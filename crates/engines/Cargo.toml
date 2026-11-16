@@ -1,0 +1,9 @@
+[package]
+name = "engines"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[dependencies]
+procio = { path = "../procio" }
+rules = { path = "../rules" }

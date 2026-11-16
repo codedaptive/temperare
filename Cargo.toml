@@ -1,0 +1,9 @@
+# Temperare workspace: one crate per lane, one binary crate (cli) on top (mission, Layout).
+[workspace]
+members = ["crates/*"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+publish = false
