@@ -3,7 +3,7 @@
 //! rules scope paths by include, exclude and kit, the read exceptions match findings, and a broken file reports
 //! every problem with its line (SPEC-rules WO-rules-1..4, Tests).
 
-use rules::{Engine, Finding, RelPath, RuleFile, Severity};
+use rules::{Engine, Finding, Kind, RelPath, RuleFile, Severity};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -73,8 +73,9 @@ fn finding(path: &str, what: &str) -> Finding {
     Finding {
         rule: "no-bool".to_string(),
         engine: Engine::AstGrep,
-        kind: "rule".to_string(),
+        kind: Kind::Quality,
         severity: Severity::Warning,
+        owner: None,
         path: RelPath::new(path),
         line: 7,
         col: Some(3),

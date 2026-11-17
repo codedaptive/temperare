@@ -1,17 +1,21 @@
 //! `Finding`: one thing an engine found, in codeteam's finding fields.
 
-use super::{Engine, RelPath, Severity};
+use super::{Engine, Kind, RelPath, Severity};
 use serde::{Deserialize, Serialize};
 
-/// One finding. The field names are the output names; `col` is left out when the engine gives no column.
+/// One finding. The field names are the output names; `owner` is left out when the file has no owner, and `col`
+/// when the engine gives no column.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Finding {
     /// The rule id; also the `Reason:` tag.
     pub rule: String,
     pub engine: Engine,
-    /// "rule" for a tool finding.
-    pub kind: String,
+    /// The rule's kind.
+    pub kind: Kind,
     pub severity: Severity,
+    /// The zone that owns the finding's path, from the rule file's kits or its top-level `owner`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub owner: Option<String>,
     pub path: RelPath,
     pub line: u32,
     #[serde(default, skip_serializing_if = "Option::is_none")]

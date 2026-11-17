@@ -1,15 +1,16 @@
 //! `RuleFile`: a read and checked rule file.
 
-use crate::{Exception, Rule};
-use std::collections::BTreeMap;
+use crate::{Exception, Kit, Rule};
 use std::path::PathBuf;
 
 /// The rule file's kits, rules and exceptions; every path in it is relative to `folder`, the rule file's folder.
 #[derive(Debug, Clone)]
 pub struct RuleFile {
     pub folder: PathBuf,
-    /// Each kit's name and its path globs.
-    pub kits: BTreeMap<String, Vec<String>>,
+    /// The kits under `[kits]`, in file order.
+    pub kits: Vec<Kit>,
+    /// The top-level `owner` as written; None when absent, blank or not a string.
+    pub owner: Option<String>,
     pub rules: Vec<Rule>,
     pub exceptions: Vec<Exception>,
 }

@@ -1,15 +1,14 @@
 //! ZUT for read_rule.rs.
 
 use super::read_rule::read_rule;
-use crate::{Engine, Problem, RelPath, Rule, Severity};
-use std::collections::BTreeMap;
+use crate::{Engine, Kind, Kit, Problem, RelPath, Rule, Severity};
 use toml::de::DeTable;
 
-/// Reads the first `[[rule]]` of `text` with one kit "core" defined.
+/// Reads the first `[[rule]]` of `text` with one kit "core" defined (read_rule uses a kit's paths, not its scope).
 fn read(text: &str, params: toml::Table) -> (Option<Rule>, Vec<Problem>) {
     let doc = DeTable::parse(text).unwrap();
     let item = &doc.get_ref().get("rule").unwrap().get_ref().as_array().unwrap()[0];
-    let kits = BTreeMap::from([("core".to_string(), vec!["crates/core/**".to_string()])]);
+    let kits = vec![Kit { name: "core".to_string(), paths: vec!["crates/core/**".to_string()], owner: None, scope: None }];
     let mut out = Vec::new();
     let rule = read_rule(text, item.span().start, item.get_ref().as_table().unwrap(), &kits, params, &mut out);
     (rule, out)
@@ -42,10 +41,48 @@ fn defaults_are_error_severity_no_config_and_every_file() {
     let (rule, out) = read(text, toml::Table::new());
     assert_eq!(out, vec![]);
     let rule = rule.expect("no problems");
+    assert_eq!(rule.kind, Kind::Quality);
     assert_eq!(rule.severity, Severity::Error);
     assert_eq!(rule.config, None);
     assert!(rule.params.is_empty());
     assert!(rule.applies(&RelPath::new("any/where.rs")));
+}
+
+#[test]
+fn kind_security_is_read() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"c\"\nfix = \"f\"\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert_eq!(out, vec![]);
+    assert_eq!(rule.expect("no problems").kind, Kind::Security);
+}
+
+#[test]
+fn kind_quality_written_out_is_read() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"ruff\"\nkind = \"quality\"\ncheck = \"c\"\nfix = \"f\"\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert_eq!(out, vec![]);
+    assert_eq!(rule.expect("no problems").kind, Kind::Quality);
+}
+
+#[test]
+fn an_unknown_kind_leaves_the_rule_out_with_a_problem_at_the_value() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"ruff\"\nkind = \"style\"\ncheck = \"c\"\nfix = \"f\"\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert!(rule.is_none());
+    assert_eq!(out.len(), 1, "{out:?}");
+    assert_eq!((out[0].line, out[0].col), (4, 8));
+    assert!(out[0].what.contains("\"style\""), "{}", out[0].what);
+    assert!(out[0].fix.contains("quality") && out[0].fix.contains("security"), "{}", out[0].fix);
+}
+
+#[test]
+fn a_kind_that_is_not_a_string_is_a_wrong_type_problem_at_the_value() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"ruff\"\nkind = 1\ncheck = \"c\"\nfix = \"f\"\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert!(rule.is_none());
+    assert_eq!(out.len(), 1, "{out:?}");
+    assert_eq!((out[0].line, out[0].col), (4, 8));
+    assert!(out[0].what.contains("kind"), "{}", out[0].what);
 }
 
 #[test]

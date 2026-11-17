@@ -1,14 +1,15 @@
 //! `Rule`: one `[[rule]]` of the rule file.
 
 use super::Scope;
-use crate::{Engine, Severity};
+use crate::{Engine, Kind, Severity};
 
 /// A rule as read from the rule file, with its compiled scope. Empty `paths` covers every file; empty `kits` sets no
-/// kit limit; `severity` is Error when the rule file gives none.
+/// kit limit; `kind` is Quality and `severity` Error when the rule file gives none.
 #[derive(Debug, Clone)]
 pub struct Rule {
     pub id: String,
     pub engine: Engine,
+    pub kind: Kind,
     /// What the engine checks: a lint name or a file relative to the rule file's folder.
     pub check: String,
     pub config: Option<String>,

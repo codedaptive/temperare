@@ -1,7 +1,6 @@
 //! ZUT for rule_file_exception_for.rs.
 
-use crate::{Engine, Exception, Finding, RelPath, RuleFile, Severity};
-use std::collections::BTreeMap;
+use crate::{Engine, Exception, Finding, Kind, RelPath, RuleFile, Severity};
 use std::path::PathBuf;
 
 fn exception(rule: &str, path: &str, what: Option<&str>, reason: &str) -> Exception {
@@ -15,15 +14,16 @@ fn exception(rule: &str, path: &str, what: Option<&str>, reason: &str) -> Except
 }
 
 fn file(exceptions: Vec<Exception>) -> RuleFile {
-    RuleFile { folder: PathBuf::from("."), kits: BTreeMap::new(), rules: Vec::new(), exceptions }
+    RuleFile { folder: PathBuf::from("."), kits: Vec::new(), owner: None, rules: Vec::new(), exceptions }
 }
 
 fn finding(rule: &str, path: &str, what: &str) -> Finding {
     Finding {
         rule: rule.to_string(),
         engine: Engine::Clippy,
-        kind: "rule".to_string(),
+        kind: Kind::Quality,
         severity: Severity::Error,
+        owner: None,
         path: RelPath::new(path),
         line: 3,
         col: Some(9),

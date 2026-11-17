@@ -1,7 +1,7 @@
 //! ZUT for read_rules.rs.
 
 use super::read_rules::read_rules;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 use toml::de::DeTable;
 
 const TWO_RULES: &str = "[[rule]]\nid = \"a\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\nparams = { n = 1 }\n\
@@ -11,7 +11,7 @@ const TWO_RULES: &str = "[[rule]]\nid = \"a\"\nengine = \"clippy\"\ncheck = \"c\
 fn rules_are_read_in_file_order_with_their_params() {
     let doc = DeTable::parse(TWO_RULES).unwrap();
     let mut out = Vec::new();
-    let (rules, ids) = read_rules(TWO_RULES, doc.get_ref(), &BTreeMap::new(), &mut out);
+    let (rules, ids) = read_rules(TWO_RULES, doc.get_ref(), &[], &mut out);
     assert_eq!(out, vec![]);
     let read: Vec<&str> = rules.iter().map(|r| r.id.as_str()).collect();
     assert_eq!(read, vec!["a", "b"]);
@@ -26,7 +26,7 @@ fn a_repeated_id_is_a_problem_at_its_second_value_and_that_rule_is_left_out() {
                 [[rule]]\nid = \"a\"\nengine = \"ruff\"\ncheck = \"E1\"\nfix = \"g\"\n";
     let doc = DeTable::parse(text).unwrap();
     let mut out = Vec::new();
-    let (rules, ids) = read_rules(text, doc.get_ref(), &BTreeMap::new(), &mut out);
+    let (rules, ids) = read_rules(text, doc.get_ref(), &[], &mut out);
     assert_eq!(rules.len(), 1);
     assert_eq!(rules[0].check, "c");
     assert_eq!(ids, BTreeSet::from(["a".to_string()]));
@@ -40,7 +40,7 @@ fn ids_include_rules_that_have_problems() {
     let text = "[[rule]]\nid = \"broken\"\nengine = \"clippy\"\n";
     let doc = DeTable::parse(text).unwrap();
     let mut out = Vec::new();
-    let (rules, ids) = read_rules(text, doc.get_ref(), &BTreeMap::new(), &mut out);
+    let (rules, ids) = read_rules(text, doc.get_ref(), &[], &mut out);
     assert!(rules.is_empty());
     assert_eq!(ids, BTreeSet::from(["broken".to_string()]));
     assert_eq!(out.len(), 2, "missing check and fix");

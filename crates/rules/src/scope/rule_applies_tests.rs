@@ -1,6 +1,6 @@
 //! ZUT for rule_applies.rs.
 
-use crate::{Engine, RelPath, Rule, Scope, Severity};
+use crate::{Engine, Kind, RelPath, Rule, Scope, Severity};
 
 fn rule(paths: &[&str], exclude: &[&str], kit_paths: Option<&[&str]>) -> Rule {
     let paths: Vec<String> = paths.iter().map(|g| g.to_string()).collect();
@@ -10,6 +10,7 @@ fn rule(paths: &[&str], exclude: &[&str], kit_paths: Option<&[&str]>) -> Rule {
     Rule {
         id: "no-unwrap".to_string(),
         engine: Engine::Clippy,
+        kind: Kind::Quality,
         check: "clippy::unwrap_used".to_string(),
         config: None,
         paths,

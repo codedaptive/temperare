@@ -5,15 +5,16 @@ use super::check_keys::check_keys;
 use super::kit_union::kit_union;
 use super::problem_at::problem_at;
 use super::required_string::required_string;
+use super::scope_or_problem::scope_or_problem;
 use super::string_list::string_list;
 use super::string_value::string_value;
 use super::wrong_type::wrong_type;
-use crate::{Engine, Problem, Rule, Scope, Severity};
-use std::collections::BTreeMap;
+use crate::{Engine, Kind, Kit, Problem, Rule, Scope, Severity};
 use toml::de::DeTable;
 
 const PLACE: &str = "[[rule]]";
-const RULE_KEYS: [&str; 10] = ["id", "engine", "check", "config", "paths", "exclude", "kits", "severity", "fix", "params"];
+const RULE_KEYS: [&str; 11] =
+    ["id", "engine", "kind", "check", "config", "paths", "exclude", "kits", "severity", "fix", "params"];
 
 /// The rule in `table`, whose `[[rule]]` header starts at byte `at`; `params` is its `params` as a plain table
 /// (empty when absent). Every check runs; any Problem leaves the rule out (None), and its scope is compiled only
@@ -22,7 +23,7 @@ pub(crate) fn read_rule(
     text: &str,
     at: usize,
     table: &DeTable,
-    kits: &BTreeMap<String, Vec<String>>,
+    kits: &[Kit],
     params: toml::Table,
     out: &mut Vec<Problem>,
 ) -> Option<Rule> {
@@ -33,6 +34,7 @@ pub(crate) fn read_rule(
         check_id(text, id, *id_at, out);
     }
     let engine = engine_value(text, table, at, out);
+    let kind = kind_value(text, table, out);
     let check = required_string(text, table, "check", PLACE, at, out);
     let config = string_value(text, table, "config", out);
     let paths = check_globs(text, &string_list(text, table, "paths", out), out);
@@ -44,24 +46,20 @@ pub(crate) fn read_rule(
     if let Some(value) = table.get("params").filter(|v| !v.get_ref().is_table()) {
         out.push(wrong_type(text, "params", value, "a table"));
     }
-    let (Some((id, _)), Some(engine), Some((check, _)), Some(severity), Some((fix, _))) =
-        (id, engine, check, severity, fix)
+    let (Some((id, _)), Some(engine), Some(kind), Some((check, _)), Some(severity), Some((fix, _))) =
+        (id, engine, kind, check, severity, fix)
     else {
         return None;
     };
     if out.len() > before {
         return None;
     }
-    let scope = match Scope::build(&paths, &exclude, kit_paths.as_deref()) {
-        Ok(scope) => scope,
-        Err(e) => {
-            out.push(problem_at(text, at, e, "Correct the rule's globs."));
-            return None;
-        }
-    };
+    let built = Scope::build(&paths, &exclude, kit_paths.as_deref());
+    let scope = scope_or_problem(built, text, at, |e| e, "Correct the rule's globs.", out)?;
     Some(Rule {
         id,
         engine,
+        kind,
         check,
         config: config.map(|(config, _)| config),
         paths,
@@ -100,6 +98,19 @@ fn engine_value(text: &str, table: &DeTable, at: usize, out: &mut Vec<Problem>) 
         ));
     }
     engine
+}
+
+/// The rule's `kind`: Quality when absent; None (with a Problem) when it is not "quality" or "security".
+fn kind_value(text: &str, table: &DeTable, out: &mut Vec<Problem>) -> Option<Kind> {
+    if table.get("kind").is_none() {
+        return Some(Kind::Quality);
+    }
+    let (name, at) = string_value(text, table, "kind", out)?;
+    let kind = Kind::from_name(&name);
+    if kind.is_none() {
+        out.push(problem_at(text, at, format!("unknown kind \"{name}\""), "Use \"quality\" or \"security\"."));
+    }
+    kind
 }
 
 /// The rule's `severity`: Error when absent; None (with a Problem) when it is not "error" or "warning".
