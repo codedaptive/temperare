@@ -8,7 +8,7 @@ use std::ops::Range;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use procio::{added_lines, blob_at, changed_files, rev_parse, toplevel, GitError, Oid};
+use procio::{added_lines, blob_at, changed_files, rev_parse, toplevel, untracked_files, GitError, Oid};
 
 /// A scratch dir under the temp dir, unique to this process and test; removed when the guard drops.
 struct Scratch {
@@ -263,4 +263,39 @@ fn blob_at_a_missing_rev_is_exit_128() {
         Err(GitError::Exit { code, .. }) => assert_eq!(code, Some(128)),
         other => panic!("expected Exit, got {other:?}"),
     }
+}
+
+/// Committed: tracked.txt, sub/tracked2.txt. Then, uncommitted: .gitignore naming ignored.txt, ignored.txt, new.txt,
+/// sub/u.txt.
+fn untracked_repo(test: &str) -> Scratch {
+    let s = repo(test);
+    write(&s.dir, "tracked.txt", b"t\n");
+    write(&s.dir, "sub/tracked2.txt", b"t2\n");
+    commit_all(&s.dir, "base");
+    write(&s.dir, ".gitignore", b"ignored.txt\n");
+    write(&s.dir, "ignored.txt", b"i\n");
+    write(&s.dir, "new.txt", b"n\n");
+    write(&s.dir, "sub/u.txt", b"u\n");
+    s
+}
+
+#[test]
+fn untracked_files_lists_untracked_not_ignored_relative_to_the_top() {
+    let s = untracked_repo("untracked_files_top");
+    // The uncommitted .gitignore is itself untracked and not ignored, so it is listed.
+    assert_eq!(untracked_files(&s.dir).unwrap(), vec![p(".gitignore"), p("new.txt"), p("sub/u.txt")]);
+}
+
+#[test]
+fn untracked_files_from_a_subdir_is_the_whole_tree_relative_to_the_top() {
+    let s = untracked_repo("untracked_files_subdir");
+    assert_eq!(untracked_files(&s.dir.join("sub")).unwrap(), vec![p(".gitignore"), p("new.txt"), p("sub/u.txt")]);
+}
+
+#[test]
+fn untracked_files_of_a_clean_tree_is_empty() {
+    let s = repo("untracked_files_clean");
+    write(&s.dir, "a.txt", b"a\n");
+    commit_all(&s.dir, "base");
+    assert_eq!(untracked_files(&s.dir).unwrap(), Vec::<PathBuf>::new());
 }
