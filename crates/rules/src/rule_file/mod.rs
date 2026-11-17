@@ -2,7 +2,10 @@
 
 mod check_globs;
 mod check_keys;
+mod check_security_owner;
 mod check_version;
+mod kit;
+mod kit_holds;
 mod kit_union;
 mod problem_at;
 mod read_exceptions;
@@ -14,8 +17,11 @@ mod required_string;
 mod rule_file;
 mod rule_file_exception_for;
 mod rule_file_exceptions_in_force;
+mod rule_file_owner_for;
 mod rule_file_parse;
 mod rule_file_read;
+mod rule_file_rules_of_kind;
+mod scope_or_problem;
 mod string_list;
 mod string_value;
 mod wrong_type;
@@ -25,7 +31,13 @@ mod check_globs_tests;
 #[cfg(test)]
 mod check_keys_tests;
 #[cfg(test)]
+mod check_security_owner_tests;
+#[cfg(test)]
 mod check_version_tests;
+#[cfg(test)]
+mod kit_holds_tests;
+#[cfg(test)]
+mod kit_tests;
 #[cfg(test)]
 mod kit_union_tests;
 #[cfg(test)]
@@ -41,6 +53,8 @@ mod read_rules_tests;
 #[cfg(test)]
 mod required_string_tests;
 #[cfg(test)]
+mod scope_or_problem_tests;
+#[cfg(test)]
 mod string_list_tests;
 #[cfg(test)]
 mod string_value_tests;
@@ -51,10 +65,15 @@ mod rule_file_exception_for_tests;
 #[cfg(test)]
 mod rule_file_exceptions_in_force_tests;
 #[cfg(test)]
+mod rule_file_owner_for_tests;
+#[cfg(test)]
 mod rule_file_parse_tests;
 #[cfg(test)]
 mod rule_file_read_tests;
 #[cfg(test)]
+mod rule_file_rules_of_kind_tests;
+#[cfg(test)]
 mod rule_file_tests;
 
+pub use kit::Kit;
 pub use rule_file::RuleFile;

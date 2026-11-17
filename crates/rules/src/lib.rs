@@ -4,6 +4,6 @@ mod rule_file;
 mod scope;
 mod types;
 
-pub use rule_file::RuleFile;
+pub use rule_file::{Kit, RuleFile};
 pub use scope::{Exception, Rule, Scope};
-pub use types::{Engine, Finding, Problem, RelPath, Severity};
+pub use types::{Engine, Finding, Kind, Problem, RelPath, Severity};

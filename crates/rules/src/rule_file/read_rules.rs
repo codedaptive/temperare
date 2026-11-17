@@ -3,8 +3,8 @@
 use super::problem_at::problem_at;
 use super::read_rule::read_rule;
 use super::wrong_type::wrong_type;
-use crate::{Problem, Rule};
-use std::collections::{BTreeMap, BTreeSet};
+use crate::{Kit, Problem, Rule};
+use std::collections::BTreeSet;
 use toml::de::DeTable;
 
 /// The rules of the `[[rule]]` tables without problems, and the id of every `[[rule]]`, so an exception for a rule
@@ -13,7 +13,7 @@ use toml::de::DeTable;
 pub(crate) fn read_rules(
     text: &str,
     root: &DeTable,
-    kits: &BTreeMap<String, Vec<String>>,
+    kits: &[Kit],
     out: &mut Vec<Problem>,
 ) -> (Vec<Rule>, BTreeSet<String>) {
     let mut ids = BTreeSet::new();

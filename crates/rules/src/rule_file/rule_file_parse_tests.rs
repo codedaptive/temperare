@@ -1,7 +1,7 @@
-//! ZUT for rule_file_parse.rs: one case per check of SPEC-rules WO-rules-2, on in-memory text, with the expected
-//! line and column written out.
+//! ZUT for rule_file_parse.rs: one case per check of SPEC-rules WO-rules-2 and the `kind` and `owner` checks, on
+//! in-memory text, with the expected line and column written out.
 
-use crate::{Engine, Problem, RelPath, RuleFile, Severity};
+use crate::{Engine, Kind, Problem, RelPath, RuleFile, Severity};
 use std::path::Path;
 
 /// A valid rule, to which a case adds lines.
@@ -121,6 +121,67 @@ fn an_unknown_severity_is_a_problem_at_the_value() {
 }
 
 #[test]
+fn an_unknown_kind_is_a_problem_at_the_value() {
+    only(&format!("version = 1\n{RULE}kind = \"style\"\n"), 7, 8, "style");
+    let found = problems(&format!("version = 1\n{RULE}kind = \"style\"\n"));
+    assert!(found[0].fix.contains("quality") && found[0].fix.contains("security"), "{}", found[0].fix);
+}
+
+#[test]
+fn a_kind_of_the_wrong_type_is_a_problem_at_the_value() {
+    only(&format!("version = 1\n{RULE}kind = [\"security\"]\n"), 7, 8, "kind");
+}
+
+#[test]
+fn a_rule_kind_is_read_and_defaults_to_quality() {
+    let text = format!("version = 1\nowner = \"core\"\n{RULE}{SECURITY_RULE}");
+    let file = RuleFile::parse(&text, Path::new(".")).expect("valid");
+    let kinds: Vec<Kind> = file.rules.iter().map(|rule| rule.kind).collect();
+    assert_eq!(kinds, vec![Kind::Quality, Kind::Security]);
+}
+
+/// A valid security rule; its `kind` value is on its fourth line, at column 8.
+const SECURITY_RULE: &str = "[[rule]]\nid = \"s\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"c\"\nfix = \"f\"\n";
+
+#[test]
+fn a_security_rule_without_a_top_level_owner_is_a_problem_at_its_kind() {
+    only(&format!("version = 1\n{RULE}{SECURITY_RULE}"), 10, 8, "owner");
+    let found = problems(&format!("version = 1\n{RULE}{SECURITY_RULE}"));
+    assert!(found[0].fix.contains("owner = "), "{}", found[0].fix);
+}
+
+#[test]
+fn a_security_rule_with_a_blank_top_level_owner_is_a_problem_at_its_kind() {
+    only(&format!("version = 1\nowner = \"  \"\n{SECURITY_RULE}"), 6, 8, "owner");
+}
+
+#[test]
+fn a_security_rule_with_a_top_level_owner_is_no_problem() {
+    let file = RuleFile::parse(&format!("version = 1\nowner = \"core\"\n{SECURITY_RULE}"), Path::new("."))
+        .expect("valid");
+    assert_eq!(file.owner.as_deref(), Some("core"));
+}
+
+#[test]
+fn a_top_level_owner_that_is_not_a_string_with_a_security_rule_is_two_problems() {
+    let found: Vec<(usize, usize)> = problems(&format!("version = 1\nowner = 3\n{SECURITY_RULE}"))
+        .iter()
+        .map(|p| (p.line, p.col))
+        .collect();
+    assert_eq!(found, vec![(2, 9), (6, 8)]);
+}
+
+#[test]
+fn owners_are_read_as_written_and_a_blank_one_is_none() {
+    let text = "version = 1\nowner = \" repo \"\n[kits.core]\npaths = [\"c/**\"]\nowner = \" core \"\n";
+    let file = RuleFile::parse(text, Path::new(".")).expect("an owner is an allowed key at the top and in a kit");
+    assert_eq!(file.owner.as_deref(), Some(" repo "));
+    assert_eq!(file.kits[0].owner.as_deref(), Some(" core "));
+    let blank = RuleFile::parse("version = 1\nowner = \"\"\n", Path::new(".")).expect("valid");
+    assert_eq!(blank.owner, None);
+}
+
+#[test]
 fn a_toml_syntax_error_is_one_problem_at_its_position() {
     let found = problems("version = 1\nid = = 3\n");
     assert_eq!(found.len(), 1, "{found:?}");
@@ -172,11 +233,15 @@ approved = "Bob 2026-11-17"      # required
 #[test]
 fn the_spec_example_parses_to_its_fields() {
     let file = RuleFile::parse(SPEC_EXAMPLE, Path::new("repo")).expect("the spec's example is valid");
-    assert_eq!(file.kits["core"], vec!["Sources/Core/**".to_string(), "crates/core/**".to_string()]);
+    assert_eq!(file.kits.len(), 1);
+    assert_eq!(file.kits[0].name, "core");
+    assert_eq!(file.kits[0].paths, vec!["Sources/Core/**".to_string(), "crates/core/**".to_string()]);
+    assert_eq!(file.owner, None, "the example names no owner");
     assert_eq!(file.rules.len(), 1);
     let rule = &file.rules[0];
     assert_eq!(rule.id, "no-stored-bool");
     assert_eq!(rule.engine, Engine::AstGrep);
+    assert_eq!(rule.kind, Kind::Quality, "the example gives no kind");
     assert_eq!(rule.check, "rules/no-stored-bool.yml");
     assert_eq!(rule.config.as_deref(), Some(".swiftlint.yml"));
     assert_eq!(rule.severity, Severity::Error);

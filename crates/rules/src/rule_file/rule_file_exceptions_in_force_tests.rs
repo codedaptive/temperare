@@ -1,7 +1,6 @@
 //! ZUT for rule_file_exceptions_in_force.rs.
 
 use crate::{Exception, RelPath, RuleFile};
-use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 fn exception(rule: &str, path: &str) -> Exception {
@@ -15,7 +14,7 @@ fn exception(rule: &str, path: &str) -> Exception {
 }
 
 fn file(exceptions: Vec<Exception>) -> RuleFile {
-    RuleFile { folder: PathBuf::from("."), kits: BTreeMap::new(), rules: Vec::new(), exceptions }
+    RuleFile { folder: PathBuf::from("."), kits: Vec::new(), owner: None, rules: Vec::new(), exceptions }
 }
 
 #[test]

@@ -1,13 +1,15 @@
 //! ZUT for kit_union.rs.
 
 use super::kit_union::kit_union;
-use std::collections::BTreeMap;
+use crate::Kit;
 
-fn kits() -> BTreeMap<String, Vec<String>> {
-    BTreeMap::from([
-        ("core".to_string(), vec!["crates/core/**".to_string()]),
-        ("web".to_string(), vec!["web/**".to_string(), "site/**".to_string()]),
-    ])
+fn kit(name: &str, paths: &[&str]) -> Kit {
+    Kit { name: name.to_string(), paths: paths.iter().map(|p| p.to_string()).collect(), owner: None, scope: None }
+}
+
+/// Two kits, "web" first, so a lookup by name cannot rely on their order.
+fn kits() -> Vec<Kit> {
+    vec![kit("web", &["web/**", "site/**"]), kit("core", &["crates/core/**"])]
 }
 
 #[test]
