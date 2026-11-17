@@ -19,7 +19,7 @@ check:
 test:
 	@$(MAKE) --no-print-directory test-group GROUP=$(GROUP)
 
-# The Done list (mission, Done 1-7): the built tm with the real engines, on throwaway repositories
+# The Done list (mission, Done 1-8): the built tm with the real engines, on throwaway repositories
 # (crates/cli/tests/validation, the orchestrator's; release, as every validation target).
 accept:
 	@CARGO="$(CARGO)" CARGO_TEST_ARGS="$(CARGO_TEST_ARGS)" sh "$(CURDIR)/scripts/test_one.sh" crates/cli/tests/validation validation
