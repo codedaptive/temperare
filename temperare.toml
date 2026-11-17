@@ -1,0 +1,17 @@
+# Temperare's own rule file: the repository is checked by itself (mission, How the code is written; Done 8;
+# SPEC-selfcheck WO-orc-selfcheck-1; S-25, S-26).
+version = 1
+owner = "orc"
+
+[kits.procio]
+paths = ["crates/procio/**"]
+owner = "procio"
+
+[[rule]]
+id = "programs-run-only-in-procio"
+engine = "ast-grep"
+check = "rules/programs-run-only-in-procio.yml"
+paths = ["crates/**/*.rs"]
+outside_kits = ["procio"]
+severity = "error"
+fix = "Run other programs through procio (procio::run, procio::Cmd); only procio starts a process."

@@ -1,0 +1,11 @@
+# Only procio starts another program (mission Layout; S-25, S-26: tests included). Matches the type by its path and
+# any Command::new call; std::process::id and the other std::process items start nothing and are not matched.
+id: programs-run-only-in-procio
+language: rust
+message: starts a program outside procio
+severity: error
+rule:
+  any:
+    - pattern: std::process::Command
+    - pattern: process::Command
+    - pattern: Command::new($$$ARGS)
