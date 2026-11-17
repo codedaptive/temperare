@@ -1,4 +1,4 @@
-//! The five git operations, each a thin wrapper over `run` with its argument list and its reading of git's answer
+//! The six git operations, each a thin wrapper over `run` with its argument list and its reading of git's answer
 //! kept as pure helpers beside it.
 
 mod added_lines;
@@ -7,12 +7,14 @@ mod changed_files;
 mod exit_128_saying;
 mod rev_parse;
 mod toplevel;
+mod untracked_files;
 
 pub use added_lines::added_lines;
 pub use blob_at::blob_at;
 pub use changed_files::changed_files;
 pub use rev_parse::rev_parse;
 pub use toplevel::toplevel;
+pub use untracked_files::untracked_files;
 
 #[cfg(test)]
 mod added_lines_tests;
@@ -26,3 +28,5 @@ mod exit_128_saying_tests;
 mod rev_parse_tests;
 #[cfg(test)]
 mod toplevel_tests;
+#[cfg(test)]
+mod untracked_files_tests;
