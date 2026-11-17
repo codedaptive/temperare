@@ -1,0 +1,38 @@
+[
+  {
+    "character" : 22,
+    "file" : "/Users/bob/devlop/team-temperare/workcrews/engines/scratchpad/cap-swiftlint/Example.swift",
+    "line" : 2,
+    "reason" : "Force casts should be avoided",
+    "rule_id" : "force_cast",
+    "severity" : "Error",
+    "type" : "Force Cast"
+  },
+  {
+    "character" : 29,
+    "file" : "/Users/bob/devlop/team-temperare/workcrews/engines/scratchpad/cap-swiftlint/Example.swift",
+    "line" : 1,
+    "reason" : "Lines should not have trailing whitespace",
+    "rule_id" : "trailing_whitespace",
+    "severity" : "Warning",
+    "type" : "Trailing Whitespace"
+  },
+  {
+    "character" : 11,
+    "file" : "/Users/bob/devlop/team-temperare/workcrews/engines/scratchpad/cap-swiftlint/NoNewline.swift",
+    "line" : 1,
+    "reason" : "Force casts should be avoided",
+    "rule_id" : "force_cast",
+    "severity" : "Error",
+    "type" : "Force Cast"
+  },
+  {
+    "character" : null,
+    "file" : "/Users/bob/devlop/team-temperare/workcrews/engines/scratchpad/cap-swiftlint/NoNewline.swift",
+    "line" : 1,
+    "reason" : "Files should have a single trailing newline",
+    "rule_id" : "trailing_newline",
+    "severity" : "Warning",
+    "type" : "Trailing Newline"
+  }
+]
