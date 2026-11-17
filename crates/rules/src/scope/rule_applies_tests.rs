@@ -16,6 +16,7 @@ fn rule(paths: &[&str], exclude: &[&str], kit_paths: Option<&[&str]>) -> Rule {
         paths,
         exclude,
         kits: Vec::new(),
+        outside_kits: Vec::new(),
         severity: Severity::Error,
         fix: "Return a typed error.".to_string(),
         params: toml::Table::new(),

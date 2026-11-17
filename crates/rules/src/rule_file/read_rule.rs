@@ -13,12 +13,13 @@ use crate::{Engine, Kind, Kit, Problem, Rule, Scope, Severity};
 use toml::de::DeTable;
 
 const PLACE: &str = "[[rule]]";
-const RULE_KEYS: [&str; 11] =
-    ["id", "engine", "kind", "check", "config", "paths", "exclude", "kits", "severity", "fix", "params"];
+const RULE_KEYS: [&str; 12] = [
+    "id", "engine", "kind", "check", "config", "paths", "exclude", "kits", "outside_kits", "severity", "fix", "params",
+];
 
 /// The rule in `table`, whose `[[rule]]` header starts at byte `at`; `params` is its `params` as a plain table
 /// (empty when absent). Every check runs; any Problem leaves the rule out (None), and its scope is compiled only
-/// when there is none.
+/// when there is none, excluding both `exclude` and the paths of the `outside_kits` kits.
 pub(crate) fn read_rule(
     text: &str,
     at: usize,
@@ -40,7 +41,9 @@ pub(crate) fn read_rule(
     let paths = check_globs(text, &string_list(text, table, "paths", out), out);
     let exclude = check_globs(text, &string_list(text, table, "exclude", out), out);
     let kit_names = string_list(text, table, "kits", out);
-    let kit_paths = kit_union(text, &kit_names, kits, out);
+    let kit_paths = kit_union(text, &kit_names, kits, "kits", out);
+    let outside_names = string_list(text, table, "outside_kits", out);
+    let outside_paths = kit_union(text, &outside_names, kits, "outside_kits", out).unwrap_or_default();
     let severity = severity_value(text, table, out);
     let fix = required_string(text, table, "fix", PLACE, at, out);
     if let Some(value) = table.get("params").filter(|v| !v.get_ref().is_table()) {
@@ -54,7 +57,11 @@ pub(crate) fn read_rule(
     if out.len() > before {
         return None;
     }
-    let built = Scope::build(&paths, &exclude, kit_paths.as_deref());
+    let built = Scope::build(
+        &paths,
+        &exclude.iter().chain(&outside_paths).cloned().collect::<Vec<_>>(),
+        kit_paths.as_deref(),
+    );
     let scope = scope_or_problem(built, text, at, |e| e, "Correct the rule's globs.", out)?;
     Some(Rule {
         id,
@@ -65,6 +72,7 @@ pub(crate) fn read_rule(
         paths,
         exclude,
         kits: kit_names.into_iter().map(|(name, _)| name).collect(),
+        outside_kits: outside_names.into_iter().map(|(name, _)| name).collect(),
         severity,
         fix,
         params,
