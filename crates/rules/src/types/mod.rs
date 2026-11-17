@@ -1,4 +1,4 @@
-//! The shared value types: engine, kind, severity, relative path, finding and rule-file problem.
+//! The shared value types: engine, kind, severity, relative path, finding, rule outcome and rule-file problem.
 
 mod engine;
 mod engine_from_name;
@@ -10,6 +10,7 @@ mod problem;
 mod rel_path;
 mod rel_path_as_str;
 mod rel_path_new;
+mod rule_outcome;
 mod severity;
 mod severity_from_name;
 
@@ -34,6 +35,8 @@ mod rel_path_new_tests;
 #[cfg(test)]
 mod rel_path_tests;
 #[cfg(test)]
+mod rule_outcome_tests;
+#[cfg(test)]
 mod severity_from_name_tests;
 #[cfg(test)]
 mod severity_tests;
@@ -43,4 +46,5 @@ pub use finding::Finding;
 pub use kind::Kind;
 pub use problem::Problem;
 pub use rel_path::RelPath;
+pub use rule_outcome::RuleOutcome;
 pub use severity::Severity;
