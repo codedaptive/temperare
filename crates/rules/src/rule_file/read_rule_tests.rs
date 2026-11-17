@@ -1,0 +1,70 @@
+//! ZUT for read_rule.rs.
+
+use super::read_rule::read_rule;
+use crate::{Engine, Problem, RelPath, Rule, Severity};
+use std::collections::BTreeMap;
+use toml::de::DeTable;
+
+/// Reads the first `[[rule]]` of `text` with one kit "core" defined.
+fn read(text: &str, params: toml::Table) -> (Option<Rule>, Vec<Problem>) {
+    let doc = DeTable::parse(text).unwrap();
+    let item = &doc.get_ref().get("rule").unwrap().get_ref().as_array().unwrap()[0];
+    let kits = BTreeMap::from([("core".to_string(), vec!["crates/core/**".to_string()])]);
+    let mut out = Vec::new();
+    let rule = read_rule(text, item.span().start, item.get_ref().as_table().unwrap(), &kits, params, &mut out);
+    (rule, out)
+}
+
+#[test]
+fn a_full_rule_is_read_with_its_scope() {
+    let text = "[[rule]]\nid = \"no-bool\"\nengine = \"ruff\"\ncheck = \"E501\"\nconfig = \"ruff.toml\"\n\
+                paths = [\"**/*.py\"]\nexclude = [\"**/gen/**\"]\nkits = [\"core\"]\nseverity = \"warning\"\nfix = \"Wrap it.\"\n";
+    let params = toml::Table::from_iter([("n".to_string(), toml::Value::Integer(3))]);
+    let (rule, out) = read(text, params.clone());
+    assert_eq!(out, vec![]);
+    let rule = rule.expect("no problems");
+    assert_eq!(rule.id, "no-bool");
+    assert_eq!(rule.engine, Engine::Ruff);
+    assert_eq!(rule.check, "E501");
+    assert_eq!(rule.config.as_deref(), Some("ruff.toml"));
+    assert_eq!(rule.kits, vec!["core".to_string()]);
+    assert_eq!(rule.severity, Severity::Warning);
+    assert_eq!(rule.fix, "Wrap it.");
+    assert_eq!(rule.params, params);
+    assert!(rule.applies(&RelPath::new("crates/core/a.py")));
+    assert!(!rule.applies(&RelPath::new("crates/core/gen/a.py")));
+    assert!(!rule.applies(&RelPath::new("web/a.py")));
+}
+
+#[test]
+fn defaults_are_error_severity_no_config_and_every_file() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"f\"\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert_eq!(out, vec![]);
+    let rule = rule.expect("no problems");
+    assert_eq!(rule.severity, Severity::Error);
+    assert_eq!(rule.config, None);
+    assert!(rule.params.is_empty());
+    assert!(rule.applies(&RelPath::new("any/where.rs")));
+}
+
+#[test]
+fn a_rule_with_a_problem_is_left_out_and_every_problem_is_reported() {
+    // No `check` (header, 1:1), unknown engine (3:10), undefined kit (4:9).
+    let text = "[[rule]]\nid = \"r\"\nengine = \"lint\"\nkits = [\"nope\"]\nfix = \"f\"\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert!(rule.is_none());
+    let mut found: Vec<(usize, usize)> = out.iter().map(|p| (p.line, p.col)).collect();
+    found.sort();
+    assert_eq!(found, vec![(1, 1), (3, 10), (4, 9)]);
+}
+
+#[test]
+fn params_that_is_not_a_table_is_a_problem() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\nparams = 3\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert!(rule.is_none());
+    assert_eq!(out.len(), 1);
+    assert_eq!((out[0].line, out[0].col), (6, 10));
+    assert!(out[0].what.contains("params"), "{}", out[0].what);
+}
