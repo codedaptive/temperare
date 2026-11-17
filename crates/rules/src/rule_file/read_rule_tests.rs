@@ -4,11 +4,18 @@ use super::read_rule::read_rule;
 use crate::{Engine, Kind, Kit, Problem, RelPath, Rule, Severity};
 use toml::de::DeTable;
 
-/// Reads the first `[[rule]]` of `text` with one kit "core" defined (read_rule uses a kit's paths, not its scope).
+/// Reads the first `[[rule]]` of `text` with two kits defined: "core" (crates/core/**) and "gen" (crates/core/gen/**,
+/// tools/**); read_rule uses a kit's paths, not its scope.
 fn read(text: &str, params: toml::Table) -> (Option<Rule>, Vec<Problem>) {
     let doc = DeTable::parse(text).unwrap();
     let item = &doc.get_ref().get("rule").unwrap().get_ref().as_array().unwrap()[0];
-    let kits = vec![Kit { name: "core".to_string(), paths: vec!["crates/core/**".to_string()], owner: None, scope: None }];
+    let kit = |name: &str, paths: &[&str]| Kit {
+        name: name.to_string(),
+        paths: paths.iter().map(|p| p.to_string()).collect(),
+        owner: None,
+        scope: None,
+    };
+    let kits = vec![kit("core", &["crates/core/**"]), kit("gen", &["crates/core/gen/**", "tools/**"])];
     let mut out = Vec::new();
     let rule = read_rule(text, item.span().start, item.get_ref().as_table().unwrap(), &kits, params, &mut out);
     (rule, out)
@@ -104,4 +111,50 @@ fn params_that_is_not_a_table_is_a_problem() {
     assert_eq!(out.len(), 1);
     assert_eq!((out[0].line, out[0].col), (6, 10));
     assert!(out[0].what.contains("params"), "{}", out[0].what);
+}
+
+#[test]
+fn outside_kits_alone_leaves_out_the_files_of_those_kits() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"ruff\"\ncheck = \"c\"\noutside_kits = [\"core\"]\nfix = \"f\"\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert_eq!(out, vec![]);
+    let rule = rule.expect("no problems");
+    assert_eq!(rule.outside_kits, vec!["core".to_string()]);
+    assert!(!rule.applies(&RelPath::new("crates/core/a.rs")));
+    assert!(rule.applies(&RelPath::new("web/a.rs")));
+}
+
+#[test]
+fn outside_kits_with_paths_leaves_out_a_matching_file_in_an_outside_kit() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"ruff\"\ncheck = \"c\"\npaths = [\"**/*.rs\"]\n\
+                outside_kits = [\"core\"]\nfix = \"f\"\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert_eq!(out, vec![]);
+    let rule = rule.expect("no problems");
+    assert!(!rule.applies(&RelPath::new("crates/core/a.rs")));
+    assert!(rule.applies(&RelPath::new("web/a.rs")));
+    assert!(!rule.applies(&RelPath::new("web/a.py")));
+}
+
+#[test]
+fn outside_kits_with_kits_leaves_out_a_file_in_both() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"ruff\"\ncheck = \"c\"\nkits = [\"core\"]\n\
+                outside_kits = [\"gen\"]\nfix = \"f\"\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert_eq!(out, vec![]);
+    let rule = rule.expect("no problems");
+    assert!(!rule.applies(&RelPath::new("crates/core/gen/a.rs")));
+    assert!(rule.applies(&RelPath::new("crates/core/a.rs")));
+    assert!(!rule.applies(&RelPath::new("tools/x.rs")));
+}
+
+#[test]
+fn an_undefined_outside_kit_leaves_the_rule_out_with_a_problem_at_its_string() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"ruff\"\noutside_kits = [\"nope\"]\ncheck = \"c\"\nfix = \"f\"\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert!(rule.is_none());
+    assert_eq!(out.len(), 1, "{out:?}");
+    assert_eq!((out[0].line, out[0].col), (4, 17));
+    assert!(out[0].what.contains("\"nope\""), "{}", out[0].what);
+    assert!(out[0].fix.contains("`outside_kits`"), "{}", out[0].fix);
 }
