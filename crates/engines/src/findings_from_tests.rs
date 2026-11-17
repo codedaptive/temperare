@@ -1,5 +1,5 @@
 //! ZUT for findings_from.rs: every field filled from the rule, the owner and the hit; hits cut by the rule's scope and
-//! by `only`; hit order kept. The rule file is built by `RuleFile::parse` on in-memory text.
+//! by `only` (a file or a folder entry); hit order kept. The rule file is built by `RuleFile::parse` on in-memory text.
 
 use crate::findings_from::findings_from;
 use crate::types::Hit;
@@ -20,6 +20,18 @@ kind = "security"
 check = "E711"
 paths = ["py/**", "tools/**"]
 exclude = ["py/gen/**"]
+severity = "warning"
+fix = "Compare with `is None`."
+"#;
+
+const SRC_TEXT: &str = r#"version = 1
+owner = "repo"
+[[rule]]
+id = "no-none-compare"
+engine = "ruff"
+kind = "security"
+check = "E711"
+paths = ["src/**", "srcx/**"]
 severity = "warning"
 fix = "Compare with `is None`."
 "#;
@@ -74,6 +86,37 @@ fn with_no_only_every_hit_the_rule_applies_to_is_a_filled_finding_in_hit_order()
 #[test]
 fn only_keeps_just_the_listed_paths() {
     assert_eq!(run(&["py/b.py"]), vec![finding("py-zone", "py/b.py", 12, Some(4), "second in py")]);
+}
+
+#[test]
+fn a_folder_entry_keeps_direct_and_nested_hits() {
+    let file = RuleFile::parse(SRC_TEXT, Path::new("/repo")).unwrap();
+    let hits = vec![hit("src/a.rs", 1, None, "direct"), hit("src/x/b.rs", 2, Some(3), "nested")];
+    assert_eq!(
+        findings_from(&file, &file.rules[0], hits, &[RelPath::new("src")]),
+        vec![finding("repo", "src/a.rs", 1, None, "direct"), finding("repo", "src/x/b.rs", 2, Some(3), "nested")]
+    );
+}
+
+#[test]
+fn a_folder_entry_does_not_keep_a_prefix_sibling() {
+    let file = RuleFile::parse(SRC_TEXT, Path::new("/repo")).unwrap();
+    let hits = vec![hit("src/a.rs", 1, None, "inside"), hit("srcx/a.rs", 2, None, "sibling")];
+    assert_eq!(
+        findings_from(&file, &file.rules[0], hits, &[RelPath::new("src")]),
+        vec![finding("repo", "src/a.rs", 1, None, "inside")]
+    );
+}
+
+#[test]
+fn a_folder_entry_still_respects_rule_exclusions() {
+    assert_eq!(
+        run(&["py"]),
+        vec![
+            finding("py-zone", "py/a.py", 3, Some(7), "comparison to None (E711)"),
+            finding("py-zone", "py/b.py", 12, Some(4), "second in py"),
+        ]
+    );
 }
 
 #[test]
