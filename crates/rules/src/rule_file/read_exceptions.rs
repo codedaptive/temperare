@@ -59,6 +59,14 @@ fn read_exception(
     }
     let path = required_string(text, table, "path", PLACE, at, out);
     let what = string_value(text, table, "what", out);
+    if let Some((_, what_at)) = what.as_ref().filter(|(what, _)| what.trim().is_empty()) {
+        out.push(problem_at(
+            text,
+            *what_at,
+            "exception `what` is empty".to_string(),
+            "empty what; omit the key to match every finding of the rule at this path",
+        ));
+    }
     let reason = required_string(text, table, "reason", PLACE, at, out);
     let approved = required_string(text, table, "approved", PLACE, at, out);
     let (Some((rule, _)), Some((path, _)), Some((reason, _)), Some((approved, _))) = (rule, path, reason, approved)
