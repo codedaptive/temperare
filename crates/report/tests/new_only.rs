@@ -1,8 +1,8 @@
 //! The report's new-only filter against repositories made for these tests.
 
+use std::ffi::OsString;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 use report::build_report;
 use rules::{Engine, Exception, Finding, Kind, RelPath, RuleFile, RuleOutcome, Severity};
@@ -18,19 +18,21 @@ impl Drop for Scratch {
 }
 
 fn git(dir: &Path, args: &[&str]) -> Vec<u8> {
-    let mut command = Command::new("git");
-    command.arg("-C").arg(dir).args(args);
-    for (key, _) in std::env::vars_os() {
-        if key.to_string_lossy().starts_with("GIT_") {
-            command.env_remove(key);
-        }
-    }
-    let output = command
-        .env("GIT_CONFIG_GLOBAL", "/dev/null")
-        .env("GIT_CONFIG_NOSYSTEM", "1")
-        .output()
-        .unwrap();
-    assert!(output.status.success(), "git {args:?}: {}", String::from_utf8_lossy(&output.stderr));
+    let output = procio::run(&procio::Cmd {
+        args: args.iter().map(OsString::from).collect(),
+        cwd: Some(dir.to_path_buf()),
+        env: vec![
+            (OsString::from("GIT_CONFIG_GLOBAL"), OsString::from("/dev/null")),
+            (OsString::from("GIT_CONFIG_NOSYSTEM"), OsString::from("1")),
+        ],
+        env_remove: std::env::vars_os()
+            .map(|(key, _)| key)
+            .filter(|key| key.to_string_lossy().starts_with("GIT_"))
+            .collect(),
+        ..procio::Cmd::new("git")
+    })
+    .unwrap();
+    assert!(output.code == Some(0), "git {args:?}: {}", String::from_utf8_lossy(&output.stderr));
     output.stdout
 }
 
