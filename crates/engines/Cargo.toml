@@ -7,3 +7,6 @@ publish.workspace = true
 [dependencies]
 procio = { path = "../procio" }
 rules = { path = "../rules" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+regex-syntax = "0.8"

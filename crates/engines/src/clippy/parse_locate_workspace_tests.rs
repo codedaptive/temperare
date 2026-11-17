@@ -1,0 +1,56 @@
+//! ZUT for parse_locate_workspace.rs. `locate_workspace.txt` is the stdout of `cargo locate-project --workspace
+//! --message-format plain`, captured once (exit 0) from the `member/` folder of a throwaway workspace; `CAPTURED` is
+//! the root path it names, which no test reads. The other outputs are hand-built.
+
+use super::parse_locate_workspace;
+use procio::Output;
+use std::path::PathBuf;
+
+const CAPTURED: &str = "/Users/bob/devlop/team-temperare/workcrews/engines/scratchpad/locate-capture";
+const LOCATED: &[u8] = include_bytes!("fixtures/locate_workspace.txt");
+
+fn output(code: i32, stdout: &[u8], stderr: &[u8]) -> Output {
+    Output { code: Some(code), stdout: stdout.to_vec(), stderr: stderr.to_vec() }
+}
+
+#[test]
+fn the_captured_output_names_the_workspace_root_folder() {
+    assert_eq!(parse_locate_workspace(&output(0, LOCATED, b"")), Ok(PathBuf::from(CAPTURED)));
+}
+
+#[test]
+fn surrounding_whitespace_is_trimmed() {
+    let got = parse_locate_workspace(&output(0, b"  /w/Cargo.toml \n\n", b""));
+    assert_eq!(got, Ok(PathBuf::from("/w")));
+}
+
+#[test]
+fn a_non_zero_exit_is_a_parse_error_quoting_stderr() {
+    let stderr = b"error: could not find `Cargo.toml` in `/w` or any parent directory\n";
+    let why = parse_locate_workspace(&output(101, b"", stderr)).unwrap_err().why;
+    assert!(why.starts_with("cargo locate-project"), "{why}");
+    assert!(why.contains("error: could not find `Cargo.toml` in `/w` or any parent directory"), "{why}");
+}
+
+#[test]
+fn a_non_zero_exit_with_a_path_printed_is_still_a_parse_error() {
+    assert!(parse_locate_workspace(&output(1, b"/w/Cargo.toml\n", b"")).is_err());
+}
+
+#[test]
+fn empty_output_is_a_parse_error() {
+    let why = parse_locate_workspace(&output(0, b"", b"")).unwrap_err().why;
+    assert!(why.starts_with("cargo locate-project"), "{why}");
+}
+
+#[test]
+fn a_relative_path_is_a_parse_error_quoting_it() {
+    let why = parse_locate_workspace(&output(0, b"w/Cargo.toml\n", b"")).unwrap_err().why;
+    assert!(why.contains("w/Cargo.toml"), "{why}");
+}
+
+#[test]
+fn a_path_not_ending_in_cargo_toml_is_a_parse_error() {
+    assert!(parse_locate_workspace(&output(0, b"/w/Cargo.lock\n", b"")).is_err());
+    assert!(parse_locate_workspace(&output(0, b"/w/member\n", b"")).is_err());
+}

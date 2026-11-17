@@ -1,0 +1,67 @@
+//! ZUT for availability.rs: the program each engine is looked up as, the exact why text when it is absent, and
+//! Tessera never available (settled S-20).
+
+use crate::availability::availability_from;
+use crate::types::Availability;
+use rules::Engine;
+use std::cell::RefCell;
+
+fn not_available(why: &str) -> Availability {
+    Availability::NotAvailable { why: why.to_string() }
+}
+
+#[test]
+fn each_absent_engine_says_why() {
+    assert_eq!(availability_from(Engine::Clippy, |_| false), not_available("cargo-clippy not found on PATH"));
+    assert_eq!(availability_from(Engine::SwiftLint, |_| false), not_available("swiftlint not found on PATH"));
+    assert_eq!(availability_from(Engine::Ruff, |_| false), not_available("ruff not found on PATH"));
+    assert_eq!(availability_from(Engine::AstGrep, |_| false), not_available("ast-grep not found on PATH"));
+}
+
+#[test]
+fn tessera_is_not_available_whatever_is_on_path() {
+    let why = not_available("Tessera's slop records are not defined yet");
+    assert_eq!(availability_from(Engine::Tessera, |_| false), why);
+    assert_eq!(availability_from(Engine::Tessera, |_| true), why);
+}
+
+#[test]
+fn each_present_engine_is_available() {
+    for engine in [Engine::Clippy, Engine::SwiftLint, Engine::Ruff, Engine::AstGrep] {
+        assert_eq!(availability_from(engine, |_| true), Availability::Available, "{engine:?}");
+    }
+}
+
+#[test]
+fn each_engine_looks_up_its_program() {
+    let cases = [
+        (Engine::Clippy, "cargo-clippy"),
+        (Engine::SwiftLint, "swiftlint"),
+        (Engine::Ruff, "ruff"),
+        (Engine::AstGrep, "ast-grep"),
+    ];
+    for (engine, program) in cases {
+        assert_eq!(asked_for(engine), vec![program.to_string()], "{engine:?}");
+    }
+}
+
+#[test]
+fn tessera_looks_up_nothing() {
+    assert_eq!(asked_for(Engine::Tessera), Vec::<String>::new());
+}
+
+/// The names `availability_from` looks up on PATH for `engine`, in order.
+fn asked_for(engine: Engine) -> Vec<String> {
+    let asked = RefCell::new(Vec::new());
+    availability_from(engine, |name| {
+        asked.borrow_mut().push(name.to_string());
+        false
+    });
+    asked.into_inner()
+}
+
+#[test]
+fn clippy_with_cargo_but_no_cargo_clippy_is_not_available() {
+    let got = availability_from(Engine::Clippy, |name| name == "cargo");
+    assert_eq!(got, not_available("cargo-clippy not found on PATH"));
+}
