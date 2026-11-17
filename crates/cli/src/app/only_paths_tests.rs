@@ -1,5 +1,5 @@
-//! ZUT for only_paths.rs: relative, `./`, `../` and absolute paths under the folder, a path outside it, and the folder
-//! itself. Pure: nothing is read from disk, so the folders named here need not exist.
+//! ZUT for only_paths.rs: relative, `./`, `../`, trailing-slash and absolute paths under the folder, a path outside
+//! it, and the folder itself. Pure: nothing is read from disk, so the folders named here need not exist.
 
 use super::only_paths::only_paths;
 use crate::UsageError;
@@ -17,6 +17,36 @@ fn texts(only: &[RelPath]) -> Vec<&str> {
 #[test]
 fn no_paths_is_the_whole_tree() {
     assert_eq!(only_paths(&[], Path::new("/repo"), Path::new("/repo")).unwrap(), Vec::<RelPath>::new());
+}
+
+#[test]
+fn a_relative_folder_is_relative_to_the_rule_file_folder() {
+    let only = only_paths(&paths(&["src"]), Path::new("/repo"), Path::new("/repo")).unwrap();
+    assert_eq!(texts(&only), vec!["src"]);
+}
+
+#[test]
+fn a_trailing_slash_is_removed_from_a_folder() {
+    let only = only_paths(&paths(&["src/"]), Path::new("/repo"), Path::new("/repo")).unwrap();
+    assert_eq!(texts(&only), vec!["src"]);
+}
+
+#[test]
+fn a_leading_dot_is_removed_from_a_folder() {
+    let only = only_paths(&paths(&["./src"]), Path::new("/repo"), Path::new("/repo")).unwrap();
+    assert_eq!(texts(&only), vec!["src"]);
+}
+
+#[test]
+fn dot_alone_at_the_rule_file_folder_is_the_whole_tree() {
+    let only = only_paths(&paths(&["."]), Path::new("/repo"), Path::new("/repo")).unwrap();
+    assert_eq!(texts(&only), Vec::<&str>::new());
+}
+
+#[test]
+fn parent_from_a_subfolder_is_the_whole_tree() {
+    let only = only_paths(&paths(&[".."]), Path::new("/repo/app"), Path::new("/repo")).unwrap();
+    assert_eq!(texts(&only), Vec::<&str>::new());
 }
 
 #[test]
