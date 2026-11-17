@@ -46,3 +46,55 @@ fn absent_is_no_exceptions() {
     assert_eq!(read_exceptions(text, doc.get_ref(), &ids(), &mut out), vec![]);
     assert_eq!(out, vec![]);
 }
+
+const EMPTY_WHAT_FIX: &str = "empty what; omit the key to match every finding of the rule at this path";
+
+#[test]
+fn an_empty_what_is_a_problem_at_the_value_and_the_exception_is_left_out() {
+    let text = "[[exception]]\nrule = \"no-bool\"\npath = \"a.rs\"\nwhat = \"\"\nreason = \"r\"\napproved = \"a\"\n";
+    let doc = DeTable::parse(text).unwrap();
+    let mut out = Vec::new();
+    assert_eq!(read_exceptions(text, doc.get_ref(), &ids(), &mut out), vec![]);
+    assert_eq!(out.len(), 1);
+    assert_eq!((out[0].line, out[0].col), (4, 8));
+    assert_eq!(out[0].fix, EMPTY_WHAT_FIX);
+}
+
+#[test]
+fn a_whitespace_only_what_is_a_problem_and_the_exception_is_left_out() {
+    let text = "[[exception]]\nrule = \"no-bool\"\npath = \"a.rs\"\nwhat = \"   \"\nreason = \"r\"\napproved = \"a\"\n";
+    let doc = DeTable::parse(text).unwrap();
+    let mut out = Vec::new();
+    assert_eq!(read_exceptions(text, doc.get_ref(), &ids(), &mut out), vec![]);
+    assert_eq!(out.len(), 1);
+    assert_eq!((out[0].line, out[0].col), (4, 8));
+    assert_eq!(out[0].fix, EMPTY_WHAT_FIX);
+}
+
+#[test]
+fn an_absent_what_is_read_as_none_without_a_problem() {
+    let text = "[[exception]]\nrule = \"no-bool\"\npath = \"a.rs\"\nreason = \"r\"\napproved = \"a\"\n";
+    let doc = DeTable::parse(text).unwrap();
+    let mut out = Vec::new();
+    let read = read_exceptions(text, doc.get_ref(), &ids(), &mut out);
+    assert_eq!(out, vec![]);
+    let expected = Exception {
+        rule: "no-bool".to_string(),
+        path: RelPath::new("a.rs"),
+        what: None,
+        reason: "r".to_string(),
+        approved: "a".to_string(),
+    };
+    assert_eq!(read, vec![expected]);
+}
+
+#[test]
+fn an_empty_what_and_an_unknown_rule_are_both_reported() {
+    let text = "[[exception]]\nrule = \"ghost\"\npath = \"a.rs\"\nwhat = \"\"\nreason = \"r\"\napproved = \"a\"\n";
+    let doc = DeTable::parse(text).unwrap();
+    let mut out = Vec::new();
+    assert_eq!(read_exceptions(text, doc.get_ref(), &ids(), &mut out), vec![]);
+    let at: Vec<(usize, usize)> = out.iter().map(|p| (p.line, p.col)).collect();
+    assert_eq!(at, vec![(2, 8), (4, 8)]);
+    assert_eq!(out[1].fix, EMPTY_WHAT_FIX);
+}
