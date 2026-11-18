@@ -162,3 +162,56 @@ fn clippy_workspace_member_finding_is_relative_to_rule_folder() {
     assert_eq!(findings[0].line, 2);
     assert!(findings[0].what.contains("true"), "{:?}", findings[0]);
 }
+
+#[test]
+fn clippy_warnings_cover_all_targets_deduplicate_and_honor_allows() {
+    assert_eq!(availability(Engine::Clippy), Availability::Available);
+    let folder = TempFolder::new("warnings");
+    fs::create_dir(folder.0.join("src")).unwrap();
+    fs::write(folder.0.join("Cargo.toml"), "[package]\nname = \"warnings_zit\"\nversion = \"0.1.0\"\nedition = \"2021\"\n[workspace]\n").unwrap();
+    fs::write(folder.0.join("src/lib.rs"), concat!(
+        "pub fn compare(value: bool) -> bool {\n",
+        "    value == true\n",
+        "}\n",
+        "pub fn big() -> Result<(), [u8; 256]> { Ok(()) }\n",
+        "pub mod things { pub mod things { pub fn f() {} } }\n",
+        "#[cfg(test)]\n",
+        "mod tests {\n",
+        "    #[test]\n",
+        "    fn check() {\n",
+        "        let unused = 1;\n",
+        "    }\n",
+        "}\n",
+    )).unwrap();
+    fs::write(folder.0.join("temperare.toml"), r#"version = 1
+[[rule]]
+id = "allowed"
+engine = "clippy"
+check = "warnings"
+severity = "error"
+fix = "Fix warning."
+params = { allow = ["clippy::result_large_err", "clippy::module_inception"] }
+[[rule]]
+id = "control"
+engine = "clippy"
+check = "warnings"
+severity = "error"
+fix = "Fix warning."
+"#).unwrap();
+    let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
+    let outcomes = run_rules(&file, &folder.0, &[]);
+    assert_eq!(outcomes.len(), 2);
+    assert_eq!(outcomes[0].0, "allowed");
+    assert_eq!(outcomes[1].0, "control");
+    let RuleOutcome::Findings(allowed) = &outcomes[0].1 else { panic!("allowed: {:?}", outcomes[0].1) };
+    let RuleOutcome::Findings(control) = &outcomes[1].1 else { panic!("control: {:?}", outcomes[1].1) };
+    assert!(allowed.iter().any(|f| f.path == RelPath::new("src/lib.rs") && f.line == 10
+        && f.what.starts_with("unused_variables: ") && f.severity == Severity::Error), "{allowed:?}");
+    assert_eq!(allowed.iter().filter(|f| f.path == RelPath::new("src/lib.rs") && f.line == 2
+        && f.what.starts_with("clippy::bool_comparison: ")).count(), 1, "{allowed:?}");
+    for (code, line) in [("clippy::result_large_err", 4), ("clippy::module_inception", 5)] {
+        assert!(!allowed.iter().any(|f| f.what.starts_with(code)), "{allowed:?}");
+        assert!(control.iter().any(|f| f.path == RelPath::new("src/lib.rs") && f.line == line
+            && f.what.starts_with(&format!("{code}: "))), "{control:?}");
+    }
+}
