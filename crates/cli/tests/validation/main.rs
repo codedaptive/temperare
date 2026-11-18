@@ -6,16 +6,30 @@
 //! real engines, each case in a throwaway repository it makes and removes. Validation, not a unit or integration test:
 //! a run of the shipped binary (rule 11), written by the orchestrator (SPEC-cli, Tests). `make accept` runs it.
 //! No codeteam variable reaches `tm` in any case (Done 6): `env.rs` builds its environment from nothing.
+//!
+//! The report (S-31, SPEC-accept): each acceptance case records what it set up and saw in a `Check`, which writes the
+//! case's part when ACCEPT_PARTS names a folder; `scripts/accept.sh` sets it and assembles the parts into the report,
+//! one entry for every case checks.txt lists.
 
 mod cli_check;
 mod cli_tm;
 
+mod check;
+mod check_drop;
+mod check_new;
+mod check_not_run;
+mod check_saw_tm;
+mod clean_cmd;
 mod env;
+mod on_tm_path;
 mod repo;
 mod run_clean;
 mod tm;
+mod tm_lines;
+mod write_head_once;
 
 mod done_1_clippy;
+mod done_1_swiftlint;
 mod done_2_new_only;
 mod done_3_house_rule;
 mod done_4_absent_engine;

@@ -3,6 +3,7 @@
 //! a Bool on a type that is not listed, pass." ast-grep does the reading; the entity types reach its rule through
 //! `params` (SPEC-engines, params into ast-grep).
 
+use crate::check::Check;
 use crate::repo::Repo;
 use crate::tm::tm;
 
@@ -63,13 +64,20 @@ const RUST: &str = "pub struct Order {\n    pub id: u64,\n    pub is_paid: bool,
 
 #[test]
 fn a_stored_bool_on_a_listed_type_is_reported_in_swift_and_rust() {
+    let mut check = Check::new(
+        "a_stored_bool_on_a_listed_type_is_reported_in_swift_and_rust",
+        "rule no-stored-bool (ast-grep, entity_types Order and Invoice); Order stores a Bool at line 3 of \
+         Sources/Model.swift and of src/model.rs, beside a computed accessor and a Bool on the unlisted Settings",
+    );
     let repo = Repo::new();
     repo.write("temperare.toml", RULES);
     repo.write("rules/no-stored-bool.yml", AST_GREP_RULE);
     repo.write("Sources/Model.swift", SWIFT);
     repo.write("src/model.rs", RUST);
     repo.commit("entities");
-    let a = tm(&repo, &["check", "--json"]);
+    let args = ["check", "--json"];
+    let a = tm(&repo, &args);
+    check.saw_tm(&args, a.code, &a.json);
     assert_eq!(a.code, 1, "the house rule refuses: {:#}\n{}", a.json, a.stderr);
     assert_eq!(
         a.places(),

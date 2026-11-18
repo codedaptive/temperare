@@ -20,9 +20,11 @@ test:
 	@$(MAKE) --no-print-directory test-group GROUP=$(GROUP)
 
 # The Done list (mission, Done 1-8): the built tm with the real engines, on throwaway repositories
-# (crates/cli/tests/validation, the orchestrator's; release, as every validation target).
+# (crates/cli/tests/validation, the orchestrator's; release, as every validation target). scripts/accept.sh runs it
+# and writes the report to ACCEPT_REPORT (S-31); the default is inside the repository, so it names no team path.
+ACCEPT_REPORT ?= $(CURDIR)/target/accept-report.md
 accept:
-	@CARGO="$(CARGO)" CARGO_TEST_ARGS="$(CARGO_TEST_ARGS)" sh "$(CURDIR)/scripts/test_one.sh" crates/cli/tests/validation validation
+	@CARGO="$(CARGO)" CARGO_TEST_ARGS="$(CARGO_TEST_ARGS)" sh "$(CURDIR)/scripts/accept.sh" "$(ACCEPT_REPORT)"
 
 ifeq ($(GROUP),unit)
 ZONE_TEST = $(CARGO) test --workspace --lib -- --skip integration::

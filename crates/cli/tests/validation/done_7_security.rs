@@ -2,6 +2,7 @@
 //! severity, location and owner, and the run does not end with the refusing exit code. The same rule run alone over
 //! the tree reports the same finding." Security-only exits 4, never 1 (S-15); the owner is the file's (S-9, S-12).
 
+use crate::check::Check;
 use crate::repo::Repo;
 use crate::tm::tm;
 
@@ -19,12 +20,19 @@ fix = "Read the secret from the environment or the keychain."
 
 #[test]
 fn a_security_finding_is_reported_with_severity_place_and_owner_and_never_refuses() {
+    let mut check = Check::new(
+        "a_security_finding_is_reported_with_severity_place_and_owner_and_never_refuses",
+        "rule no-hardcoded-password (ruff, S105, kind security), rule file owner payments; settings.py line 1 holds \
+         a hard-coded password; run over the tree, then with --kind security",
+    );
     let repo = Repo::new();
     repo.write("temperare.toml", RULES);
     repo.write("settings.py", "password = \"hunter2\"\n");
     repo.commit("settings");
 
-    let a = tm(&repo, &["check", "--json"]);
+    let args = ["check", "--json"];
+    let a = tm(&repo, &args);
+    check.saw_tm(&args, a.code, &a.json);
     assert_eq!(a.code, 4, "security alone never refuses (S-15): {:#}\n{}", a.json, a.stderr);
     let f = a.findings();
     assert_eq!(f.len(), 1, "one finding: {:#}", a.json);
@@ -35,7 +43,9 @@ fn a_security_finding_is_reported_with_severity_place_and_owner_and_never_refuse
     assert_eq!(f[0]["path"], "settings.py");
     assert_eq!(f[0]["line"], 1);
 
-    let alone = tm(&repo, &["check", "--json", "--kind", "security"]);
+    let alone_args = ["check", "--json", "--kind", "security"];
+    let alone = tm(&repo, &alone_args);
+    check.saw_tm(&alone_args, alone.code, &alone.json);
     assert_eq!(alone.code, 4, "the same exit alone: {:#}", alone.json);
     assert_eq!(alone.findings(), a.findings(), "the security rules alone report the same finding");
 }
