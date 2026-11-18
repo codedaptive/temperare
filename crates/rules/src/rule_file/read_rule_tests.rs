@@ -22,6 +22,42 @@ fn read(text: &str, params: toml::Table) -> (Option<Rule>, Vec<Problem>) {
 }
 
 #[test]
+fn a_check_starting_with_a_dash_is_rejected_at_its_string() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"-x\"\nfix = \"f\"\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert!(rule.is_none());
+    assert_eq!(out.len(), 1, "{out:?}");
+    assert_eq!((out[0].line, out[0].col), (4, 9));
+    assert!(out[0].fix.contains("leading '-'"), "{}", out[0].fix);
+}
+
+#[test]
+fn a_config_starting_with_a_dash_is_rejected_at_its_string() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"c\"\nconfig = \"--foo\"\nfix = \"f\"\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert!(rule.is_none());
+    assert_eq!(out.len(), 1, "{out:?}");
+    assert_eq!((out[0].line, out[0].col), (5, 10));
+}
+
+#[test]
+fn an_allow_value_starting_with_a_dash_is_rejected_at_its_string() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"c\"\nparams = { allow = [\"ok\", \"-bad\"] }\nfix = \"f\"\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert!(rule.is_none());
+    assert_eq!(out.len(), 1, "{out:?}");
+    assert_eq!((out[0].line, out[0].col), (5, 27));
+}
+
+#[test]
+fn dashes_inside_check_config_and_allow_values_are_accepted() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"no-stored-bool\"\nconfig = \"a-b.toml\"\nparams = { allow = [\"clippy::x-y\"] }\nfix = \"f\"\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert_eq!(out, vec![]);
+    assert!(rule.is_some());
+}
+
+#[test]
 fn a_full_rule_is_read_with_its_scope() {
     let text = "[[rule]]\nid = \"no-bool\"\nengine = \"ruff\"\ncheck = \"E501\"\nconfig = \"ruff.toml\"\n\
                 paths = [\"**/*.py\"]\nexclude = [\"**/gen/**\"]\nkits = [\"core\"]\nseverity = \"warning\"\nfix = \"Wrap it.\"\n";

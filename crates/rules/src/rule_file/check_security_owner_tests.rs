@@ -26,6 +26,14 @@ fn no_owner_is_one_problem_at_the_first_security_kind() {
 }
 
 #[test]
+fn missing_owner_fix_names_a_kit_not_a_zone() {
+    let out = check(TEXT, None);
+    assert_eq!(out.len(), 1, "{out:?}");
+    assert!(out[0].fix.contains("<kit>"), "{}", out[0].fix);
+    assert!(!out[0].fix.contains("zone"), "{}", out[0].fix);
+}
+
+#[test]
 fn an_owner_is_no_problem() {
     assert_eq!(check(TEXT, Some("core")), vec![]);
 }
