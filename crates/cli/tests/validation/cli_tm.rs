@@ -84,7 +84,7 @@ impl TempFolder {
     }
 
     fn tm(&self, cwd: &Path, args: &[&str]) -> Output {
-        procio::run(&clean_cmd(env!("CARGO_BIN_EXE_tm").as_ref(), args, cwd, &self.0, None)).unwrap()
+        procio::run(&clean_cmd(env!("CARGO_BIN_EXE_temperare").as_ref(), args, cwd, &self.0, None)).unwrap()
     }
 }
 
@@ -133,7 +133,7 @@ fn availability_listing(json: bool) -> Output {
     } else {
         &["rules", "--rules", "temperare.toml"]
     };
-    let cmd = clean_cmd(env!("CARGO_BIN_EXE_tm").as_ref(), args, &tmp.0, &tmp.0, Some(stub_dir.as_os_str()));
+    let cmd = clean_cmd(env!("CARGO_BIN_EXE_temperare").as_ref(), args, &tmp.0, &tmp.0, Some(stub_dir.as_os_str()));
     let output = procio::run(&cmd).unwrap();
     assert_eq!(output.code, Some(0), "{}", String::from_utf8_lossy(&output.stderr));
     output
@@ -270,11 +270,17 @@ fn rules_without_rule_file_reports_error() {
 }
 
 #[test]
-fn version_prints_workspace_version() {
+fn version_prints_temperare_workspace_version_and_commit() {
     let tmp = TempFolder::new("version");
     let output = tmp.tm(&tmp.0, &["--version"]);
     assert_eq!(output.code, Some(0));
-    assert_eq!(output.stdout, b"tm 0.1.0\n");
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let commit = env!("TEMPERARE_COMMIT");
+    assert_eq!(stdout, format!("temperare 0.1.0 ({commit})\n"));
+    if env!("TEMPERARE_CHECKOUT") == "yes" {
+        assert_eq!(commit.len(), 12, "{commit}");
+        assert!(commit.chars().all(|ch| matches!(ch, '0'..='9' | 'a'..='f')), "{commit}");
+    }
 }
 
 #[test]

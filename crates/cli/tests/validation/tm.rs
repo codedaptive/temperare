@@ -40,7 +40,7 @@ pub fn tm(repo: &Repo, args: &[&str]) -> Answer {
 
 /// As `tm`, with PATH replaced whole.
 pub fn tm_with_path(repo: &Repo, args: &[&str], path: Option<&str>) -> Answer {
-    let out = run_clean(env!("CARGO_BIN_EXE_tm"), args, repo.path(), clean_env(path));
+    let out = run_clean(env!("CARGO_BIN_EXE_temperare"), args, repo.path(), clean_env(path));
     let code = out.code.expect("tm ended by a signal");
     let stderr = String::from_utf8_lossy(&out.stderr).to_string();
     let json: Value = serde_json::from_slice(&out.stdout).unwrap_or_else(|e| {

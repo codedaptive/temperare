@@ -1,5 +1,5 @@
-//! tm: the binary. A thin shell: it reads the command line and the current folder, and the work is in the
-//! library's `run`, whose answer is the exit code.
+//! temperare: the binary; tm is its short name (a symlink, S-32). A thin shell: it reads the command line and the
+//! current folder, and the work is in the library's `run`, whose answer is the exit code.
 
 fn main() {
     let args: Vec<String> = std::env::args_os().skip(1).map(|a| a.to_string_lossy().into_owned()).collect();

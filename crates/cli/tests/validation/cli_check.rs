@@ -91,7 +91,7 @@ impl Repo {
     fn check(&self, args: &[&str]) -> Output {
         let mut check_args = vec!["check"];
         check_args.extend_from_slice(args);
-        run(env!("CARGO_BIN_EXE_tm").as_ref(), &check_args, &self.dir, self.dir.join("stubs").as_os_str(), false)
+        run(env!("CARGO_BIN_EXE_temperare").as_ref(), &check_args, &self.dir, self.dir.join("stubs").as_os_str(), false)
     }
 }
 

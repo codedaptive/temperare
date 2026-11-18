@@ -68,7 +68,7 @@ const VERSIONS: [(&str, &str, &[&str]); 5] = [
 /// Writes the head part into `parts` the first time it is called in this run; later calls do nothing.
 pub fn write_head_once(parts: &Path) {
     HEAD.call_once(|| {
-        let mut lines = vec![format!("- tm: {}", version(env!("CARGO_BIN_EXE_tm"), &["--version"]))];
+        let mut lines = vec![format!("- tm: {}", version(env!("CARGO_BIN_EXE_temperare"), &["--version"]))];
         lines.extend(engine_lines());
         fs::write(parts.join("00-head.md"), lines.join("\n") + "\n").expect("write the report head");
     });
@@ -79,7 +79,7 @@ pub fn write_head_once(parts: &Path) {
 fn engine_lines() -> Vec<String> {
     let repo = Repo::new();
     repo.write("temperare.toml", RULES);
-    let out = run_clean(env!("CARGO_BIN_EXE_tm"), &["rules", "--json"], repo.path(), clean_env(None));
+    let out = run_clean(env!("CARGO_BIN_EXE_temperare"), &["rules", "--json"], repo.path(), clean_env(None));
     let listing: Value = match serde_json::from_slice(&out.stdout) {
         Ok(listing) => listing,
         Err(e) => return vec![format!("- engines: not recorded; tm rules --json printed no JSON ({e})")],

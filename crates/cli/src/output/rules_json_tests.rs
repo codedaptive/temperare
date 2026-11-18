@@ -60,16 +60,16 @@ fn rules_exceptions_and_count_in_file_order() {
             "rule_file": "repo/temperare.toml",
             "rules": [
                 {"id": "lint-all", "engine": "clippy", "kind": "quality", "severity": "error",
-                 "check": "clippy::all", "paths": [], "exclude": [], "kits": [],
+                 "check": "clippy::all", "paths": [], "exclude": [], "kits": [], "outside_kits": [],
                  "available": true, "why": null},
                 {"id": "no-unwrap", "engine": "clippy", "kind": "security", "severity": "warning",
                  "check": "clippy::unwrap_used", "paths": ["src/**"], "exclude": ["**/tests/**"], "kits": ["core"],
-                 "available": true, "why": null},
+                 "outside_kits": [], "available": true, "why": null},
             ],
             "exceptions": [
                 {"rule": "no-unwrap", "path": "src/a.rs", "what": "unwrap", "reason": "Legacy.",
                  "approved": "bob 2026-11-17"},
-                {"rule": "lint-all", "path": "src/b.rs", "what": null, "reason": "Generated.",
+                {"rule": "lint-all", "path": "src/b.rs", "reason": "Generated.",
                  "approved": "bob 2026-11-16"},
             ],
             "exceptions_in_force": 2,
@@ -123,10 +123,41 @@ fix = "Cast safely."
         rules_json(Path::new("t.toml"), &parse(text), &availability)["rules"],
         json!([
             {"id": "py-lint", "engine": "ruff", "kind": "quality", "severity": "error", "check": "E501",
-             "paths": [], "exclude": [], "kits": [], "available": true, "why": null},
+             "paths": [], "exclude": [], "kits": [], "outside_kits": [], "available": true, "why": null},
             {"id": "no-force-cast", "engine": "swiftlint", "kind": "quality", "severity": "error",
-             "check": "force_cast", "paths": [], "exclude": [], "kits": [],
+             "check": "force_cast", "paths": [], "exclude": [], "kits": [], "outside_kits": [],
              "available": false, "why": "swiftlint not found on PATH"},
         ])
     );
+}
+
+#[test]
+fn outside_kits_lists_the_rules_outside_kits_in_file_order() {
+    let text = r#"version = 1
+
+[kits.a]
+paths = ["a/**"]
+
+[kits.b]
+paths = ["b/**"]
+
+[[rule]]
+id = "lint"
+engine = "clippy"
+check = "clippy::all"
+outside_kits = ["a", "b"]
+fix = "Do what clippy says."
+"#;
+    let value = rules_json(Path::new("t.toml"), &parse(text), &all_available);
+    assert_eq!(value["rules"][0]["outside_kits"], json!(["a", "b"]));
+    assert_eq!(value["rules"][0]["kits"], json!([]));
+}
+
+#[test]
+fn an_exception_without_what_has_no_what_key_and_one_with_what_keeps_it() {
+    let value = rules_json(Path::new("t.toml"), &parse(FULL), &all_available);
+    assert_eq!(value["exceptions"][0]["what"], json!("unwrap"));
+    let without = value["exceptions"][1].as_object().unwrap();
+    assert!(without.get("what").is_none(), "{without:?}");
+    assert_eq!(without.len(), 4, "{without:?}");
 }

@@ -34,7 +34,8 @@ pub fn rules_text(
     text
 }
 
-/// The paths joined ", " (`all files` when none), then `  exclude: ...` and `  kits: ...` when they are not empty.
+/// The paths joined ", " (`all files` when none), then `  exclude: ...`, `  kits: ...` and `  outside kits: ...`, each
+/// only when its list is not empty.
 fn scope(r: &rules::Rule) -> String {
     let mut scope = if r.paths.is_empty() { "all files".to_string() } else { r.paths.join(", ") };
     if !r.exclude.is_empty() {
@@ -42,6 +43,9 @@ fn scope(r: &rules::Rule) -> String {
     }
     if !r.kits.is_empty() {
         scope.push_str(&format!("  kits: {}", r.kits.join(", ")));
+    }
+    if !r.outside_kits.is_empty() {
+        scope.push_str(&format!("  outside kits: {}", r.outside_kits.join(", ")));
     }
     scope
 }

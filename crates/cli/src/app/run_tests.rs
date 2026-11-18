@@ -1,6 +1,8 @@
-//! ZUT for run.rs: help, version and a usage error. The Rules and Check arms reach real git, disk and PATH, so
-//! run_rules_tests.rs and run_check_tests.rs (seams) cover them, and the validation target, tests/validation/
-//! (cli_tm.rs, cli_check.rs, S-28), covers the runs of the built tm.
+//! ZUT for run.rs: help, version and usage errors (install's and uninstall's included). The Rules and Check arms
+//! reach real git, disk and PATH, so run_rules_tests.rs and run_check_tests.rs (seams) cover them, and the
+//! validation target, tests/validation/ (cli_tm.rs, cli_check.rs, S-28), covers the runs of the built `temperare`. The
+//! Install and Uninstall arms read the real HOME, so no test here reaches them: the zone integration target
+//! tests/install covers run_install and run_uninstall on a temporary HOME.
 
 use super::run;
 use crate::USAGE;
@@ -31,8 +33,16 @@ fn no_arguments_is_help() {
 }
 
 #[test]
-fn version_prints_tm_and_the_workspace_version() {
-    assert_eq!(run_with(&["--version"]), (0, "tm 0.1.0\n".to_string(), String::new()));
+fn version_prints_temperare_the_workspace_version_and_the_commit() {
+    let (code, out, err) = run_with(&["--version"]);
+    assert_eq!(code, 0);
+    let commit = env!("TEMPERARE_COMMIT");
+    assert_eq!(out, format!("temperare 0.1.0 ({commit})\n"));
+    if env!("TEMPERARE_CHECKOUT") == "yes" {
+        assert_eq!(commit.len(), 12, "{commit}");
+        assert!(commit.chars().all(|ch| matches!(ch, '0'..='9' | 'a'..='f')), "{commit}");
+    }
+    assert_eq!(err, "");
 }
 
 #[test]
@@ -41,6 +51,25 @@ fn a_usage_error_goes_to_stderr_with_exit_2() {
     assert_eq!(code, 2);
     assert_eq!(out, "");
     assert_eq!(err, "tm: unknown command 'frobnicate'\nnext: Run tm help to see the commands.\n");
+}
+
+#[test]
+fn an_install_usage_error_exits_2_on_stderr_before_any_disk_step() {
+    let (code, out, err) = run_with(&["install", "--mode", "mcp"]);
+    assert_eq!(code, 2);
+    assert_eq!(out, "");
+    assert_eq!(
+        err,
+        "tm: --mode mcp is not supported\nnext: Write --mode skill: Temperare wires a skill only, no MCP.\n"
+    );
+}
+
+#[test]
+fn an_argument_after_uninstall_exits_2_on_stderr_before_any_disk_step() {
+    let (code, out, err) = run_with(&["uninstall", "now"]);
+    assert_eq!(code, 2);
+    assert_eq!(out, "");
+    assert_eq!(err, "tm: unexpected argument 'now' after uninstall\nnext: Run tm uninstall with nothing after it.\n");
 }
 
 /// A writer whose every write fails, like a closed pipe.

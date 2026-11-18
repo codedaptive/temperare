@@ -109,11 +109,11 @@ fn json_lists_the_rules_with_exit_0_as_one_object() {
             "rule_file": "/repo/temperare.toml",
             "rules": [{
                 "id": "lint-all", "engine": "clippy", "kind": "quality", "severity": "error",
-                "check": "clippy::all", "paths": [], "exclude": [], "kits": [],
+                "check": "clippy::all", "paths": [], "exclude": [], "kits": [], "outside_kits": [],
                 "available": true, "why": null,
             }],
             "exceptions": [{
-                "rule": "lint-all", "path": "src/legacy.rs", "what": null, "reason": "Legacy.",
+                "rule": "lint-all", "path": "src/legacy.rs", "reason": "Legacy.",
                 "approved": "bob 2026-11-17",
             }],
             "exceptions_in_force": 1,

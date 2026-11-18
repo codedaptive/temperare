@@ -11,6 +11,9 @@ engines = { path = "../engines" }
 report = { path = "../report" }
 serde_json = "1"
 
+[build-dependencies]
+procio = { path = "../procio" }
+
 [[bin]]
-name = "tm"
+name = "temperare"
 path = "src/main.rs"
