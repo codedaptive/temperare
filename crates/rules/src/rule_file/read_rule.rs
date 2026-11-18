@@ -2,6 +2,7 @@
 
 use super::check_globs::check_globs;
 use super::check_keys::check_keys;
+use super::check_not_option::check_not_option;
 use super::kit_union::kit_union;
 use super::problem_at::problem_at;
 use super::required_string::required_string;
@@ -49,6 +50,7 @@ pub(crate) fn read_rule(
     if let Some(value) = table.get("params").filter(|v| !v.get_ref().is_table()) {
         out.push(wrong_type(text, "params", value, "a table"));
     }
+    check_not_option(text, table, out);
     let (Some((id, _)), Some(engine), Some(kind), Some((check, _)), Some(severity), Some((fix, _))) =
         (id, engine, kind, check, severity, fix)
     else {

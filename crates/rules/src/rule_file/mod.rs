@@ -2,6 +2,7 @@
 
 mod check_globs;
 mod check_keys;
+mod check_not_option;
 mod check_security_owner;
 mod check_version;
 mod kit;
@@ -30,6 +31,8 @@ mod wrong_type;
 mod check_globs_tests;
 #[cfg(test)]
 mod check_keys_tests;
+#[cfg(test)]
+mod check_not_option_tests;
 #[cfg(test)]
 mod check_security_owner_tests;
 #[cfg(test)]

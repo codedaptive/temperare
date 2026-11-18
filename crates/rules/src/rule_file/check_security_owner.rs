@@ -22,7 +22,7 @@ pub(crate) fn check_security_owner(text: &str, root: &DeTable, owner: Option<&st
             text,
             kind.span().start,
             "a security rule needs a top-level `owner`, and the rule file names none".to_string(),
-            "Add a top-level `owner = \"<zone>\"`: a security finding must name its owner.",
+            "Add a top-level `owner = \"<kit>\"`: a security finding must name its owner.",
         ));
     }
 }
