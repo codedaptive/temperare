@@ -54,13 +54,15 @@ check = "erosion"
 fix = "none"
 "#;
 
-/// For each engine `tm` can run, by its rule-file name: the program it runs as (engines' `program`) and the
-/// arguments that print its version.
-const VERSIONS: [(&str, &str, &[&str]); 4] = [
+/// For each of `tm`'s five engines, by its rule-file name: the program it runs as (engines' `program`) and the
+/// arguments that print its version. Tessera's is asked only once `tm` says Tessera is available, which it does not
+/// yet (S-20).
+const VERSIONS: [(&str, &str, &[&str]); 5] = [
     ("clippy", "cargo", &["clippy", "--version"]),
     ("swiftlint", "swiftlint", &["version"]),
     ("ruff", "ruff", &["--version"]),
     ("ast-grep", "ast-grep", &["--version"]),
+    ("tessera", "ts", &["--version"]),
 ];
 
 /// Writes the head part into `parts` the first time it is called in this run; later calls do nothing.
@@ -94,11 +96,11 @@ fn engine_line(rule: &Value) -> String {
     if rule["available"] != true {
         return format!("- {engine}: not available (tm: {})", rule["why"].as_str().unwrap_or("no reason given"));
     }
-    let state = match VERSIONS.iter().find(|(name, ..)| *name == engine) {
-        Some((_, program, args)) => version(program, args),
-        None => "available; no version command known".to_string(),
-    };
-    format!("- {engine}: {state}")
+    let (_, program, args) = VERSIONS
+        .iter()
+        .find(|(name, ..)| *name == engine)
+        .unwrap_or_else(|| panic!("tm listed engine {engine}, which is not one of its five"));
+    format!("- {engine}: {}", version(program, args))
 }
 
 /// The first line `program args` prints (stdout, else stderr), run in the temp folder and the environment `tm`
