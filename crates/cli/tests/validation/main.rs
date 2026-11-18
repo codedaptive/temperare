@@ -23,3 +23,6 @@ mod done_5_exception;
 mod done_6_alone;
 mod done_7_security;
 mod done_8_named_inside;
+
+// Objective tatertot Stage 2 cases on the built tm (#209).
+mod stage2_mortar_clippy_line;
