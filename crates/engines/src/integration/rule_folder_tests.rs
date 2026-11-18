@@ -1,4 +1,4 @@
-//! ZUT for rule_folder.rs: a relative and an absolute folder, both canonical, on a temp tree the test makes and
+//! ZIT for rule_folder.rs: a relative and an absolute folder, both canonical, on a temp tree the test makes and
 //! removes; a folder that does not exist is an error.
 
 use crate::rule_folder::rule_folder;
@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 
 /// A fresh, canonical temp folder for one test.
 fn tree(name: &str) -> PathBuf {
-    let root = std::env::temp_dir().join(format!("engines-zut-{}-rule-folder-{name}", std::process::id()));
+    let root = std::env::temp_dir().join(format!("engines-zit-{}-rule-folder-{name}", std::process::id()));
     fs::create_dir(&root).unwrap();
     fs::canonicalize(root).unwrap()
 }

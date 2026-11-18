@@ -32,6 +32,8 @@ mod findings_from_tests;
 #[cfg(test)]
 mod host_tests;
 #[cfg(test)]
+mod integration;
+#[cfg(test)]
 mod parse_failed_tests;
 #[cfg(test)]
 mod printed_start_tests;
@@ -41,7 +43,3 @@ mod program_tests;
 mod ran_tests;
 #[cfg(test)]
 mod rel_to_folder_tests;
-#[cfg(test)]
-mod rule_folder_tests;
-#[cfg(test)]
-mod run_rules_tests;

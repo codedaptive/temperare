@@ -11,7 +11,7 @@ use std::cell::RefCell;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
-const DIR: &str = "/Users/bob/devlop/team-temperare/workcrews/engines/scratchpad/cap-ruff";
+const DIR: &str = "/work/project/cap-ruff";
 
 const WITH_CONFIG: &str = "version = 1\n[[rule]]\nid = \"no-none-compare\"\nengine = \"ruff\"\ncheck = \"E711\"\nconfig = \"ruff.toml\"\nfix = \"f\"\n";
 const NO_CONFIG: &str = "version = 1\n[[rule]]\nid = \"no-none-compare\"\nengine = \"ruff\"\ncheck = \"E711\"\nfix = \"f\"\n";
@@ -56,7 +56,7 @@ fn the_rules_config_is_passed_and_ruff_runs_in_the_folder() {
     let cmd = run_rule(WITH_CONFIG, captured).1.unwrap();
     assert_eq!(
         cmd.args,
-        os(&["check", "--no-cache", "--output-format", "json", "--select", "E711", "--config", "ruff.toml", "."])
+        os(&["check", "--no-cache", "--output-format", "json", "--select=E711", "--config=ruff.toml", "."])
     );
     assert_eq!(cmd.cwd, Some(PathBuf::from(DIR)));
 }
@@ -64,7 +64,7 @@ fn the_rules_config_is_passed_and_ruff_runs_in_the_folder() {
 #[test]
 fn a_rule_with_no_config_passes_none() {
     let cmd = run_rule(NO_CONFIG, captured).1.unwrap();
-    assert_eq!(cmd.args, os(&["check", "--no-cache", "--output-format", "json", "--select", "E711", "."]));
+    assert_eq!(cmd.args, os(&["check", "--no-cache", "--output-format", "json", "--select=E711", "."]));
 }
 
 #[test]
@@ -80,4 +80,20 @@ fn garbage_output_is_failed_with_the_exit_code_and_stderr() {
 fn ruff_not_found_is_not_available() {
     let (got, _) = run_rule(NO_CONFIG, || Err(ProcError::NotFound { program: "ruff".into() }));
     assert_eq!(got, Err(Stop::NotAvailable { why: "ruff not found on PATH".to_string() }));
+}
+
+#[test]
+fn d1_ruff_named_category_is_refused_without_running() {
+    let rules = "version = 1\n[[rule]]\nid = \"r\"\nengine = \"ruff\"\ncheck = \"flake8-bugbear\"\nfix = \"f\"\n";
+    let (got, seen) = run_rule(rules, captured);
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "ruff check `flake8-bugbear`: `flake8-bugbear` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects".to_string() }));
+    assert!(seen.is_none());
+}
+
+#[test]
+fn d1_ruff_mixed_invalid_selector_is_refused_without_running() {
+    let rules = "version = 1\n[[rule]]\nid = \"r\"\nengine = \"ruff\"\ncheck = \"E7,correctness\"\nfix = \"f\"\n";
+    let (got, seen) = run_rule(rules, captured);
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "ruff check `E7,correctness`: `correctness` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects".to_string() }));
+    assert!(seen.is_none());
 }

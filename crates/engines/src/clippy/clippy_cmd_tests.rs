@@ -12,7 +12,7 @@ fn os(args: &[&str]) -> Vec<OsString> {
 fn runs_cargo_clippy_json_over_all_targets_with_the_lint_warned_in_the_cargo_root() {
     let cmd = clippy_cmd("clippy::bool_comparison", &[], Path::new("/w/crate"));
     assert_eq!(cmd.program, OsString::from("cargo"));
-    let want = os(&["clippy", "--all-targets", "--message-format=json", "--quiet", "--", "-W", "clippy::bool_comparison"]);
+    let want = os(&["clippy", "--all-targets", "--message-format=json", "--quiet", "--", "--warn=clippy::bool_comparison"]);
     assert_eq!(cmd.args, want);
     assert_eq!(cmd.cwd, Some(PathBuf::from("/w/crate")));
     assert!(cmd.env.is_empty());
@@ -22,7 +22,7 @@ fn runs_cargo_clippy_json_over_all_targets_with_the_lint_warned_in_the_cargo_roo
 }
 
 #[test]
-fn each_allow_follows_the_check_as_dash_a_in_order() {
+fn each_allow_follows_the_check_as_an_allow_value_in_order() {
     let allows = ["clippy::result_large_err".to_string(), "clippy::module_inception".to_string()];
     let cmd = clippy_cmd("warnings", &allows, Path::new("/w/crate"));
     let want = os(&[
@@ -31,18 +31,21 @@ fn each_allow_follows_the_check_as_dash_a_in_order() {
         "--message-format=json",
         "--quiet",
         "--",
-        "-W",
-        "warnings",
-        "-A",
-        "clippy::result_large_err",
-        "-A",
-        "clippy::module_inception",
+        "--warn=warnings",
+        "--allow=clippy::result_large_err",
+        "--allow=clippy::module_inception",
     ]);
     assert_eq!(cmd.args, want);
 }
 
 #[test]
-fn the_check_is_the_last_argument_as_given_when_nothing_is_allowed() {
+fn the_warned_check_is_the_last_argument_when_nothing_is_allowed() {
     let cmd = clippy_cmd("unused_variables", &[], Path::new("/w/crate"));
-    assert_eq!(cmd.args.last(), Some(&OsString::from("unused_variables")));
+    assert_eq!(cmd.args.last(), Some(&OsString::from("--warn=unused_variables")));
+}
+
+#[test]
+fn option_like_check_and_allow_are_single_value_arguments() {
+    let cmd = clippy_cmd("--help", &["--cap-lints".to_string()], Path::new("/w/crate"));
+    assert_eq!(cmd.args, os(&["clippy", "--all-targets", "--message-format=json", "--quiet", "--", "--warn=--help", "--allow=--cap-lints"]));
 }

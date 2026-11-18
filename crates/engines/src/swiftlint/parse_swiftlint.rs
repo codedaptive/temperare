@@ -20,9 +20,18 @@ struct Violation {
 
 /// The hits of rule `check` in `out`, in output order. stdout is one JSON array of violations; any exit code with
 /// such stdout is an answer (swiftlint exits 2 when a violation is an error). `cwd` is where swiftlint ran and
-/// `folder` the rule file's folder, both canonical; a violation in a file outside `folder` is not a hit. stdout that
-/// is not that array is a `ParseError` quoting the first 200 bytes of stderr, or of stdout when stderr is empty.
+/// `folder` the rule file's folder, both canonical; a violation in a file outside `folder` is not a hit.
+/// Every violation swiftlint reports for one valid `--only-rule` id carries that id, so keeping `rule_id == check`
+/// drops nothing for the checks that reach here: a `custom_rules` check, whose violations carry the custom rule's own
+/// id, is refused before running by `hits_swiftlint`. swiftlint given an id it does not know warns on stderr that it "is not a valid rule identifier",
+/// prints `[]` and exits 0; that is a `ParseError`, never a clean answer. stdout that is not the array is a
+/// `ParseError` too. Each quotes the first 200 bytes of stderr, or of stdout when stderr is empty.
 pub fn parse_swiftlint(out: &Output, check: &str, cwd: &Path, folder: &Path) -> Result<Vec<Hit>, ParseError> {
+    if String::from_utf8_lossy(&out.stderr).contains("is not a valid rule identifier") {
+        return Err(ParseError {
+            why: format!("swiftlint check `{check}` is not a rule swiftlint knows: {}", printed_start(out)),
+        });
+    }
     let violations: Vec<Violation> = serde_json::from_slice(&out.stdout).map_err(|_| not_findings(out))?;
     Ok(violations
         .into_iter()

@@ -12,7 +12,7 @@ fn args(list: &[&str]) -> Vec<OsString> {
 fn without_a_config_it_checks_one_rule_as_json_over_the_folder_with_no_cache() {
     let cmd = ruff_cmd("E711", None, Path::new("/w/py"));
     assert_eq!(cmd.program, OsString::from("ruff"));
-    assert_eq!(cmd.args, args(&["check", "--no-cache", "--output-format", "json", "--select", "E711", "."]));
+    assert_eq!(cmd.args, args(&["check", "--no-cache", "--output-format", "json", "--select=E711", "."]));
     assert_eq!(cmd.cwd, Some(PathBuf::from("/w/py")));
     assert!(cmd.env.is_empty() && cmd.env_remove.is_empty() && cmd.stdin.is_empty() && cmd.timeout.is_none());
 }
@@ -27,11 +27,15 @@ fn a_config_comes_before_the_folder_as_written() {
             "--no-cache",
             "--output-format",
             "json",
-            "--select",
-            "E711",
-            "--config",
-            "lint/ruff.toml",
+            "--select=E711",
+            "--config=lint/ruff.toml",
             "."
         ])
     );
+}
+
+#[test]
+fn option_like_check_and_config_are_single_value_arguments() {
+    let cmd = ruff_cmd("--fix", Some("--isolated"), Path::new("/w/py"));
+    assert_eq!(cmd.args, args(&["check", "--no-cache", "--output-format", "json", "--select=--fix", "--config=--isolated", "."]));
 }

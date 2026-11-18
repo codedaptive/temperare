@@ -1,0 +1,56 @@
+[
+  {
+    "cell": null,
+    "code": "E711",
+    "end_location": {
+      "column": 17,
+      "row": 3
+    },
+    "filename": "/private/tmp/d1-ruff-probe/example.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "value is None",
+          "end_location": {
+            "column": 17,
+            "row": 3
+          },
+          "location": {
+            "column": 4,
+            "row": 3
+          }
+        }
+      ],
+      "message": "Replace with `cond is None`"
+    },
+    "location": {
+      "column": 13,
+      "row": 3
+    },
+    "message": "Comparison to `None` should be `cond is None`",
+    "name": "none-comparison",
+    "noqa_row": 3,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/none-comparison"
+  },
+  {
+    "cell": null,
+    "code": "E701",
+    "end_location": {
+      "column": 18,
+      "row": 3
+    },
+    "filename": "/private/tmp/d1-ruff-probe/example.py",
+    "fix": null,
+    "location": {
+      "column": 17,
+      "row": 3
+    },
+    "message": "Multiple statements on one line (colon)",
+    "name": "multiple-statements-on-one-line-colon",
+    "noqa_row": 3,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/multiple-statements-on-one-line-colon"
+  }
+]

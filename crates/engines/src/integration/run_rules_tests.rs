@@ -1,6 +1,7 @@
-//! ZUT for run_rules.rs (`run_rules_with`): outcomes in rule-file order over mixed engines, findings filled and cut,
-//! absent and Tessera rules not available, garbage output failed, and an unresolvable folder. The host is a fake; no
-//! engine runs. The rule file's folder is a temp folder the test makes and removes; ruff's output is hand-built.
+//! ZIT for run_rules.rs (`run_rules_with`): outcomes in rule-file order over mixed engines, findings filled and cut,
+//! absent and Tessera rules not available, garbage output failed, and an unresolvable folder. Integration, not unit:
+//! each test makes and removes a real canonical temp folder for the rule file's repository. The host is a fake and
+//! no engine runs; ruff's output is hand-built.
 
 use crate::host::Host;
 use crate::run_rules::run_rules_with;
@@ -58,7 +59,7 @@ fn tree(name: &str) -> PathBuf {
 
 /// Ruff only is on PATH. A run selecting E711 prints `RUFF_E711`; any other run prints garbage and exits 2.
 fn fake_run(cmd: &Cmd) -> Result<Output, ProcError> {
-    let stdout = if cmd.args.iter().any(|arg| arg == "E711") { RUFF_E711 } else { "garbage" };
+    let stdout = if cmd.args.iter().any(|arg| arg == "--select=E711") { RUFF_E711 } else { "garbage" };
     let code = if stdout == "garbage" { 2 } else { 1 };
     Ok(Output { code: Some(code), stdout: stdout.as_bytes().to_vec(), stderr: Vec::new() })
 }

@@ -1,0 +1,5 @@
+{"reason":"compiler-message","message":{"message":"lint name `style` is deprecated and may not have an effect in the future. Use `clippy::style` instead","level":"warning","code":{"code":"renamed_and_removed_lints","explanation":null},"spans":[]}}
+{"reason":"compiler-message","message":{"message":"equality checks against true are unnecessary","level":"warning","code":{"code":"clippy::bool_comparison","explanation":null},"spans":[{"file_name":"src/lib.rs","line_start":1,"column_start":29,"is_primary":true}]}}
+{"reason":"compiler-message","message":{"message":"lint name `style` is deprecated and may not have an effect in the future. Use `clippy::style` instead","level":"warning","code":{"code":"renamed_and_removed_lints","explanation":null},"spans":[]}}
+{"reason":"compiler-message","message":{"message":"equality checks against true are unnecessary","level":"warning","code":{"code":"clippy::bool_comparison","explanation":null},"spans":[{"file_name":"src/lib.rs","line_start":1,"column_start":29,"is_primary":true}]}}
+{"reason":"build-finished","success":true}

@@ -1,5 +1,5 @@
-//! ZUT for hits_swiftlint.rs: the command the host is given, findings read from captured output, garbage output and
-//! an absent swiftlint. The host is a fake; nothing runs. `DIR` is the folder path the captured fixture's
+//! ZUT for hits_swiftlint.rs: the command the host is given, findings read from captured output, garbage output, a
+//! `custom_rules` check refused before anything runs, and an absent swiftlint. The host is a fake; nothing runs. `DIR` is the folder path the captured fixture's
 //! absolute paths start with (see parse_swiftlint_tests.rs); no folder is read, so it need not exist.
 
 use super::hits_swiftlint;
@@ -11,7 +11,7 @@ use std::cell::RefCell;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
-const DIR: &str = "/Users/bob/devlop/team-temperare/workcrews/engines/scratchpad/cap-swiftlint";
+const DIR: &str = "/work/project/cap-swiftlint";
 
 const WITH_CONFIG: &str = "version = 1\n[[rule]]\nid = \"no-force-cast\"\nengine = \"swiftlint\"\ncheck = \"force_cast\"\nconfig = \"two.yml\"\nfix = \"f\"\n";
 const NO_CONFIG: &str = "version = 1\n[[rule]]\nid = \"no-force-cast\"\nengine = \"swiftlint\"\ncheck = \"force_cast\"\nfix = \"f\"\n";
@@ -56,7 +56,7 @@ fn the_rules_config_is_passed_and_swiftlint_runs_in_the_folder() {
     let cmd = run_rule(WITH_CONFIG, captured).1.unwrap();
     assert_eq!(
         cmd.args,
-        os(&["lint", "--reporter", "json", "--quiet", "--only-rule", "force_cast", "--config", "two.yml"])
+        os(&["lint", "--reporter", "json", "--quiet", "--only-rule=force_cast", "--config=two.yml"])
     );
     assert_eq!(cmd.cwd, Some(PathBuf::from(DIR)));
 }
@@ -64,7 +64,7 @@ fn the_rules_config_is_passed_and_swiftlint_runs_in_the_folder() {
 #[test]
 fn a_rule_with_no_config_passes_none() {
     let cmd = run_rule(NO_CONFIG, captured).1.unwrap();
-    assert_eq!(cmd.args, os(&["lint", "--reporter", "json", "--quiet", "--only-rule", "force_cast"]));
+    assert_eq!(cmd.args, os(&["lint", "--reporter", "json", "--quiet", "--only-rule=force_cast"]));
 }
 
 #[test]
@@ -74,6 +74,14 @@ fn garbage_output_is_failed_with_the_exit_code_and_stderr() {
         Ok(Output { code: Some(1), stdout: b"garbage".to_vec(), stderr: b"Error: bad config".to_vec() })
     });
     assert_eq!(got, Err(Stop::Failed { code: Some(1), stderr: "Error: bad config".to_string() }));
+}
+
+#[test]
+fn custom_rules_check_is_refused_without_running_swiftlint() {
+    let rules = NO_CONFIG.replace("force_cast", "custom_rules");
+    let (got, seen) = run_rule(&rules, || Ok(Output { code: Some(0), stdout: b"[]".to_vec(), stderr: Vec::new() }));
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "swiftlint check `custom_rules` names no rule swiftlint runs under --only-rule: name the custom rule's own identifier".to_string() }));
+    assert!(seen.is_none());
 }
 
 #[test]

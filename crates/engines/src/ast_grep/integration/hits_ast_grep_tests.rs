@@ -1,16 +1,18 @@
-//! ZUT for hits_ast_grep.rs: the rule YAML read from a temp folder the test makes and removes, filled from the rule's
-//! params into a temporary copy that exists while the host runs and is gone after, on every path; param and read
-//! errors; garbage output and an absent ast-grep. The host is a fake; nothing runs. Matches come from the captured
-//! fixtures (see parse_ast_grep_tests.rs), whose paths are relative to where ast-grep ran.
+//! ZIT for hits_ast_grep.rs. These are integration, not unit: each test makes a real canonical temp folder that
+//! `hits_ast_grep` reads the rule YAML from through the real `read_rule_yaml`, fills it from the rule's params into a
+//! real temporary copy that exists while the host runs and is gone after, on every path; param and read errors; a
+//! check that names a file outside the folder is refused and nothing runs; garbage output and an absent ast-grep.
+//! The host is a fake; no engine runs. Matches come from the captured fixtures (see parse_ast_grep_tests.rs), whose
+//! paths are relative to where ast-grep ran. Each test removes its folder.
 
-use super::hits_ast_grep;
+use super::super::hits_ast_grep;
 use crate::host::Host;
 use crate::types::{Hit, Stop};
 use procio::{Cmd, Output, ProcError};
 use rules::{RelPath, RuleFile};
 use std::cell::RefCell;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 const YAML: &str = "id: names\nlanguage: JavaScript\nrule:\n  regex: '^(?:{{names}})$'\n";
 const FILLED: &str = "id: names\nlanguage: JavaScript\nrule:\n  regex: '^(?:foo|a\\.b)$'\n";
@@ -37,7 +39,7 @@ fn run_rule(
     text: &str,
     answer: impl Fn() -> Result<Output, ProcError>,
 ) -> (Result<Vec<Hit>, Stop>, PathBuf, Option<Seen>) {
-    let root = std::env::temp_dir().join(format!("engines-zut-{}-hits-ast-grep-{test}", std::process::id()));
+    let root = std::env::temp_dir().join(format!("engines-zit-{}-hits-ast-grep-{test}", std::process::id()));
     fs::create_dir(&root).unwrap();
     let folder = fs::canonicalize(root).unwrap();
     if let Some(yaml) = yaml {
@@ -58,7 +60,7 @@ fn run_rule(
 }
 
 fn matches() -> Result<Output, ProcError> {
-    Ok(Output { code: Some(0), stdout: include_bytes!("fixtures/matches.jsonl").to_vec(), stderr: Vec::new() })
+    Ok(Output { code: Some(0), stdout: include_bytes!("../fixtures/matches.jsonl").to_vec(), stderr: Vec::new() })
 }
 
 fn never_run() -> Result<Output, ProcError> {
@@ -89,7 +91,7 @@ fn findings_come_through_from_a_filled_copy_that_is_gone_after() {
 
 #[test]
 fn garbage_output_is_failed_with_the_exit_code_and_the_copy_is_gone() {
-    let stderr = include_bytes!("fixtures/broken_rule.stderr");
+    let stderr = include_bytes!("../fixtures/broken_rule.stderr");
     let answer = || Ok(Output { code: Some(8), stdout: Vec::new(), stderr: stderr.to_vec() });
     let (got, _, seen) = run_rule("garbage", Some(YAML), &rule_text("names.yml", NAMES), answer);
     let want = String::from_utf8_lossy(stderr).into_owned();
@@ -129,4 +131,48 @@ fn a_rule_yaml_that_cannot_be_read_is_failed_and_nothing_runs() {
         }
         other => panic!("not Failed with no code: {other:?}"),
     }
+}
+
+fn outside_case(test: &str, make_check: impl FnOnce(&Path) -> String) -> (Result<Vec<Hit>, Stop>, String) {
+    let root = std::env::temp_dir().join(format!("engines-zit-{}-ast-grep-reject-{test}", std::process::id()));
+    fs::create_dir(&root).unwrap();
+    let root = fs::canonicalize(root).unwrap();
+    let folder = root.join("rules");
+    fs::create_dir(&folder).unwrap();
+    fs::write(root.join("outside.yml"), YAML).unwrap();
+    fs::write(folder.join("inside.yml"), YAML).unwrap();
+    let check = make_check(&folder);
+    let file = RuleFile::parse(&rule_text(&check, ""), &folder).unwrap();
+    let run = |_: &Cmd| never_run();
+    let on_path = |_: &str| -> bool { panic!("hits_ast_grep looks nothing up on PATH") };
+    let got = hits_ast_grep(&file.rules[0], &folder, &Host { run: &run, on_path: &on_path });
+    fs::remove_dir_all(&root).unwrap();
+    (got, check)
+}
+
+#[test]
+fn refuses_absolute_check_outside_folder() {
+    let (got, check) = outside_case("absolute-outside", |folder| folder.parent().unwrap().join("outside.yml").to_str().unwrap().to_string());
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: format!("ast-grep rule {check} is an absolute path: a check names a file inside the rule file's folder") }));
+}
+
+#[test]
+fn refuses_absolute_check_inside_folder() {
+    let (got, check) = outside_case("absolute-inside", |folder| folder.join("inside.yml").to_str().unwrap().to_string());
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: format!("ast-grep rule {check} is an absolute path: a check names a file inside the rule file's folder") }));
+}
+
+#[test]
+fn refuses_parent_check_outside_folder() {
+    let (got, _) = outside_case("parent", |_| "../outside.yml".to_string());
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "ast-grep rule ../outside.yml is outside the rule file's folder".to_string() }));
+}
+
+#[test]
+fn refuses_symlink_check_outside_folder() {
+    let (got, _) = outside_case("symlink", |folder| {
+        std::os::unix::fs::symlink(folder.parent().unwrap().join("outside.yml"), folder.join("link.yml")).unwrap();
+        "link.yml".to_string()
+    });
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "ast-grep rule link.yml is outside the rule file's folder".to_string() }));
 }
