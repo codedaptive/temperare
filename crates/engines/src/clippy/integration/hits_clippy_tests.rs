@@ -1,8 +1,8 @@
-//! ZIT for hits_clippy.rs. These are integration, not unit: each test makes a real canonical temp folder of empty
-//! `Cargo.toml` files that the real `cargo_root` reads, and composes `hits_clippy` with the real `clippy_allows`,
+//! ZIT for hits_clippy.rs. These are integration, not unit: the real `cargo_root` reads real folders, a canonical temp
+//! folder of empty `Cargo.toml` files or, for the no-`Cargo.toml` test, the real ancestors of a missing path. The others compose `hits_clippy` with the real `clippy_allows`,
 //! `parse_lint_groups`, `lint_group`, `parse_lints`, `known_lint` and `parse_clippy`. The fake host answers clippy-driver help with the captured
 //! `lint_groups_help.txt`, and cargo by its first argument (see hits_clippy_tests.rs); clippy's output is the captured
-//! `lint_and_other.jsonl` / `build_failed.jsonl` (see parse_clippy_tests.rs) or a hand-built message. Each test removes its folder before asserting.
+//! `lint_and_other.jsonl` / `build_failed.jsonl` (see parse_clippy_tests.rs) or a hand-built message. A test that makes a folder removes it before asserting.
 
 use crate::clippy::hits_clippy_tests::{output, rules_with, run, run_rules};
 use crate::types::{Hit, Stop};
@@ -36,6 +36,13 @@ fn tree(name: &str, manifests: &[&str]) -> PathBuf {
 
 fn manifest(root: &Path) -> Vec<u8> {
     format!("{}\n", root.join("Cargo.toml").display()).into_bytes()
+}
+
+#[test]
+fn no_cargo_toml_at_or_above_the_folder_is_not_available_and_runs_nothing() {
+    let (got, seen) = run(Path::new("/engines-zut-no-such-folder/a"), output(0, b"", b""), output(0, b"", b""));
+    assert_eq!(got, Err(Stop::NotAvailable { why: "no Cargo.toml at or above the rule file's folder".to_string() }));
+    assert!(seen.is_empty());
 }
 
 #[test]

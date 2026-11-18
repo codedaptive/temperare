@@ -1,6 +1,6 @@
-//! ZUT for temp_rule_write.rs (and the plain struct in temp_rule.rs): the file's place, name and contents.
+//! ZIT for temp_rule_write.rs (and the plain struct in temp_rule.rs) on real temp files: the file's place, name and contents.
 
-use super::TempRule;
+use super::super::TempRule;
 
 #[test]
 fn the_written_file_holds_the_text() {

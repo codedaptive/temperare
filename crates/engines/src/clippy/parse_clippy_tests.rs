@@ -10,8 +10,11 @@
 //! the lib-test target; from the lib-test target an unused_variables warning at src/lib.rs:8:13 (in `#[cfg(test)]`
 //! code); a codeless "3 warnings emitted" warning with no spans; then build-finished success true.
 //! unknown_lint.jsonl and dashed_and_bare_group.jsonl are hand-built in the reported clippy 0.1.95 shape.
-//! The captured fixtures' home-folder paths are replaced by `/work/project`, so those paths, `CAPTURED`, `ALL_TARGETS`
-//! and the absolute paths in `all_targets_warnings.jsonl` all start with it.
+//! renamed_allowed_check.jsonl is captured from clippy 0.1.95, exit 0, with
+//! `cargo clippy --all-targets --message-format=json --quiet -- --warn=clippy::blocks_in_conditions --allow=clippy::block_in_if_condition_expr`.
+//! Its `/private/tmp/engines-kong-2bf3-probe` path prefix is replaced by `/work/project`.
+//! The other captured fixtures' home-folder paths are replaced by `/work/project`, so those paths, `CAPTURED`,
+//! `ALL_TARGETS` and the absolute paths in `all_targets_warnings.jsonl` all start with it.
 
 use super::parse_clippy;
 use crate::types::Hit;
@@ -193,8 +196,7 @@ fn d1_clippy_unknown_requested_lint_is_an_error() {
     let dir = Path::new("/private/tmp/d1-clippy-probe");
     let out = output(0, include_bytes!("fixtures/unknown_lint.jsonl"), b"");
     let got = parse_clippy(&out, "clippy::bool_comparisn", dir, dir);
-    assert!(got.is_err(), "{got:?}");
-    assert!(got.unwrap_err().why.contains("unknown lint: `clippy::bool_comparisn`"));
+    assert_eq!(got.unwrap_err().why, "clippy did not take check `clippy::bool_comparisn` whole: unknown lint: `clippy::bool_comparisn`");
 }
 
 #[test]
@@ -209,8 +211,7 @@ fn d1_clippy_deprecated_bare_group_is_an_error() {
     let dir = Path::new("/private/tmp/d1-clippy-probe");
     let out = output(0, include_bytes!("fixtures/dashed_and_bare_group.jsonl"), b"");
     let got = parse_clippy(&out, "style", dir, dir);
-    assert!(got.is_err(), "{got:?}");
-    assert!(got.unwrap_err().why.contains("lint name `style` is deprecated"));
+    assert_eq!(got.unwrap_err().why, "clippy did not take check `style` whole: lint name `style` is deprecated and may not have an effect in the future. Use `clippy::style` instead");
 }
 
 #[test]
@@ -220,7 +221,7 @@ fn d1_clippy_unknown_other_lint_does_not_hide_requested_lint() {
     assert_eq!(parse_clippy(&out, "clippy::bool_comparison", dir, dir), Ok(vec![hit("src/lib.rs", 1, 29, "equality checks against true are unnecessary")]));
 }
 
-// Hand-built compiler messages in the shape reported by Kong's clippy-driver 1.95 probe.
+// Hand-built compiler messages in the shapes of unknown_lint.jsonl and renamed_allowed_check.jsonl.
 #[test]
 fn dashed_unknown_check_is_refused_when_diagnostic_uses_underscores() {
     let stdout = concat!(
@@ -231,7 +232,7 @@ fn dashed_unknown_check_is_refused_when_diagnostic_uses_underscores() {
     );
     let dir = Path::new(CAPTURED);
     let got = parse_clippy(&output(0, stdout.as_bytes(), b""), "clippy::bool-comparisn", dir, dir);
-    assert!(got.unwrap_err().why.contains("unknown lint: `clippy::bool_comparisn`"));
+    assert_eq!(got.unwrap_err().why, "clippy did not take check `clippy::bool-comparisn` whole: unknown lint: `clippy::bool_comparisn`");
 }
 
 #[test]
@@ -244,5 +245,42 @@ fn dashed_renamed_check_is_refused_when_diagnostic_uses_underscores() {
     );
     let dir = Path::new(CAPTURED);
     let got = parse_clippy(&output(0, stdout.as_bytes(), b""), "clippy::block-in-if-condition-expr", dir, dir);
-    assert!(got.unwrap_err().why.contains("has been renamed"));
+    assert_eq!(got.unwrap_err().why, "clippy did not take check `clippy::block-in-if-condition-expr` whole: lint `clippy::block_in_if_condition_expr` has been renamed to `clippy::blocks_in_conditions`");
+}
+
+#[test]
+fn renamed_allowed_lint_does_not_refuse_its_new_name() {
+    let dir = Path::new("/work/project");
+    let out = output(0, include_bytes!("fixtures/renamed_allowed_check.jsonl"), b"");
+    assert_eq!(parse_clippy(&out, "clippy::blocks_in_conditions", dir, dir), Ok(vec![]));
+}
+
+#[test]
+fn renamed_allowed_lint_refuses_its_old_name() {
+    let dir = Path::new("/work/project");
+    let out = output(0, include_bytes!("fixtures/renamed_allowed_check.jsonl"), b"");
+    let got = parse_clippy(&out, "clippy::block_in_if_condition_expr", dir, dir);
+    assert_eq!(got.unwrap_err().why, "clippy did not take check `clippy::block_in_if_condition_expr` whole: lint `clippy::block_in_if_condition_expr` has been renamed to `clippy::blocks_in_conditions`");
+}
+
+// Hand-built from the message clippy 0.1.95 prints for `--allow=clippy::should_assert_eq` (a removed lint), cut to the fields `parse_clippy` reads.
+const REMOVED_LINT: &str = concat!(
+    r#"{"reason":"compiler-message","message":{"message":"lint `clippy::should_assert_eq` has been removed: `assert!(a == b)` can now print the values the same way `assert_eq!(a, b) can","level":"warning","code":{"code":"renamed_and_removed_lints","explanation":null},"spans":[]}}"#,
+    "\n",
+    r#"{"reason":"build-finished","success":true}"#,
+    "\n"
+);
+
+#[test]
+fn removed_lint_reason_does_not_refuse_later_quoted_text() {
+    let dir = Path::new("/work/project");
+    let got = parse_clippy(&output(0, REMOVED_LINT.as_bytes(), b""), "assert!(a == b)", dir, dir);
+    assert_eq!(got, Ok(vec![]));
+}
+
+#[test]
+fn removed_lint_refuses_its_own_name() {
+    let dir = Path::new("/work/project");
+    let got = parse_clippy(&output(0, REMOVED_LINT.as_bytes(), b""), "clippy::should_assert_eq", dir, dir);
+    assert_eq!(got.unwrap_err().why, "clippy did not take check `clippy::should_assert_eq` whole: lint `clippy::should_assert_eq` has been removed: `assert!(a == b)` can now print the values the same way `assert_eq!(a, b) can");
 }

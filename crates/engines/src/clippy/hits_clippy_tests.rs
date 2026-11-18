@@ -1,6 +1,6 @@
 //! ZUT for hits_clippy.rs. The fake host answers clippy-driver help from a capture and cargo commands by first argument.
 //! The help fixture is stdout from `clippy-driver -W help`, clippy 0.1.95 via rustup in /tmp, exit 0, empty stderr.
-//! These tests reach no real Cargo tree: each stops before any command runs (no `Cargo.toml` or invalid params).
+//! These tests reach no real Cargo tree: each stops on invalid params before any command runs.
 //! Shared helpers are `pub(super)` for the real-tree integration tests.
 
 use super::hits_clippy;
@@ -51,13 +51,6 @@ pub(super) fn run_rules_with_help(rules: &str, folder: &Path, help: Output, loca
     let on_path = |_: &str| -> bool { panic!("hits_clippy looks nothing up on PATH") };
     let got = hits_clippy(&file.rules[0], folder, &Host { run: &run, on_path: &on_path });
     (got, seen.into_inner())
-}
-
-#[test]
-fn no_cargo_toml_at_or_above_the_folder_is_not_available_and_runs_nothing() {
-    let (got, seen) = run(Path::new("/engines-zut-no-such-folder/a"), output(0, b"", b""), output(0, b"", b""));
-    assert_eq!(got, Err(Stop::NotAvailable { why: "no Cargo.toml at or above the rule file's folder".to_string() }));
-    assert!(seen.is_empty());
 }
 
 #[test]

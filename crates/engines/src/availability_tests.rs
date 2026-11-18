@@ -1,4 +1,4 @@
-//! ZUT for availability.rs: the program each engine is looked up as, the exact why text when it is absent, and
+//! ZUT for availability.rs: engine program lookups, including both Clippy programs, exact absence reasons, and
 //! Tessera never available (settled S-20).
 
 use crate::availability::availability_from;
@@ -64,4 +64,22 @@ fn asked_for(engine: Engine) -> Vec<String> {
 fn clippy_with_cargo_but_no_cargo_clippy_is_not_available() {
     let got = availability_from(Engine::Clippy, |name| name == "cargo");
     assert_eq!(got, not_available("cargo-clippy not found on PATH"));
+}
+
+#[test]
+fn clippy_without_driver_is_not_available() {
+    assert_eq!(
+        availability_from(Engine::Clippy, |name| name == "cargo-clippy"),
+        not_available("clippy-driver not found on PATH")
+    );
+}
+
+#[test]
+fn clippy_looks_up_both_programs_in_order_when_present() {
+    let asked = RefCell::new(Vec::new());
+    availability_from(Engine::Clippy, |name| {
+        asked.borrow_mut().push(name.to_string());
+        true
+    });
+    assert_eq!(asked.into_inner(), vec!["cargo-clippy", "clippy-driver"]);
 }

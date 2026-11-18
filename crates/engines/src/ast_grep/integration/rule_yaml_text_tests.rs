@@ -1,4 +1,4 @@
-//! ZIT for rule_yaml_text: an opened rule YAML checked against its path on real files (Unix: inodes and links).
+//! ZIT for rule_yaml_text: an opened rule YAML checked by its own link count on real files (Unix).
 #![cfg(unix)]
 
 use super::super::rule_yaml_text::rule_yaml_text;
@@ -39,7 +39,7 @@ fn path_swapped_after_open_is_refused() {
     let file = tree.open_names();
     fs::rename(tree.folder.join("other.yml"), tree.folder.join("names.yml")).unwrap();
     assert_eq!(
-        rule_yaml_text(file, &tree.folder, "names.yml"),
+        rule_yaml_text(file, "names.yml"),
         Err("ast-grep rule names.yml changed while it was opened".to_string())
     );
 }
@@ -48,7 +48,7 @@ fn path_swapped_after_open_is_refused() {
 fn path_not_swapped_is_read() {
     let tree = Tree::new("not-swapped");
     let file = tree.open_names();
-    assert_eq!(rule_yaml_text(file, &tree.folder, "names.yml"), Ok("id: names\n".to_string()));
+    assert_eq!(rule_yaml_text(file, "names.yml"), Ok("id: names\n".to_string()));
 }
 
 #[test]
@@ -57,7 +57,7 @@ fn hard_link_made_after_open_is_refused() {
     let file = tree.open_names();
     fs::hard_link(tree.folder.join("names.yml"), tree.folder.join("second.yml")).unwrap();
     assert_eq!(
-        rule_yaml_text(file, &tree.folder, "names.yml"),
+        rule_yaml_text(file, "names.yml"),
         Err("ast-grep rule names.yml has more than one hard link: tm reads a rule YAML only when its folder holds the only link".to_string())
     );
 }

@@ -47,8 +47,9 @@ struct Span {
 /// (`hits_clippy` passes it). `folder` is the rule file's folder; a message with no primary span, or one outside
 /// `folder`, is skipped. A run is an answer only when a `build-finished` record says it succeeded: a failed build has
 /// not linted everything, so it is a `ParseError`, as are a missing record and a non-JSON line. So is a run where
-/// clippy did not take `check` whole (`not_taken`, matching `check` as written or with every `-` read as `_`): it
-/// still succeeds, and finding nothing would read as clean.
+/// clippy did not take `check` whole (`not_taken`: an unknown, renamed, removed or deprecated lint message whose first
+/// quoted name is `check`, as written or with every `-` read as `_`; later quotes are a rename's new name or a removal
+/// reason's text): it still succeeds, and finding nothing would read as clean.
 pub fn parse_clippy(out: &Output, check: &str, cwd: &Path, folder: &Path) -> Result<Vec<Hit>, ParseError> {
     let mut hits = Vec::new();
     let mut finished = None;
@@ -74,13 +75,15 @@ pub fn parse_clippy(out: &Output, check: &str, cwd: &Path, folder: &Path) -> Res
 }
 
 /// Whether `message` says clippy did not take `check` as named: an unknown lint (`E0602`) or a renamed, removed or
-/// deprecated name (`renamed_and_removed_lints`) whose message quotes `check`, as written or with every `-` read as
-/// `_` (rustc quotes `--warn=clippy::bool-comparisn` as `clippy::bool_comparisn`). Such a message naming another lint
-/// (a misspelled `allow`, say) leaves `check` whole.
+/// deprecated name (`renamed_and_removed_lints`) whose first backtick-quoted name is `check`, as written or with every
+/// `-` read as `_` (rustc quotes `--warn=clippy::bool-comparisn` as `clippy::bool_comparisn`). Only the first quote
+/// is the name not taken: a rename quotes the new name second, and a removal reason may quote other text. Such a
+/// message naming another lint (a misspelled `allow`, say) leaves `check` whole.
 fn not_taken(message: &Message, check: &str) -> bool {
     let code = message.code.as_ref().map(|code| code.code.as_str());
-    let quotes = |name: &str| message.message.contains(&format!("`{name}`"));
-    matches!(code, Some("E0602" | "renamed_and_removed_lints")) && (quotes(check) || quotes(&check.replace('-', "_")))
+    let first = message.message.split('`').nth(1);
+    matches!(code, Some("E0602" | "renamed_and_removed_lints"))
+        && (first == Some(check) || first == Some(check.replace('-', "_").as_str()))
 }
 
 /// The hit for `message` when `check` takes it (a warning with a code under `"warnings"`, else a message whose code
