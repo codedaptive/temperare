@@ -18,6 +18,8 @@ mod clippy_cmd_tests;
 #[cfg(test)]
 mod hits_clippy_tests;
 #[cfg(test)]
+mod integration;
+#[cfg(test)]
 mod locate_workspace_cmd_tests;
 #[cfg(test)]
 mod parse_clippy_tests;
