@@ -1,10 +1,12 @@
-//! ZUT for check_world_real.rs: each seam of `CheckWorld::real()` is wired to its real function. `exists` and `read`
-//! are told from stubs on a file the tests write in a throwaway folder under the system temp folder, removed on drop;
-//! `run_rules` and `build_report` on a rule file with no rules in such a folder; `toplevel` and `rev_parse` are told
-//! by a folder that does not exist, where git fails. Nothing here needs a real repository or an engine: `run_rules` and `build_report` get rule files
-//! with no rules, so no engine is looked up, and the report has no base, so no git diff is run.
+//! Tests of crates/cli/src/app/check_world_real.rs: each seam of `CheckWorld::real()` is wired to its real function.
+//! The file mixes kinds (rule 11), each case marked: RITs (cli→procio/rules/engines, owner Nagatha; S-38) and
+//! ZITs. `exists` and `read` are told from stubs on a file the tests write in a throwaway folder under the system
+//! temp folder, removed on drop; `run_rules` and `build_report` on a rule file with no rules in such a folder;
+//! `toplevel` and `rev_parse` are told by a folder that does not exist, where git fails. Nothing here needs a real
+//! repository or an engine: `run_rules` and `build_report` get rule files with no rules, so no engine is looked up,
+//! and the report has no base, so no git diff is run.
 
-use super::CheckWorld;
+use cli::CheckWorld;
 use rules::{Exception, RelPath, RuleFile};
 use std::fs;
 use std::io::ErrorKind;
@@ -52,6 +54,7 @@ fn empty_rules(folder: PathBuf, exceptions: Vec<Exception>) -> RuleFile {
     RuleFile { folder, kits: Vec::new(), owner: None, rules: Vec::new(), exceptions }
 }
 
+/// ZIT: the seam is `Path::is_file`, std only (crates/cli/src/app/check_world_real.rs:13).
 #[test]
 fn exists_is_true_for_a_file_only() {
     let world = CheckWorld::real();
@@ -63,6 +66,7 @@ fn exists_is_true_for_a_file_only() {
     assert!(!(world.exists)(&dir.0.join("missing.toml")));
 }
 
+/// RIT: `RuleFile::read` reads the disk (crates/rules/src/rule_file/rule_file_read.rs:11).
 #[test]
 fn read_reads_a_rule_file_from_disk() {
     let world = CheckWorld::real();
@@ -74,6 +78,7 @@ fn read_reads_a_rule_file_from_disk() {
     assert_eq!(ids, vec!["lint-all"]);
 }
 
+/// RIT: git runs (crates/procio/src/git/ops/toplevel.rs:13-16, rev_parse.rs:11-13).
 #[test]
 fn toplevel_and_rev_parse_of_a_missing_folder_are_errors() {
     let world = CheckWorld::real();
@@ -83,6 +88,7 @@ fn toplevel_and_rev_parse_of_a_missing_folder_are_errors() {
     assert!((world.rev_parse)(&missing, "HEAD").is_err());
 }
 
+/// RIT: `fs::canonicalize` (crates/engines/src/rule_folder.rs:11), procio wired in (engines/src/run_rules.rs:17).
 #[test]
 fn run_rules_of_a_rule_file_with_no_rules_is_empty() {
     let world = CheckWorld::real();
@@ -90,6 +96,7 @@ fn run_rules_of_a_rule_file_with_no_rules_is_empty() {
     assert!((world.run_rules)(&empty_rules(dir.0.clone(), Vec::new()), &dir.0, &[]).is_empty());
 }
 
+/// ZIT: no base returns pure `assemble_report` (crates/report/src/build_report.rs:19-20); the setup touches disk.
 #[test]
 fn build_report_with_no_base_counts_the_exception_in_force() {
     let world = CheckWorld::real();

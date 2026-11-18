@@ -7,16 +7,17 @@ use super::select_rules::select_rules;
 use super::write_failure::write_failure;
 use super::write_problems::write_problems;
 use super::CheckWorld;
-use crate::{check_json, exit_code, next_step, not_available_names, CheckArgs, UsageError};
+use crate::{check_json, exit_code, failed_tails, next_step, not_available_names, CheckArgs, UsageError};
 use std::io::Write;
 use std::path::Path;
 
 /// Finds and reads the rule file, keeps the rules of `--kind`, turns the paths into paths under the rule file's
-/// folder and resolves `--base` before any engine runs; then runs the rules and prints the report as text ending in
-/// a `next:` line, or as one JSON object carrying `exit` and `next`, and returns the report's exit code. A rule file
-/// that cannot be found, a path outside its folder, a base that does not resolve or a report that cannot be built is
-/// a usage error on `err` (and, under `--json`, an `{"error", "exit", "next"}` object on `out`); a rule file with
-/// problems lists them on `out`. Both exit 2. Write errors are ignored: a closed pipe is not tm's failure.
+/// folder and resolves `--base` before any engine runs; then runs the rules and prints the report as text, followed
+/// by each failed rule's stderr tail and a `next:` line, or as one JSON object carrying `exit` and `next` (the tails
+/// are its failed rules' `stderr_tail`), and returns the report's exit code. A rule file that cannot be found, a path
+/// outside its folder, a base that does not resolve or a report that cannot be built is a usage error on `err` (and,
+/// under `--json`, an `{"error", "exit", "next"}` object on `out`); a rule file with problems lists them on `out`.
+/// Both exit 2. Write errors are ignored: a closed pipe is not tm's failure.
 pub fn run_check(args: &CheckArgs, cwd: &Path, world: &CheckWorld, out: &mut dyn Write, err: &mut dyn Write) -> u8 {
     let path = match discover_rule_file(args.rules.as_deref(), cwd, &|| (world.toplevel)(cwd), world.exists) {
         Ok(path) => path,
@@ -52,7 +53,7 @@ pub fn run_check(args: &CheckArgs, cwd: &Path, world: &CheckWorld, out: &mut dyn
     if args.json {
         let _ = writeln!(out, "{}", check_json(&report, exit, &next));
     } else {
-        let _ = writeln!(out, "{}next: {next}", report::render_text(&report));
+        let _ = writeln!(out, "{}{}next: {next}", report::render_text(&report), failed_tails(&report));
     }
     exit
 }

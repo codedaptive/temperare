@@ -1,4 +1,4 @@
-//! `flag_value`: the value that follows a flag, shared by the `tm rules` and `tm check` parsers.
+//! `flag_value`: the value that follows a flag, shared by the `tm rules`, `tm check` and `tm install` parsers.
 
 use super::UsageError;
 

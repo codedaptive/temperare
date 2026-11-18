@@ -1,8 +1,10 @@
-//! ZUT for parse_args.rs: help and version forms, dispatch to each command, flags given twice, unknown commands.
+//! ZUT for parse_args.rs: help and version forms, dispatch to each command (install and uninstall included), flags
+//! given twice, unknown commands.
 
 use std::path::PathBuf;
 
-use super::{parse_args, CheckArgs, Command, RulesArgs, UsageError};
+use super::{parse_args, CheckArgs, Command, InstallArgs, RulesArgs, UsageError};
+use crate::Harness;
 
 fn parse(args: &[&str]) -> Result<Command, UsageError> {
     parse_args(&args.iter().map(|a| a.to_string()).collect::<Vec<_>>())
@@ -113,5 +115,49 @@ fn a_flag_before_the_command_is_an_unknown_command() {
     assert_eq!(
         parse(&["--json", "rules"]),
         Err(error("unknown command '--json'", "Run tm help to see the commands."))
+    );
+}
+
+#[test]
+fn install_command() {
+    assert_eq!(
+        parse(&["install", "--no-place", "--target", "cursor,claude", "--mode", "skill", "-y"]),
+        Ok(Command::Install(InstallArgs {
+            no_place: true,
+            targets: Some(vec![Harness::Cursor, Harness::Claude]),
+            yes: true,
+            ..InstallArgs::default()
+        }))
+    );
+}
+
+#[test]
+fn install_alone_is_install_with_no_flags() {
+    assert_eq!(parse(&["install"]), Ok(Command::Install(InstallArgs::default())));
+}
+
+#[test]
+fn install_errors_come_through() {
+    assert_eq!(
+        parse(&["install", "--mode", "mcp"]),
+        Err(error("--mode mcp is not supported", "Write --mode skill: Temperare wires a skill only, no MCP."))
+    );
+}
+
+#[test]
+fn an_install_flag_given_twice() {
+    assert_eq!(parse(&["install", "-y", "-y"]), Err(error("-y given twice", "Give -y once.")));
+}
+
+#[test]
+fn uninstall_command() {
+    assert_eq!(parse(&["uninstall"]), Ok(Command::Uninstall));
+}
+
+#[test]
+fn an_argument_after_uninstall_is_refused() {
+    assert_eq!(
+        parse(&["uninstall", "-y"]),
+        Err(error("unexpected argument '-y' after uninstall", "Run tm uninstall with nothing after it."))
     );
 }

@@ -56,6 +56,30 @@ fn exit_3_with_no_names_speaks_of_the_engines_not_available() {
 }
 
 #[test]
+fn exit_3_with_only_tessera_says_its_checks_are_not_available_yet() {
+    assert_eq!(
+        next_step(3, None, file(), &["tessera"]),
+        "Tessera's checks are not available yet (run without those rules)"
+    );
+}
+
+#[test]
+fn exit_3_with_tessera_first_installs_the_others_and_says_tessera_is_not_available_yet() {
+    assert_eq!(
+        next_step(3, None, file(), &["tessera", "ruff"]),
+        "install ruff; Tessera's checks are not available yet (or run without those rules)"
+    );
+}
+
+#[test]
+fn exit_3_with_tessera_in_the_middle_keeps_the_others_in_the_order_given() {
+    assert_eq!(
+        next_step(3, None, file(), &["ruff", "tessera", "clippy"]),
+        "install ruff, clippy; Tessera's checks are not available yet (or run without those rules)"
+    );
+}
+
+#[test]
 fn exit_4_raises_the_security_findings() {
     assert_eq!(
         next_step(4, Some("Write it."), file(), &["ruff"]),

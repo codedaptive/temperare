@@ -4,7 +4,7 @@
 use super::{run_check, CheckWorld};
 use crate::CheckArgs;
 use procio::{GitError, Oid};
-use report::{Counts, NotAvailable, Report, ReportError};
+use report::{Counts, Failed, NotAvailable, Report, ReportError};
 use rules::{Engine, Finding, Kind, Problem, RelPath, RuleFile, RuleOutcome, Severity};
 use serde_json::json;
 use std::cell::{Cell, RefCell};
@@ -323,6 +323,34 @@ fn an_absent_engine_exits_3_and_names_it() {
     let (code, out, err) = check(&CheckArgs::default(), &CheckWorld { build_report: &absent, ..world() });
     assert_eq!((code, err.as_str()), (3, ""));
     assert!(out.ends_with("next: install swiftlint (or run without those rules)\n"), "{out}");
+}
+
+#[test]
+fn a_failed_engine_exits_5_with_its_stderr_tail_between_the_counts_and_next() {
+    let failed = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>| {
+        let mut r = report(vec![], vec![]);
+        r.failed = vec![Failed {
+            rule: "q".to_string(),
+            engine: Engine::Ruff,
+            code: Some(2),
+            stderr_tail: "ruff: unknown rule F999".to_string(),
+        }];
+        r.counts.failed = 1;
+        Ok(r)
+    };
+    assert_eq!(
+        check(&CheckArgs::default(), &CheckWorld { build_report: &failed, ..world() }),
+        (
+            5,
+            "failed: q (ruff), exit 2\n\
+             0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, \
+             1 failed\n\
+             stderr of q (ruff):\n  ruff: unknown rule F999\n\
+             next: see the engine output above\n"
+                .to_string(),
+            String::new()
+        )
+    );
 }
 
 #[test]

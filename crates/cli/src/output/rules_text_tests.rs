@@ -124,3 +124,63 @@ fix = "Cast safely."
          exceptions in force (0):\n"
     );
 }
+
+const OUTSIDE: &str = r#"version = 1
+
+[kits.a]
+paths = ["a/**"]
+
+[kits.b]
+paths = ["b/**"]
+
+[kits.core]
+paths = ["core/**"]
+
+[[rule]]
+id = "no-unwrap"
+engine = "clippy"
+check = "clippy::unwrap_used"
+kits = ["core"]
+outside_kits = ["a", "b"]
+fix = "Return a typed error."
+
+[[rule]]
+id = "lint-all"
+engine = "clippy"
+check = "clippy::all"
+outside_kits = ["a"]
+fix = "Do what clippy says."
+"#;
+
+#[test]
+fn outside_kits_follow_the_kits_and_show_alone_when_there_are_no_kits() {
+    assert_eq!(
+        rules_text(Path::new("t.toml"), &parse(OUTSIDE), &all_available),
+        "rule file: t.toml\n\
+         rules (2):\n  \
+         no-unwrap  clippy  quality  error  paths: all files  kits: core  outside kits: a, b  available\n  \
+         lint-all  clippy  quality  error  paths: all files  outside kits: a  available\n\
+         exceptions in force (0):\n"
+    );
+}
+
+#[test]
+fn a_rule_with_kits_but_no_outside_kits_prints_no_outside_kits_part() {
+    let text = r#"version = 1
+
+[kits.core]
+paths = ["core/**"]
+
+[[rule]]
+id = "lint"
+engine = "clippy"
+check = "clippy::all"
+kits = ["core"]
+fix = "Do what clippy says."
+"#;
+    assert_eq!(
+        rules_text(Path::new("t.toml"), &parse(text), &all_available),
+        "rule file: t.toml\nrules (1):\n  lint  clippy  quality  error  paths: all files  kits: core  available\n\
+         exceptions in force (0):\n"
+    );
+}
