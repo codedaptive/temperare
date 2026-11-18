@@ -1,7 +1,7 @@
 //! ZUT for hits_clippy.rs. The host is a fake: `cargo locate-project` and `cargo clippy` are answered by matching
 //! the command's first argument, clippy from the captured `lint_and_other.jsonl` / `build_failed.jsonl` (see
-//! parse_clippy_tests.rs) or a hand-built message. `cargo_root` reads the filesystem, so each test makes its own
-//! canonical temp folder of empty `Cargo.toml` files and removes it before asserting.
+//! parse_clippy_tests.rs) or a hand-built message. `cargo_root` reads the filesystem, so each test that reaches it
+//! makes its own canonical temp folder of empty `Cargo.toml` files and removes it before asserting.
 
 use super::hits_clippy;
 use crate::host::Host;
@@ -15,6 +15,10 @@ use std::path::{Path, PathBuf};
 const LINT_AND_OTHER: &[u8] = include_bytes!("fixtures/lint_and_other.jsonl");
 const BUILD_FAILED: &[u8] = include_bytes!("fixtures/build_failed.jsonl");
 const RULES: &str = "version = 1\n[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"clippy::bool_comparison\"\nfix = \"f\"\n";
+/// `RULES` with a `params` line, for the tests that read params.
+fn rules_with(params: &str) -> String {
+    format!("{RULES}params = {params}\n")
+}
 const FOUND: &str = "equality checks against true are unnecessary";
 
 /// Hand-built: a bool_comparison message as cargo prints it from a workspace root for its `member/` crate.
@@ -44,7 +48,12 @@ fn output(code: i32, stdout: &[u8], stderr: &[u8]) -> Output {
 /// `hits_clippy` on `folder` with a host answering locate-project with `located` and clippy with `linted`; returns
 /// the result and every command the host was asked to run.
 fn run(folder: &Path, located: Output, linted: Output) -> (Result<Vec<Hit>, Stop>, Vec<Cmd>) {
-    let file = RuleFile::parse(RULES, folder).unwrap();
+    run_rules(RULES, folder, located, linted)
+}
+
+/// `run` with the rule file `rules` in place of `RULES`.
+fn run_rules(rules: &str, folder: &Path, located: Output, linted: Output) -> (Result<Vec<Hit>, Stop>, Vec<Cmd>) {
+    let file = RuleFile::parse(rules, folder).unwrap();
     let seen = RefCell::new(Vec::new());
     let run = |cmd: &Cmd| -> Result<Output, ProcError> {
         seen.borrow_mut().push(cmd.clone());
@@ -71,6 +80,8 @@ fn a_single_crate_is_linted_in_its_own_folder_with_paths_from_there() {
     assert_eq!(got, Ok(vec![Hit { path: RelPath::new("src/lib.rs"), line: 3, col: Some(5), what: FOUND.to_string() }]));
     let args: Vec<_> = seen.iter().map(|cmd| cmd.args[0].clone()).collect();
     assert_eq!(args, ["locate-project", "clippy"]);
+    let want = ["clippy", "--all-targets", "--message-format=json", "--quiet", "--", "-W", "clippy::bool_comparison"];
+    assert_eq!(seen[1].args, want.map(std::ffi::OsString::from));
     assert!(seen.iter().all(|cmd| cmd.cwd.as_deref() == Some(root.as_path())));
     assert!(seen[1].env.is_empty(), "no CARGO_TARGET_DIR or other env is set");
 }
@@ -122,4 +133,33 @@ fn a_failed_build_is_failed_with_code_101_and_cargos_stderr() {
     fs::remove_dir_all(&root).unwrap();
     let want = "error: could not compile `cap_c` (lib) due to 1 previous error\n".to_string();
     assert_eq!(got, Err(Stop::Failed { code: Some(101), stderr: want }));
+}
+
+#[test]
+fn the_allowed_lints_reach_clippy_as_dash_a_after_the_check() {
+    let root = tree("allows", &["."]);
+    let rules = rules_with(r#"{ allow = ["clippy::result_large_err", "clippy::module_inception"] }"#);
+    let (got, seen) = run_rules(&rules, &root, output(0, &manifest(&root), b""), output(0, LINT_AND_OTHER, b""));
+    fs::remove_dir_all(&root).unwrap();
+    assert_eq!(got, Ok(vec![Hit { path: RelPath::new("src/lib.rs"), line: 3, col: Some(5), what: FOUND.to_string() }]));
+    let tail: Vec<_> = seen[1].args.iter().skip(5).filter_map(|arg| arg.to_str()).collect();
+    assert_eq!(tail, ["-W", "clippy::bool_comparison", "-A", "clippy::result_large_err", "-A", "clippy::module_inception"]);
+}
+
+#[test]
+fn a_param_other_than_allow_is_failed_with_the_reason_and_nothing_runs() {
+    let rules = rules_with(r#"{ alow = ["clippy::module_inception"] }"#);
+    let (got, seen) = run_rules(&rules, Path::new("/engines-zut-no-such-folder/a"), output(0, b"", b""), output(0, b"", b""));
+    let want = "clippy param alow: a clippy rule reads only the `allow` param".to_string();
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: want }));
+    assert!(seen.is_empty());
+}
+
+#[test]
+fn an_allow_that_is_not_a_list_is_failed_with_the_reason_and_nothing_runs() {
+    let rules = rules_with(r#"{ allow = "clippy::module_inception" }"#);
+    let (got, seen) = run_rules(&rules, Path::new("/engines-zut-no-such-folder/a"), output(0, b"", b""), output(0, b"", b""));
+    let want = "clippy param allow: must be a list of strings".to_string();
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: want }));
+    assert!(seen.is_empty());
 }

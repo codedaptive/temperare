@@ -12,7 +12,7 @@ fn clippy_reports_only_the_requested_lint() {
     fs::create_dir(folder.join("src")).unwrap();
     fs::write(folder.join("Cargo.toml"), "[package]\nname = \"clippy_zit\"\nversion = \"0.1.0\"\nedition = \"2021\"\n").unwrap();
     fs::write(folder.join("src/lib.rs"), "pub fn compare(value: bool) -> bool {\n    let unused = 1;\n    return value == true;\n}\npub fn clean(value: bool) -> bool { value }\n").unwrap();
-    let mut cmd = clippy_cmd("clippy::bool_comparison", &folder);
+    let mut cmd = clippy_cmd("clippy::bool_comparison", &[], &folder);
     cmd.env.push(("CARGO_TARGET_DIR".into(), folder.join("target").into_os_string()));
     cmd.env.push(("CARGO_NET_OFFLINE".into(), "true".into()));
     let result = procio::run(&cmd).map(|out| parse_clippy(&out, "clippy::bool_comparison", &folder, &folder));

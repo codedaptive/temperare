@@ -2,6 +2,11 @@
 //! captured once from tiny crates: `lint_and_other.jsonl` (exit 0; a bool_comparison at src/lib.rs:3:5 and an
 //! unused_variables warning at src/lib.rs:2:9), `clean.jsonl` (exit 0; no messages) and `build_failed.jsonl`
 //! (exit 101; an E0425 error and build-finished success false). The capture crate's folder was `CAPTURED`.
+//! `all_targets_warnings.jsonl` was not captured: no capture folder was available, so it is hand-built in the shape of
+//! a `cargo clippy --all-targets` capture of a crate in `ALL_TARGETS`. Its compiler-messages: from the lib target an
+//! unused_variables warning at src/lib.rs:2:9 and a clippy::bool_comparison at src/lib.rs:3:5; the same two again from
+//! the lib-test target; from the lib-test target an unused_variables warning at src/lib.rs:8:13 (in `#[cfg(test)]`
+//! code); a codeless "3 warnings emitted" warning with no spans; then build-finished success true.
 
 use super::parse_clippy;
 use crate::types::Hit;
@@ -13,6 +18,8 @@ const CAPTURED: &str = "/Users/bob/devlop/team-temperare/workcrews/engines/scrat
 const LINT_AND_OTHER: &[u8] = include_bytes!("fixtures/lint_and_other.jsonl");
 const CLEAN: &[u8] = include_bytes!("fixtures/clean.jsonl");
 const BUILD_FAILED: &[u8] = include_bytes!("fixtures/build_failed.jsonl");
+const ALL_TARGETS: &str = "/Users/bob/devlop/team-temperare/workcrews/engines/scratchpad/clippy-capture-all-targets";
+const ALL_TARGETS_WARNINGS: &[u8] = include_bytes!("fixtures/all_targets_warnings.jsonl");
 
 fn output(code: i32, stdout: &[u8], stderr: &[u8]) -> Output {
     Output { code: Some(code), stdout: stdout.to_vec(), stderr: stderr.to_vec() }
@@ -122,4 +129,56 @@ fn hits_keep_output_order() {
 fn a_non_zero_exit_with_parseable_output_is_an_answer() {
     let got = parse_clippy(&output(1, LINT_AND_OTHER, b""), "clippy::bool_comparison", Path::new(CAPTURED), Path::new(CAPTURED));
     assert_eq!(got, Ok(vec![hit("src/lib.rs", 3, 5, "equality checks against true are unnecessary")]));
+}
+
+#[test]
+fn warnings_keeps_every_coded_warning_once_with_its_code_in_front() {
+    let got = parse_clippy(&output(0, ALL_TARGETS_WARNINGS, b""), "warnings", Path::new(ALL_TARGETS), Path::new(ALL_TARGETS));
+    assert_eq!(
+        got,
+        Ok(vec![
+            hit("src/lib.rs", 2, 9, "unused_variables: unused variable: `unused`"),
+            hit("src/lib.rs", 3, 5, "clippy::bool_comparison: equality checks against true are unnecessary"),
+            hit("src/lib.rs", 8, 13, "unused_variables: unused variable: `test_unused`"),
+        ])
+    );
+}
+
+#[test]
+fn one_lint_over_all_targets_is_one_hit_with_the_message_unchanged() {
+    let got = parse_clippy(&output(0, ALL_TARGETS_WARNINGS, b""), "clippy::bool_comparison", Path::new(ALL_TARGETS), Path::new(ALL_TARGETS));
+    assert_eq!(got, Ok(vec![hit("src/lib.rs", 3, 5, "equality checks against true are unnecessary")]));
+}
+
+const ERROR_AND_NOTE: &str = concat!(
+    r#"{"reason":"compiler-message","message":{"message":"cannot find value","level":"error","code":{"code":"E0425","explanation":null},"spans":[{"file_name":"a.rs","line_start":1,"column_start":2,"is_primary":true}]}}"#,
+    "\n",
+    r#"{"reason":"compiler-message","message":{"message":"a note","level":"note","code":{"code":"unused_variables","explanation":null},"spans":[{"file_name":"a.rs","line_start":3,"column_start":4,"is_primary":true}]}}"#,
+    "\n",
+    r#"{"reason":"build-finished","success":true}"#,
+    "\n"
+);
+
+#[test]
+fn warnings_skips_error_and_note_levels_even_with_a_code() {
+    let got = parse_clippy(&output(0, ERROR_AND_NOTE.as_bytes(), b""), "warnings", Path::new("/w/crate"), Path::new("/w/crate"));
+    assert_eq!(got, Ok(vec![]));
+}
+
+#[test]
+fn one_lint_keeps_its_code_at_error_level() {
+    let got = parse_clippy(&output(0, ERROR_AND_NOTE.as_bytes(), b""), "E0425", Path::new("/w/crate"), Path::new("/w/crate"));
+    assert_eq!(got, Ok(vec![hit("a.rs", 1, 2, "cannot find value")]));
+}
+
+#[test]
+fn warnings_skips_a_codeless_warning_that_has_a_primary_span() {
+    let stdout = concat!(
+        r#"{"reason":"compiler-message","message":{"message":"no code here","level":"warning","code":null,"spans":[{"file_name":"a.rs","line_start":5,"column_start":6,"is_primary":true}]}}"#,
+        "\n",
+        r#"{"reason":"build-finished","success":true}"#,
+        "\n"
+    );
+    let got = parse_clippy(&output(0, stdout.as_bytes(), b""), "warnings", Path::new("/w/crate"), Path::new("/w/crate"));
+    assert_eq!(got, Ok(vec![]));
 }
