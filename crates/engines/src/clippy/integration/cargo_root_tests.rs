@@ -1,12 +1,12 @@
-//! ZUT for cargo_root.rs: the nearest folder holding a Cargo.toml, on a temp tree the test makes and removes.
+//! ZIT for cargo_root.rs: the nearest folder holding a Cargo.toml, on a temp tree the test makes and removes.
 
-use super::cargo_root;
+use crate::clippy::cargo_root;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 /// A fresh, canonical temp folder for one test.
 fn tree(name: &str) -> PathBuf {
-    let root = std::env::temp_dir().join(format!("engines-zut-{}-cargo-root-{name}", std::process::id()));
+    let root = std::env::temp_dir().join(format!("engines-zit-{}-cargo-root-{name}", std::process::id()));
     fs::create_dir(&root).unwrap();
     fs::canonicalize(root).unwrap()
 }

@@ -2,11 +2,16 @@
 //! captured once from tiny crates: `lint_and_other.jsonl` (exit 0; a bool_comparison at src/lib.rs:3:5 and an
 //! unused_variables warning at src/lib.rs:2:9), `clean.jsonl` (exit 0; no messages) and `build_failed.jsonl`
 //! (exit 101; an E0425 error and build-finished success false). The capture crate's folder was `CAPTURED`.
+//! `clippy_cmd` now passes `--warn=<check>` and `--allow=<lint>` (S-35); clippy reads both spellings the same way, so
+//! the captures stand for today's run.
 //! `all_targets_warnings.jsonl` was not captured: no capture folder was available, so it is hand-built in the shape of
 //! a `cargo clippy --all-targets` capture of a crate in `ALL_TARGETS`. Its compiler-messages: from the lib target an
 //! unused_variables warning at src/lib.rs:2:9 and a clippy::bool_comparison at src/lib.rs:3:5; the same two again from
 //! the lib-test target; from the lib-test target an unused_variables warning at src/lib.rs:8:13 (in `#[cfg(test)]`
 //! code); a codeless "3 warnings emitted" warning with no spans; then build-finished success true.
+//! unknown_lint.jsonl and dashed_and_bare_group.jsonl are hand-built in the reported clippy 0.1.95 shape.
+//! The captured fixtures' home-folder paths are replaced by `/work/project`, so those paths, `CAPTURED`, `ALL_TARGETS`
+//! and the absolute paths in `all_targets_warnings.jsonl` all start with it.
 
 use super::parse_clippy;
 use crate::types::Hit;
@@ -14,11 +19,11 @@ use procio::Output;
 use rules::RelPath;
 use std::path::Path;
 
-const CAPTURED: &str = "/Users/bob/devlop/team-temperare/workcrews/engines/scratchpad/clippy-capture/a";
+const CAPTURED: &str = "/work/project/clippy-capture/a";
 const LINT_AND_OTHER: &[u8] = include_bytes!("fixtures/lint_and_other.jsonl");
 const CLEAN: &[u8] = include_bytes!("fixtures/clean.jsonl");
 const BUILD_FAILED: &[u8] = include_bytes!("fixtures/build_failed.jsonl");
-const ALL_TARGETS: &str = "/Users/bob/devlop/team-temperare/workcrews/engines/scratchpad/clippy-capture-all-targets";
+const ALL_TARGETS: &str = "/work/project/clippy-capture-all-targets";
 const ALL_TARGETS_WARNINGS: &[u8] = include_bytes!("fixtures/all_targets_warnings.jsonl");
 
 fn output(code: i32, stdout: &[u8], stderr: &[u8]) -> Output {
@@ -181,4 +186,63 @@ fn warnings_skips_a_codeless_warning_that_has_a_primary_span() {
     );
     let got = parse_clippy(&output(0, stdout.as_bytes(), b""), "warnings", Path::new("/w/crate"), Path::new("/w/crate"));
     assert_eq!(got, Ok(vec![]));
+}
+
+#[test]
+fn d1_clippy_unknown_requested_lint_is_an_error() {
+    let dir = Path::new("/private/tmp/d1-clippy-probe");
+    let out = output(0, include_bytes!("fixtures/unknown_lint.jsonl"), b"");
+    let got = parse_clippy(&out, "clippy::bool_comparisn", dir, dir);
+    assert!(got.is_err(), "{got:?}");
+    assert!(got.unwrap_err().why.contains("unknown lint: `clippy::bool_comparisn`"));
+}
+
+#[test]
+fn d1_clippy_dashed_lint_matches_underscored_diagnostics() {
+    let dir = Path::new("/private/tmp/d1-clippy-probe");
+    let out = output(0, include_bytes!("fixtures/dashed_and_bare_group.jsonl"), b"");
+    assert_eq!(parse_clippy(&out, "clippy::bool-comparison", dir, dir), Ok(vec![hit("src/lib.rs", 1, 29, "equality checks against true are unnecessary")]));
+}
+
+#[test]
+fn d1_clippy_deprecated_bare_group_is_an_error() {
+    let dir = Path::new("/private/tmp/d1-clippy-probe");
+    let out = output(0, include_bytes!("fixtures/dashed_and_bare_group.jsonl"), b"");
+    let got = parse_clippy(&out, "style", dir, dir);
+    assert!(got.is_err(), "{got:?}");
+    assert!(got.unwrap_err().why.contains("lint name `style` is deprecated"));
+}
+
+#[test]
+fn d1_clippy_unknown_other_lint_does_not_hide_requested_lint() {
+    let dir = Path::new("/private/tmp/d1-clippy-probe");
+    let out = output(0, include_bytes!("fixtures/unknown_lint.jsonl"), b"");
+    assert_eq!(parse_clippy(&out, "clippy::bool_comparison", dir, dir), Ok(vec![hit("src/lib.rs", 1, 29, "equality checks against true are unnecessary")]));
+}
+
+// Hand-built compiler messages in the shape reported by Kong's clippy-driver 1.95 probe.
+#[test]
+fn dashed_unknown_check_is_refused_when_diagnostic_uses_underscores() {
+    let stdout = concat!(
+        r#"{"reason":"compiler-message","message":{"message":"unknown lint: `clippy::bool_comparisn`","level":"warning","code":{"code":"E0602"},"spans":[]}}"#,
+        "\n",
+        r#"{"reason":"build-finished","success":true}"#,
+        "\n"
+    );
+    let dir = Path::new(CAPTURED);
+    let got = parse_clippy(&output(0, stdout.as_bytes(), b""), "clippy::bool-comparisn", dir, dir);
+    assert!(got.unwrap_err().why.contains("unknown lint: `clippy::bool_comparisn`"));
+}
+
+#[test]
+fn dashed_renamed_check_is_refused_when_diagnostic_uses_underscores() {
+    let stdout = concat!(
+        r#"{"reason":"compiler-message","message":{"message":"lint `clippy::block_in_if_condition_expr` has been renamed to `clippy::blocks_in_conditions`","level":"warning","code":{"code":"renamed_and_removed_lints"},"spans":[]}}"#,
+        "\n",
+        r#"{"reason":"build-finished","success":true}"#,
+        "\n"
+    );
+    let dir = Path::new(CAPTURED);
+    let got = parse_clippy(&output(0, stdout.as_bytes(), b""), "clippy::block-in-if-condition-expr", dir, dir);
+    assert!(got.unwrap_err().why.contains("has been renamed"));
 }

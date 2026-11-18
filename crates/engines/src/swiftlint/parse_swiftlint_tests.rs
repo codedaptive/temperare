@@ -3,6 +3,9 @@
 //! force_cast_and_others.json: `swiftlint lint --reporter json --quiet --no-cache --config two.yml Example.swift
 //! NoNewline.swift` (two.yml's only_rules: force_cast, trailing_whitespace, trailing_newline), exit 2.
 //! clean.json: `swiftlint lint --reporter json --quiet --no-cache --only-rule force_cast Clean.swift`, exit 0.
+//! `swiftlint_cmd` now passes `--only-rule=<check>` and `--config=<config>` (S-35); swiftlint reads both spellings the
+//! same way, so the captures stand for today's run.
+//! The captures' home-folder paths are replaced by `/work/project`, so they and `DIR` start with it.
 
 use super::parse_swiftlint;
 use crate::types::{Hit, ParseError};
@@ -10,7 +13,7 @@ use procio::Output;
 use rules::RelPath;
 use std::path::Path;
 
-const DIR: &str = "/Users/bob/devlop/team-temperare/workcrews/engines/scratchpad/cap-swiftlint";
+const DIR: &str = "/work/project/cap-swiftlint";
 
 fn output(code: i32, stdout: &[u8], stderr: &[u8]) -> Output {
     Output { code: Some(code), stdout: stdout.to_vec(), stderr: stderr.to_vec() }
@@ -83,4 +86,12 @@ fn with_stderr_empty_the_error_quotes_the_first_200_bytes_of_stdout() {
     let out = output(0, stdout.as_bytes(), b"");
     let why = parse_swiftlint(&out, "force_cast", Path::new(DIR), Path::new(DIR)).unwrap_err().why;
     assert_eq!(why, format!("swiftlint printed no JSON findings: {}", "x".repeat(200)));
+}
+
+#[test]
+fn d1_swiftlint_invalid_identifier_warning_is_an_error() {
+    let out = output(0, b"[\n\n]", b"warning: 'force_cast,force_try' is not a valid rule identifier\nValid rule identifiers:\nforce_cast\nforce_try\n");
+    let got = parse_swiftlint(&out, "force_cast,force_try", Path::new(DIR), Path::new(DIR));
+    assert!(got.is_err(), "{got:?}");
+    assert!(got.unwrap_err().why.contains("is not a valid rule identifier"));
 }

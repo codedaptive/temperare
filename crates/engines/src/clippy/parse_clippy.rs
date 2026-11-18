@@ -38,14 +38,17 @@ struct Span {
     is_primary: bool,
 }
 
-/// The `check` lint's messages in `out`'s stdout, in output order, each at its primary span. `check = "warnings"`
+/// The messages `check` takes in `out`'s stdout, in output order, each at its primary span. `check = "warnings"`
 /// takes every warning-level message that has a code, its `what` prefixed `"<code>: "` so it names the lint; any other
-/// `check` takes the messages whose code is `check`, at any level, `what` as printed. With `--all-targets` cargo prints
-/// a message once per target that compiles its file, so a hit equal to an earlier one is dropped. `cwd` is the folder
-/// span paths are read relative to: the workspace root, which is where cargo prints them from even when it ran in a
-/// member crate (`hits_clippy` passes it). `folder` is the rule file's folder; a message with no primary span, or one
-/// outside `folder`, is skipped. A run is an answer only when a `build-finished` record says it succeeded: a
-/// failed build has not linted everything, so it is a `ParseError`, as are a missing record and a non-JSON line.
+/// `check` takes the messages whose code is `check` with every `-` read as `_` (clippy reports `clippy::bool-comparison`
+/// as `clippy::bool_comparison`), at any level, `what` as printed. With `--all-targets` cargo prints a message once per
+/// target that compiles its file, so a hit equal to an earlier one is dropped. `cwd` is the folder span paths are read
+/// relative to: the workspace root, which is where cargo prints them from even when it ran in a member crate
+/// (`hits_clippy` passes it). `folder` is the rule file's folder; a message with no primary span, or one outside
+/// `folder`, is skipped. A run is an answer only when a `build-finished` record says it succeeded: a failed build has
+/// not linted everything, so it is a `ParseError`, as are a missing record and a non-JSON line. So is a run where
+/// clippy did not take `check` whole (`not_taken`, matching `check` as written or with every `-` read as `_`): it
+/// still succeeds, and finding nothing would read as clean.
 pub fn parse_clippy(out: &Output, check: &str, cwd: &Path, folder: &Path) -> Result<Vec<Hit>, ParseError> {
     let mut hits = Vec::new();
     let mut finished = None;
@@ -53,9 +56,13 @@ pub fn parse_clippy(out: &Output, check: &str, cwd: &Path, folder: &Path) -> Res
         let record: Record = serde_json::from_str(line).map_err(|_| fail(out, "output is not JSON lines"))?;
         match record.reason.as_str() {
             "build-finished" => finished = Some(record.success == Some(true)),
-            "compiler-message" => hits.extend(
-                record.message.and_then(|message| hit(message, check, cwd, folder)).filter(|found| !hits.contains(found)),
-            ),
+            "compiler-message" => match record.message {
+                Some(message) if not_taken(&message, check) => {
+                    return Err(ParseError { why: format!("clippy did not take check `{check}` whole: {}", message.message) });
+                }
+                Some(message) => hits.extend(hit(message, check, cwd, folder).filter(|found| !hits.contains(found))),
+                None => {}
+            },
             _ => {}
         }
     }
@@ -66,14 +73,24 @@ pub fn parse_clippy(out: &Output, check: &str, cwd: &Path, folder: &Path) -> Res
     }
 }
 
-/// The hit for `message` when `check` takes it (a warning with a code under `"warnings"`, else the `check` lint) and
-/// it has a primary span under `folder`.
+/// Whether `message` says clippy did not take `check` as named: an unknown lint (`E0602`) or a renamed, removed or
+/// deprecated name (`renamed_and_removed_lints`) whose message quotes `check`, as written or with every `-` read as
+/// `_` (rustc quotes `--warn=clippy::bool-comparisn` as `clippy::bool_comparisn`). Such a message naming another lint
+/// (a misspelled `allow`, say) leaves `check` whole.
+fn not_taken(message: &Message, check: &str) -> bool {
+    let code = message.code.as_ref().map(|code| code.code.as_str());
+    let quotes = |name: &str| message.message.contains(&format!("`{name}`"));
+    matches!(code, Some("E0602" | "renamed_and_removed_lints")) && (quotes(check) || quotes(&check.replace('-', "_")))
+}
+
+/// The hit for `message` when `check` takes it (a warning with a code under `"warnings"`, else a message whose code
+/// is `check` with `-` read as `_`) and it has a primary span under `folder`.
 fn hit(message: Message, check: &str, cwd: &Path, folder: &Path) -> Option<Hit> {
     let code = message.code?.code;
     let what = match check {
         "warnings" if message.level == "warning" => format!("{code}: {}", message.message),
         "warnings" => return None,
-        _ if code == check => message.message,
+        _ if code == check.replace('-', "_") => message.message,
         _ => return None,
     };
     let span = message.spans.into_iter().find(|span| span.is_primary)?;

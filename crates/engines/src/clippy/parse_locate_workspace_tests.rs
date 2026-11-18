@@ -1,12 +1,13 @@
 //! ZUT for parse_locate_workspace.rs. `locate_workspace.txt` is the stdout of `cargo locate-project --workspace
 //! --message-format plain`, captured once (exit 0) from the `member/` folder of a throwaway workspace; `CAPTURED` is
-//! the root path it names, which no test reads. The other outputs are hand-built.
+//! the root path it names; no test reads that folder. The other outputs are hand-built.
+//! The capture's home-folder path is replaced by `/work/project`, so it and `CAPTURED` start with it.
 
 use super::parse_locate_workspace;
 use procio::Output;
 use std::path::PathBuf;
 
-const CAPTURED: &str = "/Users/bob/devlop/team-temperare/workcrews/engines/scratchpad/locate-capture";
+const CAPTURED: &str = "/work/project/locate-capture";
 const LOCATED: &[u8] = include_bytes!("fixtures/locate_workspace.txt");
 
 fn output(code: i32, stdout: &[u8], stderr: &[u8]) -> Output {

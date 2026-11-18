@@ -6,7 +6,7 @@
       "column": 10,
       "row": 1
     },
-    "filename": "/Users/bob/devlop/team-temperare/workcrews/engines/scratchpad/cap-ruff/example.py",
+    "filename": "/work/project/cap-ruff/example.py",
     "fix": {
       "applicability": "safe",
       "edits": [
@@ -41,7 +41,7 @@
       "column": 17,
       "row": 3
     },
-    "filename": "/Users/bob/devlop/team-temperare/workcrews/engines/scratchpad/cap-ruff/example.py",
+    "filename": "/work/project/cap-ruff/example.py",
     "fix": {
       "applicability": "unsafe",
       "edits": [

@@ -1,0 +1,1101 @@
+
+Available lint options:
+    -W <foo>           Warn about <foo>
+    -A <foo>           Allow <foo>
+    -D <foo>           Deny <foo>
+    -F <foo>           Forbid <foo> (deny <foo> and all attempts to override)
+
+
+Lint checks provided by rustc:
+
+                                                       name  default  meaning
+                                                       ----  -------  -------
+                     absolute-paths-not-starting-with-crate  allow    fully qualified paths that start with a module name instead of `crate`, `self`, or an extern crate name
+                                ambiguous-negative-literals  allow    ambiguous negative literals operations
+                              closure-returning-async-block  allow    closure that returns `async {}` could be rewritten as an async closure
+                                       deprecated-in-future  allow    detects use of items that will be deprecated in a future version
+                                       deprecated-safe-2024  allow    detects unsafe functions being used as safe functions
+                                  deref-into-dyn-supertrait  allow    `Deref` implementation with a supertrait trait object for output is shadowed by trait upcasting
+                       edition-2024-expr-fragment-specifier  allow    The `expr` fragment specifier will accept more expressions in the 2024 edition. To keep the existing behavior, use the `expr_2021` fragment specifier.
+                                  elided-lifetimes-in-paths  allow    hidden lifetime parameters in types are deprecated
+                             explicit-outlives-requirements  allow    outlives requirements can be inferred
+                                           ffi-unwind-calls  allow    call to foreign functions or function pointers with FFI-unwind ABI
+                                     fuzzy-provenance-casts  allow    a fuzzy integer to pointer cast is used
+                                             if-let-rescope  allow    `if let` assigns a shorter lifetime to temporary values being pattern-matched against in Edition 2024 and rewriting in `match` is an option to preserve the semantics up to Edition 2021
+                                    impl-trait-overcaptures  allow    `impl Trait` will capture more lifetimes than possibly intended in edition 2024
+                              impl-trait-redundant-captures  allow    redundant precise-capturing `use<...>` syntax on an `impl Trait`
+                                        keyword-idents-2018  allow    detects edition keywords being used as an identifier
+                                        keyword-idents-2024  allow    detects edition keywords being used as an identifier
+                                        let-underscore-drop  allow    non-binding let on a type that has a destructor
+                                            linker-messages  allow    warnings emitted at runtime by the target-specific linker program
+                                     lossy-provenance-casts  allow    a lossy pointer to integer cast is used
+                                     macro-use-extern-crate  allow    the `#[macro_use]` attribute is now deprecated in favor of using macros via the module system
+                                       meta-variable-misuse  allow    possible meta-variable misuse at macro definition
+                               missing-copy-implementations  allow    detects potentially-forgotten implementations of `Copy`
+                              missing-debug-implementations  allow    detects missing implementations of Debug
+                                               missing-docs  allow    detects missing documentation for public members
+                                   missing-unsafe-on-extern  allow    detects missing unsafe keyword on extern declarations
+                             multiple-supertrait-upcastable  allow    detect when a dyn-compatible trait has multiple supertraits
+                                           must-not-suspend  allow    use of a `#[must_not_suspend]` value across a yield point
+                                           non-ascii-idents  allow    detects non-ASCII identifiers
+                            non-exhaustive-omitted-patterns  allow    detect when patterns of types marked `non_exhaustive` are missed
+                                          redundant-imports  allow    imports that are redundant due to being imported already
+                                        redundant-lifetimes  allow    detects lifetime parameters that are redundant because they are equal to some other named lifetime
+              resolving-to-items-shadowing-supertrait-items  allow    detects when a supertrait item is shadowed by a subtrait item
+                    rust-2021-incompatible-closure-captures  allow    detects closures affected by Rust 2021 changes
+                         rust-2021-incompatible-or-patterns  allow    detects usage of old versions of or-patterns
+                     rust-2021-prefixes-incompatible-syntax  allow    identifiers that will be parsed as a prefix in Rust 2021
+                               rust-2021-prelude-collisions  allow    detects the usage of trait methods which are ambiguous with traits added to the prelude in future editions
+               rust-2024-guarded-string-incompatible-syntax  allow    will be parsed as a guarded string in Rust 2024
+                                 rust-2024-incompatible-pat  allow    detects patterns whose meaning will change in Rust 2024
+                               rust-2024-prelude-collisions  allow    detects the usage of trait methods which are ambiguous with traits added to the prelude in future editions
+                                 shadowing-supertrait-items  allow    detects when a supertrait item is shadowed by a subtrait item
+                                       single-use-lifetimes  allow    detects lifetime parameters that are only used once
+                                       tail-expr-drop-order  allow    Detect and warn on significant change in drop order in tail expression location
+                                              trivial-casts  allow    detects trivial casts which could be removed
+                                      trivial-numeric-casts  allow    detects trivial casts of numeric types which could be removed
+                                              unit-bindings  allow    binding is useless because it has the unit `()` type
+                                           unnameable-types  allow    effective visibility of a type is larger than the area in which it can be named
+                                  unqualified-local-imports  allow    `use` of a local item without leading `self::`, `super::`, or `crate::`
+                                            unreachable-pub  allow    `pub` items not reachable from crate root
+                                 unsafe-attr-outside-unsafe  allow    detects unsafe attributes outside of unsafe
+                                                unsafe-code  allow    usage of `unsafe` code and other potentially unsound constructs
+                                     unsafe-op-in-unsafe-fn  allow    unsafe operations in unsafe functions without an explicit unsafe block are deprecated
+                                          unstable-features  allow    enabling unstable features
+                                  unused-crate-dependencies  allow    crate dependencies that are never used
+                                       unused-extern-crates  allow    extern crates that are never used
+                                       unused-import-braces  allow    unnecessary braces around an imported item
+                                           unused-lifetimes  allow    detects lifetime parameters that are never used
+                                         unused-macro-rules  allow    detects macro rules that were not used
+                                      unused-qualifications  allow    detects unnecessarily qualified names
+                                             unused-results  allow    unused result of an expression in a statement
+                                   variant-size-differences  allow    detects enums with widely varying variant sizes
+                                     aarch64-softfloat-neon  warn     detects code that could be affected by ABI issues on aarch64 softfloat targets
+                                   ambiguous-derive-helpers  warn     detects derive helper attributes that are ambiguous with built-in attributes
+                             ambiguous-glob-imported-traits  warn     detects uses of ambiguously glob imported traits
+                                     ambiguous-glob-imports  warn     detects certain glob imports that require reporting an ambiguity error
+                                   ambiguous-glob-reexports  warn     ambiguous glob re-exports
+                              ambiguous-import-visibilities  warn     detects certain glob imports that require reporting an ambiguity error
+                                    ambiguous-panic-imports  warn     detects ambiguous core and std panic imports
+                         ambiguous-wide-pointer-comparisons  warn     detects ambiguous wide pointer comparisons
+                                       anonymous-parameters  warn     detects anonymous parameters
+                                            array-into-iter  warn     detects calling `into_iter` on arrays in Rust 2015 and 2018
+                                           asm-sub-register  warn     using only a subset of a register for inline asm inputs
+                                          async-fn-in-trait  warn     use of `async fn` in definition of a publicly-reachable trait
+                                              bad-asm-style  warn     incorrect use of inline assembly
+                                         bare-trait-objects  warn     suggest using `dyn Trait` for trait objects
+                                      boxed-slice-into-iter  warn     detects calling `into_iter` on boxed slices in Rust 2015, 2018, and 2021
+                                  break-with-label-and-loop  warn     `break` expression with label and unlabeled loop as value expression
+                               clashing-extern-declarations  warn     detects when an extern fn has been declared with the same name but different types
+                                       coherence-leak-check  warn     distinct impls distinguished only by the leak-check code
+                                          confusable-idents  warn     detects visually confusable pairs between identifiers
+                                const-evaluatable-unchecked  warn     detects a generic constant is used in a type without a emitting a warning
+                              const-item-interior-mutations  warn     checks for calls which mutates a interior mutable const-item
+                                        const-item-mutation  warn     detects attempts to mutate a `const` item
+                              dangling-pointers-from-locals  warn     detects returning a pointer from a local variable
+                         dangling-pointers-from-temporaries  warn     detects getting a pointer from a temporary
+                                                  dead-code  warn     detect unused, unexported items
+                                                 deprecated  warn     detects use of deprecated items
+                           deprecated-where-clause-location  warn     deprecated where clause location
+                                           double-negations  warn     detects expressions of the form `--x`
+                                        dropping-copy-types  warn     calls to `std::mem::drop` with a value that implements Copy
+                                        dropping-references  warn     calls to `std::mem::drop` with a reference instead of an owned value
+                                                drop-bounds  warn     bounds of the form `T: Drop` are most likely incorrect
+                                 duplicate-macro-attributes  warn     duplicated attribute
+                                                   dyn-drop  warn     trait objects of the form `dyn Drop` are useless
+                          ellipsis-inclusive-range-patterns  warn     `...` range patterns are deprecated
+                              exported-private-dependencies  warn     public interface leaks type from a private dependency
+                                      forbidden-lint-groups  warn     applying forbid to lint-groups
+                                      forgetting-copy-types  warn     calls to `std::mem::forget` with a value that implements Copy
+                                      forgetting-references  warn     calls to `std::mem::forget` with a reference instead of an owned value
+                                   for-loops-over-fallibles  warn     for-looping over an `Option` or a `Result`, which is more clearly expressed as an `if let`
+                                  function-casts-as-integer  warn     casting a function into an integer
+                                   function-item-references  warn     suggest casting to a function pointer when attempting to take references to function items
+                                      hidden-glob-reexports  warn     name introduced by a private item shadows a name introduced by a public glob re-export
+                                            improper-ctypes  warn     proper use of libc types in foreign modules
+                                improper-ctypes-definitions  warn     proper use of libc types in foreign item definitions
+                                    improper-gpu-kernel-arg  warn     GPU kernel entry points have a limited ABI
+                                        incomplete-features  warn     incomplete features that may function improperly in some or all cases
+                  inline-always-mismatching-target-features  warn     detects when a function annotated with `#[inline(always)]` and `#[target_feature(enable = "..")]` is inlined into a caller without the required target feature
+                                         inline-no-sanitize  warn     detects incompatible use of `#[inline(always)]` and `#[sanitize(... = "off")]`
+                                  integer-to-ptr-transmutes  warn     detects integer to pointer transmutes
+                             internal-eq-trait-method-impls  warn     manual implementation of the internal `Eq::assert_receiver_is_total_eq` method
+                                          internal-features  warn     internal features are not supposed to be used
+                                     invalid-doc-attributes  warn     detects invalid `#[doc(...)]` attributes
+                                          invalid-from-utf8  warn     using a non UTF-8 literal in `std::str::from_utf8`
+                                    invalid-nan-comparisons  warn     detects invalid floating point NaN comparisons
+                                              invalid-value  warn     an invalid value is being created (such as a null reference)
+                                   irrefutable-let-patterns  warn     detects irrefutable patterns in `if let` and `while let` statements
+                                          large-assignments  warn     detects large moves or copies
+                              late-bound-lifetime-arguments  warn     detects generic lifetime arguments in path segments with late bound lifetime parameters
+                            malformed-diagnostic-attributes  warn     detects malformed diagnostic attributes
+                       malformed-diagnostic-format-literals  warn     detects diagnostic attribute with malformed diagnostic format literals
+                                                map-unit-fn  warn     `Iterator::map` call that discard the iterator's values
+                               mismatched-lifetime-syntaxes  warn     detects when a lifetime uses different syntax between arguments and return values
+                            misplaced-diagnostic-attributes  warn     detects diagnostic attributes that are placed on the wrong item
+                                                missing-abi  warn     No declared ABI for extern declaration
+                             missing-gpu-kernel-export-name  warn     mangled gpu-kernel function
+                                   mixed-script-confusables  warn     detects Unicode scripts whose mixed script confusables codepoints are solely used
+                          named-arguments-used-positionally  warn     named arguments in format used positionally
+                                       non-camel-case-types  warn     types, variants, traits and type parameters should have camel case names
+                             non-contiguous-range-endpoints  warn     detects off-by-one errors with exclusive range patterns
+                                             non-fmt-panics  warn     detect single-argument panic!() invocations in which the argument is not a format string
+                                      non-local-definitions  warn     checks for non-local definitions
+                               non-shorthand-field-patterns  warn     using `Struct { x: x }` instead of `Struct { x }` in a pattern
+                                             non-snake-case  warn     variables, methods, functions, lifetime parameters and modules should have snake case names
+                                     non-upper-case-globals  warn     static constants should have uppercase identifiers
+                                           noop-method-call  warn     detects the use of well-known noop methods
+                                    no-mangle-generic-items  warn     generic items must be mangled
+                               opaque-hidden-inferred-bound  warn     detects the use of nested `impl Trait` types in associated type bounds that are not general enough
+                                overlapping-range-endpoints  warn     detects range patterns with overlapping endpoints
+                                            path-statements  warn     path statements with no effect
+                                             private-bounds  warn     private type in secondary interface of an item
+                                         private-interfaces  warn     private type in primary interface of an item
+                         ptr-to-integer-transmute-in-consts  warn     detects pointer to integer transmutes in const functions and associated constants
+                                       redundant-semicolons  warn     detects unnecessary trailing semicolons
+                               refining-impl-trait-internal  warn     impl trait in impl method signature does not match trait method signature
+                              refining-impl-trait-reachable  warn     impl trait in impl method signature does not match trait method signature
+                                  renamed-and-removed-lints  warn     lints that have been renamed or removed
+                               repr-c-enums-larger-than-int  warn     repr(C) enums with discriminant values that do not fit into a C int
+                                    rtsan-nonblocking-async  warn     detects incompatible uses of `#[sanitize(realtime = "nonblocking")]` on async functions
+                           self-constructor-from-outer-item  warn     detect unsupported use of `Self` from outer item
+                                        special-module-name  warn     module declarations for files with a special meaning
+                                            stable-features  warn     stable features found in `#[feature]` directive
+                                            static-mut-refs  warn     creating a shared reference to mutable static
+                                   suspicious-double-ref-op  warn     suspicious call of trait method on `&&T`
+                                             trivial-bounds  warn     these bounds don't depend on an type parameters
+                                          type-alias-bounds  warn     bounds in type aliases are not enforced
+                                   tyvar-behind-raw-pointer  warn     raw pointer to an inference variable
+                                        uncommon-codepoints  warn     detects uncommon Unicode codepoints in identifiers
+                                    unconditional-recursion  warn     functions that cannot return without calling themselves
+                              uncovered-param-in-projection  warn     impl contains type parameters that are not covered
+                                            unexpected-cfgs  warn     detects unexpected names and values in `#[cfg]` conditions
+                              unfulfilled-lint-expectations  warn     unfulfilled lint expectation
+                              ungated-async-fn-track-caller  warn     enabling track_caller on an async fn is a no-op unless the async_fn_track_caller feature is enabled
+                                         uninhabited-static  warn     uninhabited static
+                              unknown-diagnostic-attributes  warn     detects unknown diagnostic attributes
+                                              unknown-lints  warn     unrecognized lint attribute
+                                      unnameable-test-items  warn     detects an item that cannot be named being marked as `#[test_case]`
+                                     unnecessary-transmutes  warn     detects transmutes that can also be achieved by other operations
+                 unpredictable-function-pointer-comparisons  warn     detects unpredictable function pointer comparisons
+                          unreachable-cfg-select-predicates  warn     detects unreachable configuration predicates in the cfg_select macro
+                                           unreachable-code  warn     detects unreachable code paths
+                                       unreachable-patterns  warn     detects unreachable patterns
+                                   unstable-name-collisions  warn     detects name collision with an existing but unstable method
+                              unstable-syntax-pre-expansion  warn     unstable syntax can change at any point in the future, causing a hard error!
+                            unsupported-calling-conventions  warn     use of unsupported calling convention
+                                          unused-allocation  warn     detects unnecessary allocations that can be eliminated
+                                         unused-assignments  warn     detect assignments that will never be read
+                              unused-associated-type-bounds  warn     detects unused `Foo = Bar` bounds in `dyn Trait<Foo = Bar>`
+                                          unused-attributes  warn     detects attributes that were not used by the compiler
+                                              unused-braces  warn     unnecessary braces around an expression
+                                         unused-comparisons  warn     comparisons made useless by limits of the types involved
+                                        unused-doc-comments  warn     detects doc comments that aren't used by rustdoc
+                                            unused-features  warn     unused features found in crate-level `#[feature]` directives
+                                             unused-imports  warn     imports that are never used
+                                              unused-labels  warn     detects labels that are never used
+                                              unused-macros  warn     detects macros that were not used
+                                            unused-must-use  warn     unused result of a type flagged as `#[must_use]`
+                                                 unused-mut  warn     detect mut variables which don't need to be mutable
+                                              unused-parens  warn     `if`, `match`, `while` and `return` do not need parentheses
+                                              unused-unsafe  warn     unnecessary use of an `unsafe` block
+                                           unused-variables  warn     detect variables which are not used in any way
+                                        unused-visibilities  warn     detect visibility qualifiers on `const _` items
+                                    useless-ptr-null-checks  warn     useless checking of non-null-typed pointer
+                                       uses-power-alignment  warn     Structs do not follow the power alignment rule under repr(C)
+                                    varargs-without-pattern  warn     detects usage of `...` arguments without a pattern in non-foreign items
+                                                   warnings  warn     mass-change the level for lints which produce warnings
+                                                 while-true  warn     suggest using `loop { }` instead of `while true { }`
+                                 ambiguous-associated-items  deny     ambiguous associated items
+                                        arithmetic-overflow  deny     arithmetic operation overflows
+                                          binary-asm-labels  deny     labels in inline assembly containing only 0 or 1 digits
+                                 bindings-with-variant-name  deny     detects pattern bindings with the same name as one of the matched variants
+                                     conflicting-repr-hints  deny     conflicts between `#[repr(..)]` hints that were previously accepted and used in practice
+                                dangerous-implicit-autorefs  deny     implicit reference to a dereference of a raw pointer
+                           default-overrides-default-fields  deny     detect `Default` impl that should use the type's default field values
+                     dependency-on-unit-never-type-fallback  deny     never type fallback affecting unsafe function calls
+                                              deref-nullptr  deny     detects when an null pointer is dereferenced
+                    elided-lifetimes-in-associated-constant  deny     elided lifetimes cannot be used in associated constants in impls
+                                  enum-intrinsics-non-enums  deny     detects calls to `core::mem::discriminant` and `core::mem::variant_count` with non-enum types
+                             explicit-builtin-cfgs-in-flags  deny     detects builtin cfgs set via the `--cfg`
+                                 ill-formed-attribute-input  deny     ill-formed attribute inputs that were previously accepted and used in practice
+                                         incomplete-include  deny     trailing content in included file
+                            ineffective-unstable-trait-impl  deny     detects `#[unstable]` on stable trait implementations for stable types
+                                    invalid-atomic-ordering  deny     usage of invalid atomic ordering in atomic operations and memory fences
+                                invalid-from-utf8-unchecked  deny     using a non UTF-8 literal in `std::str::from_utf8_unchecked`
+                             invalid-macro-export-arguments  deny     "invalid_parameter" isn't a valid argument for `#[macro_export]`
+                                     invalid-null-arguments  deny     invalid null pointer in arguments
+                                  invalid-reference-casting  deny     casts of `&T` to `&mut T` without interior mutability
+                                 invalid-type-param-default  deny     type parameter default erroneously allowed in invalid location
+                                      legacy-derive-helpers  deny     detects derive helper attributes that are used before they are introduced
+                                        let-underscore-lock  deny     non-binding let on a synchronization lock
+                                    long-running-const-eval  deny     detects long const eval operations
+    macro-expanded-macro-exports-accessed-by-absolute-paths  deny     macro-expanded `macro_export` macros from the current crate cannot be referred to by absolute paths
+                                         mutable-transmutes  deny     transmuting &T to &mut T is undefined behavior, even if the reference is unused
+                                           named-asm-labels  deny     named labels in inline assembly
+                    never-type-fallback-flowing-into-unsafe  deny     never type fallback affecting unsafe function calls
+                                      no-mangle-const-items  deny     const items will not have their symbols exported
+                                   out-of-scope-macro-calls  deny     detects out of scope calls to `macro_rules` in key-value attributes
+                                       overflowing-literals  deny     literal out of range for its type
+                               patterns-in-fns-without-body  deny     patterns in functions without body were erroneously allowed
+                      proc-macro-derive-resolution-fallback  deny     detects proc macro derives using inaccessible names from parent modules
+                            pub-use-of-private-extern-crate  deny     detect public re-exports of private extern crates
+                            repr-transparent-non-zst-fields  deny     transparent type contains an external ZST that is marked #[non_exhaustive] or contains private fields
+                       semicolon-in-expressions-from-macros  deny     trailing semicolon in macro body used as expression
+                                              soft-unstable  deny     a feature gate that doesn't break dependent crates
+                                         test-unstable-lint  deny     this unstable lint is only for testing
+                        text-direction-codepoint-in-comment  deny     invisible directionality-changing codepoints in comment
+                        text-direction-codepoint-in-literal  deny     detect special Unicode codepoints that affect the visual representation of text on screen, changing the direction in which text flows
+                                        unconditional-panic  deny     operation will cause a panic at runtime
+                                   undropped-manually-drops  deny     calls to `std::mem::drop` with `std::mem::ManuallyDrop` instead of it's inner value
+                                        unknown-crate-types  deny     unknown crate type found in `#[crate_type]` directive
+                                         useless-deprecated  deny     detects deprecation attributes with no effect
+
+
+Lint groups provided by rustc:
+
+                                          name  sub-lints
+                                          ----  ---------
+                                      warnings  all lints that are set to issue warnings
+                               deprecated-safe  deprecated-safe-2024
+                           future-incompatible  internal-eq-trait-method-impls, aarch64-softfloat-neon, ambiguous-associated-items, ambiguous-derive-helpers, ambiguous-glob-imported-traits, ambiguous-glob-imports, ambiguous-import-visibilities, ambiguous-panic-imports, coherence-leak-check, conflicting-repr-hints, const-evaluatable-unchecked, elided-lifetimes-in-associated-constant, forbidden-lint-groups, ill-formed-attribute-input, invalid-macro-export-arguments, invalid-type-param-default, late-bound-lifetime-arguments, legacy-derive-helpers, macro-expanded-macro-exports-accessed-by-absolute-paths, out-of-scope-macro-calls, patterns-in-fns-without-body, proc-macro-derive-resolution-fallback, pub-use-of-private-extern-crate, repr-c-enums-larger-than-int, repr-transparent-non-zst-fields, self-constructor-from-outer-item, semicolon-in-expressions-from-macros, soft-unstable, uncovered-param-in-projection, uninhabited-static, unstable-name-collisions, unstable-syntax-pre-expansion, unsupported-calling-conventions, varargs-without-pattern
+                                keyword-idents  keyword-idents-2018, keyword-idents-2024
+                                let-underscore  let-underscore-drop, let-underscore-lock
+                             nonstandard-style  non-camel-case-types, non-snake-case, non-upper-case-globals
+                           refining-impl-trait  refining-impl-trait-reachable, refining-impl-trait-internal
+                       rust-2018-compatibility  keyword-idents-2018, anonymous-parameters, absolute-paths-not-starting-with-crate, tyvar-behind-raw-pointer
+                              rust-2018-idioms  bare-trait-objects, unused-extern-crates, ellipsis-inclusive-range-patterns, elided-lifetimes-in-paths, explicit-outlives-requirements
+                       rust-2021-compatibility  ellipsis-inclusive-range-patterns, array-into-iter, non-fmt-panics, bare-trait-objects, rust-2021-incompatible-closure-captures, rust-2021-incompatible-or-patterns, rust-2021-prefixes-incompatible-syntax, rust-2021-prelude-collisions
+                       rust-2024-compatibility  keyword-idents-2024, edition-2024-expr-fragment-specifier, boxed-slice-into-iter, impl-trait-overcaptures, if-let-rescope, static-mut-refs, dependency-on-unit-never-type-fallback, deprecated-safe-2024, missing-unsafe-on-extern, never-type-fallback-flowing-into-unsafe, rust-2024-guarded-string-incompatible-syntax, rust-2024-incompatible-pat, rust-2024-prelude-collisions, tail-expr-drop-order, unsafe-attr-outside-unsafe, unsafe-op-in-unsafe-fn
+    unknown-or-malformed-diagnostic-attributes  malformed-diagnostic-attributes, malformed-diagnostic-format-literals, misplaced-diagnostic-attributes, unknown-diagnostic-attributes
+                                        unused  unused-imports, unused-variables, unused-visibilities, unused-assignments, dead-code, unused-mut, unreachable-code, unreachable-patterns, unused-must-use, unused-unsafe, path-statements, unused-attributes, unused-macros, unused-macro-rules, unused-allocation, unused-doc-comments, unused-extern-crates, unused-features, unused-labels, unused-parens, unused-braces, redundant-semicolons, map-unit-fn
+
+
+Lint checks loaded by this crate:
+
+                                                       name  default  meaning
+                                                       ----  -------  -------
+                                     clippy::absolute-paths  allow    checks for usage of an item without a `use` statement
+                              clippy::alloc-instead-of-core  allow    type is imported from alloc when available in core
+                                   clippy::allow-attributes  allow    `#[allow]` will not trigger if a warning isn't found. `#[expect]` triggers if there are no warnings.
+                    clippy::allow-attributes-without-reason  allow    ensures that all `allow` and `expect` attributes have a reason
+                     clippy::arbitrary-source-item-ordering  allow    arbitrary source item ordering
+                            clippy::arithmetic-side-effects  allow    any arithmetic expression that can cause side effects like overflows or panics
+                        clippy::assertions-on-result-states  allow    `assert!(r.is_ok())` or `assert!(r.is_err())` gives worse panic messages than directly calling `r.unwrap()` or `r.unwrap_err()`
+                                   clippy::assigning-clones  allow    assigning the result of cloning may be inefficient
+                                     clippy::as-conversions  allow    using a potentially dangerous silent `as` conversion
+                              clippy::as-pointer-underscore  allow    detects `as *mut _` and `as *const _` conversion
+                                    clippy::as-ptr-cast-mut  allow    casting the result of the `&self`-taking `as_ptr` to a mutable pointer
+                                      clippy::as-underscore  allow    detects `as _` conversion
+                                   clippy::big-endian-bytes  allow    disallows usage of the `to_be_bytes` method
+                                clippy::bool-to-int-with-if  allow    using if to convert bool to int
+                                      clippy::borrow-as-ptr  allow    borrowing just to cast to a raw pointer
+                              clippy::branches-sharing-code  allow    `if` statement with shared code in all blocks
+                              clippy::cargo-common-metadata  allow    common metadata is defined in `Cargo.toml`
+          clippy::case-sensitive-file-extension-comparisons  allow    Checks for calls to ends_with with case-sensitive file extensions
+                                      clippy::cast-lossless  allow    casts using `as` that are known to be lossless, e.g., `x as u64` where `x: u8`
+                           clippy::cast-possible-truncation  allow    casts that may cause truncation of the value, e.g., `x as u8` where `x: u32`, or `x as i32` where `x: f32`
+                                 clippy::cast-possible-wrap  allow    casts that may cause wrapping around the value, e.g., `x as i32` where `x: u32` and `x > i32::MAX`
+                                clippy::cast-precision-loss  allow    casts that cause loss of precision, e.g., `x as f32` where `x: u64`
+                                 clippy::cast-ptr-alignment  allow    cast from a pointer to a more strictly aligned pointer
+                                     clippy::cast-sign-loss  allow    casts from signed types to unsigned types, e.g., `x as u32` where `x: i32`
+                                       clippy::cfg-not-test  allow    enforce against excluding code from test builds
+                                clippy::checked-conversions  allow    `try_from` could replace manual bounds checking when casting
+                                   clippy::clear-with-drain  allow    calling `drain` in order to `clear` a container
+                           clippy::cloned-instead-of-copied  allow    used `cloned` where `copied` could be used instead
+                                   clippy::clone-on-ref-ptr  allow    using `clone` on a ref-counted pointer
+                            clippy::coerce-container-to-any  allow    coercing to `&dyn Any` when dereferencing could produce a `dyn Any` without coercion is usually not intended
+                               clippy::cognitive-complexity  allow    functions that should be split up into multiple functions
+                                clippy::collapsible-else-if  allow    nested `else`-`if` expressions that can be collapsed (e.g., `else { if x { ... } }`)
+                           clippy::collection-is-never-read  allow    a collection is never queried
+                                   clippy::comparison-chain  allow    `if`s that can be rewritten with `match` and `cmp`
+                                      clippy::copy-iterator  allow    implementing `Iterator` on a `Copy` type
+                                         clippy::create-dir  allow    calling `std::fs::create_dir` instead of `std::fs::create_dir_all`
+                                          clippy::dbg-macro  allow    `dbg!` macro is intended as a debugging tool
+                         clippy::debug-assert-with-mut-call  allow    mutable arguments in `debug_assert{,_ne,_eq}!`
+                           clippy::decimal-bitwise-operands  allow    use binary, hex, or octal literals for bitwise operations
+                     clippy::decimal-literal-representation  allow    using decimal representation when hexadecimal would be better
+                           clippy::default-numeric-fallback  allow    usage of unconstrained numeric literals which may cause default numeric fallback.
+                               clippy::default-trait-access  allow    checks for literal calls to `Default::default()`
+                       clippy::default-union-representation  allow    unions without a `#[repr(C)]` attribute
+                                   clippy::deref-by-slicing  allow    slicing instead of dereferencing
+                       clippy::derive-partial-eq-without-eq  allow    deriving `PartialEq` on a type that can implement `Eq`, without implementing `Eq`
+                           clippy::disallowed-script-idents  allow    usage of non-allowed Unicode scripts
+                                    clippy::doc-broken-link  allow    broken document link
+                clippy::doc-comment-double-space-linebreaks  allow    double-space used for doc comment linebreak instead of `\`
+                            clippy::doc-include-without-cfg  allow    check if files included in documentation are behind `cfg(doc)`
+                                      clippy::doc-link-code  allow    link with code back-to-back with other code
+                               clippy::doc-link-with-quotes  allow    possible typo for an intra-doc link
+                                       clippy::doc-markdown  allow    presence of `_`, `::` or camel-case outside backticks in documentation
+                 clippy::doc-paragraphs-missing-punctuation  allow    missing terminal punctuation in doc comments
+                          clippy::duration-suboptimal-units  allow    constructing a `Duration` using a smaller unit when a larger unit would be more readable
+                            clippy::elidable-lifetime-names  allow    lifetime name that can be replaced with the anonymous lifetime
+                               clippy::else-if-without-else  allow    `if` expression with an `else if`, but without a final `else` branch
+                                         clippy::empty-drop  allow    empty `Drop` implementations
+                                        clippy::empty-enums  allow    enum with no variants
+                  clippy::empty-enum-variants-with-brackets  allow    finds enum variants with empty brackets
+                        clippy::empty-structs-with-brackets  allow    finds struct declarations with empty brackets
+                                      clippy::enum-glob-use  allow    use items that import all variants of an enum
+                                   clippy::equatable-if-let  allow    using pattern matching instead of equality
+                                   clippy::error-impl-error  allow    exported types named `Error` that implement `Error`
+                                   clippy::exhaustive-enums  allow    detects exported enums that have not been marked #[non_exhaustive]
+                                 clippy::exhaustive-structs  allow    detects exported structs that have not been marked #[non_exhaustive]
+                                               clippy::exit  allow    detects `std::process::exit` calls outside of `main`
+                                        clippy::expect-used  allow    using `.expect()` on `Result` or `Option`, which might be better handled
+                             clippy::explicit-deref-methods  allow    Explicit use of deref or deref_mut method while not in a method chain.
+                            clippy::explicit-into-iter-loop  allow    for-looping over `_.into_iter()` when `_` would do
+                                 clippy::explicit-iter-loop  allow    for-looping over `_.iter()` or `_.iter_mut()` when `&_` or `&mut _` would do
+                            clippy::expl-impl-clone-on-copy  allow    implementing `Clone` explicitly on `Copy` types
+                                 clippy::fallible-impl-from  allow    Warn on impls of `From<..>` that contain `panic!()` or `unwrap()`
+                  clippy::field-scoped-visibility-modifiers  allow    checks for usage of a scoped visibility modifier, like `pub(crate)`, on fields
+                                   clippy::filetype-is-file  allow    `FileType::is_file` is not recommended to test for readable file type
+                                    clippy::filter-map-next  allow    using combination of `filter_map` and `next` which can usually be written as a single method call
+                                    clippy::flat-map-option  allow    used `flat_map` where `filter_map` could be used instead
+                                   clippy::float-arithmetic  allow    any floating-point arithmetic statement
+                                          clippy::float-cmp  allow    using `==` or `!=` on float values instead of comparing difference with an allowed error
+                                    clippy::float-cmp-const  allow    using `==` or `!=` on float constants instead of comparing difference with an allowed error
+                          clippy::fn-params-excessive-bools  allow    using too many bools in function parameters
+                             clippy::fn-to-numeric-cast-any  allow    casting a function pointer to any integer type
+                                     clippy::format-collect  allow    `format!`ing every element in a collection, then collecting the strings into a new `String`
+                                 clippy::format-push-string  allow    `format!(..)` appended to existing `String`
+                       clippy::from-iter-instead-of-collect  allow    use `.collect()` instead of `::from_iter()`
+                                    clippy::future-not-send  allow    public Futures must be Send
+                                         clippy::get-unwrap  allow    using `.get().unwrap()` or `.get_mut().unwrap()` when using `[]` would work instead
+                                  clippy::host-endian-bytes  allow    disallows usage of the `to_ne_bytes` method
+                                        clippy::if-not-else  allow    `if` branches that could be swapped so no negation operation is necessary on the condition
+                             clippy::if-then-some-else-none  allow    Finds if-else that could be written using either `bool::then` or `bool::then_some`
+                              clippy::ignored-unit-patterns  allow    suggest replacing `_` by `()` in patterns where appropriate
+                              clippy::ignore-without-reason  allow    ignored tests without messages
+                                     clippy::implicit-clone  allow    implicitly cloning a value by invoking a function on its dereferenced type
+                                    clippy::implicit-hasher  allow    missing generalization over different hashers
+                                    clippy::implicit-return  allow    use a return statement like `return expr` instead of an expression
+                               clippy::impl-trait-in-params  allow    `impl Trait` is used in the function's parameters
+                                    clippy::imprecise-flops  allow    usage of imprecise floating point operations
+                    clippy::inconsistent-struct-constructor  allow    the order of the field init is inconsistent with the order in the struct definition
+                                   clippy::indexing-slicing  allow    indexing/slicing usage
+                              clippy::index-refutable-slice  allow    avoid indexing on slices which could be destructed
+                              clippy::inefficient-to-string  allow    using `to_string` on `&&T` where `T: ToString`
+                                      clippy::infinite-loop  allow    possibly unintended infinite loop
+                                      clippy::inline-always  allow    use of `#[inline(always)]`
+                          clippy::inline-asm-x86-att-syntax  allow    prefer Intel x86 assembly syntax
+                        clippy::inline-asm-x86-intel-syntax  allow    prefer AT&T x86 assembly syntax
+                                   clippy::integer-division  allow    integer division may cause loss of precision
+                    clippy::integer-division-remainder-used  allow    use of disallowed default division and remainder operations
+                             clippy::into-iter-without-iter  allow    implementing `IntoIterator for (&|&mut) Type` without an inherent `iter(_mut)` method
+                         clippy::invalid-upcast-comparisons  allow    a comparison involving an upcast which is always true or false
+                                        clippy::ip-constant  allow    hardcoded localhost IP address
+                             clippy::items-after-statements  allow    blocks where an item comes after a statement
+                                  clippy::iter-filter-is-ok  allow    filtering an iterator over `Result`s for `Ok` can be achieved with `flatten`
+                                clippy::iter-filter-is-some  allow    filtering an iterator over `Option`s for `Some` can be achieved with `flatten`
+                        clippy::iter-not-returning-iterator  allow    methods named `iter` or `iter_mut` that do not return an `Iterator`
+                          clippy::iter-on-empty-collections  allow    Iterator for empty array
+                               clippy::iter-on-single-items  allow    Iterator for array of length 1
+                                clippy::iter-over-hash-type  allow    iterating over unordered hash-based types (`HashMap` and `HashSet`)
+                             clippy::iter-without-into-iter  allow    implementing `iter(_mut)` without an associated `IntoIterator for (&|&mut) Type` impl
+                                    clippy::iter-with-drain  allow    replace `.drain(..)` with `.into_iter()`
+                                 clippy::large-digit-groups  allow    grouping digits into groups that are too large
+                                      clippy::large-futures  allow    large future may lead to unexpected stack overflows
+                                 clippy::large-include-file  allow    including a large file
+                                 clippy::large-stack-arrays  allow    allocating large arrays on stack may cause stack overflow
+                                 clippy::large-stack-frames  allow    checks for functions that allocate a lot of stack space
+                        clippy::large-types-passed-by-value  allow    functions taking large arguments by value
+                            clippy::let-underscore-must-use  allow    non-binding `let` on a `#[must_use]` expression
+                             clippy::let-underscore-untyped  allow    non-binding `let` without a type annotation
+                                         clippy::linkedlist  allow    usage of LinkedList, usually a vector is faster, or a more specialized data structure like a `VecDeque`
+                clippy::literal-string-with-formatting-args  allow    Checks if string literals have formatting arguments
+                                clippy::little-endian-bytes  allow    disallows usage of the `to_le_bytes` method
+                                clippy::lossy-float-literal  allow    lossy whole number float literals
+                                  clippy::macro-use-imports  allow    #[macro_use] is no longer needed
+                                      clippy::manual-assert  allow    `panic!` and only a `panic!` in `if`-then statement
+                                       clippy::manual-ilog2  allow    manually reimplementing `ilog2`
+                             clippy::manual-instant-elapsed  allow    subtraction between `Instant::now()` and previous `Instant`
+                             clippy::manual-is-power-of-two  allow    manually reimplementing `is_power_of_two`
+                              clippy::manual-is-variant-and  allow    using `.map(f).unwrap_or_default()` or `.map(f) == Some/Ok(true)`, which are more succinctly expressed as `is_some_and(f)` or `is_ok_and(f)`
+                                    clippy::manual-let-else  allow    manual implementation of a let...else statement
+                                    clippy::manual-midpoint  allow    manual implementation of `midpoint` which can overflow
+                                  clippy::manual-string-new  allow    empty String is being created manually
+                             clippy::many-single-char-names  allow    too many single character bindings
+                                     clippy::map-err-ignore  allow    `map_err` should not ignore the original error
+                                      clippy::map-unwrap-or  allow    using `.map(f).unwrap_or(a)` or `.map(f).unwrap_or_else(func)`, which are more succinctly expressed as `map_or(a, f)` or `map_or_else(a, f)`
+               clippy::map-with-unused-argument-over-ranges  allow    map of a trivial closure (not dependent on parameter) over a range
+                                         clippy::match-bool  allow    a `match` on a boolean expression instead of an `if..else` block
+                                    clippy::match-same-arms  allow    `match` with identical arm bodies
+                 clippy::match-wildcard-for-single-variants  allow    a wildcard enum match for a single variant
+                                 clippy::match-wild-err-arm  allow    a `match` with `Err(_)` arm and take drastic actions
+                                clippy::maybe-infinite-iter  allow    possible infinite iteration
+                                         clippy::mem-forget  allow    `mem::forget` usage on `Drop` types, likely to cause memory leaks
+                                    clippy::min-ident-chars  allow    disallows idents that are too short
+                       clippy::mismatching-type-param-order  allow    type parameter positioned inconsistently between type def and impl block
+                       clippy::missing-asserts-for-indexing  allow    indexing into a slice multiple times without an `assert`
+                             clippy::missing-assert-message  allow    checks assertions without a custom panic message
+                               clippy::missing-const-for-fn  allow    Lint functions definitions that could be made `const fn`
+                      clippy::missing-docs-in-private-items  allow    detects missing documentation for private members
+                                 clippy::missing-errors-doc  allow    `pub fn` returns `Result` without `# Errors` in doc comment
+                            clippy::missing-fields-in-debug  allow    missing fields in manual `Debug` implementation
+                     clippy::missing-inline-in-public-items  allow    detects missing `#[inline]` attribute for public callables (functions, trait methods, methods...)
+                                 clippy::missing-panics-doc  allow    `pub fn` may panic without `# Panics` in doc comment
+                              clippy::missing-trait-methods  allow    trait implementation uses default provided method
+                     clippy::mixed-read-write-in-expression  allow    whether a variable read occurs before a write depends on sub-expression evaluation order
+                            clippy::module-name-repetitions  allow    type names prefixed/postfixed with their containing module's name
+                                  clippy::modulo-arithmetic  allow    any modulo arithmetic statement
+                                   clippy::mod-module-files  allow    checks that module layout is consistent
+                            clippy::multiple-crate-versions  allow    multiple versions of the same crate being used
+                             clippy::multiple-inherent-impl  allow    Multiple inherent impl that could be grouped
+                      clippy::multiple-unsafe-ops-per-block  allow    more than one unsafe operation per `unsafe` block
+                                 clippy::must-use-candidate  allow    function or method that could take a `#[must_use]` attribute
+                                       clippy::mutex-atomic  allow    using a mutex where an atomic value could be used instead.
+                                      clippy::mutex-integer  allow    using a mutex for an integer type
+                                            clippy::mut-mut  allow    usage of double mut-refs, e.g., `&mut &mut ...`
+                                    clippy::naive-bytecount  allow    use of naive `<slice>.filter(|&x| x == y).count()` to count byte values
+                              clippy::needless-bitwise-bool  allow    Boolean expressions that use bitwise rather than lazy operators
+                                   clippy::needless-collect  allow    collecting an iterator when collect is not needed
+                                  clippy::needless-continue  allow    `continue` statements that can be replaced by a rearrangement of code
+                                  clippy::needless-for-each  allow    using `for_each` where a `for` loop would be simpler
+                           clippy::needless-pass-by-ref-mut  allow    using a `&mut` argument when it's not mutated
+                             clippy::needless-pass-by-value  allow    functions taking arguments by value, but not consuming them in its body
+                               clippy::needless-raw-strings  allow    suggests using a string literal when a raw string literal is unnecessary
+                         clippy::needless-raw-string-hashes  allow    suggests reducing the number of hashes around a raw string literal
+                                 clippy::needless-type-cast  allow    binding defined with one type but always cast to another
+                             clippy::negative-feature-names  allow    usage of a negative feature name
+                           clippy::nonstandard-macro-braces  allow    check consistent use of braces in macro
+                                  clippy::non-ascii-literal  allow    using any literal non-ASCII chars in a string literal instead of using the `\u` escape
+                         clippy::non-send-fields-in-send-ty  allow    there is a field that is not safe to be sent to another thread in a `Send` struct
+                               clippy::non-std-lazy-statics  allow    lazy static that could be replaced by `std::sync::LazyLock`
+                               clippy::non-zero-suggestions  allow    suggests using `NonZero#` from `u#` or `i#` for more efficient and type-safe conversions
+                       clippy::no-effect-underscore-binding  allow    binding to `_` prefixed variable with no side-effect
+                            clippy::no-mangle-with-rust-abi  allow    convert Rust ABI functions to C ABI
+                               clippy::option-as-ref-cloned  allow    cloning an `Option` via `as_ref().cloned()`
+                                 clippy::option-if-let-else  allow    reimplementation of Option::map_or
+                                      clippy::option-option  allow    usage of `Option<Option<T>>`
+                                        clippy::or-fun-call  allow    using any `*or` method with a function call, which suggests `*or_else`
+                                              clippy::panic  allow    usage of the `panic!` macro
+                                 clippy::panic-in-result-fn  allow    functions of type `Result<..>` that contain `panic!()` or assertion
+                                 clippy::partial-pub-fields  allow    partial fields of a struct are public
+                             clippy::pathbuf-init-then-push  allow    `push` immediately after `PathBuf` creation
+                            clippy::path-buf-push-overwrite  allow    calling `push` with file system root on `PathBuf` can overwrite it
+                              clippy::pattern-type-mismatch  allow    type of pattern does not match the expression type
+                                     clippy::pointer-format  allow    formatting a pointer
+                                    clippy::precedence-bits  allow    operations mixing bit shifting with bit combining/masking
+                                       clippy::print-stderr  allow    printing on stderr
+                                       clippy::print-stdout  allow    printing on stdout
+                                         clippy::ptr-as-ptr  allow    casting using `as` between raw pointers that doesn't change their constness, where `pointer::cast` could take the place of `as`
+                                 clippy::ptr-cast-constness  allow    casting using `as` on raw pointers to change constness when specialized methods apply
+                              clippy::ptr-offset-by-literal  allow    unneeded pointer offset
+                              clippy::pub-underscore-fields  allow    struct field prefixed with underscore and marked public
+                                            clippy::pub-use  allow    restricts the usage of `pub use`
+                              clippy::pub-without-shorthand  allow    disallows usage of `pub(in <loc>)` with `in`
+                                 clippy::pub-with-shorthand  allow    disallows usage of `pub(<loc>)`, without `in`
+                                 clippy::question-mark-used  allow    checks if the `?` operator is used
+                                    clippy::range-minus-one  allow    `x..=(y-1)` reads better as `x..y`
+                                     clippy::range-plus-one  allow    `x..(y+1)` reads better as `x..=y`
+                                          clippy::rc-buffer  allow    shared ownership of a buffer type
+                                           clippy::rc-mutex  allow    usage of `Rc<Mutex<T>>`
+                                 clippy::read-zero-byte-vec  allow    checks for reads into a zero-length `Vec`
+                                    clippy::redundant-clone  allow    `clone()` of an owned value that is going to be dropped immediately
+                 clippy::redundant-closure-for-method-calls  allow    redundant closures for method calls
+                                     clippy::redundant-else  allow    `else` branch that can be removed without changing semantics
+                            clippy::redundant-feature-names  allow    usage of a redundant feature name
+                                clippy::redundant-pub-crate  allow    Using `pub(crate)` visibility on items that are not crate visible due to the visibility of the module that contains them.
+                              clippy::redundant-test-prefix  allow    redundant `test_` prefix in test function name
+                         clippy::redundant-type-annotations  allow    warns about needless / redundant type annotations.
+                                         clippy::ref-as-ptr  allow    using `as` to cast a reference to pointer
+                           clippy::ref-binding-to-reference  allow    `ref` binding to a reference
+                                         clippy::ref-option  allow    function signature uses `&Option<T>` instead of `Option<&T>`
+                                     clippy::ref-option-ref  allow    use `Option<&T>` instead of `&Option<&T>`
+                                       clippy::ref-patterns  allow    use of a ref pattern, e.g. Some(ref value)
+                            clippy::renamed-function-params  allow    renamed function parameters in trait implementation
+                    clippy::rest-pat-in-fully-bound-structs  allow    a match on a struct that binds all fields but still uses the wildcard pattern
+                                    clippy::return-and-then  allow    using `Option::and_then` or `Result::and_then` to chain a computation that returns an `Option` or a `Result`
+                           clippy::return-self-not-must-use  allow    missing `#[must_use]` annotation on a method returning `Self`
+                     clippy::same-functions-in-if-condition  allow    consecutive `if`s with the same function call
+                           clippy::same-length-and-capacity  allow    `from_raw_parts` with same length and capacity
+                                   clippy::same-name-method  allow    two method with same name
+                                     clippy::search-is-some  allow    using an iterator or string search followed by `is_some()` or `is_none()`, which is more succinctly expressed as a call to `any()` or `contains()` (with negation in case of `is_none()`)
+                            clippy::self-named-module-files  allow    checks that module layout is consistent
+                        clippy::self-only-used-in-recursion  allow    self receiver only used to recursively call method can be removed
+                      clippy::semicolon-if-nothing-returned  allow    add a semicolon if nothing is returned
+                             clippy::semicolon-inside-block  allow    add a semicolon inside the block
+                            clippy::semicolon-outside-block  allow    add a semicolon outside the block
+                           clippy::separated-literal-suffix  allow    literals whose suffix is separated by an underscore
+                             clippy::set-contains-or-insert  allow    call to `<set>::contains` followed by `<set>::insert`
+                                       clippy::shadow-reuse  allow    rebinding a name to an expression that reuses the original value, e.g., `let x = x + 1`
+                                        clippy::shadow-same  allow    rebinding a name to itself, e.g., `let mut x = &mut x`
+                                   clippy::shadow-unrelated  allow    rebinding a name without even using the original value
+                        clippy::should-panic-without-expect  allow    ensures that all `should_panic` attributes specify its expected panic message
+                      clippy::significant-drop-in-scrutinee  allow    warns when a temporary of a type with a drop with a significant side-effect might have a surprising lifetime
+                        clippy::significant-drop-tightening  allow    Searches for elements marked with `#[clippy::has_significant_drop]` that could be early dropped but are in fact dropped at the end of their scopes
+                                      clippy::similar-names  allow    similarly named items and bindings
+                                     clippy::single-call-fn  allow    checks for functions that are only used once
+                         clippy::single-char-lifetime-names  allow    warns against single-character lifetime names
+                                clippy::single-char-pattern  allow    using a single-character str where a char could be used, e.g., `_.split("x")`
+                                  clippy::single-match-else  allow    a `match` statement with two arms where the second arm's pattern is a placeholder instead of a specific match pattern
+                                  clippy::single-option-map  allow    Checks for functions with method calls to `.map(_)` on an arg of type `Option` as the outermost expression.
+                              clippy::stable-sort-primitive  allow    use of sort() when sort_unstable() is equivalent
+                               clippy::std-instead-of-alloc  allow    type is imported from std when available in alloc
+                                clippy::std-instead-of-core  allow    type is imported from std when available in core
+                                         clippy::string-add  allow    using `x + ..` where x is a `String` instead of `push_str()`
+                                  clippy::string-add-assign  allow    using `x = x + ..` where x is a `String` instead of `push_str()`
+                                clippy::string-lit-as-bytes  allow    calling `as_bytes` on a string literal instead of using a byte string literal
+                               clippy::string-lit-chars-any  allow    checks for `<string_lit>.chars().any(|i| i == c)`
+                                       clippy::string-slice  allow    slicing a string
+                             clippy::struct-excessive-bools  allow    using too many bools in a struct
+                                 clippy::struct-field-names  allow    structs where all fields share a prefix/postfix or contain the name of the struct
+                               clippy::str-split-at-newline  allow    splitting a trimmed string at hard-coded newlines
+                                      clippy::str-to-string  allow    using `to_string()` on a `&str`, which should be `to_owned()`
+                                   clippy::suboptimal-flops  allow    usage of sub-optimal floating point operations
+                     clippy::suspicious-operation-groupings  allow    groupings of binary operations that look suspiciously like typos
+                         clippy::suspicious-xor-used-as-pow  allow    XOR (`^`) operator possibly used as exponentiation operator
+                          clippy::tests-outside-test-module  allow    A test function is outside the testing module.
+                                               clippy::todo  allow    `todo!` should not be present in production code
+                       clippy::too-long-first-doc-paragraph  allow    ensure the first documentation paragraph is short
+                                     clippy::too-many-lines  allow    functions with too many lines
+                               clippy::trailing-empty-array  allow    struct with a trailing zero-sized array but without `#[repr(C)]` or another `repr` attribute
+                        clippy::trait-duplication-in-bounds  allow    check if the same trait bounds are specified more than once during a generic declaration
+                               clippy::transmute-ptr-to-ptr  allow    transmutes from a pointer to a pointer / a reference to a reference
+                           clippy::transmute-undefined-repr  allow    transmute to or from a type with an undefined representation
+                         clippy::trivially-copy-pass-by-ref  allow    functions taking small copyable arguments by reference
+                                      clippy::trivial-regex  allow    trivial regular expressions
+                                            clippy::try-err  allow    return errors explicitly rather than hiding them behind a `?`
+                            clippy::tuple-array-conversions  allow    checks for tuple<=>array conversions that are not done with `.into()`
+                          clippy::type-repetition-in-bounds  allow    types are repeated unnecessarily in trait bounds, use `+` instead of using `T: _, T: _`
+                         clippy::unchecked-time-subtraction  allow    finds unchecked subtraction involving 'Duration' or 'Instant'
+                         clippy::undocumented-unsafe-blocks  allow    creating an unsafe block without explaining why it is safe
+                                    clippy::unicode-not-nfc  allow    using a Unicode literal not in NFC normal form (see [Unicode tr15](http://www.unicode.org/reports/tr15/) for further information)
+                                      clippy::unimplemented  allow    `unimplemented!` should not be present in production code
+                             clippy::uninhabited-references  allow    reference to uninhabited type
+                              clippy::uninlined-format-args  allow    using non-inlined variables in `format!` calls
+                            clippy::unnecessary-box-returns  allow    Needlessly returning a Box
+                       clippy::unnecessary-debug-formatting  allow    `Debug` formatting applied to an `OsStr` or `Path` when `.display()` is available
+                                   clippy::unnecessary-join  allow    using `.collect::<Vec<String>>().join("")` on an iterator
+                          clippy::unnecessary-literal-bound  allow    detects &str that could be &'static str in function return types
+                         clippy::unnecessary-safety-comment  allow    annotating safe code with a safety comment
+                             clippy::unnecessary-safety-doc  allow    `pub fn` or `pub trait` with `# Safety` docs
+                           clippy::unnecessary-self-imports  allow    imports ending in `::{self}`, which can be omitted
+                              clippy::unnecessary-semicolon  allow    unnecessary semicolon after expression returning `()`
+                  clippy::unnecessary-struct-initialization  allow    struct built from a base that can be written mode concisely
+                         clippy::unnecessary-trailing-comma  allow    unnecessary trailing comma before closing parenthesis
+                                  clippy::unnecessary-wraps  allow    functions that only return `Ok` or `Some`
+                             clippy::unneeded-field-pattern  allow    struct fields bound to a wildcard instead of using `..`
+                               clippy::unnested-or-patterns  allow    unnested or-patterns, e.g., `Foo(Bar) | Foo(Baz) instead of `Foo(Bar | Baz)`
+                                        clippy::unreachable  allow    usage of the `unreachable!` macro
+                                 clippy::unreadable-literal  allow    long literal without underscores
+                          clippy::unsafe-derive-deserialize  allow    deriving `serde::Deserialize` on a type that has methods using `unsafe`
+                         clippy::unseparated-literal-suffix  allow    literals whose suffix is not separated by an underscore
+                                       clippy::unused-async  allow    finds async functions with no await statements
+                                    clippy::unused-peekable  allow    creating a peekable iterator without using any of its methods
+                                   clippy::unused-result-ok  allow    Use of `.ok()` to silence `Result`'s `#[must_use]` is misleading. Use `let _ =` instead.
+                                    clippy::unused-rounding  allow    Uselessly rounding a whole number floating-point literal
+                                        clippy::unused-self  allow    methods that contain a `self` argument but don't use it
+                                 clippy::unused-trait-names  allow    use items that import a trait but only use it anonymously
+                                   clippy::unwrap-in-result  allow    functions of type `Result<..>` or `Option`<...> that contain `expect()` or `unwrap()`
+                                        clippy::unwrap-used  allow    using `.unwrap()` on `Result` or `Option`, which should at least get a better message using `expect()`
+                            clippy::used-underscore-binding  allow    using a binding which is prefixed with an underscore
+                              clippy::used-underscore-items  allow    using a item which is prefixed with an underscore
+                                 clippy::useless-let-if-seq  allow    unidiomatic `let mut` declaration followed by initialization in `if`
+                                          clippy::use-debug  allow    use of `Debug`-based formatting
+                                           clippy::use-self  allow    unnecessary structure name repetition whereas `Self` is applicable
+                                   clippy::verbose-bit-mask  allow    expressions where a bit mask is less readable than the corresponding method call
+                                 clippy::verbose-file-reads  allow    use of `File::read_to_end` or `File::read_to_string`
+                                clippy::volatile-composites  allow    warn about volatile read/write applied to composite types
+                                        clippy::while-float  allow    while loops comparing floating point values
+                              clippy::wildcard-dependencies  allow    wildcard dependencies being used
+                            clippy::wildcard-enum-match-arm  allow    a wildcard enum match arm using `_`
+                                   clippy::wildcard-imports  allow    lint `use _::*` statements
+                              clippy::zero-sized-map-values  allow    usage of map with zero-sized value type
+                              clippy::almost-complete-range  warn     almost complete range
+                             clippy::arc-with-non-send-sync  warn     using `Arc` with a type that does not implement `Send` and `Sync`
+                            clippy::assertions-on-constants  warn     `assert!(true)` / `assert!(false)` will be optimized out by the compiler, and should probably be replaced by a `panic!()` or `unreachable!()`
+                                  clippy::assign-op-pattern  warn     assigning the result of an operation on a variable to that same variable
+                         clippy::await-holding-invalid-type  warn     holding a type across an await point which is not allowed to be held as per the configuration
+                                 clippy::await-holding-lock  warn     inside an async function, holding a `MutexGuard` while calling `await`
+                          clippy::await-holding-refcell-ref  warn     inside an async function, holding a `RefCell` ref while calling `await`
+                                clippy::bind-instead-of-map  warn     using `Option.and_then(|x| Some(y))`, which is more succinctly expressed as `map(|x| y)`
+                   clippy::blanket-clippy-restriction-lints  warn     enabling the complete restriction group
+                               clippy::blocks-in-conditions  warn     useless or complex blocks that can be eliminated in conditions
+                             clippy::bool-assert-comparison  warn     Using a boolean as comparison value in an assert_* macro when there is no need
+                                    clippy::bool-comparison  warn     comparing a variable to a boolean, e.g., `if x == true` or `if x != true`
+                                       clippy::borrowed-box  warn     a borrow of a boxed type
+                                   clippy::borrow-deref-ref  warn     deref on an immutable reference returns the same type as itself
+                      clippy::borrow-interior-mutable-const  warn     referencing `const` with interior mutability
+                                        clippy::boxed-local  warn     using `Box<T>` where unnecessary
+                                     clippy::box-collection  warn     usage of `Box<Vec<T>>`, vector elements are already on the heap
+                                        clippy::box-default  warn     Using Box::new(T::default()) instead of Box::default()
+                                clippy::builtin-type-shadow  warn     shadowing a builtin type
+                                 clippy::bytes-count-to-len  warn     Using `bytes().count()` when `len()` performs the same functionality
+                                          clippy::bytes-nth  warn     replace `.bytes().nth()` with `.as_bytes().get()`
+                                   clippy::byte-char-slices  warn     hard to read byte char slice
+                               clippy::cast-abs-to-unsigned  warn     casting the result of `abs()` to an unsigned integer can panic
+                              clippy::cast-enum-constructor  warn     casts from an enum tuple constructor to an integer
+                               clippy::cast-enum-truncation  warn     casts from an enum type to an integral type that will truncate the value
+                                    clippy::cast-nan-to-int  warn     casting a known floating-point NaN into an integer
+                          clippy::cast-slice-from-raw-parts  warn     casting a slice created from a pointer and length to a slice pointer
+                                     clippy::chars-last-cmp  warn     using `.chars().last()` or `.chars().next_back()` to check if a string ends with a char
+                                     clippy::chars-next-cmp  warn     using `.chars().next()` to check if a string starts with a char
+                                     clippy::char-lit-as-u8  warn     casting a character literal to `u8` truncates
+                           clippy::cloned-ref-to-slice-refs  warn     cloning a reference for slice references
+                                      clippy::clone-on-copy  warn     using `clone` on a `Copy` type
+                                           clippy::cmp-null  warn     comparing a pointer to a null pointer, suggesting to use `.is_null()` instead
+                                          clippy::cmp-owned  warn     creating owned instances for comparing with others, e.g., `x == "foo".to_string()`
+                                     clippy::collapsible-if  warn     nested `if`s that can be collapsed (e.g., `if x { if y { ... } }`
+                                  clippy::collapsible-match  warn     Nested `match` or `if let` expressions where the patterns may be "collapsed" together.
+                            clippy::collapsible-str-replace  warn     collapse consecutive calls to str::replace (2 or more) into a single call
+                                clippy::comparison-to-empty  warn     checking `x == ""` or `x == []` (or similar) when `.is_empty()` could be used instead
+                   clippy::confusing-method-to-numeric-cast  warn     casting a primitive method pointer to any integer type
+                                     clippy::const-is-empty  warn     is_empty() called on strings known at compile time
+                                 clippy::crate-in-macro-def  warn     using `crate` in a macro definition
+                             clippy::crosspointer-transmute  warn     transmutes that have to or from types that are a pointer to the other
+                     clippy::declare-interior-mutable-const  warn     declaring `const` with interior mutability
+                   clippy::default-constructed-unit-structs  warn     unit structs can be constructed without calling `default`
+                      clippy::default-instead-of-iter-empty  warn     check `std::iter::Empty::default()` and replace with `std::iter::empty()`
+                                clippy::deprecated-cfg-attr  warn     usage of `cfg_attr(rustfmt)` instead of tool attributes
+                         clippy::deprecated-clippy-cfg-attr  warn     usage of `cfg(feature = "cargo-clippy")` instead of `cfg(clippy)`
+                                       clippy::deref-addrof  warn     use of `*&` or `*&mut` in an expression
+                                    clippy::derivable-impls  warn     manual implementation of the `Default` trait which is equal to a derive
+                                  clippy::disallowed-fields  warn     declaration of a disallowed field use
+                                  clippy::disallowed-macros  warn     use of a disallowed macro
+                                 clippy::disallowed-methods  warn     use of a disallowed method call
+                                   clippy::disallowed-names  warn     usage of a disallowed/placeholder name
+                                   clippy::disallowed-types  warn     use of disallowed types
+                           clippy::diverging-sub-expression  warn     whether an expression contains a diverging sub expression
+                              clippy::doc-lazy-continuation  warn     require every line of a paragraph to be indented and marked
+                                 clippy::doc-nested-refdefs  warn     link reference defined in list item or quote
+                        clippy::doc-overindented-list-items  warn     ensure list items are not overindented
+                           clippy::doc-suspicious-footnotes  warn     looks like a link or footnote ref, but with no definition
+                                 clippy::double-comparisons  warn     unnecessary double comparisons that can be simplified
+                         clippy::double-ended-iterator-last  warn     using `Iterator::last` on a `DoubleEndedIterator`
+                                    clippy::double-must-use  warn     `#[must_use]` attribute on a `#[must_use]`-returning function / method
+                                      clippy::double-parens  warn     Warn on unnecessary double parentheses
+                                      clippy::drain-collect  warn     calling `.drain(..).collect()` to move all elements into a new collection
+                                      clippy::drop-non-drop  warn     call to `std::mem::drop` with a value which does not implement `Drop`
+                              clippy::duplicated-attributes  warn     duplicated attribute
+                                      clippy::duplicate-mod  warn     file loaded as module multiple times
+                      clippy::duplicate-underscore-argument  warn     function arguments having names which only differ by an underscore
+                                    clippy::duration-subsec  warn     checks for calculation of subsecond microseconds or milliseconds
+                                         clippy::empty-docs  warn     docstrings exist but documentation is empty
+                      clippy::empty-line-after-doc-comments  warn     empty line after doc comments
+                        clippy::empty-line-after-outer-attr  warn     empty line after outer attribute
+                                         clippy::empty-loop  warn     empty `loop {}`, which should block or sleep
+                                 clippy::enum-variant-names  warn     enums where all variants share a prefix/postfix
+                                         clippy::err-expect  warn     using `.err().expect("")` when `.expect_err("")` can be used
+                                  clippy::excessive-nesting  warn     checks for blocks nested beyond a certain threshold
+                                clippy::excessive-precision  warn     excessive precision for float literal
+                                    clippy::expect-fun-call  warn     using any `expect` method with a function call
+                                clippy::explicit-auto-deref  warn     dereferencing when the compiler would automatically dereference
+                              clippy::explicit-counter-loop  warn     for-looping with an explicit counter when `_.enumerate()` would do
+                                     clippy::explicit-write  warn     using the `write!()` family of functions instead of the `print!()` family of functions, when using the latter would work
+                                  clippy::extend-with-drain  warn     using vec.append(&mut vec) to move the full range of a vector to another
+                             clippy::extra-unused-lifetimes  warn     unused lifetimes in function definitions
+                       clippy::extra-unused-type-parameters  warn     unused type parameters in function definitions
+                        clippy::field-reassign-with-default  warn     binding initialized with Default should have its fields set in the initializer
+                               clippy::filter-map-bool-then  warn     checks for usage of `bool::then` in `Iterator::filter_map`
+                                clippy::filter-map-identity  warn     call to `filter_map` where `flatten` is sufficient
+                                        clippy::filter-next  warn     using `filter(p).next()`, which is more succinctly expressed as `.find(p)`
+                                  clippy::flat-map-identity  warn     call to `flat_map` where `flatten` is sufficient
+                         clippy::float-equality-without-abs  warn     float equality check without `.abs()`
+                                 clippy::fn-to-numeric-cast  warn     casting a function pointer to a numeric type other than `usize`
+                 clippy::fn-to-numeric-cast-with-truncation  warn     casting a function pointer to a numeric type not wide enough to store the address
+                                    clippy::forget-non-drop  warn     call to `std::mem::forget` with a value which does not implement `Drop`
+                              clippy::format-in-format-args  warn     `format!` used in a macro that does formatting
+                                         clippy::for-kv-map  warn     looping on a map using `iter` when `keys` or `values` would do
+                               clippy::four-forward-slashes  warn     comments with 4 forward slashes (`////`) likely intended to be doc comments (`///`)
+                                     clippy::from-over-into  warn     Warns on implementations of `Into<..>` to use `From<..>`
+                             clippy::from-raw-with-void-ptr  warn     creating a `Box` from a void raw pointer
+                                  clippy::from-str-radix-10  warn     from_str_radix with radix 10
+                                          clippy::get-first  warn     Using `x.get(0)` when `x.first()` or `x.front()` is simpler
+                                  clippy::get-last-with-len  warn     Using `x.get(x.len() - 1)` when `x.last()` is correct and simpler
+                                        clippy::identity-op  warn     using identity operations, e.g., `x + 0` or `y / 1`
+                                  clippy::if-same-then-else  warn     `if` with the same `then` and `else` blocks
+                            clippy::implicit-saturating-add  warn     Perform saturating addition instead of implicitly checking max bound of data type
+                            clippy::implicit-saturating-sub  warn     Perform saturating subtraction instead of implicitly checking lower bound of data type
+                            clippy::implied-bounds-in-impls  warn     specifying bounds that are implied by other bounds in `impl Trait` type
+                                  clippy::incompatible-msrv  warn     ensures that all items used in the crate are available for the current MSRV
+                        clippy::inconsistent-digit-grouping  warn     integer literals with digits grouped inconsistently
+                           clippy::ineffective-open-options  warn     usage of both `write(true)` and `append(true)` on same `OpenOptions`
+                     clippy::infallible-destructuring-match  warn     a `match` statement with a single infallible arm instead of a `let`
+                                clippy::infallible-try-from  warn     TryFrom with infallible Error type
+                                 clippy::inherent-to-string  warn     type implements inherent method `to_string()`, but should instead implement the `Display` trait
+                               clippy::init-numbered-fields  warn     numbered fields in tuple struct initializer
+                                   clippy::inspect-for-each  warn     using `.inspect().for_each()`, which can be replaced with `.for_each()`
+                                   clippy::into-iter-on-ref  warn     using `.into_iter()` on a reference
+                                       clippy::int-plus-one  warn     instead of using `x >= y + 1`, use `x > y`
+                                     clippy::io-other-error  warn     calling `std::io::Error::new(std::io::ErrorKind::Other, _)`
+                               clippy::is-digit-ascii-radix  warn     use of `char::is_digit(..)` with literal radix of 10 or 16
+                            clippy::items-after-test-module  warn     An item was found after the testing module `tests`
+                                clippy::iter-cloned-collect  warn     using `.cloned().collect()` on slice to create a `Vec`
+                                         clippy::iter-count  warn     replace `.iter().count()` with `.len()`
+                                        clippy::iter-kv-map  warn     iterating on map using `iter` when `keys` or `values` would do
+                                    clippy::iter-next-slice  warn     using `.iter().next()` on a sliced array, which can be shortened to just `.get()`
+                                           clippy::iter-nth  warn     using `.iter().nth()` on a standard library type with O(1) element access
+                                      clippy::iter-nth-zero  warn     replace `iter.nth(0)` with `iter.next()`
+                                 clippy::iter-out-of-bounds  warn     calls to `.take()` or `.skip()` that are out of bounds
+                              clippy::iter-overeager-cloned  warn     using `cloned()` early with `Iterator::iter()` can lead to some performance inefficiencies
+                                     clippy::iter-skip-next  warn     using `.skip(x).next()` on an iterator
+                                clippy::join-absolute-paths  warn     calls to `Path::join` which will overwrite the original path
+                        clippy::just-underscores-and-digits  warn     unclear name
+                                 clippy::large-const-arrays  warn     large non-scalar const array may cause performance overhead
+                                 clippy::large-enum-variant  warn     large size difference between variants on an enum
+                           clippy::legacy-numeric-constants  warn     checks for usage of legacy std numeric constants and methods
+                               clippy::len-without-is-empty  warn     traits or impls with a public `len` method but no corresponding `is_empty` method
+                                           clippy::len-zero  warn     checking `.len() == 0` or `.len() > 0` (or similar) when `.is_empty()` could be used instead
+                                     clippy::let-and-return  warn     creating a let-binding and then immediately returning it like `let x = expr; x` at the end of a block
+                              clippy::let-underscore-future  warn     non-binding `let` on a future
+                                     clippy::let-unit-value  warn     creating a `let` binding to a value of unit type, which usually can't be used afterwards
+                           clippy::let-with-type-underscore  warn     unneeded underscore type (`_`) in a variable declaration
+                                clippy::lines-filter-map-ok  warn     filtering `std::io::Lines` with `filter_map()`, `flat_map()`, or `flatten()` might cause an infinite loop
+                           clippy::macro-metavars-in-unsafe  warn     expanding macro metavariables in an unsafe block
+                                     clippy::main-recursion  warn     recursion using the entrypoint
+                                    clippy::manual-abs-diff  warn     using an if-else pattern instead of `abs_diff`
+                                    clippy::manual-async-fn  warn     manual implementations of `async` functions can be simplified using the dedicated syntax
+                                        clippy::manual-bits  warn     manual implementation of `size_of::<T>() * 8` can be simplified with `T::BITS`
+                                 clippy::manual-checked-ops  warn     manual zero checks before dividing integers
+                                       clippy::manual-clamp  warn     using a clamp pattern instead of the clamp function
+                                    clippy::manual-contains  warn     unnecessary `iter().any()` on slices that can be replaced with `contains()`
+                              clippy::manual-c-str-literals  warn     creating a `CStr` through functions when `c""` literals can be used
+                                clippy::manual-dangling-ptr  warn     casting small constant literals to pointers to create dangling pointers
+                                    clippy::manual-div-ceil  warn     manually reimplementing `div_ceil`
+                                      clippy::manual-filter  warn     reimplementation of `filter`
+                                  clippy::manual-filter-map  warn     using `_.filter(_).map(_)` in a way that can be written more simply as `filter_map(_)`
+                                        clippy::manual-find  warn     manual implementation of `Iterator::find`
+                                    clippy::manual-find-map  warn     using `_.find(_).map(_)` in a way that can be written more simply as `find_map(_)`
+                                     clippy::manual-flatten  warn     for loops over `Option`s or `Result`s with a single expression can be simplified
+                                    clippy::manual-hash-one  warn     manual implementations of `BuildHasher::hash_one`
+                             clippy::manual-ignore-case-cmp  warn     manual case-insensitive ASCII comparison
+                                     clippy::manual-inspect  warn     use of `map` returning the original item
+                              clippy::manual-is-ascii-check  warn     use dedicated method to check ascii range
+                                   clippy::manual-is-finite  warn     use dedicated method to check if a float is finite
+                                 clippy::manual-is-infinite  warn     use dedicated method to check if a float is infinite
+                              clippy::manual-is-multiple-of  warn     manual implementation of `.is_multiple_of()`
+                          clippy::manual-main-separator-str  warn     `&std::path::MAIN_SEPARATOR.to_string()` can be replaced by `std::path::MAIN_SEPARATOR_STR`
+                                         clippy::manual-map  warn     reimplementation of `map`
+                                      clippy::manual-memcpy  warn     manually copying items between slices
+                                   clippy::manual-next-back  warn     manual reverse iteration of `DoubleEndedIterator`
+                              clippy::manual-non-exhaustive  warn     manual implementations of the non-exhaustive pattern can be simplified using #[non_exhaustive]
+                                      clippy::manual-ok-err  warn     find manual implementations of `.ok()` or `.err()` on `Result`
+                                       clippy::manual-ok-or  warn     finds patterns that can be encoded more concisely with `Option::ok_or`
+                             clippy::manual-option-as-slice  warn     manual `Option::as_slice`
+                     clippy::manual-pattern-char-comparison  warn     manual char comparison in string patterns
+                              clippy::manual-range-contains  warn     manually reimplementing {`Range`, `RangeInclusive`}`::contains`
+                              clippy::manual-range-patterns  warn     manually writing range patterns using a combined OR pattern (`|`)
+                                  clippy::manual-rem-euclid  warn     manually reimplementing `rem_euclid`
+                                    clippy::manual-repeat-n  warn     detect `repeat().take()` that can be replaced with `repeat_n()`
+                                      clippy::manual-retain  warn     `retain()` is simpler and the same functionalities
+                                      clippy::manual-rotate  warn     using bit shifts to rotate integers
+                       clippy::manual-saturating-arithmetic  warn     `.checked_add/sub(x).unwrap_or(MAX/MIN)`
+                                  clippy::manual-slice-fill  warn     manually filling a slice with a value
+                      clippy::manual-slice-size-calculation  warn     manual slice size calculation
+                                  clippy::manual-split-once  warn     replace `.splitn(2, pat)` with `.split_once(pat)`
+                                       clippy::manual-strip  warn     suggests using `strip_{prefix,suffix}` over `str::{starts,ends}_with` and slicing
+                                  clippy::manual-str-repeat  warn     manual implementation of `str::repeat`
+                                        clippy::manual-swap  warn     manual swap of two variables
+                                        clippy::manual-take  warn     manual `mem::take` implementation
+                                    clippy::manual-try-fold  warn     checks for usage of `Iterator::fold` with a type that implements `Try`
+                                   clippy::manual-unwrap-or  warn     finds patterns that can be encoded more concisely with `Option::unwrap_or` or `Result::unwrap_or`
+                           clippy::manual-unwrap-or-default  warn     check if a `match` or `if let` can be simplified with `unwrap_or_default`
+                              clippy::manual-while-let-some  warn     checking for emptiness of a `Vec` in the loop condition and popping an element in the body
+                               clippy::map-all-any-identity  warn     combine `.map(_)` followed by `.all(identity)`/`.any(identity)` into a single call
+                                          clippy::map-clone  warn     using `iterator.map(|x| x.clone())`, or dereferencing closures for `Copy` types
+                            clippy::map-collect-result-unit  warn     using `.map(_).collect::<Result<(),_>()`, which can be replaced with `try_for_each`
+                                          clippy::map-entry  warn     use of `contains_key` followed by `insert` on a `HashMap` or `BTreeMap`
+                                        clippy::map-flatten  warn     using combinations of `flatten` and `map` which can usually be written as a single method call
+                                       clippy::map-identity  warn     using iterator.map(|x| x)
+                                       clippy::match-as-ref  warn     a `match` on an Option value instead of using `as_ref()` or `as_mut`
+                           clippy::match-like-matches-macro  warn     a match that could be written with the matches! macro
+                              clippy::match-overlapping-arm  warn     a `match` with overlapping arms
+                                     clippy::match-ref-pats  warn     a `match` or `if let` with all arms prefixed with `&` instead of deref-ing the match expression
+                                    clippy::match-result-ok  warn     usage of `ok()` in `let Some(pat)` statements is unnecessary, match on `Ok(pat)` instead
+                               clippy::match-single-binding  warn     a match with a single binding instead of using `let` statement
+                       clippy::mem-replace-option-with-none  warn     replacing an `Option` with `None` instead of `take()`
+                       clippy::mem-replace-option-with-some  warn     replacing an `Option` with `Some` instead of `replace()`
+                           clippy::mem-replace-with-default  warn     replacing a value of type `T` with `T::default()` instead of using `std::mem::take`
+                                   clippy::misnamed-getters  warn     getter method returning the wrong field
+                            clippy::misrefactored-assign-op  warn     having a variable on both sides of an assign op
+                     clippy::missing-const-for-thread-local  warn     suggest using `const` in `thread_local!` macro
+                    clippy::missing-enforced-import-renames  warn     enforce import renames
+                                 clippy::missing-safety-doc  warn     `pub unsafe fn` without `# Safety` docs
+                                  clippy::missing-spin-loop  warn     An empty busy waiting loop
+                      clippy::missing-transmute-annotations  warn     warns if a transmute call doesn't have all generics specified
+                             clippy::mixed-attributes-style  warn     item has both inner and outer attributes
+                            clippy::mixed-case-hex-literals  warn     hex literals whose letter digits are not consistently upper- or lowercased
+                                   clippy::module-inception  warn     modules that have the same name as their parent module
+                           clippy::multiple-bound-locations  warn     defining generic bounds in multiple locations
+                                  clippy::multi-assignments  warn     instead of using `a = b = c;` use `a = c; b = c;`
+                                      clippy::must-use-unit  warn     `#[must_use]` attribute on a unit-returning function / method
+                                   clippy::mutable-key-type  warn     Check for mutable `Map`/`Set` key type
+                                     clippy::mut-mutex-lock  warn     `&mut Mutex::lock` does unnecessary locking
+                                    clippy::mut-range-bound  warn     for loop over a range where one of the bounds is a mutable variable
+                       clippy::needless-arbitrary-self-type  warn     type of `self` parameter is already by default `Self`
+                                  clippy::needless-as-bytes  warn     detect useless calls to `as_bytes()`
+                                      clippy::needless-bool  warn     if-statements with plain booleans in the then- and else-clause, e.g., `if p { true } else { false }`
+                               clippy::needless-bool-assign  warn     setting the same boolean variable in both branches of an if-statement
+                                    clippy::needless-borrow  warn     taking a reference that is going to be automatically dereferenced
+                        clippy::needless-borrowed-reference  warn     destructuring a reference and borrowing the inner value
+                  clippy::needless-borrows-for-generic-args  warn     taking a reference that is going to be automatically dereferenced
+                       clippy::needless-character-iteration  warn     is_ascii() called on a char iterator
+                              clippy::needless-doctest-main  warn     presence of `fn main() {` in code examples
+                                      clippy::needless-else  warn     empty else branch
+                                       clippy::needless-ifs  warn     checks for empty if branches
+                                 clippy::needless-late-init  warn     late initializations that can be replaced by a `let` statement with an initializer
+                                 clippy::needless-lifetimes  warn     using explicit lifetimes for references in function arguments when elision rules would allow omitting them
+                                     clippy::needless-match  warn     `match` or match-like `if let` that are unnecessary
+                               clippy::needless-maybe-sized  warn     a `?Sized` bound that is unusable due to a `Sized` requirement
+                           clippy::needless-option-as-deref  warn     no-op use of `deref` or `deref_mut` method to `Option`.
+                               clippy::needless-option-take  warn     using `.as_ref().take()` on a temporary value
+                  clippy::needless-parens-on-range-literals  warn     needless parenthesis on range literals can be removed
+                                  clippy::needless-pub-self  warn     checks for usage of `pub(self)` and `pub(in self)`.
+                             clippy::needless-question-mark  warn     using `Ok(x?)` or `Some(x?)` where `x` would be equivalent
+                                clippy::needless-range-loop  warn     for-looping over a range of indices where an iterator over items would do
+                                    clippy::needless-return  warn     using a return statement like `return expr;` where an expression would suffice
+                 clippy::needless-return-with-question-mark  warn     using a return statement like `return Err(expr)?;` where removing it would suffice
+                                    clippy::needless-splitn  warn     usages of `str::splitn` that can be replaced with `str::split`
+                                    clippy::needless-update  warn     using `Foo { ..base }` when there are no missing fields
+                          clippy::neg-cmp-op-on-partial-ord  warn     The use of negated comparison operators on partially ordered types may produce confusing code.
+                                       clippy::neg-multiply  warn     multiplying integers by `-1`
+                                    clippy::new-ret-no-self  warn     not returning type containing `Self` in a `new` method
+                                clippy::new-without-default  warn     `pub fn new() -> Self` method without `Default` implementation
+                                    clippy::nonminimal-bool  warn     boolean expressions that can be written more concisely
+                           clippy::non-canonical-clone-impl  warn     non-canonical implementation of `Clone` on a `Copy` type
+                     clippy::non-canonical-partial-ord-impl  warn     non-canonical implementation of `PartialOrd` on an `Ord` type
+                                    clippy::non-minimal-cfg  warn     ensure that all `cfg(any())` and `cfg(all())` have more than one condition
+                                          clippy::no-effect  warn     statements with no effect
+                                  clippy::no-effect-replace  warn     replace with no effect
+                                 clippy::obfuscated-if-else  warn     use of `.then_some(..).unwrap_or(..)` can be written more clearly with `if .. else ..`
+                                      clippy::octal-escapes  warn     string escape sequences looking like octal characters
+                                          clippy::ok-expect  warn     using `ok().expect()`, which gives worse error messages than calling `expect` directly on the Result
+                             clippy::only-used-in-recursion  warn     arguments that is only used in recursion can be removed
+                                clippy::option-as-ref-deref  warn     using `as_ref().map(Deref::deref)`, which is more succinctly expressed as `as_deref()`
+                                  clippy::option-filter-map  warn     filtering `Option` for `Some` then force-unwrapping, which can be one type-safe operation
+                                 clippy::option-map-or-none  warn     using `Option.map_or(None, f)`, which is more succinctly expressed as `and_then(f)`
+                                 clippy::option-map-unit-fn  warn     using `option.map(f)`, where `f` is a function or closure that returns `()`
+                                             clippy::op-ref  warn     taking a reference to satisfy the type constraints on `==`
+                                     clippy::or-then-unwrap  warn     checks for `.or(…).unwrap()` calls to Options and Results.
+                                          clippy::owned-cow  warn     needlessly owned Cow type
+                                  clippy::partialeq-ne-impl  warn     re-implementing `PartialEq::ne`
+                                  clippy::partialeq-to-none  warn     Binary comparison to `Option<T>::None` relies on `T: PartialEq`, which is unneeded
+                                 clippy::path-ends-with-ext  warn     attempting to compare file extensions using `Path::ends_with`
+                     clippy::permissions-set-readonly-false  warn     Checks for calls to `std::fs::Permissions.set_readonly` with argument `false`
+                        clippy::pointers-in-nomem-asm-block  warn     pointers in nomem asm block
+                              clippy::possible-missing-else  warn     possibly missing `else`
+                                         clippy::precedence  warn     operations where precedence may be unclear
+                               clippy::println-empty-string  warn     using `println!("")` with an empty string
+                               clippy::print-in-format-impl  warn     use of a print macro in a formatting trait impl
+                                      clippy::print-literal  warn     printing a literal with a format string
+                                 clippy::print-with-newline  warn     using `print!()` with a format string that ends in a single newline
+                                            clippy::ptr-arg  warn     fn arguments of the type `&Vec<...>` or `&String`, suggesting to use `&[...]` or `&str` instead, respectively
+                                             clippy::ptr-eq  warn     use `std::ptr::eq` when comparing raw pointers
+                               clippy::ptr-offset-with-cast  warn     unneeded pointer offset cast
+                                      clippy::question-mark  warn     checks for expressions that could be replaced by the `?` operator
+                                 clippy::range-zip-with-len  warn     zipping iterator with a range when `enumerate()` would do
+                               clippy::rc-clone-in-vec-init  warn     initializing reference-counted pointer in `vec![elem; len]`
+                                clippy::readonly-write-lock  warn     acquiring a write lock when a read lock would work
+                               clippy::redundant-allocation  warn     redundant allocation
+                              clippy::redundant-async-block  warn     `async { future.await }` can be replaced by `future`
+                                   clippy::redundant-as-str  warn     `as_str` used to call a method on `str` that is also available on `String`
+                          clippy::redundant-at-rest-pattern  warn     checks for `[all @ ..]` where `all` would suffice
+                                  clippy::redundant-closure  warn     redundant closures, i.e., `|a| foo(a)` (which can be written as just `foo`)
+                             clippy::redundant-closure-call  warn     throwaway closures called in the expression they are defined
+                              clippy::redundant-field-names  warn     checks for fields in struct literals where shorthands could be used
+                                   clippy::redundant-guards  warn     checks for unnecessary guards in match expressions
+                              clippy::redundant-iter-cloned  warn     detects redundant calls to `Iterator::cloned`
+                                   clippy::redundant-locals  warn     redundant redefinition of a local binding
+                                  clippy::redundant-pattern  warn     using `name @ _` in a pattern
+                         clippy::redundant-pattern-matching  warn     use the proper utility function avoiding an `if let`
+                                  clippy::redundant-slicing  warn     redundant slicing of the whole range of a type
+                         clippy::redundant-static-lifetimes  warn     Using explicit `'static` lifetime for constants or statics when elision rules would allow omitting them.
+                            clippy::regex-creation-in-loops  warn     regular expression compilation performed in a loop
+                                        clippy::repeat-once  warn     using `.repeat(1)` instead of `String.clone()`, `str.to_string()` or `slice.to_vec()` 
+                           clippy::repeat-vec-with-capacity  warn     repeating a `Vec::with_capacity` expression which does not retain capacity
+                                        clippy::replace-box  warn     assigning a newly created box to `Box<T>` is inefficient
+                            clippy::repr-packed-without-abi  warn     ensures that `repr(packed)` always comes with a qualified ABI
+                       clippy::reserve-after-initialization  warn     `reserve` called immediately after `Vec` creation
+                                  clippy::result-filter-map  warn     filtering `Result` for `Ok` then force-unwrapping, which can be one type-safe operation
+                                   clippy::result-large-err  warn     function returning `Result` with large `Err` type
+                          clippy::result-map-or-into-option  warn     using `Result.map_or(None, Some)`, which is more succinctly expressed as `ok()`
+                                 clippy::result-map-unit-fn  warn     using `result.map(f)`, where `f` is a function or closure that returns `()`
+                                    clippy::result-unit-err  warn     public function returning `Result` with an `Err` type of `()`
+                                     clippy::same-item-push  warn     the same item is pushed inside of a for loop
+                                  clippy::seek-from-current  warn     use dedicated method for seek from current position
+                    clippy::seek-to-start-instead-of-rewind  warn     jumping to the start of stream using `seek` method
+                            clippy::self-named-constructors  warn     method should not have the same name as the type it is implemented for
+                            clippy::short-circuit-statement  warn     using a short circuit boolean condition as a statement
+                             clippy::should-implement-trait  warn     defining a method that should be implementing a std trait
+                                clippy::single-char-add-str  warn     `push_str()` or `insert_str()` used with a single-character string literal as parameter
+                      clippy::single-component-path-imports  warn     imports with single component path are redundant
+                                clippy::single-element-loop  warn     there is no reason to have a single element loop
+                                       clippy::single-match  warn     a `match` statement with a single nontrivial arm (i.e., where the other arm is `_ => {}`) instead of `if let`
+                           clippy::single-range-in-vec-init  warn     checks for initialization of `Vec` or arrays which consist of a single range
+                                        clippy::size-of-ref  warn     Argument to `size_of_val()` is a double-reference, which is almost certainly unintended
+                                    clippy::skip-while-next  warn     using `skip_while(p).next()`, which is more succinctly expressed as `.find(!p)`
+                             clippy::sliced-string-as-bytes  warn     slicing a string and immediately calling as_bytes is less efficient and can lead to panics
+                         clippy::slow-vector-initialization  warn     slow vector initialization
+                                clippy::string-extend-chars  warn     using `x.extend(s.chars())` where s is a `&str` or `String`
+                          clippy::string-from-utf8-as-bytes  warn     casting string slices to byte slices and back
+                                clippy::strlen-on-c-strings  warn     using `libc::strlen` on a `CString` or `CStr` value, while `count_bytes()` can be used instead
+                         clippy::suspicious-arithmetic-impl  warn     suspicious use of operators in impl of arithmetic trait
+                   clippy::suspicious-assignment-formatting  warn     suspicious formatting of `*=`, `-=` or `!=`
+                       clippy::suspicious-command-arg-space  warn     single command line argument that looks like it should be multiple arguments
+                            clippy::suspicious-doc-comments  warn     suspicious usage of (outer) doc comments
+                         clippy::suspicious-else-formatting  warn     suspicious formatting of `else`
+                                     clippy::suspicious-map  warn     suspicious usage of map
+                            clippy::suspicious-open-options  warn     suspicious combination of options for opening a file
+                          clippy::suspicious-op-assign-impl  warn     suspicious use of operators in impl of OpAssign trait
+                                clippy::suspicious-to-owned  warn     calls to `to_owned` on a `Cow<'_, _>` might not do what they are expected
+                     clippy::suspicious-unary-op-formatting  warn     suspicious formatting of unary `-` or `!` on the RHS of a BinOp
+                                    clippy::swap-ptr-to-ref  warn     call to `mem::swap` using pointer derived references
+                                clippy::swap-with-temporary  warn     detect swap with a temporary value
+                               clippy::tabs-in-doc-comments  warn     using tabs in doc comments is not recommended
+                               clippy::temporary-assignment  warn     assignments to temporaries
+                               clippy::test-attr-in-doctest  warn     presence of `#[test]` in code examples
+                                 clippy::too-many-arguments  warn     functions with too many arguments
+                                   clippy::toplevel-ref-arg  warn     an entire binding declared as `ref`, in a function argument or a `let` statement
+                                   clippy::to-digit-is-some  warn     `char.is_digit()` is clearer
+                           clippy::to-string-in-format-args  warn     `to_string` applied to a type that implements `Display` in format args
+                               clippy::to-string-trait-impl  warn     check for direct implementations of `ToString`
+                clippy::transmutes-expressible-as-ptr-casts  warn     transmutes that could be a pointer cast
+                             clippy::transmute-bytes-to-str  warn     transmutes from a `&[u8]` to a `&str`
+                              clippy::transmute-int-to-bool  warn     transmutes from an integer to a `bool`
+                          clippy::transmute-int-to-non-zero  warn     transmutes from an integer to a non-zero wrapper
+                               clippy::transmute-ptr-to-ref  warn     transmutes from a pointer to a reference type
+                              clippy::trim-split-whitespace  warn     using `str::trim()` or alike before `str::split_whitespace`
+                                    clippy::type-complexity  warn     usage of very complex types that might be better factored into `type` definitions
+                                     clippy::type-id-on-box  warn     calling `.type_id()` on a boxed trait object
+                                   clippy::unbuffered-bytes  warn     calling .bytes() is very inefficient when data is not in memory
+                            clippy::unconditional-recursion  warn     detect unconditional recursion in some traits implementation
+                                           clippy::unit-arg  warn     passing unit to a function
+                                   clippy::unnecessary-cast  warn     cast to the same type, e.g., `x as i32` where `x: i32`
+                             clippy::unnecessary-clippy-cfg  warn     usage of `cfg_attr(clippy, allow(clippy::lint))` instead of `allow(clippy::lint)`
+                   clippy::unnecessary-fallible-conversions  warn     calling the `try_from` and `try_into` trait methods when `From`/`Into` is implemented
+                             clippy::unnecessary-filter-map  warn     using `filter_map` when a more succinct alternative exists
+                               clippy::unnecessary-find-map  warn     using `find_map` when a more succinct alternative exists
+                       clippy::unnecessary-first-then-check  warn     calling `.first().is_some()` or `.first().is_none()` instead of `.is_empty()`
+                                   clippy::unnecessary-fold  warn     using `fold` when a more succinct alternative exists
+                         clippy::unnecessary-get-then-check  warn     calling `.get().is_some()` or `.get().is_none()` instead of `.contains()` or `.contains_key()`
+                       clippy::unnecessary-lazy-evaluations  warn     using unnecessary lazy evaluation, which can be replaced with simpler eager evaluation
+                         clippy::unnecessary-literal-unwrap  warn     using `unwrap()` related calls on `Result` and `Option` constructors
+                     clippy::unnecessary-map-on-constructor  warn     using `map`/`map_err` on `Option` or `Result` constructors
+                                 clippy::unnecessary-map-or  warn     reduce unnecessary calls to `.map_or(bool, …)`
+                             clippy::unnecessary-min-or-max  warn     using 'min()/max()' when there is no need for it
+                             clippy::unnecessary-mut-passed  warn     an argument passed as a mutable reference although the callee only demands an immutable reference
+                              clippy::unnecessary-operation  warn     outer expressions with no effect
+                     clippy::unnecessary-option-map-or-else  warn     making no use of the "map closure" when calling `.map_or_else(|| 2 * k, |n| n)`
+                    clippy::unnecessary-owned-empty-strings  warn     detects cases of references to owned empty strings being passed as an argument to a function expecting `&str`
+                     clippy::unnecessary-result-map-or-else  warn     making no use of the "map closure" when calling `.map_or_else(|err| handle_error(err), |n| n)`
+                                clippy::unnecessary-sort-by  warn     Use of `Vec::sort_by` when `Vec::sort_by_key` or `Vec::sort` would be clearer
+                               clippy::unnecessary-to-owned  warn     unnecessary calls to `to_owned`-like functions
+                                 clippy::unnecessary-unwrap  warn     checks for calls of `unwrap[_err]()` that cannot fail
+                            clippy::unneeded-struct-pattern  warn     using struct pattern to match against unit variant
+                          clippy::unneeded-wildcard-pattern  warn     tuple patterns with a wildcard pattern (`_`) is next to a rest pattern (`..`)
+                           clippy::unsafe-removed-from-name  warn     `unsafe` removed from API names on import
+                             clippy::unused-enumerate-index  warn     using `.enumerate()` and immediately dropping the index
+                                clippy::unused-format-specs  warn     use of a format specifier that has no effect
+                                        clippy::unused-unit  warn     needless unit expression
+                             clippy::unusual-byte-groupings  warn     binary or hex literals that aren't grouped by four
+                                  clippy::unwrap-or-default  warn     using `.unwrap_or`, etc. with an argument that constructs a default value
+                                clippy::upper-case-acronyms  warn     capitalized acronyms are against the naming convention
+                                      clippy::useless-asref  warn     using `as_ref` where the types before and after the call are the same
+                                     clippy::useless-concat  warn     checks that the `concat` macro has at least two arguments
+                                 clippy::useless-conversion  warn     calls to `Into`, `TryInto`, `From`, `TryFrom`, or `IntoIter` which perform useless conversions to the same type
+                                     clippy::useless-format  warn     useless use of `format!`
+                      clippy::useless-nonzero-new-unchecked  warn     using `NonZero::new_unchecked()` in a `const` context
+                                  clippy::useless-transmute  warn     transmutes that have the same to and from types or could be a cast/coercion
+                                        clippy::useless-vec  warn     useless `vec!`
+                                            clippy::vec-box  warn     usage of `Vec<Box<T>>` where T: Sized, vector elements are already on the heap
+                                 clippy::vec-init-then-push  warn     `push` immediately after `Vec` creation
+                                   clippy::waker-clone-wake  warn     cloning a `Waker` only to wake it
+                                     clippy::while-let-loop  warn     `loop { if let { ... } else break }`, which can be written as a `while let` loop
+                              clippy::while-let-on-iterator  warn     using a `while let` loop instead of a for loop on an iterator
+                            clippy::wildcard-in-or-patterns  warn     a wildcard pattern used with others patterns in same match arm
+                               clippy::writeln-empty-string  warn     using `writeln!(buf, "")` with an empty string
+                                      clippy::write-literal  warn     writing a literal with a format string
+                                 clippy::write-with-newline  warn     using `write!()` with a format string that ends in a single newline
+                              clippy::wrong-self-convention  warn     defining a method named with an established prefix (like "into_") that takes `self` with the wrong convention
+                               clippy::zero-divided-by-zero  warn     usage of `0.0 / 0.0` to obtain NaN instead of `f32::NAN` or `f64::NAN`
+                              clippy::zero-prefixed-literal  warn     integer literals starting with `0`
+                                           clippy::zero-ptr  warn     using `0 as *{const, mut} T`
+                           clippy::zero-repeat-side-effects  warn     usage of zero-sized initializations of arrays or vecs causing side effects
+                                   clippy::zombie-processes  warn     not waiting on a spawned child process
+                         clippy::absurd-extreme-comparisons  deny     a comparison with a maximum or minimum value that is always true or false
+                                     clippy::almost-swapped  deny     `foo = bar; bar = foo` sequence
+                                    clippy::approx-constant  deny     the approximate of a known float constant (in `std::fXX::consts`)
+                                 clippy::async-yields-async  deny     async blocks that return a type that can be awaited
+                                       clippy::bad-bit-mask  deny     expressions of the form `_ & mask == select` that will only ever return `true` or `false`
+                         clippy::cast-slice-different-sizes  deny     casting using `as` between raw pointers to slices of types with different sizes
+                       clippy::char-indices-as-byte-indices  deny     using the character position yielded by `.chars().enumerate()` in a context where a byte index is expected
+                                  clippy::deprecated-semver  deny     use of `#[deprecated(since = "x")]` where x is not semver
+                        clippy::derived-hash-with-manual-eq  deny     deriving `Hash` but implementing `PartialEq` explicitly
+                         clippy::derive-ord-xor-partial-ord  deny     deriving `Ord` but implementing `PartialOrd` explicitly
+                                    clippy::eager-transmute  deny     eager evaluation of `transmute`
+                      clippy::enum-clike-unportable-variant  deny     C-like enums that are `repr(isize/usize)` and have values that don't fit into an `i32`
+                                              clippy::eq-op  deny     equal operands on both sides of a comparison or bitwise combination (e.g., `x == x`)
+                                         clippy::erasing-op  deny     using erasing operations, e.g., `x * 0` or `y & 0`
+                                      clippy::ifs-same-cond  deny     consecutive `if`s with the same condition
+                                       clippy::if-let-mutex  deny     locking a `Mutex` in an `if let` block can cause deadlocks
+                clippy::impl-hash-borrow-with-str-and-bytes  deny     ensures that the semantics of `Borrow` for `Hash` are satisfied when `Borrow<str>` and `Borrow<[u8]>` are implemented
+                             clippy::impossible-comparisons  deny     double comparisons that will never evaluate to `true`
+                               clippy::ineffective-bit-mask  deny     expressions where a bit mask will be rendered useless by a comparison, e.g., `(x | 1) > 2`
+                                      clippy::infinite-iter  deny     infinite iteration
+                  clippy::inherent-to-string-shadow-display  deny     type implements inherent method `to_string()`, which gets shadowed by the implementation of the `Display` trait
+                             clippy::inline-fn-without-body  deny     use of `#[inline]` on trait methods without bodies
+                                      clippy::invalid-regex  deny     invalid regular expressions
+                            clippy::inverted-saturating-sub  deny     Check if a variable is smaller than another one and still subtract from it even if smaller
+                               clippy::invisible-characters  deny     using an invisible character in a string literal, which is confusing
+                              clippy::iterator-step-by-zero  deny     using `Iterator::step_by(0)`, which will panic at runtime
+                                     clippy::iter-next-loop  deny     for-looping over `_.next()` which is probably not intended
+                                     clippy::iter-skip-zero  deny     disallows `.skip(0)`
+                                clippy::let-underscore-lock  deny     non-binding `let` on a synchronization lock
+                               clippy::lint-groups-priority  deny     a lint group in `Cargo.toml` at the same priority as a lint
+                            clippy::match-str-case-mismatch  deny     creation of a case altering match expression with non-compliant arms
+                            clippy::mem-replace-with-uninit  deny     `mem::replace(&mut _, mem::uninitialized())` or `mem::replace(&mut _, mem::zeroed())`
+                                            clippy::min-max  deny     `min(_, max(_, _))` (or vice versa) with bounds clamping the result to a constant
+                          clippy::mistyped-literal-suffixes  deny     mistyped literal suffix
+                                         clippy::modulo-one  deny     taking an integer modulo +/-1, which can either panic/overflow or always returns 0
+                                       clippy::mut-from-ref  deny     fns that create mutable refs from immutable ref args
+                                         clippy::never-loop  deny     any loop that will always `break` or `return`
+                           clippy::nonsensical-open-options  deny     nonsensical combination of options for opening a file
+                         clippy::non-octal-unix-permissions  deny     use of non-octal value to set unix file permissions, which will be translated into octal
+                           clippy::not-unsafe-ptr-arg-deref  deny     public functions dereferencing raw pointer arguments but not marked `unsafe`
+                                  clippy::option-env-unwrap  deny     using `option_env!(...).unwrap()` to get environment variable
+                             clippy::out-of-bounds-indexing  deny     out of bounds constant indexing
+                           clippy::overly-complex-bool-expr  deny     boolean expressions that contain terminals which can be eliminated
+                          clippy::panicking-overflow-checks  deny     overflow checks which will panic in debug mode
+                                   clippy::panicking-unwrap  deny     checks for calls of `unwrap[_err]()` that will always fail
+                             clippy::possible-missing-comma  deny     possible missing comma in array
+                             clippy::read-line-without-trim  deny     calling `Stdin::read_line`, then trying to parse it without first trimming
+                              clippy::recursive-format-impl  deny     Format trait method called while implementing the same Format trait
+                              clippy::redundant-comparisons  deny     double comparisons where one of them can be removed
+                              clippy::reversed-empty-ranges  deny     reversing the limits of range expressions, resulting in empty ranges
+                                    clippy::self-assignment  deny     explicit self-assignment
+                                   clippy::serde-api-misuse  deny     various things that will negatively affect your serde experience
+                           clippy::size-of-in-element-count  deny     using `size_of::<T>` or `size_of_val::<T>` where a count of elements of `T` is expected
+                                  clippy::suspicious-splitn  deny     checks for `.splitn(0, ..)` and `.splitn(1, ..)`
+                               clippy::transmute-null-to-fn  deny     transmute results in a null function pointer, which is undefined behavior
+                                   clippy::transmuting-null  deny     transmutes from a null pointer to a reference, which is undefined behavior
+                                clippy::uninit-assumed-init  deny     `MaybeUninit::uninit().assume_init()`
+                                         clippy::uninit-vec  deny     Vec with uninitialized data
+                                           clippy::unit-cmp  deny     comparing unit values
+                                          clippy::unit-hash  deny     hashing a unit value, which does nothing
+                          clippy::unit-return-expecting-ord  deny     fn arguments of type Fn(...) -> Ord returning the unit type ().
+                       clippy::unsound-collection-transmute  deny     transmute between collections of layout-incompatible types
+                                   clippy::unused-io-amount  deny     unused written/read amount
+                                  clippy::useless-attribute  deny     use of lint attributes on `extern crate` items
+                                 clippy::vec-resize-to-zero  deny     emptying a vector with `resize(0, an_int)` instead of `clear()` is probably an argument inversion mistake
+                          clippy::while-immutable-condition  deny     variables used within while expression are not mutated in the body
+                                    clippy::wrong-transmute  deny     transmutes that are confusing at best, undefined behavior at worst and always useless
+                                         clippy::zst-offset  deny     Check for offset calculations on raw pointers to zero-sized types
+
+
+Lint groups loaded by this crate:
+
+                                          name  sub-lints
+                                          ----  ---------
+                                   clippy::all  clippy::almost-complete-range, clippy::approx-constant, clippy::arc-with-non-send-sync, clippy::assertions-on-constants, clippy::async-yields-async, clippy::blanket-clippy-restriction-lints, clippy::deprecated-cfg-attr, clippy::deprecated-clippy-cfg-attr, clippy::deprecated-semver, clippy::duplicated-attributes, clippy::mixed-attributes-style, clippy::non-minimal-cfg, clippy::repr-packed-without-abi, clippy::unnecessary-clippy-cfg, clippy::useless-attribute, clippy::await-holding-invalid-type, clippy::await-holding-lock, clippy::await-holding-refcell-ref, clippy::blocks-in-conditions, clippy::bool-assert-comparison, clippy::bool-comparison, clippy::nonminimal-bool, clippy::overly-complex-bool-expr, clippy::borrow-deref-ref, clippy::box-default, clippy::byte-char-slices, clippy::lint-groups-priority, clippy::cast-abs-to-unsigned, clippy::cast-enum-constructor, clippy::cast-enum-truncation, clippy::cast-nan-to-int, clippy::cast-slice-different-sizes, clippy::cast-slice-from-raw-parts, clippy::char-lit-as-u8, clippy::confusing-method-to-numeric-cast, clippy::fn-to-numeric-cast, clippy::fn-to-numeric-cast-with-truncation, clippy::manual-dangling-ptr, clippy::unnecessary-cast, clippy::zero-ptr, clippy::cloned-ref-to-slice-refs, clippy::collapsible-if, clippy::crate-in-macro-def, clippy::field-reassign-with-default, clippy::default-constructed-unit-structs, clippy::default-instead-of-iter-empty, clippy::explicit-auto-deref, clippy::needless-borrow, clippy::derivable-impls, clippy::derive-ord-xor-partial-ord, clippy::derived-hash-with-manual-eq, clippy::disallowed-fields, clippy::disallowed-macros, clippy::disallowed-methods, clippy::disallowed-names, clippy::disallowed-types, clippy::doc-lazy-continuation, clippy::doc-nested-refdefs, clippy::doc-overindented-list-items, clippy::doc-suspicious-footnotes, clippy::empty-docs, clippy::missing-safety-doc, clippy::needless-doctest-main, clippy::suspicious-doc-comments, clippy::test-attr-in-doctest, clippy::double-parens, clippy::drop-non-drop, clippy::forget-non-drop, clippy::duplicate-mod, clippy::empty-line-after-doc-comments, clippy::empty-line-after-outer-attr, clippy::map-entry, clippy::enum-clike-unportable-variant, clippy::boxed-local, clippy::redundant-closure, clippy::excessive-nesting, clippy::explicit-write, clippy::extra-unused-type-parameters, clippy::excessive-precision, clippy::useless-format, clippy::format-in-format-args, clippy::to-string-in-format-args, clippy::unused-format-specs, clippy::print-in-format-impl, clippy::recursive-format-impl, clippy::possible-missing-comma, clippy::possible-missing-else, clippy::suspicious-assignment-formatting, clippy::suspicious-else-formatting, clippy::suspicious-unary-op-formatting, clippy::four-forward-slashes, clippy::from-over-into, clippy::from-raw-with-void-ptr, clippy::from-str-radix-10, clippy::double-must-use, clippy::duplicate-underscore-argument, clippy::misnamed-getters, clippy::must-use-unit, clippy::not-unsafe-ptr-arg-deref, clippy::result-large-err, clippy::result-unit-err, clippy::too-many-arguments, clippy::if-let-mutex, clippy::if-same-then-else, clippy::ifs-same-cond, clippy::impl-hash-borrow-with-str-and-bytes, clippy::implicit-saturating-add, clippy::implicit-saturating-sub, clippy::inverted-saturating-sub, clippy::implied-bounds-in-impls, clippy::incompatible-msrv, clippy::out-of-bounds-indexing, clippy::ineffective-open-options, clippy::infallible-try-from, clippy::infinite-iter, clippy::inherent-to-string, clippy::inherent-to-string-shadow-display, clippy::init-numbered-fields, clippy::inline-fn-without-body, clippy::int-plus-one, clippy::enum-variant-names, clippy::module-inception, clippy::items-after-test-module, clippy::large-const-arrays, clippy::large-enum-variant, clippy::legacy-numeric-constants, clippy::len-without-is-empty, clippy::comparison-to-empty, clippy::len-zero, clippy::let-underscore-future, clippy::let-underscore-lock, clippy::let-with-type-underscore, clippy::extra-unused-lifetimes, clippy::needless-lifetimes, clippy::inconsistent-digit-grouping, clippy::mistyped-literal-suffixes, clippy::unusual-byte-groupings, clippy::char-indices-as-byte-indices, clippy::empty-loop, clippy::explicit-counter-loop, clippy::for-kv-map, clippy::iter-next-loop, clippy::manual-find, clippy::manual-flatten, clippy::manual-memcpy, clippy::manual-slice-fill, clippy::manual-while-let-some, clippy::missing-spin-loop, clippy::mut-range-bound, clippy::needless-range-loop, clippy::never-loop, clippy::same-item-push, clippy::single-element-loop, clippy::unused-enumerate-index, clippy::while-immutable-condition, clippy::while-let-loop, clippy::while-let-on-iterator, clippy::macro-metavars-in-unsafe, clippy::main-recursion, clippy::manual-abs-diff, clippy::manual-async-fn, clippy::manual-bits, clippy::manual-checked-ops, clippy::manual-clamp, clippy::manual-is-finite, clippy::manual-is-infinite, clippy::manual-hash-one, clippy::manual-ignore-case-cmp, clippy::manual-is-ascii-check, clippy::manual-main-separator-str, clippy::manual-non-exhaustive, clippy::manual-option-as-slice, clippy::manual-range-patterns, clippy::manual-rem-euclid, clippy::manual-retain, clippy::manual-rotate, clippy::manual-slice-size-calculation, clippy::manual-strip, clippy::manual-take, clippy::option-map-unit-fn, clippy::result-map-unit-fn, clippy::match-result-ok, clippy::collapsible-match, clippy::infallible-destructuring-match, clippy::manual-filter, clippy::manual-map, clippy::manual-ok-err, clippy::manual-unwrap-or, clippy::manual-unwrap-or-default, clippy::match-as-ref, clippy::match-like-matches-macro, clippy::match-overlapping-arm, clippy::match-ref-pats, clippy::match-single-binding, clippy::match-str-case-mismatch, clippy::needless-match, clippy::redundant-guards, clippy::redundant-pattern-matching, clippy::single-match, clippy::wildcard-in-or-patterns, clippy::mem-replace-option-with-none, clippy::mem-replace-option-with-some, clippy::mem-replace-with-default, clippy::mem-replace-with-uninit, clippy::bind-instead-of-map, clippy::bytes-count-to-len, clippy::bytes-nth, clippy::chars-last-cmp, clippy::chars-next-cmp, clippy::clone-on-copy, clippy::collapsible-str-replace, clippy::const-is-empty, clippy::double-ended-iterator-last, clippy::drain-collect, clippy::err-expect, clippy::expect-fun-call, clippy::extend-with-drain, clippy::filter-map-bool-then, clippy::filter-map-identity, clippy::filter-next, clippy::flat-map-identity, clippy::get-first, clippy::get-last-with-len, clippy::inspect-for-each, clippy::into-iter-on-ref, clippy::io-other-error, clippy::is-digit-ascii-radix, clippy::iter-cloned-collect, clippy::iter-count, clippy::iter-kv-map, clippy::iter-next-slice, clippy::iter-nth, clippy::iter-nth-zero, clippy::iter-out-of-bounds, clippy::iter-overeager-cloned, clippy::iter-skip-next, clippy::iter-skip-zero, clippy::iterator-step-by-zero, clippy::join-absolute-paths, clippy::lines-filter-map-ok, clippy::manual-c-str-literals, clippy::manual-contains, clippy::manual-filter-map, clippy::manual-find-map, clippy::manual-inspect, clippy::manual-next-back, clippy::manual-ok-or, clippy::manual-repeat-n, clippy::manual-saturating-arithmetic, clippy::manual-split-once, clippy::manual-str-repeat, clippy::manual-try-fold, clippy::map-all-any-identity, clippy::map-clone, clippy::map-collect-result-unit, clippy::map-flatten, clippy::map-identity, clippy::mut-mutex-lock, clippy::needless-as-bytes, clippy::needless-character-iteration, clippy::needless-option-as-deref, clippy::needless-option-take, clippy::needless-splitn, clippy::new-ret-no-self, clippy::no-effect-replace, clippy::nonsensical-open-options, clippy::obfuscated-if-else, clippy::ok-expect, clippy::option-as-ref-deref, clippy::option-filter-map, clippy::option-map-or-none, clippy::or-then-unwrap, clippy::path-ends-with-ext, clippy::ptr-offset-with-cast, clippy::range-zip-with-len, clippy::read-line-without-trim, clippy::readonly-write-lock, clippy::redundant-as-str, clippy::redundant-iter-cloned, clippy::repeat-once, clippy::result-filter-map, clippy::result-map-or-into-option, clippy::seek-from-current, clippy::seek-to-start-instead-of-rewind, clippy::should-implement-trait, clippy::single-char-add-str, clippy::skip-while-next, clippy::sliced-string-as-bytes, clippy::string-extend-chars, clippy::suspicious-command-arg-space, clippy::suspicious-map, clippy::suspicious-open-options, clippy::suspicious-splitn, clippy::suspicious-to-owned, clippy::swap-with-temporary, clippy::type-id-on-box, clippy::unbuffered-bytes, clippy::uninit-assumed-init, clippy::unit-hash, clippy::unnecessary-fallible-conversions, clippy::unnecessary-filter-map, clippy::unnecessary-find-map, clippy::unnecessary-first-then-check, clippy::unnecessary-fold, clippy::unnecessary-get-then-check, clippy::unnecessary-lazy-evaluations, clippy::unnecessary-literal-unwrap, clippy::unnecessary-map-or, clippy::unnecessary-min-or-max, clippy::unnecessary-option-map-or-else, clippy::unnecessary-result-map-or-else, clippy::unnecessary-sort-by, clippy::unnecessary-to-owned, clippy::unwrap-or-default, clippy::useless-asref, clippy::useless-nonzero-new-unchecked, clippy::vec-resize-to-zero, clippy::waker-clone-wake, clippy::wrong-self-convention, clippy::zst-offset, clippy::min-max, clippy::short-circuit-statement, clippy::builtin-type-shadow, clippy::mixed-case-hex-literals, clippy::redundant-at-rest-pattern, clippy::redundant-pattern, clippy::unneeded-wildcard-pattern, clippy::zero-prefixed-literal, clippy::missing-const-for-thread-local, clippy::missing-enforced-import-renames, clippy::diverging-sub-expression, clippy::multi-assignments, clippy::multiple-bound-locations, clippy::mutable-key-type, clippy::needless-arbitrary-self-type, clippy::needless-bool, clippy::needless-bool-assign, clippy::needless-borrowed-reference, clippy::needless-borrows-for-generic-args, clippy::needless-else, clippy::needless-ifs, clippy::needless-late-init, clippy::needless-maybe-sized, clippy::needless-parens-on-range-literals, clippy::needless-question-mark, clippy::needless-update, clippy::neg-cmp-op-on-partial-ord, clippy::neg-multiply, clippy::new-without-default, clippy::no-effect, clippy::unnecessary-operation, clippy::non-canonical-clone-impl, clippy::non-canonical-partial-ord-impl, clippy::borrow-interior-mutable-const, clippy::declare-interior-mutable-const, clippy::just-underscores-and-digits, clippy::non-octal-unix-permissions, clippy::octal-escapes, clippy::only-used-in-recursion, clippy::absurd-extreme-comparisons, clippy::assign-op-pattern, clippy::bad-bit-mask, clippy::cmp-owned, clippy::double-comparisons, clippy::duration-subsec, clippy::eq-op, clippy::erasing-op, clippy::float-equality-without-abs, clippy::identity-op, clippy::impossible-comparisons, clippy::ineffective-bit-mask, clippy::manual-div-ceil, clippy::manual-is-multiple-of, clippy::misrefactored-assign-op, clippy::modulo-one, clippy::op-ref, clippy::redundant-comparisons, clippy::self-assignment, clippy::option-env-unwrap, clippy::panicking-overflow-checks, clippy::partialeq-ne-impl, clippy::partialeq-to-none, clippy::permissions-set-readonly-false, clippy::pointers-in-nomem-asm-block, clippy::precedence, clippy::cmp-null, clippy::mut-from-ref, clippy::ptr-arg, clippy::ptr-eq, clippy::question-mark, clippy::manual-range-contains, clippy::reversed-empty-ranges, clippy::rc-clone-in-vec-init, clippy::redundant-async-block, clippy::redundant-closure-call, clippy::redundant-field-names, clippy::redundant-locals, clippy::redundant-slicing, clippy::redundant-static-lifetimes, clippy::deref-addrof, clippy::invalid-regex, clippy::regex-creation-in-loops, clippy::repeat-vec-with-capacity, clippy::replace-box, clippy::reserve-after-initialization, clippy::let-and-return, clippy::needless-return, clippy::needless-return-with-question-mark, clippy::self-named-constructors, clippy::serde-api-misuse, clippy::single-component-path-imports, clippy::single-range-in-vec-init, clippy::size-of-in-element-count, clippy::size-of-ref, clippy::slow-vector-initialization, clippy::manual-pattern-char-comparison, clippy::string-from-utf8-as-bytes, clippy::trim-split-whitespace, clippy::strlen-on-c-strings, clippy::suspicious-arithmetic-impl, clippy::suspicious-op-assign-impl, clippy::almost-swapped, clippy::manual-swap, clippy::swap-ptr-to-ref, clippy::tabs-in-doc-comments, clippy::temporary-assignment, clippy::to-digit-is-some, clippy::to-string-trait-impl, clippy::toplevel-ref-arg, clippy::crosspointer-transmute, clippy::eager-transmute, clippy::missing-transmute-annotations, clippy::transmute-bytes-to-str, clippy::transmute-int-to-bool, clippy::transmute-int-to-non-zero, clippy::transmute-null-to-fn, clippy::transmute-ptr-to-ref, clippy::transmutes-expressible-as-ptr-casts, clippy::transmuting-null, clippy::unsound-collection-transmute, clippy::useless-transmute, clippy::wrong-transmute, clippy::borrowed-box, clippy::box-collection, clippy::owned-cow, clippy::redundant-allocation, clippy::type-complexity, clippy::vec-box, clippy::unconditional-recursion, clippy::invisible-characters, clippy::uninit-vec, clippy::unit-return-expecting-ord, clippy::let-unit-value, clippy::unit-arg, clippy::unit-cmp, clippy::unnecessary-map-on-constructor, clippy::unnecessary-mut-passed, clippy::unnecessary-owned-empty-strings, clippy::unneeded-struct-pattern, clippy::unsafe-removed-from-name, clippy::unused-io-amount, clippy::unused-unit, clippy::panicking-unwrap, clippy::unnecessary-unwrap, clippy::upper-case-acronyms, clippy::useless-concat, clippy::useless-conversion, clippy::useless-vec, clippy::vec-init-then-push, clippy::needless-pub-self, clippy::print-literal, clippy::print-with-newline, clippy::println-empty-string, clippy::write-literal, clippy::write-with-newline, clippy::writeln-empty-string, clippy::zero-divided-by-zero, clippy::zero-repeat-side-effects, clippy::zombie-processes
+                                 clippy::cargo  clippy::cargo-common-metadata, clippy::multiple-crate-versions, clippy::negative-feature-names, clippy::redundant-feature-names, clippy::wildcard-dependencies
+                            clippy::complexity  clippy::deprecated-cfg-attr, clippy::bool-comparison, clippy::nonminimal-bool, clippy::borrow-deref-ref, clippy::char-lit-as-u8, clippy::unnecessary-cast, clippy::default-constructed-unit-structs, clippy::explicit-auto-deref, clippy::derivable-impls, clippy::double-parens, clippy::excessive-nesting, clippy::explicit-write, clippy::extra-unused-type-parameters, clippy::useless-format, clippy::unused-format-specs, clippy::too-many-arguments, clippy::implied-bounds-in-impls, clippy::int-plus-one, clippy::let-with-type-underscore, clippy::extra-unused-lifetimes, clippy::needless-lifetimes, clippy::explicit-counter-loop, clippy::manual-find, clippy::manual-flatten, clippy::single-element-loop, clippy::while-let-loop, clippy::manual-abs-diff, clippy::manual-checked-ops, clippy::manual-clamp, clippy::manual-hash-one, clippy::manual-main-separator-str, clippy::manual-option-as-slice, clippy::manual-range-patterns, clippy::manual-rem-euclid, clippy::manual-slice-size-calculation, clippy::manual-strip, clippy::manual-take, clippy::option-map-unit-fn, clippy::result-map-unit-fn, clippy::manual-filter, clippy::manual-ok-err, clippy::manual-unwrap-or, clippy::match-as-ref, clippy::match-single-binding, clippy::needless-match, clippy::redundant-guards, clippy::wildcard-in-or-patterns, clippy::bind-instead-of-map, clippy::bytes-count-to-len, clippy::clone-on-copy, clippy::filter-map-identity, clippy::filter-next, clippy::flat-map-identity, clippy::get-last-with-len, clippy::inspect-for-each, clippy::iter-count, clippy::iter-kv-map, clippy::manual-c-str-literals, clippy::manual-filter-map, clippy::manual-find-map, clippy::manual-inspect, clippy::manual-split-once, clippy::map-all-any-identity, clippy::map-flatten, clippy::map-identity, clippy::needless-as-bytes, clippy::needless-option-as-deref, clippy::needless-option-take, clippy::needless-splitn, clippy::option-as-ref-deref, clippy::option-filter-map, clippy::or-then-unwrap, clippy::ptr-offset-with-cast, clippy::range-zip-with-len, clippy::redundant-as-str, clippy::repeat-once, clippy::result-filter-map, clippy::seek-from-current, clippy::seek-to-start-instead-of-rewind, clippy::skip-while-next, clippy::swap-with-temporary, clippy::unnecessary-filter-map, clippy::unnecessary-find-map, clippy::unnecessary-first-then-check, clippy::unnecessary-literal-unwrap, clippy::unnecessary-min-or-max, clippy::unnecessary-sort-by, clippy::useless-asref, clippy::useless-nonzero-new-unchecked, clippy::short-circuit-statement, clippy::redundant-at-rest-pattern, clippy::unneeded-wildcard-pattern, clippy::zero-prefixed-literal, clippy::diverging-sub-expression, clippy::needless-arbitrary-self-type, clippy::needless-bool, clippy::needless-bool-assign, clippy::needless-borrowed-reference, clippy::needless-ifs, clippy::needless-question-mark, clippy::needless-update, clippy::neg-cmp-op-on-partial-ord, clippy::no-effect, clippy::unnecessary-operation, clippy::only-used-in-recursion, clippy::double-comparisons, clippy::duration-subsec, clippy::identity-op, clippy::manual-div-ceil, clippy::manual-is-multiple-of, clippy::partialeq-ne-impl, clippy::precedence, clippy::redundant-async-block, clippy::redundant-closure-call, clippy::redundant-slicing, clippy::deref-addrof, clippy::reserve-after-initialization, clippy::string-from-utf8-as-bytes, clippy::strlen-on-c-strings, clippy::manual-swap, clippy::temporary-assignment, clippy::transmute-bytes-to-str, clippy::transmute-int-to-bool, clippy::transmute-int-to-non-zero, clippy::transmute-ptr-to-ref, clippy::transmutes-expressible-as-ptr-casts, clippy::useless-transmute, clippy::borrowed-box, clippy::type-complexity, clippy::vec-box, clippy::unit-arg, clippy::unnecessary-map-on-constructor, clippy::unnecessary-unwrap, clippy::useless-concat, clippy::useless-conversion, clippy::zero-divided-by-zero
+                           clippy::correctness  clippy::approx-constant, clippy::async-yields-async, clippy::deprecated-semver, clippy::useless-attribute, clippy::overly-complex-bool-expr, clippy::lint-groups-priority, clippy::cast-slice-different-sizes, clippy::derive-ord-xor-partial-ord, clippy::derived-hash-with-manual-eq, clippy::enum-clike-unportable-variant, clippy::recursive-format-impl, clippy::possible-missing-comma, clippy::not-unsafe-ptr-arg-deref, clippy::if-let-mutex, clippy::ifs-same-cond, clippy::impl-hash-borrow-with-str-and-bytes, clippy::inverted-saturating-sub, clippy::out-of-bounds-indexing, clippy::infinite-iter, clippy::inherent-to-string-shadow-display, clippy::inline-fn-without-body, clippy::let-underscore-lock, clippy::mistyped-literal-suffixes, clippy::char-indices-as-byte-indices, clippy::iter-next-loop, clippy::never-loop, clippy::while-immutable-condition, clippy::match-str-case-mismatch, clippy::mem-replace-with-uninit, clippy::iter-skip-zero, clippy::iterator-step-by-zero, clippy::nonsensical-open-options, clippy::read-line-without-trim, clippy::suspicious-splitn, clippy::uninit-assumed-init, clippy::unit-hash, clippy::vec-resize-to-zero, clippy::zst-offset, clippy::min-max, clippy::non-octal-unix-permissions, clippy::absurd-extreme-comparisons, clippy::bad-bit-mask, clippy::eq-op, clippy::erasing-op, clippy::impossible-comparisons, clippy::ineffective-bit-mask, clippy::modulo-one, clippy::redundant-comparisons, clippy::self-assignment, clippy::option-env-unwrap, clippy::panicking-overflow-checks, clippy::mut-from-ref, clippy::reversed-empty-ranges, clippy::invalid-regex, clippy::serde-api-misuse, clippy::size-of-in-element-count, clippy::almost-swapped, clippy::eager-transmute, clippy::transmute-null-to-fn, clippy::transmuting-null, clippy::unsound-collection-transmute, clippy::wrong-transmute, clippy::invisible-characters, clippy::uninit-vec, clippy::unit-return-expecting-ord, clippy::unit-cmp, clippy::unused-io-amount, clippy::panicking-unwrap
+                               clippy::nursery  clippy::as-ptr-cast-mut, clippy::needless-type-cast, clippy::coerce-container-to-any, clippy::collection-is-never-read, clippy::derive-partial-eq-without-eq, clippy::doc-link-code, clippy::too-long-first-doc-paragraph, clippy::equatable-if-let, clippy::fallible-impl-from, clippy::imprecise-flops, clippy::suboptimal-flops, clippy::future-not-send, clippy::branches-sharing-code, clippy::large-stack-frames, clippy::useless-let-if-seq, clippy::literal-string-with-formatting-args, clippy::while-float, clippy::significant-drop-in-scrutinee, clippy::clear-with-drain, clippy::iter-on-empty-collections, clippy::iter-on-single-items, clippy::iter-with-drain, clippy::needless-collect, clippy::or-fun-call, clippy::path-buf-push-overwrite, clippy::search-is-some, clippy::missing-const-for-fn, clippy::debug-assert-with-mut-call, clippy::needless-pass-by-ref-mut, clippy::non-send-fields-in-send-ty, clippy::nonstandard-macro-braces, clippy::option-if-let-else, clippy::read-zero-byte-vec, clippy::redundant-clone, clippy::redundant-pub-crate, clippy::trivial-regex, clippy::set-contains-or-insert, clippy::significant-drop-tightening, clippy::single-option-map, clippy::string-lit-as-bytes, clippy::suspicious-operation-groupings, clippy::trailing-empty-array, clippy::trait-duplication-in-bounds, clippy::type-repetition-in-bounds, clippy::transmute-undefined-repr, clippy::tuple-array-conversions, clippy::uninhabited-references, clippy::unnecessary-struct-initialization, clippy::unused-peekable, clippy::unused-rounding, clippy::use-self, clippy::volatile-composites
+                              clippy::pedantic  clippy::assigning-clones, clippy::ignore-without-reason, clippy::inline-always, clippy::should-panic-without-expect, clippy::bool-to-int-with-if, clippy::borrow-as-ptr, clippy::cast-lossless, clippy::cast-possible-truncation, clippy::cast-possible-wrap, clippy::cast-precision-loss, clippy::cast-ptr-alignment, clippy::cast-sign-loss, clippy::ptr-as-ptr, clippy::ptr-cast-constness, clippy::ref-as-ptr, clippy::checked-conversions, clippy::collapsible-else-if, clippy::comparison-chain, clippy::copy-iterator, clippy::default-trait-access, clippy::explicit-deref-methods, clippy::ref-binding-to-reference, clippy::expl-impl-clone-on-copy, clippy::unsafe-derive-deserialize, clippy::doc-broken-link, clippy::doc-comment-double-space-linebreaks, clippy::doc-link-with-quotes, clippy::doc-markdown, clippy::missing-errors-doc, clippy::missing-panics-doc, clippy::duration-suboptimal-units, clippy::empty-enums, clippy::redundant-closure-for-method-calls, clippy::fn-params-excessive-bools, clippy::struct-excessive-bools, clippy::uninlined-format-args, clippy::unnecessary-debug-formatting, clippy::unnecessary-trailing-comma, clippy::format-push-string, clippy::must-use-candidate, clippy::ref-option, clippy::too-many-lines, clippy::if-not-else, clippy::same-functions-in-if-condition, clippy::ignored-unit-patterns, clippy::implicit-hasher, clippy::inconsistent-struct-constructor, clippy::index-refutable-slice, clippy::maybe-infinite-iter, clippy::struct-field-names, clippy::items-after-statements, clippy::iter-not-returning-iterator, clippy::into-iter-without-iter, clippy::iter-without-into-iter, clippy::large-futures, clippy::large-stack-arrays, clippy::elidable-lifetime-names, clippy::large-digit-groups, clippy::unreadable-literal, clippy::explicit-into-iter-loop, clippy::explicit-iter-loop, clippy::macro-use-imports, clippy::manual-assert, clippy::manual-ilog2, clippy::manual-is-power-of-two, clippy::manual-let-else, clippy::manual-string-new, clippy::match-bool, clippy::match-same-arms, clippy::match-wild-err-arm, clippy::match-wildcard-for-single-variants, clippy::single-match-else, clippy::case-sensitive-file-extension-comparisons, clippy::cloned-instead-of-copied, clippy::filter-map-next, clippy::flat-map-option, clippy::format-collect, clippy::from-iter-instead-of-collect, clippy::implicit-clone, clippy::inefficient-to-string, clippy::ip-constant, clippy::iter-filter-is-ok, clippy::iter-filter-is-some, clippy::manual-is-variant-and, clippy::map-unwrap-or, clippy::naive-bytecount, clippy::option-as-ref-cloned, clippy::ptr-offset-by-literal, clippy::stable-sort-primitive, clippy::str-split-at-newline, clippy::unnecessary-join, clippy::used-underscore-binding, clippy::used-underscore-items, clippy::mismatching-type-param-order, clippy::missing-fields-in-debug, clippy::mut-mut, clippy::needless-continue, clippy::needless-for-each, clippy::needless-pass-by-value, clippy::no-effect-underscore-binding, clippy::no-mangle-with-rust-abi, clippy::many-single-char-names, clippy::similar-names, clippy::non-std-lazy-statics, clippy::self-only-used-in-recursion, clippy::decimal-bitwise-operands, clippy::float-cmp, clippy::invalid-upcast-comparisons, clippy::manual-midpoint, clippy::needless-bitwise-bool, clippy::verbose-bit-mask, clippy::large-types-passed-by-value, clippy::trivially-copy-pass-by-ref, clippy::pub-underscore-fields, clippy::range-minus-one, clippy::range-plus-one, clippy::needless-raw-string-hashes, clippy::redundant-else, clippy::ref-option-ref, clippy::return-self-not-must-use, clippy::same-length-and-capacity, clippy::semicolon-if-nothing-returned, clippy::single-char-pattern, clippy::string-add-assign, clippy::manual-instant-elapsed, clippy::unchecked-time-subtraction, clippy::transmute-ptr-to-ptr, clippy::linkedlist, clippy::option-option, clippy::unicode-not-nfc, clippy::unnecessary-box-returns, clippy::unnecessary-literal-bound, clippy::unnecessary-semicolon, clippy::unnecessary-wraps, clippy::unnested-or-patterns, clippy::unused-async, clippy::unused-self, clippy::enum-glob-use, clippy::wildcard-imports, clippy::zero-sized-map-values
+                                  clippy::perf  clippy::cloned-ref-to-slice-refs, clippy::map-entry, clippy::boxed-local, clippy::format-in-format-args, clippy::to-string-in-format-args, clippy::result-large-err, clippy::large-const-arrays, clippy::large-enum-variant, clippy::manual-memcpy, clippy::missing-spin-loop, clippy::manual-ignore-case-cmp, clippy::manual-retain, clippy::collapsible-str-replace, clippy::double-ended-iterator-last, clippy::drain-collect, clippy::expect-fun-call, clippy::extend-with-drain, clippy::iter-overeager-cloned, clippy::manual-contains, clippy::manual-str-repeat, clippy::manual-try-fold, clippy::readonly-write-lock, clippy::redundant-iter-cloned, clippy::sliced-string-as-bytes, clippy::unbuffered-bytes, clippy::unnecessary-to-owned, clippy::waker-clone-wake, clippy::missing-const-for-thread-local, clippy::cmp-owned, clippy::regex-creation-in-loops, clippy::replace-box, clippy::slow-vector-initialization, clippy::box-collection, clippy::redundant-allocation, clippy::useless-vec, clippy::vec-init-then-push
+                           clippy::restriction  clippy::absolute-paths, clippy::arbitrary-source-item-ordering, clippy::as-conversions, clippy::inline-asm-x86-att-syntax, clippy::inline-asm-x86-intel-syntax, clippy::assertions-on-result-states, clippy::allow-attributes, clippy::allow-attributes-without-reason, clippy::as-pointer-underscore, clippy::as-underscore, clippy::fn-to-numeric-cast-any, clippy::cfg-not-test, clippy::cognitive-complexity, clippy::create-dir, clippy::dbg-macro, clippy::default-numeric-fallback, clippy::default-union-representation, clippy::disallowed-script-idents, clippy::doc-include-without-cfg, clippy::doc-paragraphs-missing-punctuation, clippy::unnecessary-safety-doc, clippy::mem-forget, clippy::else-if-without-else, clippy::empty-drop, clippy::empty-enum-variants-with-brackets, clippy::empty-structs-with-brackets, clippy::big-endian-bytes, clippy::host-endian-bytes, clippy::little-endian-bytes, clippy::error-impl-error, clippy::exhaustive-enums, clippy::exhaustive-structs, clippy::exit, clippy::field-scoped-visibility-modifiers, clippy::lossy-float-literal, clippy::pointer-format, clippy::impl-trait-in-params, clippy::renamed-function-params, clippy::if-then-some-else-none, clippy::implicit-return, clippy::indexing-slicing, clippy::multiple-inherent-impl, clippy::module-name-repetitions, clippy::iter-over-hash-type, clippy::large-include-file, clippy::let-underscore-must-use, clippy::let-underscore-untyped, clippy::decimal-literal-representation, clippy::infinite-loop, clippy::rest-pat-in-fully-bound-structs, clippy::try-err, clippy::wildcard-enum-match-arm, clippy::clone-on-ref-ptr, clippy::expect-used, clippy::filetype-is-file, clippy::get-unwrap, clippy::map-err-ignore, clippy::map-with-unused-argument-over-ranges, clippy::return-and-then, clippy::string-lit-chars-any, clippy::unwrap-used, clippy::verbose-file-reads, clippy::min-ident-chars, clippy::separated-literal-suffix, clippy::unneeded-field-pattern, clippy::unseparated-literal-suffix, clippy::missing-assert-message, clippy::missing-asserts-for-indexing, clippy::missing-docs-in-private-items, clippy::missing-inline-in-public-items, clippy::missing-trait-methods, clippy::mixed-read-write-in-expression, clippy::mod-module-files, clippy::self-named-module-files, clippy::multiple-unsafe-ops-per-block, clippy::mutex-atomic, clippy::mutex-integer, clippy::non-zero-suggestions, clippy::arithmetic-side-effects, clippy::float-arithmetic, clippy::float-cmp-const, clippy::integer-division, clippy::integer-division-remainder-used, clippy::modulo-arithmetic, clippy::panic-in-result-fn, clippy::panic, clippy::todo, clippy::unimplemented, clippy::unreachable, clippy::partial-pub-fields, clippy::pathbuf-init-then-push, clippy::pattern-type-mismatch, clippy::precedence-bits, clippy::pub-use, clippy::question-mark-used, clippy::needless-raw-strings, clippy::deref-by-slicing, clippy::redundant-test-prefix, clippy::redundant-type-annotations, clippy::ref-patterns, clippy::same-name-method, clippy::semicolon-inside-block, clippy::semicolon-outside-block, clippy::shadow-reuse, clippy::shadow-same, clippy::shadow-unrelated, clippy::single-call-fn, clippy::single-char-lifetime-names, clippy::alloc-instead-of-core, clippy::std-instead-of-alloc, clippy::std-instead-of-core, clippy::str-to-string, clippy::string-add, clippy::string-slice, clippy::suspicious-xor-used-as-pow, clippy::tests-outside-test-module, clippy::rc-buffer, clippy::rc-mutex, clippy::undocumented-unsafe-blocks, clippy::unnecessary-safety-comment, clippy::non-ascii-literal, clippy::unnecessary-self-imports, clippy::unused-result-ok, clippy::unused-trait-names, clippy::unwrap-in-result, clippy::pub-with-shorthand, clippy::pub-without-shorthand, clippy::print-stderr, clippy::print-stdout, clippy::use-debug
+                                 clippy::style  clippy::assertions-on-constants, clippy::mixed-attributes-style, clippy::non-minimal-cfg, clippy::blocks-in-conditions, clippy::bool-assert-comparison, clippy::box-default, clippy::byte-char-slices, clippy::fn-to-numeric-cast, clippy::fn-to-numeric-cast-with-truncation, clippy::manual-dangling-ptr, clippy::zero-ptr, clippy::collapsible-if, clippy::field-reassign-with-default, clippy::default-instead-of-iter-empty, clippy::needless-borrow, clippy::disallowed-fields, clippy::disallowed-macros, clippy::disallowed-methods, clippy::disallowed-names, clippy::disallowed-types, clippy::doc-lazy-continuation, clippy::doc-overindented-list-items, clippy::missing-safety-doc, clippy::needless-doctest-main, clippy::redundant-closure, clippy::excessive-precision, clippy::from-over-into, clippy::from-str-radix-10, clippy::double-must-use, clippy::duplicate-underscore-argument, clippy::must-use-unit, clippy::result-unit-err, clippy::if-same-then-else, clippy::implicit-saturating-add, clippy::implicit-saturating-sub, clippy::inherent-to-string, clippy::init-numbered-fields, clippy::enum-variant-names, clippy::module-inception, clippy::items-after-test-module, clippy::legacy-numeric-constants, clippy::len-without-is-empty, clippy::comparison-to-empty, clippy::len-zero, clippy::inconsistent-digit-grouping, clippy::unusual-byte-groupings, clippy::for-kv-map, clippy::manual-slice-fill, clippy::manual-while-let-some, clippy::needless-range-loop, clippy::same-item-push, clippy::unused-enumerate-index, clippy::while-let-on-iterator, clippy::main-recursion, clippy::manual-async-fn, clippy::manual-bits, clippy::manual-is-finite, clippy::manual-is-infinite, clippy::manual-is-ascii-check, clippy::manual-non-exhaustive, clippy::manual-rotate, clippy::match-result-ok, clippy::collapsible-match, clippy::infallible-destructuring-match, clippy::manual-map, clippy::match-like-matches-macro, clippy::match-overlapping-arm, clippy::match-ref-pats, clippy::redundant-pattern-matching, clippy::single-match, clippy::mem-replace-option-with-none, clippy::mem-replace-option-with-some, clippy::mem-replace-with-default, clippy::bytes-nth, clippy::chars-last-cmp, clippy::chars-next-cmp, clippy::err-expect, clippy::filter-map-bool-then, clippy::get-first, clippy::into-iter-on-ref, clippy::io-other-error, clippy::is-digit-ascii-radix, clippy::iter-cloned-collect, clippy::iter-next-slice, clippy::iter-nth, clippy::iter-nth-zero, clippy::iter-skip-next, clippy::manual-next-back, clippy::manual-ok-or, clippy::manual-repeat-n, clippy::manual-saturating-arithmetic, clippy::map-clone, clippy::map-collect-result-unit, clippy::mut-mutex-lock, clippy::new-ret-no-self, clippy::obfuscated-if-else, clippy::ok-expect, clippy::option-map-or-none, clippy::result-map-or-into-option, clippy::should-implement-trait, clippy::single-char-add-str, clippy::string-extend-chars, clippy::unnecessary-fallible-conversions, clippy::unnecessary-fold, clippy::unnecessary-lazy-evaluations, clippy::unnecessary-map-or, clippy::unwrap-or-default, clippy::wrong-self-convention, clippy::builtin-type-shadow, clippy::mixed-case-hex-literals, clippy::redundant-pattern, clippy::missing-enforced-import-renames, clippy::multiple-bound-locations, clippy::needless-borrows-for-generic-args, clippy::needless-else, clippy::needless-late-init, clippy::needless-parens-on-range-literals, clippy::neg-multiply, clippy::new-without-default, clippy::borrow-interior-mutable-const, clippy::just-underscores-and-digits, clippy::assign-op-pattern, clippy::op-ref, clippy::partialeq-to-none, clippy::cmp-null, clippy::ptr-arg, clippy::ptr-eq, clippy::question-mark, clippy::manual-range-contains, clippy::redundant-field-names, clippy::redundant-static-lifetimes, clippy::let-and-return, clippy::needless-return, clippy::needless-return-with-question-mark, clippy::self-named-constructors, clippy::single-component-path-imports, clippy::manual-pattern-char-comparison, clippy::trim-split-whitespace, clippy::tabs-in-doc-comments, clippy::to-digit-is-some, clippy::to-string-trait-impl, clippy::toplevel-ref-arg, clippy::owned-cow, clippy::let-unit-value, clippy::unnecessary-mut-passed, clippy::unnecessary-owned-empty-strings, clippy::unneeded-struct-pattern, clippy::unsafe-removed-from-name, clippy::unused-unit, clippy::upper-case-acronyms, clippy::needless-pub-self, clippy::print-literal, clippy::print-with-newline, clippy::println-empty-string, clippy::write-literal, clippy::write-with-newline, clippy::writeln-empty-string
+                            clippy::suspicious  clippy::almost-complete-range, clippy::arc-with-non-send-sync, clippy::blanket-clippy-restriction-lints, clippy::deprecated-clippy-cfg-attr, clippy::duplicated-attributes, clippy::repr-packed-without-abi, clippy::unnecessary-clippy-cfg, clippy::await-holding-invalid-type, clippy::await-holding-lock, clippy::await-holding-refcell-ref, clippy::cast-abs-to-unsigned, clippy::cast-enum-constructor, clippy::cast-enum-truncation, clippy::cast-nan-to-int, clippy::cast-slice-from-raw-parts, clippy::confusing-method-to-numeric-cast, clippy::crate-in-macro-def, clippy::doc-nested-refdefs, clippy::doc-suspicious-footnotes, clippy::empty-docs, clippy::suspicious-doc-comments, clippy::test-attr-in-doctest, clippy::drop-non-drop, clippy::forget-non-drop, clippy::duplicate-mod, clippy::empty-line-after-doc-comments, clippy::empty-line-after-outer-attr, clippy::print-in-format-impl, clippy::possible-missing-else, clippy::suspicious-assignment-formatting, clippy::suspicious-else-formatting, clippy::suspicious-unary-op-formatting, clippy::four-forward-slashes, clippy::from-raw-with-void-ptr, clippy::misnamed-getters, clippy::incompatible-msrv, clippy::ineffective-open-options, clippy::infallible-try-from, clippy::let-underscore-future, clippy::empty-loop, clippy::mut-range-bound, clippy::macro-metavars-in-unsafe, clippy::manual-unwrap-or-default, clippy::const-is-empty, clippy::iter-out-of-bounds, clippy::join-absolute-paths, clippy::lines-filter-map-ok, clippy::needless-character-iteration, clippy::no-effect-replace, clippy::path-ends-with-ext, clippy::suspicious-command-arg-space, clippy::suspicious-map, clippy::suspicious-open-options, clippy::suspicious-to-owned, clippy::type-id-on-box, clippy::unnecessary-get-then-check, clippy::unnecessary-option-map-or-else, clippy::unnecessary-result-map-or-else, clippy::multi-assignments, clippy::mutable-key-type, clippy::needless-maybe-sized, clippy::non-canonical-clone-impl, clippy::non-canonical-partial-ord-impl, clippy::declare-interior-mutable-const, clippy::octal-escapes, clippy::float-equality-without-abs, clippy::misrefactored-assign-op, clippy::permissions-set-readonly-false, clippy::pointers-in-nomem-asm-block, clippy::rc-clone-in-vec-init, clippy::redundant-locals, clippy::repeat-vec-with-capacity, clippy::single-range-in-vec-init, clippy::size-of-ref, clippy::suspicious-arithmetic-impl, clippy::suspicious-op-assign-impl, clippy::swap-ptr-to-ref, clippy::crosspointer-transmute, clippy::missing-transmute-annotations, clippy::unconditional-recursion, clippy::zero-repeat-side-effects, clippy::zombie-processes
+
+

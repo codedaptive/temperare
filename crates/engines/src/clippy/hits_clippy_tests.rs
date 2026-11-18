@@ -1,7 +1,7 @@
-//! ZUT for hits_clippy.rs. The host is a fake: `cargo locate-project` and `cargo clippy` are answered by matching
-//! the command's first argument. These tests reach no real Cargo tree: each stops before any command runs (no
-//! `Cargo.toml` is found, or a param is refused). The shared helpers here are `pub(super)` for the real-tree cases in
-//! integration/hits_clippy_tests.rs.
+//! ZUT for hits_clippy.rs. The fake host answers clippy-driver help from a capture and cargo commands by first argument.
+//! The help fixture is stdout from `clippy-driver -W help`, clippy 0.1.95 via rustup in /tmp, exit 0, empty stderr.
+//! These tests reach no real Cargo tree: each stops before any command runs (no `Cargo.toml` or invalid params).
+//! Shared helpers are `pub(super)` for the real-tree integration tests.
 
 use super::hits_clippy;
 use crate::host::Host;
@@ -21,7 +21,8 @@ pub(super) fn output(code: i32, stdout: &[u8], stderr: &[u8]) -> Output {
     Output { code: Some(code), stdout: stdout.to_vec(), stderr: stderr.to_vec() }
 }
 
-/// `hits_clippy` on `folder` with a host answering locate-project with `located` and clippy with `linted`; returns
+/// `hits_clippy` on `folder` with a host answering clippy-driver help with the captured fixture, locate-project with
+/// `located` and clippy with `linted`; returns
 /// the result and every command the host was asked to run.
 pub(super) fn run(folder: &Path, located: Output, linted: Output) -> (Result<Vec<Hit>, Stop>, Vec<Cmd>) {
     run_rules(RULES, folder, located, linted)
@@ -29,14 +30,22 @@ pub(super) fn run(folder: &Path, located: Output, linted: Output) -> (Result<Vec
 
 /// `run` with the rule file `rules` in place of `RULES`.
 pub(super) fn run_rules(rules: &str, folder: &Path, located: Output, linted: Output) -> (Result<Vec<Hit>, Stop>, Vec<Cmd>) {
+    run_rules_with_help(rules, folder, output(0, include_bytes!("fixtures/lint_groups_help.txt"), b""), located, linted)
+}
+
+pub(super) fn run_rules_with_help(rules: &str, folder: &Path, help: Output, located: Output, linted: Output) -> (Result<Vec<Hit>, Stop>, Vec<Cmd>) {
     let file = RuleFile::parse(rules, folder).unwrap();
     let seen = RefCell::new(Vec::new());
     let run = |cmd: &Cmd| -> Result<Output, ProcError> {
         seen.borrow_mut().push(cmd.clone());
-        match cmd.args[0].to_str() {
-            Some("locate-project") => Ok(located.clone()),
-            Some("clippy") => Ok(linted.clone()),
-            other => panic!("unexpected cargo command {other:?}"),
+        match cmd.program.to_str() {
+            Some("clippy-driver") => Ok(help.clone()),
+            Some("cargo") => match cmd.args[0].to_str() {
+                Some("locate-project") => Ok(located.clone()),
+                Some("clippy") => Ok(linted.clone()),
+                other => panic!("unexpected cargo command {other:?}"),
+            },
+            other => panic!("unexpected program {other:?}"),
         }
     };
     let on_path = |_: &str| -> bool { panic!("hits_clippy looks nothing up on PATH") };
@@ -68,3 +77,4 @@ fn an_allow_that_is_not_a_list_is_failed_with_the_reason_and_nothing_runs() {
     assert_eq!(got, Err(Stop::Failed { code: None, stderr: want }));
     assert!(seen.is_empty());
 }
+
