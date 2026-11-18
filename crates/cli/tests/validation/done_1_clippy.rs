@@ -1,6 +1,7 @@
 //! Done 1: a stock linter through a rule file. "A Rust file that breaks a clippy lint is reported with its rule, its
 //! place and its fix text; a clean file passes."
 
+use crate::check::Check;
 use crate::repo::Repo;
 use crate::tm::tm;
 
@@ -30,8 +31,15 @@ fn crate_with(lib: &str) -> Repo {
 
 #[test]
 fn a_clippy_lint_is_reported_with_its_rule_place_and_fix() {
+    let mut check = Check::new(
+        "a_clippy_lint_is_reported_with_its_rule_place_and_fix",
+        "a one-file crate whose src/lib.rs line 2 is `if x == true`; rule no-bool-compare (clippy, \
+         clippy::bool_comparison)",
+    );
     let repo = crate_with("pub fn yes(x: bool) -> bool {\n    if x == true {\n        return true;\n    }\n    false\n}\n");
-    let a = tm(&repo, &["check", "--json"]);
+    let args = ["check", "--json"];
+    let a = tm(&repo, &args);
+    check.saw_tm(&args, a.code, &a.json);
     assert_eq!(a.code, 1, "a quality error is the refusal (S-15): {:#}\n{}", a.json, a.stderr);
     let f = a.findings();
     assert_eq!(f.len(), 1, "one finding: {:#}", a.json);
@@ -45,8 +53,14 @@ fn a_clippy_lint_is_reported_with_its_rule_place_and_fix() {
 
 #[test]
 fn a_clean_file_passes() {
+    let mut check = Check::new(
+        "a_clean_file_passes",
+        "a one-file crate whose src/lib.rs returns `x` itself; rule no-bool-compare (clippy, clippy::bool_comparison)",
+    );
     let repo = crate_with("pub fn yes(x: bool) -> bool {\n    x\n}\n");
-    let a = tm(&repo, &["check", "--json"]);
+    let args = ["check", "--json"];
+    let a = tm(&repo, &args);
+    check.saw_tm(&args, a.code, &a.json);
     assert_eq!(a.code, 0, "clean: {:#}\n{}", a.json, a.stderr);
     assert!(a.findings().is_empty(), "no findings: {:#}", a.json);
 }

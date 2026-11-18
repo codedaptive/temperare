@@ -3,6 +3,7 @@
 //! kit it belongs to (SPEC-rules WO-rules-8, S-25). The same call sits in both kits; only the one outside is reported,
 //! and its owner is the kit that holds the file (S-9).
 
+use crate::check::Check;
 use crate::repo::Repo;
 use crate::tm::tm;
 
@@ -43,6 +44,11 @@ const APP: &str = "use std::process::Command;\n\npub fn sync() {\n    \
 
 #[test]
 fn a_command_named_only_inside_one_kit_is_reported_in_another_and_passes_inside() {
+    let mut check = Check::new(
+        "a_command_named_only_inside_one_kit_is_reported_in_another_and_passes_inside",
+        "kits app and deploy; rule git-only-in-deploy (ast-grep, outside_kits deploy); line 4 of deploy/src/push.rs \
+         and of app/src/sync.rs each call Command::new(\"git\")",
+    );
     let repo = Repo::new();
     repo.write("temperare.toml", RULES);
     repo.write("rules/git-only-in-deploy.yml", AST_GREP_RULE);
@@ -50,7 +56,9 @@ fn a_command_named_only_inside_one_kit_is_reported_in_another_and_passes_inside(
     repo.write("app/src/sync.rs", APP);
     repo.commit("two kits");
 
-    let a = tm(&repo, &["check", "--json"]);
+    let args = ["check", "--json"];
+    let a = tm(&repo, &args);
+    check.saw_tm(&args, a.code, &a.json);
     assert_eq!(a.code, 1, "the use outside the kit refuses: {:#}\n{}", a.json, a.stderr);
     assert_eq!(
         a.places(),

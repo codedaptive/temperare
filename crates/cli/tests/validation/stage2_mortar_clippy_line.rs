@@ -4,6 +4,7 @@
 //! warning that two targets compile is one finding; each `what` starts with its lint code. A second rule, every warning
 //! with no allow, shows the allowed lints do fire on this crate, so their absence above is the allow's doing.
 
+use crate::check::Check;
 use crate::repo::Repo;
 use crate::tm::tm;
 use serde_json::Value;
@@ -55,6 +56,12 @@ fn lints(findings: &[Value], rule: &str) -> Vec<(String, u64)> {
 
 #[test]
 fn mortars_clippy_line_reports_test_code_and_not_the_allowed_lints() {
+    let mut check = Check::new(
+        "mortars_clippy_line_reports_test_code_and_not_the_allowed_lints",
+        "rule mortar-clippy (clippy warnings, allow result_large_err and module_inception) beside rule every-warning; \
+         src/lib.rs: module_inception at 2, result_large_err at 9, needless_return at 14, bool_comparison in test \
+         code at 21",
+    );
     let repo = Repo::new();
     repo.write("temperare.toml", RULES);
     repo.write("Cargo.toml", CARGO_TOML);
@@ -62,7 +69,9 @@ fn mortars_clippy_line_reports_test_code_and_not_the_allowed_lints() {
     repo.write("src/lib.rs", LIB);
     repo.commit("mortar's line on a tiny crate");
 
-    let a = tm(&repo, &["check", "--json"]);
+    let args = ["check", "--json"];
+    let a = tm(&repo, &args);
+    check.saw_tm(&args, a.code, &a.json);
     assert_eq!(a.code, 1, "a quality error is the refusal (S-15): {:#}\n{}", a.json, a.stderr);
     let f = a.findings();
     assert_eq!(

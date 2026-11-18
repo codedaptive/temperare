@@ -1,0 +1,18 @@
+# The acceptance checks of the make accept report (S-31), in report order: one line per case, order|case|section.
+# Check::new looks its case up here for the part's order; scripts/accept.sh lists every case here in the report,
+# NOT RUN when the case wrote no part. A case that is not listed here panics in Check::new.
+10|a_clippy_lint_is_reported_with_its_rule_place_and_fix|Done 1: a stock linter through a rule file (clippy)
+10|a_clean_file_passes|Done 1: a stock linter through a rule file (clippy)
+15|a_force_cast_is_reported_with_its_rule_place_and_fix|Done 1 (SwiftLint): a stock linter through a rule file
+15|a_file_without_a_force_cast_passes|Done 1 (SwiftLint): a stock linter through a rule file
+20|only_the_violation_added_after_the_base_is_reported|Done 2: new violations only
+20|a_violation_in_a_new_untracked_file_is_new|Done 2: new violations only
+20|a_base_that_does_not_resolve_is_a_usage_error|Done 2: new violations only
+30|a_stored_bool_on_a_listed_type_is_reported_in_swift_and_rust|Done 3: a house rule
+40|an_absent_linter_and_absent_tessera_each_report_not_available|Done 4: an absent engine
+50|an_approved_exception_silences_its_finding_and_is_counted|Done 5: an exception
+50|the_exceptions_in_force_are_counted_with_nothing_to_silence|Done 5: an exception
+60|tm_checks_a_plain_git_repository_with_only_path_and_home|Done 6: alone
+70|a_security_finding_is_reported_with_severity_place_and_owner_and_never_refuses|Done 7: a security rule
+80|a_command_named_only_inside_one_kit_is_reported_in_another_and_passes_inside|Done 8: named only inside
+90|mortars_clippy_line_reports_test_code_and_not_the_allowed_lints|S-30: mortar's clippy line (objective tatertot 2.1)
