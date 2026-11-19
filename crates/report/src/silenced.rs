@@ -3,7 +3,7 @@
 use rules::{Exception, Finding, RelPath};
 use serde::{Serialize, Serializer};
 
-/// A finding on a new line that an exception in the rule file covers (S-22). The exception serializes as `rule`,
+/// A finding on a new line that an exception in the rule file covers. The exception serializes as `rule`,
 /// `path`, `what` (left out when the exception has none), `reason` and `approved`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Silenced {

@@ -1,4 +1,4 @@
-//! ZUT for assemble_report.rs: order, the new-only filter before exceptions, counts, and the carried lists.
+//! Unit tests for assemble_report.rs: order, the new-only filter before exceptions, counts, and the carried lists.
 
 use crate::assemble_report;
 use procio::Oid;
@@ -30,7 +30,7 @@ fn exception(rule: &str, path: &str) -> Exception {
         path: RelPath::new(path),
         what: None,
         reason: "approved use".to_string(),
-        approved: "Bob, 2026-11-17".to_string(),
+        approved: "maintainer, 2026-11-17".to_string(),
     }
 }
 

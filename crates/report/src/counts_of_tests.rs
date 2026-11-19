@@ -1,4 +1,4 @@
-//! ZUT for counts_of.rs.
+//! Unit tests for counts_of.rs.
 
 use crate::Counts;
 use rules::{Engine, Finding, Kind, RelPath, Severity};

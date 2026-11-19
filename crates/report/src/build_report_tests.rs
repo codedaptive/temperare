@@ -1,5 +1,5 @@
-//! ZUT for build_report.rs: the no-base path, which runs nothing and reads no file. The base path is proved by the
-//! zone's integration test (tests/new_only.rs).
+//! Unit tests for build_report.rs: the no-base path, which runs nothing and reads no file. The base path is proved
+//! by the integration test (tests/new_only.rs).
 
 use crate::build_report;
 use rules::{Engine, Finding, Kind, RelPath, RuleFile, RuleOutcome, Severity};

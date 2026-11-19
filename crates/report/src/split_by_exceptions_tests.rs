@@ -1,4 +1,4 @@
-//! ZUT for split_by_exceptions.rs.
+//! Unit tests for split_by_exceptions.rs.
 
 use crate::split_by_exceptions;
 use rules::{Engine, Exception, Finding, Kind, RelPath, RuleFile, Severity};
@@ -10,7 +10,7 @@ fn exception(rule: &str, path: &str, what: Option<&str>, reason: &str) -> Except
         path: RelPath::new(path),
         what: what.map(str::to_string),
         reason: reason.to_string(),
-        approved: "Bob, 2026-11-17".to_string(),
+        approved: "maintainer, 2026-11-17".to_string(),
     }
 }
 

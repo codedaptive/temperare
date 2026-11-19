@@ -1,4 +1,4 @@
-//! ZUT for folder_from_top.rs.
+//! Unit tests for folder_from_top.rs.
 
 use crate::folder_from_top;
 use std::path::{Path, PathBuf};

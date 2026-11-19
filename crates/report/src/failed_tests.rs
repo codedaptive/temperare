@@ -1,4 +1,4 @@
-//! ZUT for failed.rs: the exact JSON text, `code` a number or null.
+//! Unit tests for failed.rs: the exact JSON text, `code` a number or null.
 
 use crate::test_json::to_json;
 use crate::Failed;

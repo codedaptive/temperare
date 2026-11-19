@@ -1,4 +1,4 @@
-//! ZUT for not_available.rs: the exact JSON text.
+//! Unit tests for not_available.rs: the exact JSON text.
 
 use crate::test_json::to_json;
 use crate::NotAvailable;

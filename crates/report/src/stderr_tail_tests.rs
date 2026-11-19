@@ -1,4 +1,4 @@
-//! ZUT for stderr_tail.rs.
+//! Unit tests for stderr_tail.rs.
 
 use crate::stderr_tail;
 
