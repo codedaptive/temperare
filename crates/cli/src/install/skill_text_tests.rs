@@ -34,7 +34,8 @@ fn gives_every_exit_code() {
         assert!(SKILL_TEXT.contains(code), "{code}");
     }
     assert!(SKILL_TEXT.contains("1: a quality error finding refuses"));
-    assert!(SKILL_TEXT.contains("3: a rule could not run because its engine is not available"));
+    assert!(SKILL_TEXT.contains("3: a rule could not run because its engine, or what the rule needs, is not available"));
+    assert!(SKILL_TEXT.contains("put the rule file inside the Cargo project it checks"));
     assert!(SKILL_TEXT.contains("4: security error findings only"));
     assert!(SKILL_TEXT.contains("5: an engine failed"));
 }

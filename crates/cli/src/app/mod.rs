@@ -35,6 +35,8 @@ mod rules_world_real_tests;
 #[cfg(test)]
 mod rules_world_tests;
 #[cfg(test)]
+mod run_check_not_available_tests;
+#[cfg(test)]
 mod run_check_tests;
 #[cfg(test)]
 mod run_install_tests;
