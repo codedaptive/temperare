@@ -166,12 +166,14 @@ ast-grep is for rules about the shape of code that no stock linter states: a hou
 
   A symlink whose target is inside the rule file's folder is resolved by these checks, so it is read.
 
-  On Unix two more checks hold. The file is opened one path component at a time from the rule file's folder,
-  following no symlink, so the file read is the one inside the folder: if a component has become a symlink since
-  the path was resolved, or the file is removed while it is read, the rule fails with
-  `changed while it was opened`. And a file with more than one hard link fails the rule, wherever the other link
-  is, because Temperare cannot tell where a file's other names are. On other systems only the path checks above
-  apply.
+  On Unix more checks hold. The file is opened one path component at a time from `/` down through the rule file's
+  folder, following no symlink, so the file read is the one inside the folder: if a component has become a symlink
+  or something that is not a folder since the path was resolved, or the file is removed while it is read, the rule
+  fails with `changed while it was opened`. A folder on that walk that cannot be opened (one you may pass through
+  but not read) fails the rule, naming that folder. A YAML path that is not a regular file, such as a FIFO or a
+  folder, fails the rule without waiting on it. And a file with more than one hard link fails the rule, wherever
+  the other link is, because Temperare cannot tell where a file's other names are. On other systems only the path
+  checks above apply.
 - **`params`:** the values for the placeholders in the YAML. Temperare reads your rule file, replaces each
   `{{name}}` with the param of that name, writes the result to a temporary file, runs ast-grep with it and removes
   it:
