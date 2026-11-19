@@ -1,8 +1,8 @@
 //! Done 1 (SwiftLint) (S-31, SPEC-accept WO-orc-accept-2): the stock linter check with SwiftLint run for real. One
 //! rule, `engine = "swiftlint"`, `check = "force_cast"`: a Swift file holding `as!` is reported with its rule, path,
 //! line and fix, exit 1; a Swift file without it passes, exit 0. The repository holds no `.swiftlint.yml`. Only when
-//! swiftlint is not on the PATH `tm` gets (`on_tm_path`, which runs nothing) is a case NOT RUN, with `tm`'s reason,
-//! never PASS; `tm` must then report the rule not available. With swiftlint there, the case asserts as usual.
+//! swiftlint is not on the PATH `temperare` gets (`on_tm_path`, which runs nothing) is a case NOT RUN, with `temperare`'s reason,
+//! never PASS; `temperare` must then report the rule not available. With swiftlint there, the case asserts as usual.
 
 use crate::check::Check;
 use crate::on_tm_path::on_tm_path;
@@ -36,7 +36,7 @@ fn repo_with(files: &[(&str, &str)]) -> Repo {
     repo
 }
 
-/// NOT RUN's reason when swiftlint is not on the PATH `tm` gets: `tm`'s own reason for reporting the rule not
+/// NOT RUN's reason when swiftlint is not on the PATH `temperare` gets: `temperare`'s own reason for reporting the rule not
 /// available, which it must then give (panics when it does not). None when swiftlint is there.
 fn not_run_reason(a: &Answer) -> Option<String> {
     if on_tm_path("swiftlint") {

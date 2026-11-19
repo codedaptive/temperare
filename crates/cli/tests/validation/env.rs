@@ -1,4 +1,4 @@
-//! The environment `tm`, git and the report head's version lookups run in for acceptance, built from nothing (Done 6:
+//! The environment `temperare`, git and the report head's version lookups run in for acceptance, built from nothing (Done 6:
 //! "with no codeteam variable set").
 //! Only HOME, PATH, TMPDIR, LANG and CARGO_NET_OFFLINE are passed. PATH drops every codeteam folder (its `cargo`
 //! wrapper would queue clippy's build behind the run that started it) and keeps ~/.cargo/bin for the real cargo.

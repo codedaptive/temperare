@@ -1,5 +1,5 @@
-//! Done 6: alone. "All of the above run with no codeteam variable set." Every case in this suite runs `tm` in the
-//! environment `env.rs` builds from nothing; this case goes further and gives `tm` only PATH and HOME, in a plain git
+//! Done 6: alone. "All of the above run with no codeteam variable set." Every case in this suite runs `temperare` with
+//! only the variables it sets (`env.rs` for the acceptance cases, `install_temp_home.rs` its own); this case goes further and gives `temperare` only PATH and HOME, in a plain git
 //! repository with no Tessera rule (mission must match 1: useful alone).
 
 use serde_json::Value;

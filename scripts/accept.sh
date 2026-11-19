@@ -3,7 +3,7 @@
 # crates/cli/tests/validation through test_one.sh, as before, so the tests print on the terminal as they did; one line
 # naming the report follows. Each acceptance case writes its part into a temporary folder this script names in
 # ACCEPT_PARTS (crates/cli/tests/validation: check_new.rs names the part, check_drop.rs writes it). Then it writes
-# the markdown report to REPORT: a head (commit, date, the test run's exit code, then the tm and engine versions the
+# the markdown report to REPORT: a head (commit, date, the test run's exit code, then the temperare and engine versions the
 # cases saw), one section per check, and a last line of totals. Every case that crates/cli/tests/validation/checks.txt
 # lists is in the report, in its order: with its part, or NOT RUN when it wrote none (a filtered run, a test target
 # that did not build, a part that could not be written) or when its part was cut short before a whole Result line.
@@ -60,18 +60,26 @@ sections() {
         echo
         if [ -f "$parts/$order-$name.md" ]; then
             cat "$parts/$order-$name.md"
-            grep -Eq '^Result: (PASS|FAIL|NOT RUN \(.*\))$' "$parts/$order-$name.md" || printf '\nResult: NOT RUN (%s)\n' "$cut_short"
+            last=$(grep -E '^Result: (PASS|FAIL|NOT RUN \(.*\))$' "$parts/$order-$name.md" | tail -n 1)
+            if [ -z "$last" ]; then
+                printf '\nResult: NOT RUN (%s)\n' "$cut_short"
+                last="Result: NOT RUN"
+            fi
         else
             printf '### %s\n\nResult: NOT RUN (%s)\n' "$name" "$no_result"
+            last="Result: NOT RUN"
         fi
+        printf '%s\n' "$last" >> "$parts/results.txt"
     done < "$list"
 }
 
+: > "$parts/results.txt" || not_written "could not start the tally"
 sections > "$parts/sections.md" || not_written "could not assemble the sections from $list"
 
-# The number of cases whose entry ends with `Result: <$1>`.
+# The number of cases whose result is `<$1>`: one result per case, its last whole Result line, so a part cut short
+# inside its own NOT RUN line is counted once (Kong #315).
 count() {
-    grep -c "^Result: $1" "$parts/sections.md"
+    grep -c "^Result: $1" "$parts/results.txt"
 }
 
 {
@@ -79,11 +87,11 @@ count() {
     echo
     echo "- Commit: $commit"
     echo "- Date: $(date '+%Y-%m-%d %H:%M:%S %z')"
-    echo "- Test run: crates/cli/tests/validation (these checks and cli's own tests of the built tm, S-28), exit $rc"
+    echo "- Test run: crates/cli/tests/validation (these checks and cli's own tests of the built temperare, S-28), exit $rc"
     if [ -f "$parts/00-head.md" ]; then
         cat "$parts/00-head.md"
     else
-        echo "- tm and engines: not recorded (no case ran)"
+        echo "- temperare and engines: not recorded (no case ran)"
     fi
     cat "$parts/sections.md"
     echo
