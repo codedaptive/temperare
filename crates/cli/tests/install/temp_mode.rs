@@ -5,7 +5,7 @@ use cli::InstallArgs;
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::os::unix::fs::PermissionsExt;
-use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
+use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::Arc;
 use std::thread;
 
@@ -20,9 +20,10 @@ fn temp_mode_is_private_until_the_full_executable_is_installed() {
     assert_eq!(fifo_result.code, Some(0), "mkfifo failed: {}", String::from_utf8_lossy(&fifo_result.stderr));
     let bin = f.host.home.join(".local/bin");
     fs::create_dir_all(&bin).unwrap();
-    let done = Arc::new(AtomicBool::new(false));
+    let first = vec![0x5a; 8 * 1024 * 1024];
+    let mut payload = first.clone();
+    payload.extend_from_slice(EXE_BYTES);
     let connection = Arc::new(AtomicU8::new(0));
-    let writer_done = Arc::clone(&done);
     let writer_connection = Arc::clone(&connection);
     let fifo = f.host.exe.clone();
     let writer_bin = bin.clone();
@@ -35,32 +36,21 @@ fn temp_mode_is_private_until_the_full_executable_is_installed() {
             }
             return None;
         }
-        let _ = source.write_all(&EXE_BYTES[..4]);
-        // While the copy waits for the rest, the temporary file is the only entry in the empty bin folder; taking any
-        // entry (its name is checked below) means a renamed temporary file fails the test instead of hanging it.
-        // The writer gives up after 1,000,000 polls (a count, not a time); dropping the source then lets the install
-        // finish, and the test fails at "never observed".
-        for _ in 0..1_000_000 {
-            if writer_done.load(Ordering::SeqCst) {
-                return None;
-            }
-            if let Some(entry) = fs::read_dir(&writer_bin).unwrap().next() {
-                let temp = entry.unwrap().path();
-                let mode = fs::symlink_metadata(&temp).unwrap().permissions().mode() & 0o7777;
-                let seen = (temp.file_name().unwrap().to_string_lossy().into_owned(), mode);
-                let _ = source.write_all(&EXE_BYTES[4..]);
-                return Some(seen);
-            }
-            thread::yield_now();
-        }
-        None
+        // A write larger than the FIFO buffer returns only after install has read from the FIFO in io::copy, which
+        // runs after the temp is created and set to 0o600, and before EOF can allow its rename. If no entry is
+        // present, dropping the writer lets install finish and the test fail.
+        let _ = source.write_all(&first);
+        let temp = fs::read_dir(&writer_bin).unwrap().next()?.unwrap().path();
+        let mode = fs::symlink_metadata(&temp).unwrap().permissions().mode() & 0o7777;
+        let seen = (temp.file_name().unwrap().to_string_lossy().into_owned(), mode);
+        let _ = source.write_all(EXE_BYTES);
+        Some(seen)
     });
 
     let (status, out, err) = f.install(&InstallArgs::default());
-    done.store(true, Ordering::SeqCst);
     if connection.compare_exchange(0, 2, Ordering::SeqCst, Ordering::SeqCst).is_ok() {
-        let reader = OpenOptions::new().read(true).open(&f.host.exe).unwrap();
         connection.store(3, Ordering::SeqCst);
+        let reader = OpenOptions::new().read(true).open(&f.host.exe).unwrap();
         drop(reader);
     }
     let seen = writer.join().unwrap();
@@ -69,6 +59,6 @@ fn temp_mode_is_private_until_the_full_executable_is_installed() {
     assert!(name.starts_with(".temperare.") && name.ends_with(".installing"), "unexpected entry {name}");
     assert_eq!(mode, 0o600, "temporary binary mode was {mode:#05o}, expected 0o600");
     let binary = bin.join("temperare");
-    assert_eq!(fs::read(&binary).unwrap(), EXE_BYTES);
+    assert!(fs::read(&binary).unwrap() == payload, "the installed binary is not the whole payload");
     assert_eq!(fs::symlink_metadata(binary).unwrap().permissions().mode() & 0o7777, 0o755);
 }
