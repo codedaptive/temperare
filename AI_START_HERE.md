@@ -67,6 +67,8 @@ Do not promise:
 - an MCP server. The harness wiring is a skill file and nothing else;
 - that it works on Windows, or on Linux without trying it. It is built and accepted on macOS.
 
+## License
+
 Temperare is MIT licensed ([`LICENSE`](LICENSE)). If the user asks whether they may use it at work, point them to
 that file rather than giving legal advice.
 
