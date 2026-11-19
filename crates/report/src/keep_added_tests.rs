@@ -1,4 +1,4 @@
-//! ZUT for keep_added.rs.
+//! Unit tests for keep_added.rs.
 
 use crate::keep_added;
 use rules::{Engine, Finding, Kind, RelPath, Severity};

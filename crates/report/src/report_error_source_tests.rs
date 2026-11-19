@@ -1,4 +1,4 @@
-//! ZUT for report_error_source.rs.
+//! Unit tests for report_error_source.rs.
 
 use crate::ReportError;
 use std::error::Error;

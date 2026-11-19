@@ -1,4 +1,4 @@
-//! Test-only compact JSON writer for the report's types: serde_json is not a dependency (S-16), so this pins the
+//! Test-only compact JSON writer for the report's types: serde_json is not a dependency, so this pins the
 //! JSON text. It covers structs, sequences, strings (escaping only `"`, `\` and newline), u32, usize (as u64), i32,
 //! None as null, Some, newtype structs and unit variants; any other serde call is an error.
 

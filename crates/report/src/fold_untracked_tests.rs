@@ -1,4 +1,4 @@
-//! ZUT for fold_untracked.rs.
+//! Unit tests for fold_untracked.rs.
 
 use crate::fold_untracked;
 use std::collections::BTreeMap;

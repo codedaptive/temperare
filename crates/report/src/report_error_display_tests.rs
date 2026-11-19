@@ -1,4 +1,4 @@
-//! ZUT for report_error_display.rs.
+//! Unit tests for report_error_display.rs.
 
 use crate::ReportError;
 use std::path::PathBuf;

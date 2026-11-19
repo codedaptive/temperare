@@ -1,6 +1,6 @@
 //! `stderr_tail`: the end of a failed engine's stderr, as the report carries it.
 
-/// How many lines of a failed engine's stderr the report keeps: the last 20 (settled S-23).
+/// How many lines of a failed engine's stderr the report keeps: the last 20.
 pub(crate) const STDERR_TAIL_LINES: usize = 20;
 
 /// The last `STDERR_TAIL_LINES` lines of `stderr` (split by `str::lines`), joined with '\n' and no trailing newline;

@@ -1,4 +1,4 @@
-//! ZUT for counts.rs: the exact JSON text, keys in field order.
+//! Unit tests for counts.rs: the exact JSON text, keys in field order.
 
 use crate::test_json::to_json;
 use crate::Counts;

@@ -1,4 +1,4 @@
-//! ZUT for render_text.rs: whole expected texts, written out from the WO-report-4 contract.
+//! Unit tests for render_text.rs: whole expected texts, written out by hand from the text format's contract.
 
 use crate::{render_text, Counts, Failed, NotAvailable, Report, Silenced};
 use rules::{Engine, Exception, Finding, Kind, RelPath, Severity};
@@ -97,7 +97,7 @@ fn a_silenced_finding_is_not_listed() {
         path: RelPath::new("src/main.rs"),
         what: None,
         reason: "startup only".to_string(),
-        approved: "Bob, 2026-11-17".to_string(),
+        approved: "maintainer, 2026-11-17".to_string(),
     };
     let silenced = Silenced { finding: finding(Severity::Error, Kind::Quality, None, None), exception };
     let report = Report { silenced: vec![silenced], ..empty() };

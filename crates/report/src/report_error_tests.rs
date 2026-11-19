@@ -1,4 +1,4 @@
-//! ZUT for report_error.rs: each variant carries what it was given.
+//! Unit tests for report_error.rs: each variant carries what it was given.
 
 use crate::ReportError;
 use std::path::{Path, PathBuf};

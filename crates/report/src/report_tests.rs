@@ -1,4 +1,4 @@
-//! ZUT for report.rs: the exact JSON text of an empty report, with and without a base.
+//! Unit tests for report.rs: the exact JSON text of an empty report, with and without a base.
 
 use crate::test_json::to_json;
 use crate::{Counts, Report};
