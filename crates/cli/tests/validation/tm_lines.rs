@@ -1,4 +1,4 @@
-//! `tm_lines`: what one `tm` run showed, as lines for the `make accept` report (S-31). Every value comes from `tm`'s
+//! `tm_lines`: what one `temperare` run showed, as lines for the `make accept` report (S-31). Every value comes from `temperare`'s
 //! `--json` answer: a finding's place, rule, engine, kind, severity and owner are written bare, every other string
 //! as a JSON string, and `counts` as its JSON object.
 

@@ -1,6 +1,6 @@
 //! `write_head_once`: the head lines of the `make accept` report that only the checks can see (S-31): the built
-//! `tm`'s version, then each engine as that `tm` sees it, from `tm rules --json` over one rule per engine: the engine's
-//! version when `tm` says it is available, else "not available" with `tm`'s reason. Written once per run, to
+//! `temperare`'s version, then each engine as that `temperare` sees it, from `temperare rules --json` over one rule per engine: the engine's
+//! version when `temperare` says it is available, else "not available" with `temperare`'s reason. Written once per run, to
 //! `00-head.md` in the parts folder; `scripts/accept.sh` puts the commit, the date and the test run's exit code above
 //! them.
 
@@ -20,7 +20,7 @@ use crate::run_clean::run_clean;
 
 static HEAD: Once = Once::new();
 
-/// One rule per engine, only so `tm rules` says whether each engine is available; nothing is checked with them.
+/// One rule per engine, only so `temperare rules` says whether each engine is available; nothing is checked with them.
 const RULES: &str = r#"version = 1
 
 [[rule]]
@@ -54,8 +54,8 @@ check = "erosion"
 fix = "none"
 "#;
 
-/// For each of `tm`'s five engines, by its rule-file name: the program it runs as (engines' `program`) and the
-/// arguments that print its version. Tessera's is asked only once `tm` says Tessera is available, which it does not
+/// For each of `temperare`'s five engines, by its rule-file name: the program it runs as (engines' `program`) and the
+/// arguments that print its version. Tessera's is asked only once `temperare` says Tessera is available, which it does not
 /// yet (S-20).
 const VERSIONS: [(&str, &str, &[&str]); 5] = [
     ("clippy", "cargo", &["clippy", "--version"]),
@@ -68,13 +68,13 @@ const VERSIONS: [(&str, &str, &[&str]); 5] = [
 /// Writes the head part into `parts` the first time it is called in this run; later calls do nothing.
 pub fn write_head_once(parts: &Path) {
     HEAD.call_once(|| {
-        let mut lines = vec![format!("- tm: {}", version(env!("CARGO_BIN_EXE_temperare"), &["--version"]))];
+        let mut lines = vec![format!("- temperare: {}", version(env!("CARGO_BIN_EXE_temperare"), &["--version"]))];
         lines.extend(engine_lines());
         fs::write(parts.join("00-head.md"), lines.join("\n") + "\n").expect("write the report head");
     });
 }
 
-/// One line per rule of `tm rules --json` over RULES, run in a throwaway repository in the environment `tm` gets; one
+/// One line per rule of `temperare rules --json` over RULES, run in a throwaway repository in the environment `temperare` gets; one
 /// line saying why when its answer holds no rules list.
 fn engine_lines() -> Vec<String> {
     let repo = Repo::new();
@@ -90,7 +90,7 @@ fn engine_lines() -> Vec<String> {
     rules.iter().map(engine_line).collect()
 }
 
-/// `- <engine>: <version>` when `tm` says the engine is available, else `- <engine>: not available (tm: <why>)`.
+/// `- <engine>: <version>` when `temperare` says the engine is available, else `- <engine>: not available (tm: <why>)`.
 fn engine_line(rule: &Value) -> String {
     let engine = rule["engine"].as_str().unwrap_or("?");
     if rule["available"] != true {
@@ -103,7 +103,7 @@ fn engine_line(rule: &Value) -> String {
     format!("- {engine}: {}", version(program, args))
 }
 
-/// The first line `program args` prints (stdout, else stderr), run in the temp folder and the environment `tm`
+/// The first line `program args` prints (stdout, else stderr), run in the temp folder and the environment `temperare`
 /// gets; "no version printed" when it prints nothing; "not installed" when procio finds no such program; procio's
 /// error when it gives no answer otherwise; the exit code when the program fails.
 fn version(program: &str, args: &[&str]) -> String {
