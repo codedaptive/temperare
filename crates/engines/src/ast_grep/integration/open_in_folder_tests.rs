@@ -80,3 +80,83 @@ fn missing_file_reports_read_failure() {
     let error = open_in_folder(&tree.folder, &tree.folder.join("missing.yml"), "missing.yml").unwrap_err();
     assert!(error.starts_with("cannot read ast-grep rule missing.yml: "), "{error}");
 }
+
+#[test]
+fn ancestor_swapped_for_a_symlink_is_refused() {
+    let tree = Tree::new("ancestor-swap");
+    fs::create_dir_all(tree.root.join("a/rules")).unwrap();
+    fs::write(tree.root.join("a/rules/names.yml"), "id: names\n").unwrap();
+    let folder = fs::canonicalize(tree.root.join("a/rules")).unwrap();
+    fs::rename(tree.root.join("a"), tree.root.join("b")).unwrap();
+    symlink(tree.root.join("b"), tree.root.join("a")).unwrap();
+    assert_eq!(
+        open_in_folder(&folder, &folder.join("names.yml"), "names.yml").err().as_deref(),
+        Some("ast-grep rule names.yml changed while it was opened")
+    );
+}
+
+#[test]
+fn folder_swapped_for_a_symlink_is_refused() {
+    let tree = Tree::new("folder-swap");
+    fs::write(tree.folder.join("names.yml"), "id: names\n").unwrap();
+    let folder = fs::canonicalize(&tree.folder).unwrap();
+    fs::rename(&folder, tree.root.join("real")).unwrap();
+    symlink(tree.root.join("real"), &folder).unwrap();
+    assert_eq!(
+        open_in_folder(&folder, &folder.join("names.yml"), "names.yml").err().as_deref(),
+        Some("ast-grep rule names.yml changed while it was opened")
+    );
+}
+
+#[test]
+fn fifo_held_open_is_refused() {
+    let tree = Tree::new("fifo-held");
+    let path = tree.folder.join("names.yml");
+    assert!(std::process::Command::new("mkfifo").arg(&path).status().unwrap().success());
+    let _held = fs::OpenOptions::new().read(true).write(true).open(&path).unwrap();
+    assert_eq!(
+        open_in_folder(&tree.folder, &path, "names.yml").err().as_deref(),
+        Some("ast-grep rule names.yml is not a regular file")
+    );
+}
+
+/// A FIFO opened without O_NONBLOCK and with no writer blocks the open, so this test passes only when the walk
+/// never blocks.
+#[test]
+fn fifo_with_no_other_handle_is_refused_without_blocking() {
+    let tree = Tree::new("fifo-unheld");
+    let path = tree.folder.join("names.yml");
+    assert!(std::process::Command::new("mkfifo").arg(&path).status().unwrap().success());
+    assert_eq!(
+        open_in_folder(&tree.folder, &path, "names.yml").err().as_deref(),
+        Some("ast-grep rule names.yml is not a regular file")
+    );
+}
+
+struct RestorePermissions(PathBuf);
+
+impl Drop for RestorePermissions {
+    fn drop(&mut self) {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&self.0, fs::Permissions::from_mode(0o755)).unwrap();
+    }
+}
+
+#[test]
+fn unreadable_ancestor_is_failed_naming_it() {
+    use std::os::unix::fs::PermissionsExt;
+    let tree = Tree::new("unreadable-ancestor");
+    let anc = tree.root.join("anc");
+    fs::create_dir_all(anc.join("rules")).unwrap();
+    fs::write(anc.join("rules/names.yml"), "id: names\n").unwrap();
+    let folder = fs::canonicalize(anc.join("rules")).unwrap();
+    let _restore = RestorePermissions(anc.clone());
+    fs::set_permissions(&anc, fs::Permissions::from_mode(0o311)).unwrap();
+    assert_eq!(
+        open_in_folder(&folder, &folder.join("names.yml"), "names.yml").err(),
+        Some(format!(
+            "cannot read ast-grep rule names.yml: cannot open folder {}: Permission denied (os error 13)",
+            anc.display()
+        ))
+    );
+}

@@ -74,8 +74,7 @@ fn a_failed_build_is_a_parse_error_quoting_stderr() {
     let stderr = b"error: could not compile `cap_c` (lib) due to 1 previous error\n";
     let got = parse_clippy(&output(101, BUILD_FAILED, stderr), "E0425", Path::new(CAPTURED), Path::new(CAPTURED));
     let why = got.unwrap_err().why;
-    assert!(why.starts_with("clippy"), "{why}");
-    assert!(why.contains("error: could not compile `cap_c` (lib) due to 1 previous error"), "{why}");
+    assert_eq!(why, r#"clippy: the build failed: "error: could not compile `cap_c` (lib) due to 1 previous error\n""#);
 }
 
 #[test]
@@ -86,7 +85,7 @@ fn output_with_no_build_finished_record_is_a_parse_error() {
         .flat_map(|line| line.iter().copied().chain([b'\n']))
         .collect();
     let got = parse_clippy(&output(0, &cut, b""), "clippy::bool_comparison", Path::new(CAPTURED), Path::new(CAPTURED));
-    assert!(got.unwrap_err().why.starts_with("clippy"));
+    assert_eq!(got.unwrap_err().why, r##"clippy: no build-finished record: "{\"reason\":\"compiler-message\",\"package_id\":\"path+file:///work/project/clippy-capture/a#cap_a@0.1.0\",\"manifest_path\":\"/work/project/clippy-capture/a/Cargo.toml\",\"target\":{\"kind\":[\"lib\"],\"crate_types\":[\"""##);
 }
 
 #[test]
@@ -94,8 +93,7 @@ fn a_non_json_line_is_a_parse_error_quoting_stdout_when_stderr_is_empty() {
     let stdout = [b"warning: not json\n", CLEAN].concat();
     let got = parse_clippy(&output(0, &stdout, b""), "clippy::bool_comparison", Path::new(CAPTURED), Path::new(CAPTURED));
     let why = got.unwrap_err().why;
-    assert!(why.starts_with("clippy"), "{why}");
-    assert!(why.contains("warning: not json"), "{why}");
+    assert_eq!(why, r##"clippy: output is not JSON lines: "warning: not json\n{\"reason\":\"compiler-artifact\",\"package_id\":\"path+file:///work/project/clippy-capture/b#cap_b@0.1.0\",\"manifest_path\":\"/work/project/clippy-capture/b/Cargo.toml\",\"target\":{\"kind\":[\"lib""##);
 }
 
 #[test]
