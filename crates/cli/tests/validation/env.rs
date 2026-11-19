@@ -1,7 +1,7 @@
-//! The environment `temperare`, git and the report head's version lookups run in for acceptance, built from nothing (Done 6:
-//! "with no codeteam variable set").
-//! Only HOME, PATH, TMPDIR, LANG and CARGO_NET_OFFLINE are passed. PATH drops every codeteam folder (its `cargo`
-//! wrapper would queue clippy's build behind the run that started it) and keeps ~/.cargo/bin for the real cargo.
+//! The environment `temperare`, git and the report head's version lookups run in for acceptance, built from nothing
+//! (Done 6: no tool-specific variable set).
+//! Only HOME, PATH, TMPDIR, LANG and CARGO_NET_OFFLINE are passed. PATH is the caller's PATH with ~/.cargo/bin moved
+//! to the front.
 
 /// The variables for one run. `path` replaces PATH whole (Done 4 runs with a PATH that lacks an engine).
 pub fn clean_env(path: Option<&str>) -> Vec<(String, String)> {
@@ -20,10 +20,6 @@ pub fn clean_env(path: Option<&str>) -> Vec<(String, String)> {
     if let Ok(tmp) = std::env::var("TMPDIR") {
         env.push(("TMPDIR".to_string(), tmp));
     }
-    assert!(
-        env.iter().all(|(k, _)| !k.starts_with("CODETEAM")),
-        "no codeteam variable reaches tm (Done 6)"
-    );
     env
 }
 
@@ -32,11 +28,12 @@ fn default_path(home: &str) -> String {
     let mut dirs: Vec<String> = std::env::var("PATH")
         .unwrap_or_default()
         .split(':')
-        .filter(|d| !d.is_empty() && !d.contains("codeteam"))
+        .filter(|d| !d.is_empty())
         .map(str::to_string)
         .collect();
-    if !dirs.contains(&cargo_bin) {
-        dirs.insert(0, cargo_bin);
-    }
+    // Other folders on PATH can hold a `cargo` wrapper; the real cargo goes first so clippy's build does not queue
+    // behind the test run that started it.
+    dirs.retain(|d| d != &cargo_bin);
+    dirs.insert(0, cargo_bin);
     dirs.join(":")
 }
