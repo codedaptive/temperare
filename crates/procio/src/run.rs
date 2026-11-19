@@ -1,7 +1,7 @@
 //! `run`: start a program, feed its stdin, capture both outputs, wait for its exit.
 //!
-//! No sibling ZUT: any test of `run` starts a process, which a unit test may not (rule 11; S-4), so the runner is
-//! proved by the zone integration tests in `tests/run.rs` (SPEC-procio, Tests). Its parts (`command_from`,
+//! No sibling unit tests: any test of `run` starts a process, which a unit test may not, so the runner is
+//! proved by the integration tests in `tests/run.rs`. Its parts (`command_from`,
 //! `kill_group_cmd`, `spawn_error`, `spawn_reader`, `spawn_writer`, `wait_deadline`) each have their own unit tests.
 
 use std::io;

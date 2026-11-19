@@ -1,4 +1,4 @@
-//! procio's zone integration test that an inherited `GIT_DIR` and `GIT_WORK_TREE` do not leak into its git runs.
+//! procio's integration test that an inherited `GIT_DIR` and `GIT_WORK_TREE` do not leak into its git runs.
 //! Its own test binary with one test, because it sets the process environment.
 
 use std::fs;

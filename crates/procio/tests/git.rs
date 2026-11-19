@@ -1,4 +1,4 @@
-//! procio's zone integration tests for the git layer: each operation on a throwaway repository the test makes
+//! procio's integration tests for the git layer: each operation on a throwaway repository the test makes
 //! under the temp dir and removes. Setup runs git with the machine's global and system config shut out, so no
 //! signing or default-branch setting can change what the repository holds.
 
