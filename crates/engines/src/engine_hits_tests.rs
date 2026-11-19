@@ -1,7 +1,6 @@
 //! ZUT for engine_hits.rs: an absent engine stops before anything runs, with availability's why; Tessera is never
-//! available (S-20); an available engine goes to its own adapter; an unresolved folder fails only an available
-//! engine. The host is a fake; nothing runs. The folder does not exist, so the adapters that read the disk stop at
-//! their first step, which tells them apart.
+//! available (S-20); ruff and SwiftLint go to their own adapters; an unresolved folder fails only an available
+//! engine. The host is a fake; nothing runs.
 
 use crate::engine_hits::engine_hits;
 use crate::host::Host;
@@ -16,7 +15,7 @@ const FOLDER: &str = "/no/such/engines-zut-folder";
 
 /// `engine_hits` for a one-rule file with `engine` and `check`, PATH answering `on_path`, and every run answering
 /// garbage with exit code 2; also the programs the host was asked to run, in order.
-fn hits_of(engine: &str, check: &str, on_path: bool) -> (Result<Vec<Hit>, Stop>, Vec<OsString>) {
+pub(crate) fn hits_of(engine: &str, check: &str, on_path: bool) -> (Result<Vec<Hit>, Stop>, Vec<OsString>) {
     let text = format!("version = 1\n[[rule]]\nid = \"r\"\nengine = \"{engine}\"\ncheck = \"{check}\"\nfix = \"f\"\n");
     let file = RuleFile::parse(&text, Path::new(FOLDER)).unwrap();
     let ran = RefCell::new(Vec::new());
@@ -55,7 +54,7 @@ fn an_unresolved_folder_leaves_absent_engines_and_tessera_not_available() {
     );
 }
 
-fn not_available(why: &str) -> Result<Vec<Hit>, Stop> {
+pub(crate) fn not_available(why: &str) -> Result<Vec<Hit>, Stop> {
     Err(Stop::NotAvailable { why: why.to_string() })
 }
 
@@ -88,19 +87,4 @@ fn ruff_and_swiftlint_go_to_their_own_adapters() {
         assert_eq!(ran, vec![OsString::from(program)]);
         assert!(matches!(got, Err(Stop::Failed { code: Some(2), .. })), "{program}: {got:?}");
     }
-}
-
-#[test]
-fn clippy_goes_to_its_adapter_which_finds_no_cargo_toml() {
-    let (got, ran) = hits_of("clippy", "clippy::bool_comparison", true);
-    assert_eq!(got, not_available("no Cargo.toml at or above the rule file's folder"));
-    assert!(ran.is_empty(), "ran {ran:?}");
-}
-
-#[test]
-fn ast_grep_goes_to_its_adapter_which_cannot_read_the_rule_yaml() {
-    let (got, ran) = hits_of("ast-grep", "rules/x.yml", true);
-    let Err(Stop::Failed { code: None, stderr }) = got else { panic!("not Failed with no code: {got:?}") };
-    assert!(stderr.starts_with("cannot read ast-grep rule rules/x.yml: "), "{stderr}");
-    assert!(ran.is_empty(), "ran {ran:?}");
 }

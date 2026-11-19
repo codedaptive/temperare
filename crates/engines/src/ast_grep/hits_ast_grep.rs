@@ -11,9 +11,9 @@ use std::path::Path;
 
 /// The hits of `rule` under `folder` (canonical). The check must name a file inside `folder`, read by
 /// `read_rule_yaml`: an absolute check, one that cannot be canonicalized or opened, one whose canonical path is
-/// outside `folder` (through `..` or a symlink), and on Unix one that met a symlink, or a middle component replaced
-/// by something that is not a folder, on the way down (`open_in_folder`), one unlinked while it was opened or with
-/// more than one hard link (`rule_yaml_text`) are
+/// outside `folder` (through `..` or a symlink), and on Unix one whose walk from "/" (`open_in_folder`) met a
+/// symlink, found a folder replaced by something else or could not open a folder, one that is not a regular file,
+/// one unlinked while it was opened or with more than one hard link (`rule_yaml_text`) are
 /// `Failed` with no exit code, and nothing is run. The rule YAML's `{{name}}`s are filled from
 /// `rule.params`, and the filled copy written to a temporary file that ast-grep runs through `host`; the copy is
 /// removed before this returns, whatever the outcome. A YAML that cannot be read, a param it names that the rule

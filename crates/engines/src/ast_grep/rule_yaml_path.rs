@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 /// `check` is refused before the filesystem is touched, a path that cannot be canonicalized cannot be read, and a
 /// canonical path outside `folder` (through `..` or a symlink) is refused. The path returned was inside the rule
 /// file's folder when it was checked; `read_rule_yaml` opens it with `open_in_folder`, which walks it down from
-/// `folder` again without following a symlink.
+/// "/" again without following a symlink.
 pub(crate) fn rule_yaml_path(folder: &Path, check: &str) -> Result<PathBuf, String> {
     if Path::new(check).is_absolute() {
         return Err(format!(

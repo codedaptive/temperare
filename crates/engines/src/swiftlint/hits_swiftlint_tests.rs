@@ -1,6 +1,7 @@
-//! ZUT for hits_swiftlint.rs: the command the host is given, findings read from captured output, garbage output, a
-//! `custom_rules` check refused before anything runs, and an absent swiftlint. The host is a fake; nothing runs. `DIR` is the folder path the captured fixture's
-//! absolute paths start with (see parse_swiftlint_tests.rs); no folder is read, so it need not exist.
+//! ZUT for hits_swiftlint.rs: the command the host is given, findings read from captured output, garbage output, an
+//! unknown rule, a `custom_rules` check refused before anything runs, and an absent swiftlint. The host is a fake;
+//! nothing runs. `DIR` is the folder path the captured fixture's absolute paths start with (see
+//! parse_swiftlint_tests.rs); no folder is read, so it need not exist.
 
 use super::hits_swiftlint;
 use crate::host::Host;
@@ -74,6 +75,22 @@ fn garbage_output_is_failed_with_the_exit_code_and_stderr() {
         Ok(Output { code: Some(1), stdout: b"garbage".to_vec(), stderr: b"Error: bad config".to_vec() })
     });
     assert_eq!(got, Err(Stop::Failed { code: Some(1), stderr: "Error: bad config".to_string() }));
+}
+
+#[test]
+fn unknown_rule_is_failed_with_the_actionable_warning_only() {
+    let rules = NO_CONFIG.replace("force_cast", "no_such_rule");
+    let (got, _) = run_rule(&rules, || {
+        Ok(Output {
+            code: Some(0),
+            stdout: b"[\n\n]".to_vec(),
+            stderr: b"warning: 'no_such_rule' is not a valid rule identifier\nValid rule identifiers:\nforce_cast\nforce_try\nline_length\n".to_vec(),
+        })
+    });
+    assert_eq!(got, Err(Stop::Failed {
+        code: Some(0),
+        stderr: "swiftlint check `no_such_rule` is not a rule this swiftlint knows (warning: 'no_such_rule' is not a valid rule identifier): tm cannot report it; name a rule `swiftlint rules` lists, or a custom rule the rule's config defines".to_string(),
+    }));
 }
 
 #[test]

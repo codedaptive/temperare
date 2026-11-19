@@ -38,6 +38,5 @@ fn dashed_unknown_lint_from_real_clippy_is_an_error() {
     let result = procio::run(&cmd).map(|out| parse_clippy(&out, "clippy::bool-comparisn", &folder, &folder));
     fs::remove_dir_all(&folder).unwrap();
     let got = result.unwrap();
-    assert!(got.is_err(), "{got:?}");
-    assert!(got.unwrap_err().why.contains("unknown lint: `clippy::bool_comparisn`"));
+    assert_eq!(got.unwrap_err().why, "clippy did not take check `clippy::bool-comparisn` whole: unknown lint: `clippy::bool_comparisn`");
 }
