@@ -5,7 +5,7 @@ use rules::{Engine, Finding, Kind, Severity};
 
 /// The report as text: a three-line block and a blank line per kept finding, one line per not-available rule, one
 /// line per failed rule, then the counts line. Silenced findings are counted, not listed; a failed rule's stderr
-/// tail is left to the `--json` body. Every line ends with '\n'.
+/// tail is printed by the caller (cli's `failed_tails`), and `--json` carries it. Every line ends with '\n'.
 pub fn render_text(report: &Report) -> String {
     let mut text = String::new();
     report.findings.iter().for_each(|finding| text.push_str(&finding_block(finding)));
