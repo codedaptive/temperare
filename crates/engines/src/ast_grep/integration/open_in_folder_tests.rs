@@ -5,7 +5,7 @@ use super::super::open_in_folder::open_in_folder;
 use std::fs;
 use std::io::Read;
 use std::os::unix::fs::symlink;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 struct Tree {
     root: PathBuf,
@@ -108,11 +108,17 @@ fn folder_swapped_for_a_symlink_is_refused() {
     );
 }
 
+fn make_fifo(path: &Path) {
+    let mkfifo = procio::Cmd { args: vec![path.as_os_str().to_owned()], ..procio::Cmd::new("mkfifo") };
+    let made = procio::run(&mkfifo).unwrap();
+    assert_eq!(made.code, Some(0), "{}", String::from_utf8_lossy(&made.stderr));
+}
+
 #[test]
 fn fifo_held_open_is_refused() {
     let tree = Tree::new("fifo-held");
     let path = tree.folder.join("names.yml");
-    assert!(std::process::Command::new("mkfifo").arg(&path).status().unwrap().success());
+    make_fifo(&path);
     let _held = fs::OpenOptions::new().read(true).write(true).open(&path).unwrap();
     assert_eq!(
         open_in_folder(&tree.folder, &path, "names.yml").err().as_deref(),
@@ -126,7 +132,7 @@ fn fifo_held_open_is_refused() {
 fn fifo_with_no_other_handle_is_refused_without_blocking() {
     let tree = Tree::new("fifo-unheld");
     let path = tree.folder.join("names.yml");
-    assert!(std::process::Command::new("mkfifo").arg(&path).status().unwrap().success());
+    make_fifo(&path);
     assert_eq!(
         open_in_folder(&tree.folder, &path, "names.yml").err().as_deref(),
         Some("ast-grep rule names.yml is not a regular file")
