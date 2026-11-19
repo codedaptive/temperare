@@ -1,23 +1,125 @@
+<div align="center">
+
 # Temperare
 
-Temperare checks code against the rules a repository has chosen to enforce, and reports what it finds. The command is `tm`.
+### One command that checks code against the rules a repository chose, and says how to fix what it finds.
 
-It runs other tools as engines (clippy, SwiftLint, ruff and ast-grep) and parses no code itself. Every finding comes back in one shape, whichever engine found it, with the fix the rule's author wrote. A rule file may already name Tessera as an engine; such rules are reported "not available" for now (see below).
+</div>
 
-Temperare checks and reports. It never edits code, and it never decides what a finding blocks: that belongs to whoever calls it.
+Temperare checks code against the rules a repository has chosen to enforce, and reports what it finds, each finding
+with the fix the rule's author wrote. It runs the linters you already have (clippy, SwiftLint, ruff, ast-grep) as
+programs, reads their answers into one report, and never edits the code.
+
+The program is built as `temperare`; `tm` is a link to it that `temperare install` makes, and the examples here use
+`tm`. `tm --version` and `temperare --version` print the same line.
+
+> **Status:** version 0.1.0, built from source. There are no release downloads yet, and the license is not chosen
+> yet (see [Status and license](#status-and-license)).
+
+## Why
+
+A repository's rules are scattered: the lints it turned on, the house rules no stock linter can state, the
+exceptions somebody agreed to. Temperare puts them in one file, `temperare.toml`:
+
+- each rule names the engine that checks it, where it applies, and the fix text shown when it is broken;
+- each approved exception is a table in the same file, never a comment in the code, and every report counts them;
+- one run gives one report in one shape, as text for a person or JSON for a program, with a fixed exit code and a
+  last line that says what to do next.
+
+## Who it is for
+
+- **A person or an AI coding agent working in a git repository** who wants one command that answers "does this
+  code meet the rules here, and if not, what do I change?"
+- **A team with house rules** that a stock linter cannot say ("no stored Bool on a persisted type", "only this
+  folder may start git"), written once as ast-grep rules and enforced beside the stock lints.
+- **A team turning a rule on in old code:** `--base <rev>` reports only what was added since a commit, so a rule can
+  stop new cases before the old ones are cleaned up.
+- **A script or CI step that decides what blocks:** the exit code says what kind of result it was, and security
+  findings have their own code that never refuses.
+
+## What it is not
+
+- **Not a linter and not a parser.** Temperare reads no source code. Every rule names an engine that does the
+  reading, and a rule whose engine is missing is reported "not available", never clean.
+- **Not a fixer or a formatter.** It never edits the code it checks. There is no `--fix`.
+- **Not a gate.** It reports and sets an exit code. What a finding blocks belongs to whoever calls it.
+- **Not a service.** No daemon, no cache, no network code, nothing kept between runs.
+- **Not an installer for the engines.** You install clippy, SwiftLint, ruff and ast-grep yourself.
 
 ## Install
 
+Temperare is built from source. You need git and a Rust toolchain with cargo.
+
+**1. Build it.**
+
 ```
-cargo install --path crates/cli --locked
-tm --version
+git clone https://github.com/codedaptive/temperare
+cd temperare
+cargo build --release --locked
 ```
 
-Install the engines your rules name. A rule whose engine is missing is reported as "not available"; it is never reported as clean.
+**2. Place it.**
 
-## Use
+```
+./target/release/temperare install
+```
 
-Put a rule file, `temperare.toml`, at the top of a git repository:
+`temperare install` does this:
+
+- It copies the binary to `~/.local/bin/temperare`. No root is needed.
+- It makes `tm` a symlink to `temperare` in the same folder. If another program already answers to `tm` on your
+  PATH, the link is skipped and install says so; `--short-name` links it anyway.
+- It skips the copy when the binary already runs from a package-manager prefix (`/opt/homebrew`, `/usr/local`), or
+  when you pass `--no-place`. `tm` then links to the binary where it is.
+- It offers to wire a skill into the AI coding harnesses it finds (Claude Code, Codex, Cursor). A harness is found
+  when its folder is in your home: `~/.claude`, `~/.codex` or `~/.cursor`. This is offered, never required.
+  `--target claude,codex,cursor` names the harnesses instead of asking, and `-y` takes every one it found without
+  asking; with no terminal to ask at, pass one of the two. A harness you name that is not found is not wired, and
+  install says so. `--mode skill` is the only mode: a skill file, no MCP server. The skill is written to the
+  harness's folder in your home, for example `~/.claude/skills/temperare/SKILL.md`, or to the current project with
+  `--location local` (`.claude/skills/temperare/SKILL.md`). Its text is compiled into the binary.
+- It replaces only the files its own record names. Anything else already at one of those paths is kept, and
+  install says so.
+- Install records what it placed in `~/.local/state/temperare/installed`, and `uninstall` reads that record.
+  A check keeps nothing between runs.
+
+Install prints one line for each thing it placed or skipped. It exits 0 when it is done, skips included, and 1
+when a step failed, with the cause and what to do next.
+
+`temperare uninstall` removes what that record names and nothing else: the binary, the skill files, the `tm` link
+while it still points where install pointed it, the folders install made once they are empty, and the record.
+
+Check it:
+
+```
+tm --version      # temperare 0.1.0 (<the commit it was built from>)
+```
+
+`temperare` and `tm` answer every command alike. If `~/.local/bin` is not on your PATH, add it. If you only want the
+binary and none of the above, `cargo install --path crates/cli --locked` puts it in `~/.cargo/bin`.
+
+**3. Install the engines your rules name.** Temperare finds each one on your PATH:
+
+| Engine in a rule | Program it must find |
+|---|---|
+| `clippy` | `cargo-clippy` and `clippy-driver` (and `cargo`, which runs it) |
+| `swiftlint` | `swiftlint` |
+| `ruff` | `ruff` |
+| `ast-grep` | `ast-grep` |
+
+`tm rules` shows, for each rule, whether its engine is available.
+
+## First run
+
+This needs `ruff` on your PATH. Make a repository with one rule and one file that breaks it:
+
+```
+mkdir tm-first-run
+cd tm-first-run
+git init
+```
+
+`temperare.toml`:
 
 ```toml
 version = 1
@@ -31,73 +133,238 @@ severity = "error"
 fix = "Compare with `is None`."
 ```
 
-Then:
+`app.py`:
 
-```
-tm rules              # the rules in force, and whether each one's engine is available
-tm check              # check the repository
-tm check src          # check only the files under src
-tm check --base main  # report only what was added since a commit
-tm check --json       # the same report as one JSON object
-tm check --kind security   # the security rules alone
-tm help
+```python
+def is_missing(x):
+    return x == None
 ```
 
-`--rules <path>` names a rule file anywhere else. `tm check` ends with a `next:` line that says what to do.
+List the rules:
+
+```
+$ tm rules
+rule file: /path/to/tm-first-run/temperare.toml
+rules (1):
+  no-none-compare  ruff  quality  error  paths: all files  available
+exceptions in force (0):
+next: nothing to do
+```
+
+Check the code. The exit code is 1:
+
+```
+$ tm check
+app.py:2:17  error quality no-none-compare  owner payments
+  Comparison to `None` should be `cond is None`
+  fix: Compare with `is None`.
+
+1 findings (1 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed
+next: fix the findings above, or add an approved [[exception]] to /path/to/tm-first-run/temperare.toml
+```
+
+The first line is where, how severe, which kind, which rule and who owns the file. The second is ruff's own
+message. The third is the fix from the rule file. Change `x == None` to `x is None` and run it again. The exit code
+is 0:
+
+```
+$ tm check
+0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed
+next: nothing to do
+```
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `tm check [--rules <path>] [--base <rev>] [--kind quality\|security] [--json] [<path>...]` | Runs every rule's engine and prints the report |
+| `tm rules [--rules <path>] [--json]` | Reads and checks the rule file; lists each rule, whether its engine is available, and the exceptions in force. Runs no engine |
+| `tm install [--no-place] [--short-name] [--target claude,codex,cursor] [--mode skill] [--location local] [-y]` | Places the binary, links `tm`, offers the harness skill (see [Install](#install)) |
+| `tm uninstall` | Removes what install placed |
+| `tm help` | The usage text. Also `--help`, `-h`, or no arguments |
+| `tm --version` | The version and the commit |
+
+| Flag | Meaning |
+|---|---|
+| `--rules <path>` | The rule file to read. Without it: `temperare.toml` at the top of the git repository that holds the current folder |
+| `--base <rev>` | A commit, branch or tag. Only findings on lines added since it are reported: lines that differ between that commit and your working tree, committed or not, and every line of an untracked file git does not ignore |
+| `--kind quality\|security` | Run only the rules of that kind. `--kind security` is the security rules alone over the tree |
+| `--json` | Print the report as one JSON object on one line |
+| `<path>...` | Files or folders. Findings are cut to these paths. The engines still run over the rule file's whole folder |
+
+Flags come after the command. Every finding's path in a report is relative to the rule file's folder. With no
+paths given, `tm check` covers the whole tree even when you start it in a subfolder. A path you give is taken from
+the current folder and must be inside the rule file's folder. With `--rules`, `tm` also works outside a git
+repository; only `--base` needs git.
 
 ## The rule file
 
-| Key | Meaning |
+```toml
+version = 1
+owner = "platform"
+
+[kits.deploy]
+paths = ["deploy/**"]
+owner = "deploy-team"
+
+[[rule]]
+id = "git-only-in-deploy"
+engine = "ast-grep"
+check = "rules/git-only-in-deploy.yml"
+paths = ["**/*.rs"]
+outside_kits = ["deploy"]
+severity = "error"
+fix = "Run git through the deploy kit; only deploy starts git."
+
+[[exception]]
+rule = "git-only-in-deploy"
+path = "tools/release.rs"
+reason = "the release tool is rewritten in 2.0"
+approved = "who approved it"
+```
+
+| Key of a `[[rule]]` | Meaning |
 |---|---|
-| `id` | The rule's name in every report: lower-case letters, digits and `-` |
+| `id` | The rule's name in every report: lower-case letters, digits and `-`, unique in the file |
 | `engine` | `clippy`, `swiftlint`, `ruff`, `ast-grep` or `tessera` |
-| `check` | What the engine is asked: a lint or rule code (`clippy::bool_comparison`, `E711`, `force_cast`), `warnings` for every clippy warning, or the path of an ast-grep rule file |
-| `config` | The engine's own config file, passed to SwiftLint or ruff as written |
+| `check` | What the engine is asked. clippy: one lint the toolchain lists (`clippy::bool_comparison`), or `warnings` for every warning clippy reports; not a lint group. SwiftLint: one rule identifier (`force_cast`). ruff: a rule code, a code prefix or `ALL` (`E711`, `E7`), or several joined by commas. ast-grep: the path of a rule file inside the rule file's folder |
+| `fix` | The text shown with each finding |
+| `severity` | `error` (the default) or `warning` |
+| `kind` | `quality` (the default) or `security`. A security rule needs a top-level `owner` |
 | `paths` | The files the rule covers, as globs; all files when absent |
 | `exclude` | Globs the rule leaves out |
 | `kits` | The rule applies only inside the named kits |
 | `outside_kits` | The rule applies everywhere except inside the named kits: "this is named only inside kit Y" |
-| `severity` | `error` (the default) or `warning` |
-| `kind` | `quality` (the default) or `security`. A security rule needs a top-level `owner` |
-| `fix` | The text shown with each finding |
-| `params` | Values passed to the engine: into an ast-grep rule (such as a list of type names), or `allow` for clippy (lints left out) |
+| `config` | The engine's own config file, passed to SwiftLint or ruff as written |
+| `params` | Values for the engine: names filled into an ast-grep rule (such as a list of type names), or `allow` for clippy (lints left out) |
 
-`id`, `engine`, `check` and `fix` are required. A `[kits.<name>]` table gives a kit its `paths` and its `owner`. A finding's owner is the first kit that holds its file, else the rule file's top-level `owner`.
+`version = 1` is required, and so are a rule's `id`, `engine`, `check` and `fix`. A kit is a named set of paths,
+`[kits.<name>]`, with an optional `owner`. A finding's owner is the owner of the first kit that holds its file, else
+the top-level `owner`.
 
-An exception is a table in the same file, never a comment in the code:
+An exception names one rule and one file. `reason` and `approved` are required, and an optional `what` limits it to
+the findings whose message contains that text. A finding it covers is counted as silenced and left out of the
+findings; the JSON report lists it under `silenced` with the exception that covered it.
 
-```toml
-[[exception]]
-rule = "no-none-compare"
-path = "legacy.py"
-reason = "the legacy module is rewritten in 2.0"
-approved = "who approved it"
-```
+A rule file with a problem is never half-used: `tm` lists every problem as `file:line:col  what  fix`, runs
+nothing, and exits 2.
 
-An optional `what` limits it to the findings whose message contains that text. Every report counts the exceptions in force.
+Every key, the glob rules and every problem `tm` reports: [`docs/reference/RULE_FILE.md`](docs/reference/RULE_FILE.md).
 
 ## Exit codes
+
+`tm check` ends with one of these:
 
 | Code | Meaning |
 |---|---|
 | 0 | Nothing to refuse. Warnings alone end here |
 | 1 | A quality rule at severity `error` was broken |
 | 2 | The command was used wrongly, or the rule file has a problem |
-| 3 | A rule's engine was not available |
+| 3 | A rule was not available, most often because its engine is not installed |
 | 4 | The only errors are security findings. A security finding is reported with its severity, place and owner, and never refuses |
-| 5 | An engine failed |
+| 5 | A rule failed: its engine gave no answer, or its `check` could not be used |
 
-When more than one applies, the first of 2, 1, 5, 3, 4 wins.
+When more than one applies, the first of 2, 1, 5, 3, 4 wins. So exit 0 and exit 4 both mean every rule ran. Exit 1
+does not: read the `not available` and `failed` counts as well.
+
+`tm check` ends with a `next:` line that says what to do, and `--json` carries the same text as `next` beside
+`exit`. For a failed rule the text also prints why, under the counts line. The text and JSON shapes in full:
+[`docs/reference/OUTPUT.md`](docs/reference/OUTPUT.md).
+
+`tm rules` exits 0 when the rule file is good and 2 when it is not. `tm install` and `tm uninstall` exit 0 when
+done, 1 when a step failed, and 2 when used wrongly.
+
+## Engines
+
+| Engine | What Temperare runs | Checks |
+|---|---|---|
+| `clippy` | `cargo clippy` in the nearest folder, at or above the rule file's, with a `Cargo.toml` | Rust |
+| `swiftlint` | `swiftlint lint` in the rule file's folder | Swift |
+| `ruff` | `ruff check` in the rule file's folder | Python |
+| `ast-grep` | `ast-grep scan` with your rule file, its `params` filled in | Any language ast-grep reads; rules about the shape of code |
+| `tessera` | Nothing | Not available today |
+
+Engines are run as programs, rule by rule: ten ruff rules are ten ruff runs. Temperare links no engine and reads
+only what the engine prints. The report shows the rule's own `severity` and `fix`; the engine's own severity for a
+finding is not read.
+
+**Tessera rules are not available today.** A rule with `engine = "tessera"` is accepted in the rule file and is
+always reported "not available", whether or not Tessera is installed: `tm` neither runs nor looks for it. The
+report gives the reason, and the run ends with exit 3 unless a quality error (1) or a failed engine (5) comes
+first. The `next:` line says Tessera's checks are not available yet; installing Tessera changes nothing, so run
+without those rules.
+
+**A `check` that cannot be matched is "failed", never clean.** A clippy lint group or a lint the toolchain does not
+list, SwiftLint's `custom_rules`, a ruff rule name in place of a code, and an ast-grep rule file outside the rule
+file's folder each fail their rule (exit 5) before the engine runs. The report says why.
+
+The exact command line for each engine, and what counts as a failure:
+[`docs/reference/ENGINES.md`](docs/reference/ENGINES.md).
 
 ## With Tessera and Mortar
 
-Tessera reads the code, Mortar writes its history, and Temperare checks it. Each one works alone.
+Temperare has two sibling tools. Tessera reads the code, Mortar writes its history, and Temperare checks it. Each
+one works alone.
 
-- Rules with `engine = "tessera"` are accepted, but for now they are reported "not available" whether or not Tessera is installed: Tessera does not yet define the records Temperare would read.
-- Temperare needs nothing from Mortar.
+- **Tessera.** A rule file may name `tessera` as an engine. Those rules are "not available" today (see above).
+  Nothing else in Temperare needs Tessera.
+- **Mortar.** Temperare needs nothing from Mortar and never runs it.
+
+With neither installed, `tm` checks a plain git repository. It has no settings outside the rule file and defines no
+environment variables of its own; it finds git and the engines on `PATH`.
+
+## For AI agents
+
+[`AI_START_HERE.md`](AI_START_HERE.md) says what to read first, how to decide whether Temperare helps, and how to
+install and run it for a user. [`llms.txt`](llms.txt) is the index.
+
+## What is in this repository
+
+| Path | What |
+|---|---|
+| `crates/cli` | The binary: the commands, the output, the exit codes |
+| `crates/report` | The report and its counts; new findings only, against a base commit |
+| `crates/engines` | One adapter per engine: run it, read its output into findings |
+| `crates/rules` | The rule file: read it, check it, scope a rule by path and kit, exceptions; the rule and finding types |
+| `crates/procio` | The one place that runs another program, git included |
+| `temperare.toml`, `rules/` | Temperare's own rule file and its ast-grep rule: this repository is checked by itself |
+| `Makefile`, `scripts/` | The build, test and acceptance targets |
+| `docs/` | The reference: [`docs/README.md`](docs/README.md) |
 
 ## Working on Temperare
 
-`CLAUDE.md` is where an agent starts. This repository carries its own `temperare.toml` and is checked by itself.
+```
+make check                        # type-check the workspace, every target
+make test                         # the unit tests of every crate
+make test GROUP=integration       # the tests that touch the disk, git or a real engine
+make test GROUP=validation        # the tests of the built binary
+make test-one DIR=crates/rules    # one crate
+make accept                       # the acceptance checks, with a report
+```
 
-`make check` type-checks the workspace and `make test` runs the unit tests (`GROUP=integration` or `GROUP=validation` for the other kinds). `make accept` runs the mission's Done list against the real engines on throwaway repositories and writes a report to `target/accept-report.md` (`ACCEPT_REPORT=<file>` for another place). It fails when a check fails or does not run, for example when an engine is not installed.
+`make accept` builds the binary and runs it against the real engines on throwaway repositories, then writes a
+report to `target/accept-report.md` (`ACCEPT_REPORT=<file>` for another place). It fails when a check fails or does
+not run, for example when an engine is not installed.
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## Security
+
+Temperare runs other programs with your privileges, and the rule file decides what they are asked. Read
+[`SECURITY.md`](SECURITY.md) before you run it on a repository you do not trust, and to report a vulnerability.
+
+## Status and license
+
+- **Version:** 0.1.0. See [`CHANGELOG.md`](CHANGELOG.md).
+- **Proven:** the acceptance checks run the built binary against real clippy, SwiftLint, ruff and ast-grep. They
+  cover a stock lint in Rust, Swift and Python, new findings only against a base commit, a house rule in Swift and
+  Rust, an absent engine, an exception, a run with nothing but `PATH` and `HOME` set, a security rule, a rule that
+  a command is named only inside one kit, and clippy's `warnings` with an `allow` list.
+- **Platforms:** built and accepted on macOS. The code is written for Unix systems; Linux and Windows are untested.
+- **Not available today:** rules with `engine = "tessera"`.
+- **License:** not chosen yet. This is the one open item before release; until a `LICENSE` file is added, no
+  license is granted.
+
+---
+
+*Temperare is a [Codedaptive](https://codedaptive.com) project.*

@@ -1,0 +1,69 @@
+# Temperare documentation map
+
+Temperare checks code against the rules a repository has chosen to enforce, and reports what it finds. It is a
+command-line program, `temperare`, short name `tm`. It runs clippy, SwiftLint, ruff and ast-grep as programs, reads
+their output into one report, and never edits code. This file routes people and AI agents to the maintained
+sources.
+
+## Start here
+
+- Product overview, install, first run, commands: README.md
+- AI-assisted explanation, install and use: AI_START_HERE.md
+- Documentation index: docs/README.md
+- Changes by version: CHANGELOG.md
+
+## Reference
+
+- The rule file, temperare.toml, every key: docs/reference/RULE_FILE.md
+- Text output, JSON output, exit codes, the next line: docs/reference/OUTPUT.md
+- Each engine: the exact command line, what check means, not available and failed: docs/reference/ENGINES.md
+
+## Policy
+
+- What Temperare runs, what the rule file can make it do, how to report a vulnerability: SECURITY.md
+- Layout of the code, build and test commands, what a change must keep: CONTRIBUTING.md
+- License: not chosen yet. There is no LICENSE file, and until there is one no license is granted.
+
+## Facts an agent needs before running it
+
+- Commands: tm check, tm rules, tm install, tm uninstall, tm help, tm --version.
+- tm check [--rules <path>] [--base <rev>] [--kind quality|security] [--json] [<path>...]
+- tm rules [--rules <path>] [--json]
+- The rule file is --rules <path>, else temperare.toml at the top of the git repository.
+- --json prints one JSON object on one line on stdout, with exit and next beside the result.
+- tm install [--no-place] [--short-name] [--target claude,codex,cursor] [--mode skill] [--location local] [-y]
+- tm install copies the binary to ~/.local/bin/temperare, links tm beside it, writes a skill file for the harnesses
+  chosen, and records what it placed in ~/.local/state/temperare/installed. tm uninstall removes what that record
+  names. Both exit 0 when done, 1 when a step failed, 2 when used wrongly.
+- Exit codes of tm check: 0 nothing to refuse; 1 a quality error was found; 2 used wrongly or the rule file has a
+  problem, nothing checked; 3 a rule was not available; 4 the only errors are security findings, which never
+  refuse; 5 a rule failed. The first of 2, 1, 5, 3, 4 that applies wins.
+- Exit 0 and exit 4 mean every rule ran. Exit 1 does not: read counts.not_available and counts.failed.
+- Exit 3 and exit 5 are never clean: the code was not fully checked.
+- A rule fails (exit 5) when its engine gives no answer that can be read, or when its check cannot be matched back
+  to findings: a clippy lint group or a lint the toolchain does not list, SwiftLint's custom_rules, a ruff rule
+  name in place of a code, an ast-grep rule file outside the rule file's folder. The reason is in
+  failed[].stderr_tail.
+- check, by engine: clippy, one lint or warnings; swiftlint, one rule identifier; ruff, a rule code, a code prefix,
+  ALL, or several joined by commas; ast-grep, the path of a rule file inside the rule file's folder.
+- A clippy rule needs cargo-clippy and clippy-driver on PATH.
+- Every finding's path is relative to the rule file's folder.
+- A finding has: rule, engine, kind, severity, owner (when the rule file names one), path, line, col (when the
+  engine gives one), what (the engine's message), fix (the rule's fix text).
+- An exception is an [[exception]] table in the rule file with rule, path, reason and approved. It records a
+  person's approval. An agent does not add one on its own.
+
+## What it does not do
+
+- It does not parse code, fix code or format code.
+- It does not decide what a finding blocks.
+- It does not install the engines.
+- A check keeps nothing between runs, and Temperare has no network code of its own. The engines it runs are
+  separate programs.
+- Rules with engine = "tessera" are accepted and are always reported "not available" today, whether or not Tessera
+  is installed.
+
+## Version note
+
+This is version 0.1.0, built from source. There are no release downloads. It is built and accepted on macOS; Linux
+and Windows are untested.
