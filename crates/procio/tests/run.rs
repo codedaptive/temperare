@@ -1,4 +1,4 @@
-//! procio's zone integration tests for the runner: `run` and `which` on real programs, with a throwaway dir
+//! procio's integration tests for the runner: `run` and `which` on real programs, with a throwaway dir
 //! where a test needs files.
 
 use std::ffi::OsString;
@@ -153,9 +153,9 @@ fn cwd_env_add_and_env_remove_apply() {
     let dir = scratch("cwd_env");
     let cmd = Cmd {
         cwd: Some(dir.clone()),
-        env: vec![("PROCIO_ZIT_A".into(), "yes".into())],
+        env: vec![("PROCIO_TEST_A".into(), "yes".into())],
         env_remove: vec!["HOME".into()],
-        ..sh(r#"pwd -P; echo "$PROCIO_ZIT_A"; echo "${HOME-unset}""#)
+        ..sh(r#"pwd -P; echo "$PROCIO_TEST_A"; echo "${HOME-unset}""#)
     };
     let result = run(&cmd);
     let real = fs::canonicalize(&dir).unwrap();
