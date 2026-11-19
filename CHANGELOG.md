@@ -4,7 +4,7 @@ All notable changes to Temperare are recorded here, newest first.
 
 ## 0.1.0
 
-The first version. Built from source; there are no release downloads yet.
+The first version. Built from source; there are no release downloads yet. MIT licensed.
 
 ### Commands
 

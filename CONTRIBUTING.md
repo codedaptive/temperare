@@ -5,8 +5,7 @@ Thank you for your interest in Temperare. This document explains how to contribu
 The short version: open an issue to report a problem or propose an idea, or open a pull request with a change and
 its tests.
 
-> **Before you send code:** the license is not chosen yet (see the [README](README.md#status-and-license)). The terms
-> a contribution is accepted under will be stated with it. Until then, an issue is the best way to contribute.
+> **License:** Temperare is MIT licensed ([`LICENSE`](LICENSE)).
 
 ---
 

@@ -22,7 +22,7 @@ sources.
 
 - What Temperare runs, what the rule file can make it do, how to report a vulnerability: SECURITY.md
 - Layout of the code, build and test commands, what a change must keep: CONTRIBUTING.md
-- License: not chosen yet. There is no LICENSE file, and until there is one no license is granted.
+- License: MIT, in LICENSE.
 
 ## Facts an agent needs before running it
 

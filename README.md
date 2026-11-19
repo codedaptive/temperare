@@ -13,8 +13,8 @@ programs, reads their answers into one report, and never edits the code.
 The program is built as `temperare`; `tm` is a link to it that `temperare install` makes, and the examples here use
 `tm`. `tm --version` and `temperare --version` print the same line.
 
-> **Status:** version 0.1.0, built from source. There are no release downloads yet, and the license is not chosen
-> yet (see [Status and license](#status-and-license)).
+> **Status:** version 0.1.0, built from source. There are no release downloads yet. MIT licensed (see
+> [Status and license](#status-and-license)).
 
 ## Why
 
@@ -362,8 +362,7 @@ Temperare runs other programs with your privileges, and the rule file decides wh
   a command is named only inside one kit, and clippy's `warnings` with an `allow` list.
 - **Platforms:** built and accepted on macOS. The code is written for Unix systems; Linux and Windows are untested.
 - **Not available today:** rules with `engine = "tessera"`.
-- **License:** not chosen yet. This is the one open item before release; until a `LICENSE` file is added, no
-  license is granted.
+- **License:** MIT. See [`LICENSE`](LICENSE).
 
 ---
 

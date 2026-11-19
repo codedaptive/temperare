@@ -65,9 +65,10 @@ Do not promise:
 - that rules with `engine = "tessera"` run. They are always "not available" today;
 - release downloads, a Homebrew formula or any install path other than building from source;
 - an MCP server. The harness wiring is a skill file and nothing else;
-- that it works on Windows, or on Linux without trying it. It is built and accepted on macOS;
-- a license. None is chosen yet, and until a `LICENSE` file is added no license is granted. If the user asks whether
-  they may use it at work, say that.
+- that it works on Windows, or on Linux without trying it. It is built and accepted on macOS.
+
+Temperare is MIT licensed ([`LICENSE`](LICENSE)). If the user asks whether they may use it at work, point them to
+that file rather than giving legal advice.
 
 ## Install
 
