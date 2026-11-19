@@ -185,9 +185,7 @@ Swift file. [`docs/reference/ENGINES.md`](docs/reference/ENGINES.md) lists every
 and `outside_kits` must cover the file, and in a glob `*` stays within one folder and `**` crosses folders; paths
 on the command line cut the result; `--kind` runs only the rules of that kind; with `--base` only lines added since
 that commit count; an exception may cover the file (the counts line then shows it as silenced); and the engine's
-own configuration in the repository still applies. One more for SwiftLint on macOS: a repository under `/tmp` or
-`/var` reports no SwiftLint findings at all; see
-[`docs/reference/ENGINES.md`](docs/reference/ENGINES.md#swiftlint).
+own configuration in the repository still applies.
 
 **The documents and the program disagree.** Trust the program: `tm help` prints the commands it takes. Tell the
 user which one you followed.

@@ -14,10 +14,15 @@ pub struct Repo {
 }
 
 impl Repo {
-    /// An empty repository on branch main, with a committer set and signing off.
+    /// An empty repository on branch main under the temp folder, with a committer set and signing off.
     pub fn new() -> Repo {
+        Repo::new_in(&std::env::temp_dir())
+    }
+
+    /// As `new`, made in `parent` (a case that needs the repository in a given place, such as /private/tmp).
+    pub fn new_in(parent: &Path) -> Repo {
         let n = NEXT.fetch_add(1, Ordering::SeqCst);
-        let root = std::env::temp_dir().join(format!("tm-accept-{}-{}", std::process::id(), n));
+        let root = parent.join(format!("tm-accept-{}-{}", std::process::id(), n));
         fs::create_dir_all(&root).expect("make the throwaway repository");
         let repo = Repo { root };
         repo.git(&["init", "-q", "-b", "main"]);

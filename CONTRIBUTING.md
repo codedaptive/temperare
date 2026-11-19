@@ -84,7 +84,7 @@ These hold today, and a pull request that breaks one will be asked to change.
    (`--select=<check>`), and an ast-grep rule file is read only from inside the rule file's folder.
 5. **It checks and reports.** No code path edits the code under check, and none decides what a finding blocks.
 6. **The rule file is the only home** of a rule and of an exception. Nothing is read from a comment in the code.
-7. **Useful alone.** No environment variable of its own, no service, nothing needed beyond git and the engines the
+7. **Useful alone.** Reads no environment variable of its own, no service, nothing needed beyond git and the engines the
    rules name.
 8. **The output is a contract.** The fields of a finding, the JSON keys, the text lines, the exit codes and their
    order are what callers build on. A change to any of them is a breaking change: say so, and update

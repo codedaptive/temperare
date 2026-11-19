@@ -3,6 +3,8 @@
 //! line and fix, exit 1; a Swift file without it passes, exit 0. The repository holds no `.swiftlint.yml`. Only when
 //! swiftlint is not on the PATH `temperare` gets (`on_tm_path`, which runs nothing) is a case NOT RUN, with `temperare`'s reason,
 //! never PASS; `temperare` must then report the rule not available. With swiftlint there, the case asserts as usual.
+//! On macOS a third case puts the repository under /private/tmp, whose paths SwiftLint prints without `/private`
+//! (Designer #476, engines #477): the finding is still reported, never dropped as outside the folder.
 
 use crate::check::Check;
 use crate::on_tm_path::on_tm_path;
@@ -27,7 +29,11 @@ const SAFE: &str = "let value: Any = 1\nlet number = value as? Int\n";
 
 /// A repository holding the rule file and each (path, text), committed.
 fn repo_with(files: &[(&str, &str)]) -> Repo {
-    let repo = Repo::new();
+    fill(Repo::new(), files)
+}
+
+/// `repo` with the rule file and each (path, text), committed.
+fn fill(repo: Repo, files: &[(&str, &str)]) -> Repo {
     repo.write("temperare.toml", RULES);
     for (path, text) in files {
         repo.write(path, text);
@@ -94,4 +100,28 @@ fn a_file_without_a_force_cast_passes() {
     }
     assert_eq!(a.code, 0, "clean: {:#}\n{}", a.json, a.stderr);
     assert!(a.findings().is_empty(), "no findings: {:#}", a.json);
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn a_force_cast_under_private_tmp_is_reported() {
+    let mut check = Check::new(
+        "a_force_cast_under_private_tmp_is_reported",
+        "the same rule and files as above, in a repository under /private/tmp (SwiftLint prints its paths without \
+         /private)",
+    );
+    let files = [("Sources/Cast.swift", CAST), ("Sources/Safe.swift", SAFE)];
+    let repo = fill(Repo::new_in(std::path::Path::new("/private/tmp")), &files);
+    let args = ["check", "--json"];
+    let a = tm(&repo, &args);
+    check.saw_tm(&args, a.code, &a.json);
+    if let Some(why) = not_run_reason(&a) {
+        check.not_run(why);
+        return;
+    }
+    assert_eq!(a.code, 1, "the finding is kept, not dropped as outside the folder: {:#}\n{}", a.json, a.stderr);
+    let f = a.findings();
+    assert_eq!(f.len(), 1, "one finding, in Cast.swift: {:#}", a.json);
+    assert_eq!(f[0]["path"], "Sources/Cast.swift");
+    assert_eq!(f[0]["line"], 2);
 }
