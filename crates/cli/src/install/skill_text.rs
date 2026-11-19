@@ -29,8 +29,9 @@ The rules come from `temperare.toml` at the top of the git repository.
 - 0: nothing refuses; warnings alone exit 0.
 - 1: a quality error finding refuses the change. Fix it, or add an approved exception to the rule file.
 - 2: a usage error. The message says what to type instead.
-- 3: a rule could not run because its engine is not available. Install the engine the message names, or run
-  without those rules; Tessera's checks are not available yet, so installing Tessera changes nothing.
+- 3: a rule could not run because its engine, or what the rule needs, is not available. Do what the message names
+  (install the engine; for clippy, put the rule file inside the Cargo project it checks), or run without those rules;
+  Tessera's checks are not available yet, so installing Tessera changes nothing.
 - 4: security error findings only. Raise them with their owner; work goes on.
 - 5: an engine failed. Read its output.
 

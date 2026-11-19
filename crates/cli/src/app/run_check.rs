@@ -7,7 +7,7 @@ use super::select_rules::select_rules;
 use super::write_failure::write_failure;
 use super::write_problems::write_problems;
 use super::CheckWorld;
-use crate::{check_json, exit_code, failed_tails, next_step, not_available_names, CheckArgs, UsageError};
+use crate::{check_json, exit_code, failed_tails, next_step, CheckArgs, UsageError};
 use std::io::Write;
 use std::path::Path;
 
@@ -47,9 +47,7 @@ pub fn run_check(args: &CheckArgs, cwd: &Path, world: &CheckWorld, out: &mut dyn
         }
     };
     let exit = exit_code(&report);
-    let names = not_available_names(&report);
-    let names: Vec<&str> = names.iter().map(String::as_str).collect();
-    let next = next_step(exit, None, &path, &names);
+    let next = next_step(exit, None, &path, &report.not_available);
     if args.json {
         let _ = writeln!(out, "{}", check_json(&report, exit, &next));
     } else {
