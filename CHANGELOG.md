@@ -62,8 +62,5 @@ The first version. Built from source; there are no release downloads yet.
   available or failed. The counts say so.
 - A rule whose `paths` match no file reports nothing and is not flagged.
 - A SwiftLint rule fails in a folder that holds no Swift file.
-- On macOS, a SwiftLint rule reports nothing when the rule file's real folder begins with `/private` (anything
-  under `/tmp` or `/var`): SwiftLint prints paths without `/private`, and its findings are dropped as outside the
-  folder. See [`docs/reference/ENGINES.md`](docs/reference/ENGINES.md#swiftlint).
 - The ast-grep rule file is opened without following symlinks on Unix only; elsewhere only its path is checked.
 - Built and accepted on macOS. Linux and Windows are untested.

@@ -112,12 +112,10 @@ of the engine's stderr, or Temperare's own reason when the engine printed none o
 - **Failed** when `check` is `custom_rules`, before SwiftLint runs: under `--only-rule` that name runs no custom
   rule, so the rule could match nothing. Failed too when SwiftLint says `check` is not a valid rule identifier, and
   when SwiftLint finds no Swift file to lint in the folder (it exits with an error instead of an empty result).
-  For an identifier it does not know, SwiftLint prints its whole list of identifiers after the message, so the 20
-  lines shown are the end of that list.
-- **On macOS, keep the code out of `/private`.** SwiftLint prints file paths with a leading `/private` removed.
-  When the rule file's real folder begins with `/private`, as everything under `/tmp` and `/var` does, those paths
-  do not match the folder, the findings are dropped as outside it, and the rule reports nothing. Seen with
-  SwiftLint 0.65.1. Check Swift code from a folder elsewhere, such as one under your home.
+  For an identifier it does not know, the failure quotes SwiftLint's own warning line, which names the identifier.
+- **Paths under `/private` on macOS.** SwiftLint prints file paths with a leading `/private` removed; a finding is
+  placed under the rule file's folder either way, so code under `/tmp` and `/var` is checked as anywhere else. A
+  path that cannot be placed under the folder at all makes the rule Failed, never clean.
 - **`config`:** passed as written, so a relative path is taken from the rule file's folder. Temperare does not read
   or copy the file.
 - **`params`:** not read.

@@ -5,6 +5,7 @@
 10|a_clean_file_passes|Done 1: a stock linter through a rule file (clippy)
 15|a_force_cast_is_reported_with_its_rule_place_and_fix|Done 1 (SwiftLint): a stock linter through a rule file
 15|a_file_without_a_force_cast_passes|Done 1 (SwiftLint): a stock linter through a rule file
+15|a_force_cast_under_private_tmp_is_reported|Done 1 (SwiftLint): a stock linter through a rule file
 20|only_the_violation_added_after_the_base_is_reported|Done 2: new violations only
 20|a_violation_in_a_new_untracked_file_is_new|Done 2: new violations only
 20|a_base_that_does_not_resolve_is_a_usage_error|Done 2: new violations only

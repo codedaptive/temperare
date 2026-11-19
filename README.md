@@ -310,8 +310,8 @@ one works alone.
   Nothing else in Temperare needs Tessera.
 - **Mortar.** Temperare needs nothing from Mortar and never runs it.
 
-With neither installed, `tm` checks a plain git repository. It has no settings outside the rule file and defines no
-environment variables of its own; it finds git and the engines on `PATH`.
+With neither installed, `tm` checks a plain git repository. It has no settings outside the rule file and reads no
+environment variable of its own; it finds git and the engines on `PATH`.
 
 ## For AI agents
 

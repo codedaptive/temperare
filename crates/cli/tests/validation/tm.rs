@@ -1,4 +1,4 @@
-//! Runs the built `tm` in a throwaway repository and reads its `--json` answer (SPEC-cli WO-cli-3: the report, plus
+//! Runs the built `temperare` in a throwaway repository and reads its `--json` answer (SPEC-cli WO-cli-3: the report, plus
 //! `exit` and `next`; nothing else on stdout).
 
 use serde_json::Value;
