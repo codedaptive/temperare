@@ -1,7 +1,7 @@
 //! `render_text`: the report as the text a person reads.
 
 use crate::{Failed, NotAvailable, Report};
-use rules::{Engine, Finding, Kind, Severity};
+use rules::{Finding, Kind, Severity};
 
 /// The report as text: a three-line block and a blank line per kept finding, one line per not-available rule, one
 /// line per failed rule, then the counts line. Silenced findings are counted, not listed; a failed rule's stderr
@@ -43,16 +43,16 @@ fn finding_block(finding: &Finding) -> String {
 }
 
 fn not_available_line(rule: &NotAvailable) -> String {
-    format!("not available: {} ({}): {}\n", rule.rule, engine_name(rule.engine), rule.why)
+    format!("not available: {} ({}): {}\n", rule.rule, rule.engine.name(), rule.why)
 }
 
 fn failed_line(rule: &Failed) -> String {
     let code = rule.code.map(|code| format!("exit {code}")).unwrap_or_else(|| "no exit code".to_string());
-    format!("failed: {} ({}), {code}\n", rule.rule, engine_name(rule.engine))
+    format!("failed: {} ({}), {code}\n", rule.rule, rule.engine.name())
 }
 
-/// The rule-file names; `rules` reads them (`from_name`) and writes them through `Serialize`, but has no `&str`
-/// name accessor.
+/// Severity's and kind's rule-file names; `rules` reads them (`from_name`) and writes them through `Serialize`, but
+/// has no `&str` name accessor for either.
 fn severity_name(severity: Severity) -> &'static str {
     match severity {
         Severity::Error => "error",
@@ -64,15 +64,5 @@ fn kind_name(kind: Kind) -> &'static str {
     match kind {
         Kind::Quality => "quality",
         Kind::Security => "security",
-    }
-}
-
-fn engine_name(engine: Engine) -> &'static str {
-    match engine {
-        Engine::Clippy => "clippy",
-        Engine::SwiftLint => "swiftlint",
-        Engine::Ruff => "ruff",
-        Engine::AstGrep => "ast-grep",
-        Engine::Tessera => "tessera",
     }
 }
