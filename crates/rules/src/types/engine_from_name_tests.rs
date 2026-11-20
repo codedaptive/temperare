@@ -1,4 +1,4 @@
-//! ZUT for engine_from_name.rs: the five rule-file names, and None for anything else.
+//! ZUT for engine_from_name.rs: the ten rule-file names, and None for anything else.
 
 use super::Engine;
 
@@ -28,8 +28,48 @@ fn tessera() {
 }
 
 #[test]
+fn golangci_lint() {
+    assert_eq!(Engine::from_name("golangci-lint"), Some(Engine::GolangciLint));
+}
+
+#[test]
+fn pylint() {
+    assert_eq!(Engine::from_name("pylint"), Some(Engine::Pylint));
+}
+
+#[test]
+fn clang_tidy() {
+    assert_eq!(Engine::from_name("clang-tidy"), Some(Engine::ClangTidy));
+}
+
+#[test]
+fn oclint() {
+    assert_eq!(Engine::from_name("oclint"), Some(Engine::Oclint));
+}
+
+#[test]
+fn shellcheck() {
+    assert_eq!(Engine::from_name("shellcheck"), Some(Engine::ShellCheck));
+}
+
+#[test]
 fn unknown_names_are_none() {
-    for name in ["eslint", "", "Clippy", "ast_grep", "SwiftLint", " ruff"] {
+    for name in [
+        "eslint",
+        "",
+        "Clippy",
+        "ast_grep",
+        "SwiftLint",
+        " ruff",
+        "golangci_lint",
+        "golangci",
+        "clang_tidy",
+        "ClangTidy",
+        "ShellCheck",
+        "shell-check",
+        "PyLint",
+        "OCLint",
+    ] {
         assert_eq!(Engine::from_name(name), None, "{name:?}");
     }
 }

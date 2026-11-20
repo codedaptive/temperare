@@ -11,7 +11,8 @@ pub struct Rule {
     pub id: String,
     pub engine: Engine,
     pub kind: Kind,
-    /// What the engine checks: a lint name or a file relative to the rule file's folder.
+    /// What the engine checks: a lint name, or a file relative to the rule file's folder (for a baseline set's rule,
+    /// relative to the set's folder).
     pub check: String,
     pub config: Option<String>,
     pub paths: Vec<String>,
@@ -34,4 +35,6 @@ pub struct Rule {
     pub required_params: Vec<String>,
     /// Why the rule is not applicable (e.g. a required param not given); None when it applies.
     pub not_applicable: Option<String>,
+    /// The rule's ast-grep YAML when the baseline set it came from carries it in tm; None for a repository's own rule.
+    pub embedded_text: Option<&'static str>,
 }

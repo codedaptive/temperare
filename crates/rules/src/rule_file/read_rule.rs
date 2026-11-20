@@ -103,6 +103,7 @@ pub(crate) fn read_rule(
         only_with_base,
         required_params: required_params.into_iter().map(|(name, _)| name).collect(),
         not_applicable: None,
+        embedded_text: None,
     })
 }
 

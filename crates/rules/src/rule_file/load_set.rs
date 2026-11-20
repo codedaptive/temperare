@@ -2,19 +2,22 @@
 
 use super::baseline_set::BaselineSet;
 use super::check_keys::check_keys;
+use super::check_set_yaml::check_set_yaml;
 use super::check_version::check_version;
 use super::problem_at::problem_at;
 use super::read_rules::read_rules;
 use super::string_list::string_list;
 use super::syntax_problem::syntax_problem;
-use crate::{Problem, Rule};
+use crate::{Engine, Problem, Rule};
 use std::collections::BTreeSet;
 use toml::de::DeTable;
 
 const SET_TOP_KEYS: [&str; 3] = ["version", "rule", "retired"];
 
 /// The rules of `set` (read as a set's rules, with no kits) and the ids its top-level `retired` lists, in file order;
-/// or every Problem, positioned in the set's own text and sorted by (line, col).
+/// or every Problem, positioned in the set's own text and sorted by (line, col). Each ast-grep rule's `check` must
+/// name a YAML file the set carries, and the rule comes back with that file's text as its embedded YAML; a rule of
+/// any other engine has none.
 pub(crate) fn load_set(set: &BaselineSet) -> Result<(Vec<Rule>, Vec<String>), Vec<Problem>> {
     let text = set.text;
     let doc = DeTable::parse(text).map_err(|e| vec![syntax_problem(text, &e)])?;
@@ -22,12 +25,16 @@ pub(crate) fn load_set(set: &BaselineSet) -> Result<(Vec<Rule>, Vec<String>), Ve
     let mut out = Vec::new();
     check_keys(text, root, &SET_TOP_KEYS, "the top level", &mut out);
     check_version(text, root, &mut out);
-    let (rules, ids) = read_rules(text, root, &[], true, &mut out);
+    let (mut rules, ids) = read_rules(text, root, &[], true, &mut out);
+    check_set_yaml(text, root, set, &mut out);
     let retired = string_list(text, root, "retired", &mut out);
     for (id, at) in &retired {
         check_retired(text, id, *at, &ids, &mut out);
     }
     if out.is_empty() {
+        for rule in rules.iter_mut().filter(|rule| rule.engine == Engine::AstGrep) {
+            rule.embedded_text = set.yaml_for(&rule.check);
+        }
         return Ok((rules, retired.into_iter().map(|(id, _)| id).collect()));
     }
     out.sort_by_key(|p| (p.line, p.col));

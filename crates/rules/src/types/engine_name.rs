@@ -11,6 +11,11 @@ impl Engine {
             Engine::Ruff => "ruff",
             Engine::AstGrep => "ast-grep",
             Engine::Tessera => "tessera",
+            Engine::GolangciLint => "golangci-lint",
+            Engine::Pylint => "pylint",
+            Engine::ClangTidy => "clang-tidy",
+            Engine::Oclint => "oclint",
+            Engine::ShellCheck => "shellcheck",
         }
     }
 }

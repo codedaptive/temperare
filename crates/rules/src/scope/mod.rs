@@ -7,6 +7,7 @@ mod exception;
 mod exception_new;
 mod rule;
 mod rule_applies;
+mod rule_embedded_yaml;
 mod rule_new;
 #[allow(clippy::module_inception)]
 mod scope;
@@ -25,6 +26,8 @@ mod exception_new_tests;
 mod exception_tests;
 #[cfg(test)]
 mod rule_applies_tests;
+#[cfg(test)]
+mod rule_embedded_yaml_tests;
 #[cfg(test)]
 mod rule_new_tests;
 #[cfg(test)]

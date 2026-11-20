@@ -4,7 +4,18 @@
 use super::Engine;
 use serde::Serialize;
 
-const ALL: [Engine; 5] = [Engine::Clippy, Engine::SwiftLint, Engine::Ruff, Engine::AstGrep, Engine::Tessera];
+const ALL: [Engine; 10] = [
+    Engine::Clippy,
+    Engine::SwiftLint,
+    Engine::Ruff,
+    Engine::AstGrep,
+    Engine::Tessera,
+    Engine::GolangciLint,
+    Engine::Pylint,
+    Engine::ClangTidy,
+    Engine::Oclint,
+    Engine::ShellCheck,
+];
 
 #[test]
 fn clippy() {
@@ -29,6 +40,31 @@ fn ast_grep() {
 #[test]
 fn tessera() {
     assert_eq!(Engine::Tessera.name(), "tessera");
+}
+
+#[test]
+fn golangci_lint() {
+    assert_eq!(Engine::GolangciLint.name(), "golangci-lint");
+}
+
+#[test]
+fn pylint() {
+    assert_eq!(Engine::Pylint.name(), "pylint");
+}
+
+#[test]
+fn clang_tidy() {
+    assert_eq!(Engine::ClangTidy.name(), "clang-tidy");
+}
+
+#[test]
+fn oclint() {
+    assert_eq!(Engine::Oclint.name(), "oclint");
+}
+
+#[test]
+fn shellcheck() {
+    assert_eq!(Engine::ShellCheck.name(), "shellcheck");
 }
 
 #[test]
