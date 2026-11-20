@@ -312,9 +312,14 @@ report gives the reason, and the run ends with exit 3 unless a quality error (1)
 first. The `next:` line says Tessera's checks are not available yet; installing Tessera changes nothing, so run
 without those rules.
 
-**A `check` that cannot be matched is "failed", never clean.** A clippy lint group or a lint the toolchain does not
-list, SwiftLint's `custom_rules`, a ruff rule name in place of a code, and an ast-grep rule file outside the rule
-file's folder each fail their rule (exit 5) before the engine runs. The report says why.
+**A `check` that cannot be matched is "failed", never clean.** A clippy lint group or `rustdoc::` lint, SwiftLint's
+`custom_rules`, a ruff rule name in place of a code, and an ast-grep rule file outside the rule file's folder each
+fail their rule (exit 5) before the engine runs. So does a param the rule's engine does not take. The report says why.
+
+**A `check` the installed engine does not know is "not available".** A clippy lint the toolchain does not list
+(a `rustdoc::` lint is not among these: it fails, exit 5, as above), or a SwiftLint rule identifier or ruff selector
+the installed version rejects, makes the rule not available (exit 3), with the engine's version (or `(version
+unknown)` when it could not be read) and the check named. Upgrade the engine or write a check it knows.
 
 The exact command line for each engine, and what counts as a failure:
 [`docs/reference/ENGINES.md`](docs/reference/ENGINES.md).

@@ -38,7 +38,7 @@ The short version:
 - One command, `tm check`, and one report in one shape whichever engine found the problem.
 - Every finding comes with the fix the rule's author wrote.
 - Text for a person, `--json` for a program, a fixed exit code, and a last line that says what to do next.
-- A rule that cannot be checked is reported "not available". It is never reported as clean.
+- A rule that cannot be checked is reported "not available" or "failed", never clean.
 
 ## Does it help?
 
@@ -177,12 +177,16 @@ Follow these strictly:
 **`not available: ... cargo-clippy not found on PATH`, or `clippy-driver not found on PATH`.** A clippy rule needs
 both programs on `PATH`. Tell the user which one is missing.
 
+**`not available: ... does not know the check ...`.** The installed clippy, SwiftLint or ruff does not know the
+rule's `check` (a misspelt name, or one newer than the engine); the why names the engine's version, or `(version unknown)` when it could not be read. Tell the user to
+upgrade the engine or correct the check.
+
 **`failed: ...`.** The reason is printed below the counts line, under `stderr of <rule> (<engine>):`, and is in
 `failed[].stderr_tail` with `--json`. A rule fails before its engine runs when its `check` cannot be matched back
-to findings: a clippy lint group (`clippy::pedantic`) or a lint the toolchain does not list, SwiftLint's
-`custom_rules`, a ruff rule name in place of a code, or an ast-grep rule file that is outside the rule file's
-folder, reached through a symlink to outside it, or hard-linked. A SwiftLint rule also fails in a folder with no
-Swift file. [`docs/reference/ENGINES.md`](docs/reference/ENGINES.md) lists every case.
+to findings: a clippy lint group (`clippy::pedantic`) or `rustdoc::` lint, SwiftLint's `custom_rules`, a ruff rule
+name in place of a code, or an ast-grep rule file that is outside the rule file's folder, reached through a symlink
+to outside it, or hard-linked. It fails too on a param its engine does not take. A SwiftLint rule in a folder with no
+Swift file fails after SwiftLint runs, which exits with an error. [`docs/reference/ENGINES.md`](docs/reference/ENGINES.md) lists every case.
 
 **A rule reports nothing and you expected a finding.** Check these in order: the rule's `paths`, `exclude`, `kits`
 and `outside_kits` must cover the file, and in a glob `*` stays within one folder and `**` crosses folders; paths
