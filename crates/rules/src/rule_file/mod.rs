@@ -2,12 +2,18 @@
 
 mod apply_override;
 mod baseline_set;
+mod baseline_set_case_for;
 mod baseline_set_yaml_for;
 mod bool_value;
+mod check_case_file_name;
+mod check_duplicate_case_file;
+mod check_failing_line;
+mod check_failing_path;
 mod check_globs;
 mod check_keys;
 mod check_not_option;
 mod check_security_owner;
+mod check_set_carried;
 mod check_set_yaml;
 mod check_version;
 mod date_value;
@@ -22,11 +28,13 @@ mod missing_params;
 mod override_entry;
 mod problem_at;
 mod read_baseline;
+mod read_case;
 mod read_exceptions;
 mod read_kits;
 mod read_overrides;
 mod read_rule;
 mod read_rules;
+mod read_set_cases;
 mod required_string;
 mod resolve_baseline;
 mod resolved_baseline;
@@ -39,6 +47,7 @@ mod rule_file_new;
 mod rule_file_owner_for;
 mod rule_file_parse;
 mod rule_file_read;
+mod rule_file_rules_in_order;
 mod rule_file_rules_of_kind;
 mod scope_or_problem;
 mod severity_value;
@@ -52,9 +61,19 @@ mod apply_override_tests;
 #[cfg(test)]
 mod baseline_set_tests;
 #[cfg(test)]
+mod baseline_set_case_for_tests;
+#[cfg(test)]
 mod baseline_set_yaml_for_tests;
 #[cfg(test)]
 mod bool_value_tests;
+#[cfg(test)]
+mod check_case_file_name_tests;
+#[cfg(test)]
+mod check_duplicate_case_file_tests;
+#[cfg(test)]
+mod check_failing_line_tests;
+#[cfg(test)]
+mod check_failing_path_tests;
 #[cfg(test)]
 mod check_globs_tests;
 #[cfg(test)]
@@ -63,6 +82,8 @@ mod check_keys_tests;
 mod check_not_option_tests;
 #[cfg(test)]
 mod check_security_owner_tests;
+#[cfg(test)]
+mod check_set_carried_tests;
 #[cfg(test)]
 mod check_set_yaml_tests;
 #[cfg(test)]
@@ -92,6 +113,8 @@ mod problem_at_tests;
 #[cfg(test)]
 mod read_baseline_tests;
 #[cfg(test)]
+mod read_case_tests;
+#[cfg(test)]
 mod read_exceptions_tests;
 #[cfg(test)]
 mod read_kits_tests;
@@ -101,6 +124,8 @@ mod read_overrides_tests;
 mod read_rule_tests;
 #[cfg(test)]
 mod read_rules_tests;
+#[cfg(test)]
+mod read_set_cases_tests;
 #[cfg(test)]
 mod required_string_tests;
 #[cfg(test)]
@@ -130,11 +155,17 @@ mod rule_file_new_tests;
 #[cfg(test)]
 mod rule_file_owner_for_tests;
 #[cfg(test)]
+mod rule_file_parse_cases_tests;
+#[cfg(test)]
+mod rule_file_parse_order_tests;
+#[cfg(test)]
 mod rule_file_parse_tests;
 #[cfg(test)]
 mod rule_file_parse_yaml_tests;
 #[cfg(test)]
 mod rule_file_read_tests;
+#[cfg(test)]
+mod rule_file_rules_in_order_tests;
 #[cfg(test)]
 mod rule_file_rules_of_kind_tests;
 #[cfg(test)]

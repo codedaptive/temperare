@@ -8,8 +8,9 @@ impl Rule {
     /// A rule `id` that runs `engine` on `check`, with the rule file's defaults for kind (Quality) and severity
     /// (Error), no config, no paths, excludes or kits, an empty fix (the rule file requires one) and no params, a
     /// scope covering every file, no `enforces` or `leaves`, `only_with_base` false, no required params,
-    /// `not_applicable` None and no embedded YAML (`embedded_text` None). The scope is not rebuilt when a caller
-    /// later sets `paths`, `exclude`, `kits` or `outside_kits`: the caller sets `scope` with `Scope::build` for that.
+    /// `not_applicable` None, no embedded YAML (`embedded_text` None), no cases (`embedded_cases` None) and `position`
+    /// 0. The scope is not rebuilt when a caller later sets `paths`, `exclude`, `kits` or `outside_kits`: the caller
+    /// sets `scope` with `Scope::build` for that.
     pub fn new(id: &str, engine: Engine, check: &str) -> Rule {
         Rule {
             id: id.to_string(),
@@ -31,6 +32,8 @@ impl Rule {
             required_params: Vec::new(),
             not_applicable: None,
             embedded_text: None,
+            embedded_cases: None,
+            position: 0,
         }
     }
 }

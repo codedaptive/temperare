@@ -7,6 +7,7 @@ const SET: BaselineSet = BaselineSet {
     version: 1,
     text: "version = 1\n",
     yaml: &[("no-unwrap.yml", "rule: first\n"), ("swift/no-force.yml", "rule: second\n")],
+    cases: &[],
 };
 
 #[test]

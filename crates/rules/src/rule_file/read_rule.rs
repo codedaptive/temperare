@@ -23,17 +23,19 @@ const OWN_KEYS: [&str; 15] = [
     "id", "engine", "kind", "check", "config", "paths", "exclude", "kits", "outside_kits", "severity", "fix", "params",
     "enforces", "leaves", "only_with_base",
 ];
-/// The keys of a baseline set's `[[rule]]`: the own keys and `required_params`.
-const SET_KEYS: [&str; 16] = [
+/// The keys of a baseline set's `[[rule]]`: the own keys, `required_params`, and the rule's `failing` and `passing`
+/// cases.
+const SET_KEYS: [&str; 18] = [
     "id", "engine", "kind", "check", "config", "paths", "exclude", "kits", "outside_kits", "severity", "fix", "params",
-    "enforces", "leaves", "only_with_base", "required_params",
+    "enforces", "leaves", "only_with_base", "required_params", "failing", "passing",
 ];
 
 /// The rule in `table`, whose `[[rule]]` header starts at byte `at`; `params` is its `params` as a plain table
 /// (empty when absent); `from_set` is true when the table comes from an embedded baseline set, whose ids start
-/// "tm-" and whose rules may declare `required_params`, and false for a repository's own file, whose ids may not
-/// start "tm-". Every check runs; any Problem leaves the rule out (None), and its scope is compiled only when there
-/// is none, excluding both `exclude` and the paths of the `outside_kits` kits.
+/// "tm-" and whose rules may declare `required_params` and their `failing` and `passing` cases, and false for a
+/// repository's own file, whose ids may not start "tm-". Every check runs; any Problem leaves the rule out (None),
+/// and its scope is compiled only when there is none, excluding both `exclude` and the paths of the `outside_kits`
+/// kits.
 pub(crate) fn read_rule(
     text: &str,
     at: usize,
@@ -104,6 +106,8 @@ pub(crate) fn read_rule(
         required_params: required_params.into_iter().map(|(name, _)| name).collect(),
         not_applicable: None,
         embedded_text: None,
+        embedded_cases: None,
+        position: 0,
     })
 }
 

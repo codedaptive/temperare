@@ -14,7 +14,7 @@ use super::read_rules::read_rules;
 use super::resolve_baseline::resolve_baseline;
 use super::string_value::string_value;
 use super::syntax_problem::syntax_problem;
-use crate::Problem;
+use crate::{Problem, Rule};
 use std::path::Path;
 use toml::de::DeTable;
 
@@ -25,7 +25,9 @@ impl RuleFile {
     /// syntax error is one Problem at its position; otherwise every check runs and Err holds all problems sorted by
     /// (line, col). `rules` holds the taken sets' rules that apply, with the `[[override]]`s applied, then the file's
     /// own; a set rule turned off is left out, and one missing a required param is in `not_applicable_rules`
-    /// instead. An exception may name any rule of the taken sets or of the file.
+    /// instead. Each rule's `position` is its place in that order, from 0, with the not-applicable rules counted in
+    /// their place among the set rules (see `RuleFile::rules_in_order`). An exception may name any rule of the taken
+    /// sets or of the file.
     pub fn parse(text: &str, folder: &Path) -> Result<RuleFile, Vec<Problem>> {
         parse_with_sets(text, folder, EMBEDDED_SETS)
     }
@@ -51,8 +53,10 @@ pub(crate) fn parse_with_sets(text: &str, folder: &Path, sets: &[BaselineSet]) -
     rule_ids.extend(resolved.ids);
     let exceptions = read_exceptions(text, root, &rule_ids, &mut out);
     if out.is_empty() {
+        // The file's own rules come after every set rule, the not-applicable ones included.
+        let base = resolved.rules.len() + resolved.not_applicable.len();
         let mut rules = resolved.rules;
-        rules.extend(own_rules);
+        rules.extend(own_rules.into_iter().enumerate().map(|(i, rule)| Rule { position: base + i, ..rule }));
         return Ok(RuleFile {
             folder: folder.to_path_buf(),
             kits,

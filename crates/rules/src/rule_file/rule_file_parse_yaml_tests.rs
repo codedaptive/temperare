@@ -11,14 +11,18 @@ const SETS: &[BaselineSet] = &[
     BaselineSet {
         name: "kit",
         version: 1,
-        text: "version = 1\n[[rule]]\nid = \"tm-y1\"\nengine = \"ast-grep\"\ncheck = \"no-unwrap.yml\"\nfix = \"f\"\n",
+        text: "version = 1\n[[rule]]\nid = \"tm-y1\"\nengine = \"ast-grep\"\ncheck = \"no-unwrap.yml\"\nfix = \"f\"\n\
+               failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
         yaml: &[("no-unwrap.yml", "id: no-unwrap\nlanguage: rust\nrule:\n  pattern: $X.unwrap()\n")],
+        cases: &[("cases/tm-y1/failing/a.rs", "x\n"), ("cases/tm-y1/passing/a.rs", "x\n")],
     },
     BaselineSet {
         name: "gap",
         version: 3,
-        text: "version = 1\n[[rule]]\nid = \"tm-g1\"\nengine = \"ast-grep\"\ncheck = \"gone.yml\"\nfix = \"f\"\n",
-        yaml: &[("other.yml", "rule: other\n")],
+        text: "version = 1\n[[rule]]\nid = \"tm-g1\"\nengine = \"ast-grep\"\ncheck = \"gone.yml\"\nfix = \"f\"\n\
+               failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
+        yaml: &[],
+        cases: &[("cases/tm-g1/failing/a.rs", "x\n"), ("cases/tm-g1/passing/a.rs", "x\n")],
     },
 ];
 

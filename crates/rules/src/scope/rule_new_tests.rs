@@ -33,6 +33,7 @@ fn the_baseline_fields_take_their_empty_values() {
     assert_eq!(r.required_params, Vec::<String>::new());
     assert_eq!(r.not_applicable, None);
     assert_eq!(r.embedded_yaml(), None);
+    assert_eq!(r.embedded_cases, None);
 }
 
 #[test]
@@ -41,4 +42,9 @@ fn the_rule_applies_to_any_path() {
     for file in ["a.rs", "src/lib.rs", "crates/core/tests/x/y.txt", ".github/workflows/ci.yml"] {
         assert!(r.applies(&RelPath::new(file)), "{file}");
     }
+}
+
+#[test]
+fn the_position_is_zero() {
+    assert_eq!(Rule::new("no-unwrap", Engine::Clippy, "clippy::unwrap_used").position, 0);
 }

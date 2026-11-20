@@ -6,7 +6,8 @@ use crate::Problem;
 use toml::de::DeTable;
 
 /// A set that carries `a.yml` only.
-const CARRIES_A: BaselineSet = BaselineSet { name: "house", version: 2, text: "", yaml: &[("a.yml", "rule: a\n")] };
+const CARRIES_A: BaselineSet =
+    BaselineSet { name: "house", version: 2, text: "", yaml: &[("a.yml", "rule: a\n")], cases: &[] };
 /// The same set carrying nothing.
 const CARRIES_NONE: BaselineSet = BaselineSet { yaml: &[], ..CARRIES_A };
 

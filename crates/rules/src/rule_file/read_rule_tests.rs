@@ -172,6 +172,35 @@ fn required_params_in_an_own_rule_is_an_unknown_key() {
 }
 
 #[test]
+fn failing_and_passing_cases_are_accepted_on_a_set_rule() {
+    let text = "[[rule]]\nid = \"tm-x\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\n\
+                failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n";
+    let (rule, out) = read_from(text, toml::Table::new(), true);
+    assert_eq!(out, vec![]);
+    let rule = rule.expect("no problems");
+    assert_eq!(rule.id, "tm-x");
+    assert_eq!(rule.embedded_cases, None);
+}
+
+#[test]
+fn failing_in_an_own_rule_is_an_unknown_key() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\n\
+                failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert!(rule.is_none());
+    assert_eq!(
+        only_problem(&out),
+        (
+            6,
+            1,
+            "unknown key `failing` in [[rule]]",
+            "Remove it, or use one of: id, engine, kind, check, config, paths, exclude, kits, outside_kits, severity, \
+             fix, params, enforces, leaves, only_with_base."
+        )
+    );
+}
+
+#[test]
 fn an_own_id_starting_tm_is_a_problem_at_the_id() {
     let text = "[[rule]]\nid = \"tm-mine\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\n";
     let (rule, out) = read(text, toml::Table::new());

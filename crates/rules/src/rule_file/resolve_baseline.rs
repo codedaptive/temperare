@@ -15,7 +15,8 @@ use std::collections::BTreeMap;
 /// set already gave is a Problem at the later entry, whose copy is left out. An id one set retires and another gives
 /// is a Problem at the retiring set's entry. An override naming no rule of the taken sets is a Problem at its `rule`
 /// string. A rule whose required params its override's `params` do not give goes to `not_applicable` with the
-/// reason. `security_at` is the entry offset of the first security rule in `rules`.
+/// reason. Each rule in `rules` or `not_applicable` gets the next `position` from 0 in taken order, then each set's
+/// order; an off rule takes none. `security_at` is the entry offset of the first security rule in `rules`.
 pub(crate) fn resolve_baseline(
     text: &str,
     taken: &[(&BaselineSet, usize)],
@@ -60,6 +61,7 @@ pub(crate) fn resolve_baseline(
             continue;
         };
         rule.not_applicable = missing_params(&rule, found.and_then(|o| o.params.as_ref()));
+        rule.position = resolved.rules.len() + resolved.not_applicable.len();
         if rule.not_applicable.is_some() {
             resolved.not_applicable.push(rule);
         } else {
