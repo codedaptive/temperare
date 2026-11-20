@@ -3,12 +3,13 @@
 //! signing or default-branch setting can change what the repository holds.
 
 use std::collections::BTreeMap;
+use std::ffi::OsString;
 use std::fs;
 use std::ops::Range;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use procio::{added_lines, blob_at, changed_files, rev_parse, toplevel, untracked_files, GitError, Oid};
+use procio::{added_lines, blob_at, changed_files, rev_parse, toplevel, tracked_files, untracked_files, GitError, Oid};
 
 /// A scratch dir under the temp dir, unique to this process and test; removed when the guard drops.
 struct Scratch {
@@ -263,6 +264,107 @@ fn blob_at_a_missing_rev_is_exit_128() {
         Err(GitError::Exit { code, .. }) => assert_eq!(code, Some(128)),
         other => panic!("expected Exit, got {other:?}"),
     }
+}
+
+/// Committed a.sh, sub/b.sh, c.txt and gone.sh; gone.sh is deleted, d.sh untracked and e.sh ignored.
+fn tracked_repo(test: &str) -> Scratch {
+    let s = repo(test);
+    write(&s.dir, "a.sh", b"a\n");
+    write(&s.dir, "sub/b.sh", b"b\n");
+    write(&s.dir, "c.txt", b"c\n");
+    write(&s.dir, "gone.sh", b"gone\n");
+    commit_all(&s.dir, "base");
+    fs::remove_file(s.dir.join("gone.sh")).unwrap();
+    write(&s.dir, "d.sh", b"untracked\n");
+    write(&s.dir, ".git/info/exclude", b"e.sh\n");
+    write(&s.dir, "e.sh", b"ignored\n");
+    s
+}
+
+#[test]
+fn tracked_files_glob_matches_tracked_shell_files_across_directories() {
+    let s = tracked_repo("tracked_glob");
+    assert_eq!(tracked_files(&s.dir, &[OsString::from("*.sh")]).unwrap(), vec![p("a.sh"), p("sub/b.sh")]);
+}
+
+#[test]
+fn tracked_files_without_pathspecs_lists_existing_tracked_files() {
+    let s = tracked_repo("tracked_all");
+    assert_eq!(tracked_files::<&str>(&s.dir, &[]).unwrap(), vec![p("a.sh"), p("c.txt"), p("sub/b.sh")]);
+}
+
+#[test]
+fn tracked_files_from_subdir_without_pathspecs_is_top_relative() {
+    let s = tracked_repo("tracked_subdir_all");
+    assert_eq!(tracked_files::<&str>(&s.dir.join("sub"), &[]).unwrap(), vec![p("sub/b.sh")]);
+}
+
+#[test]
+fn tracked_files_from_subdir_resolves_pathspecs_relative_to_subdir() {
+    let s = tracked_repo("tracked_subdir_glob");
+    assert_eq!(tracked_files(&s.dir.join("sub"), &["*.sh"]).unwrap(), vec![p("sub/b.sh")]);
+}
+
+#[test]
+fn tracked_files_with_unmatched_pathspec_is_empty() {
+    let s = tracked_repo("tracked_no_match");
+    assert_eq!(tracked_files(&s.dir, &["*.nothing"]).unwrap(), Vec::<PathBuf>::new());
+}
+
+#[test]
+fn tracked_files_of_a_plain_dir_is_exit_128() {
+    let s = scratch("tracked_plain_dir");
+    match tracked_files::<&str>(&s.dir, &[]) {
+        Err(GitError::Exit { code, .. }) => assert_eq!(code, Some(128)),
+        other => panic!("expected Exit, got {other:?}"),
+    }
+}
+
+#[test]
+fn tracked_files_lists_an_unmerged_file_once() {
+    let s = repo("tracked_unmerged");
+    write(&s.dir, "u.txt", b"working tree\n");
+    write(&s.dir, ".git/base", b"base\n");
+    write(&s.dir, ".git/ours", b"ours\n");
+    write(&s.dir, ".git/theirs", b"theirs\n");
+    let base = String::from_utf8(git(&s.dir, &["hash-object", "-w", ".git/base"])).unwrap();
+    let ours = String::from_utf8(git(&s.dir, &["hash-object", "-w", ".git/ours"])).unwrap();
+    let theirs = String::from_utf8(git(&s.dir, &["hash-object", "-w", ".git/theirs"])).unwrap();
+    let index = format!(
+        "100644 {} 1\tu.txt\n100644 {} 2\tu.txt\n100644 {} 3\tu.txt\n",
+        base.trim(), ours.trim(), theirs.trim()
+    );
+    write(&s.dir, ".git/index-info", index.as_bytes());
+    let out = Command::new("git")
+        .arg("-C")
+        .arg(&s.dir)
+        .args(["update-index", "--index-info"])
+        .env_remove("GIT_DIR")
+        .env_remove("GIT_WORK_TREE")
+        .env_remove("GIT_INDEX_FILE")
+        .env_remove("GIT_COMMON_DIR")
+        .env("GIT_CONFIG_GLOBAL", "/dev/null")
+        .env("GIT_CONFIG_NOSYSTEM", "1")
+        .stdin(fs::File::open(s.dir.join(".git/index-info")).unwrap())
+        .output()
+        .unwrap();
+    assert!(out.status.success(), "setup git update-index failed: {}", String::from_utf8_lossy(&out.stderr));
+    assert_eq!(tracked_files::<&str>(&s.dir, &[]).unwrap(), vec![p("u.txt")]);
+}
+
+#[test]
+fn tracked_files_excludes_skip_worktree_entries() {
+    let s = tracked_repo("tracked_skip_worktree");
+    git(&s.dir, &["update-index", "--skip-worktree", "c.txt"]);
+    fs::remove_file(s.dir.join("c.txt")).unwrap();
+    assert_eq!(tracked_files::<&str>(&s.dir, &[]).unwrap(), vec![p("a.sh"), p("sub/b.sh")]);
+}
+
+#[test]
+fn tracked_files_drops_a_skip_worktree_entry_still_on_disk() {
+    let s = tracked_repo("tracked_skip_worktree_on_disk");
+    git(&s.dir, &["update-index", "--skip-worktree", "c.txt"]);
+    assert_eq!(tracked_files::<&str>(&s.dir, &[]).unwrap(), vec![p("a.sh"), p("sub/b.sh")]);
 }
 
 /// Committed: tracked.txt, sub/tracked2.txt. Then, uncommitted: .gitignore naming ignored.txt, ignored.txt, new.txt,
