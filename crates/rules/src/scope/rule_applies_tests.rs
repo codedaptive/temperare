@@ -1,27 +1,18 @@
 //! ZUT for rule_applies.rs.
 
-use crate::{Engine, Kind, RelPath, Rule, Scope, Severity};
+use crate::{Engine, RelPath, Rule, Scope};
 
 fn rule(paths: &[&str], exclude: &[&str], kit_paths: Option<&[&str]>) -> Rule {
     let paths: Vec<String> = paths.iter().map(|g| g.to_string()).collect();
     let exclude: Vec<String> = exclude.iter().map(|g| g.to_string()).collect();
     let kit_paths: Option<Vec<String>> = kit_paths.map(|k| k.iter().map(|g| g.to_string()).collect());
     let scope = Scope::build(&paths, &exclude, kit_paths.as_deref()).unwrap();
-    Rule {
-        id: "no-unwrap".to_string(),
-        engine: Engine::Clippy,
-        kind: Kind::Quality,
-        check: "clippy::unwrap_used".to_string(),
-        config: None,
-        paths,
-        exclude,
-        kits: Vec::new(),
-        outside_kits: Vec::new(),
-        severity: Severity::Error,
-        fix: "Return a typed error.".to_string(),
-        params: toml::Table::new(),
-        scope,
-    }
+    let mut rule = Rule::new("no-unwrap", Engine::Clippy, "clippy::unwrap_used");
+    rule.paths = paths;
+    rule.exclude = exclude;
+    rule.fix = "Return a typed error.".to_string();
+    rule.scope = scope;
+    rule
 }
 
 fn applies(rule: &Rule, file: &str) -> bool {

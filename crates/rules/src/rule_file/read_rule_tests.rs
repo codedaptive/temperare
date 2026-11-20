@@ -4,9 +4,14 @@ use super::read_rule::read_rule;
 use crate::{Engine, Kind, Kit, Problem, RelPath, Rule, Severity};
 use toml::de::DeTable;
 
-/// Reads the first `[[rule]]` of `text` with two kits defined: "core" (crates/core/**) and "gen" (crates/core/gen/**,
-/// tools/**); read_rule uses a kit's paths, not its scope.
+/// Reads the first `[[rule]]` of `text` as a repository's own rule (see `read_from`).
 fn read(text: &str, params: toml::Table) -> (Option<Rule>, Vec<Problem>) {
+    read_from(text, params, false)
+}
+
+/// Reads the first `[[rule]]` of `text` with two kits defined: "core" (crates/core/**) and "gen" (crates/core/gen/**,
+/// tools/**); read_rule uses a kit's paths, not its scope. `from_set` as read_rule takes it.
+fn read_from(text: &str, params: toml::Table, from_set: bool) -> (Option<Rule>, Vec<Problem>) {
     let doc = DeTable::parse(text).unwrap();
     let item = &doc.get_ref().get("rule").unwrap().get_ref().as_array().unwrap()[0];
     let kit = |name: &str, paths: &[&str]| Kit {
@@ -17,7 +22,7 @@ fn read(text: &str, params: toml::Table) -> (Option<Rule>, Vec<Problem>) {
     };
     let kits = vec![kit("core", &["crates/core/**"]), kit("gen", &["crates/core/gen/**", "tools/**"])];
     let mut out = Vec::new();
-    let rule = read_rule(text, item.span().start, item.get_ref().as_table().unwrap(), &kits, params, &mut out);
+    let rule = read_rule(text, item.span().start, item.get_ref().as_table().unwrap(), &kits, params, from_set, &mut out);
     (rule, out)
 }
 
@@ -89,6 +94,140 @@ fn defaults_are_error_severity_no_config_and_every_file() {
     assert_eq!(rule.config, None);
     assert!(rule.params.is_empty());
     assert!(rule.applies(&RelPath::new("any/where.rs")));
+    assert_eq!(rule.enforces, None);
+    assert_eq!(rule.leaves, None);
+    assert!(!rule.only_with_base);
+    assert_eq!(rule.required_params, Vec::<String>::new());
+    assert_eq!(rule.not_applicable, None);
+}
+
+/// The one Problem of `out`, as (line, col, what, fix).
+fn only_problem(out: &[Problem]) -> (usize, usize, &str, &str) {
+    assert_eq!(out.len(), 1, "{out:?}");
+    (out[0].line, out[0].col, out[0].what.as_str(), out[0].fix.as_str())
+}
+
+#[test]
+fn enforces_leaves_and_only_with_base_are_stored_on_an_own_rule() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\n\
+                enforces = \"No unwrap (rust skill)\"\nleaves = \"macros\"\nonly_with_base = true\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert_eq!(out, vec![]);
+    let rule = rule.expect("no problems");
+    assert_eq!(rule.enforces.as_deref(), Some("No unwrap (rust skill)"));
+    assert_eq!(rule.leaves.as_deref(), Some("macros"));
+    assert!(rule.only_with_base);
+    assert_eq!(rule.required_params, Vec::<String>::new());
+    assert_eq!(rule.not_applicable, None);
+}
+
+#[test]
+fn enforces_that_is_not_a_string_is_a_wrong_type_problem() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\nenforces = 3\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert!(rule.is_none());
+    assert_eq!(
+        only_problem(&out),
+        (6, 12, "`enforces` must be a string, not integer", "Write `enforces` as a string.")
+    );
+}
+
+#[test]
+fn only_with_base_that_is_not_a_boolean_is_a_wrong_type_problem() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\nonly_with_base = \"yes\"\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert!(rule.is_none());
+    assert_eq!(
+        only_problem(&out),
+        (6, 18, "`only_with_base` must be a boolean, not string", "Write `only_with_base` as a boolean.")
+    );
+}
+
+#[test]
+fn required_params_are_read_on_a_set_rule() {
+    let text = "[[rule]]\nid = \"tm-x\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\n\
+                required_params = [\"entities\", \"bitmaps\"]\n";
+    let (rule, out) = read_from(text, toml::Table::new(), true);
+    assert_eq!(out, vec![]);
+    let rule = rule.expect("no problems");
+    assert_eq!(rule.id, "tm-x");
+    assert_eq!(rule.required_params, vec!["entities".to_string(), "bitmaps".to_string()]);
+}
+
+#[test]
+fn required_params_in_an_own_rule_is_an_unknown_key() {
+    let text = "[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\nrequired_params = [\"e\"]\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert!(rule.is_none());
+    assert_eq!(
+        only_problem(&out),
+        (
+            6,
+            1,
+            "unknown key `required_params` in [[rule]]",
+            "Remove it, or use one of: id, engine, kind, check, config, paths, exclude, kits, outside_kits, severity, \
+             fix, params, enforces, leaves, only_with_base."
+        )
+    );
+}
+
+#[test]
+fn an_own_id_starting_tm_is_a_problem_at_the_id() {
+    let text = "[[rule]]\nid = \"tm-mine\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert!(rule.is_none());
+    assert_eq!(
+        only_problem(&out),
+        (
+            2,
+            6,
+            "id \"tm-mine\" starts with \"tm-\", which is kept for baseline rules",
+            "Give the rule an id that does not start with \"tm-\", or change the baseline rule with an [[override]]."
+        )
+    );
+}
+
+#[test]
+fn a_set_id_not_starting_tm_is_a_problem_at_the_id() {
+    let text = "[[rule]]\nid = \"own\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\n";
+    let (rule, out) = read_from(text, toml::Table::new(), true);
+    assert!(rule.is_none());
+    assert_eq!(
+        only_problem(&out),
+        (2, 6, "baseline rule id \"own\" does not start with \"tm-\"", "Start every baseline rule's id with \"tm-\".")
+    );
+}
+
+#[test]
+fn a_set_id_starting_tm_is_accepted() {
+    let text = "[[rule]]\nid = \"tm-x\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\n";
+    let (rule, out) = read_from(text, toml::Table::new(), true);
+    assert_eq!(out, vec![]);
+    assert_eq!(rule.expect("no problems").id, "tm-x");
+}
+
+#[test]
+fn an_own_id_starting_tmx_is_accepted() {
+    let text = "[[rule]]\nid = \"tmx-a\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert_eq!(out, vec![]);
+    assert_eq!(rule.expect("no problems").id, "tmx-a");
+}
+
+#[test]
+fn a_malformed_tm_id_has_only_the_malformed_problem() {
+    let text = "[[rule]]\nid = \"tm-A\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\n";
+    let (rule, out) = read(text, toml::Table::new());
+    assert!(rule.is_none());
+    assert_eq!(
+        only_problem(&out),
+        (
+            2,
+            6,
+            "malformed id \"tm-A\": an id is one or more of a-z, 0-9 and '-'",
+            "Write the id in lower-case letters, digits and dashes, e.g. \"no-stored-bool\"."
+        )
+    );
 }
 
 #[test]

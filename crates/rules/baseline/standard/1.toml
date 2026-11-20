@@ -1,0 +1,5 @@
+# The baseline set "standard", version 1: the rules any team would take, per language and for any language.
+# A rule file takes it with `baseline = ["standard@1"]`. Once released, this version is frozen; a change is version 2.
+# No rules yet.
+
+version = 1

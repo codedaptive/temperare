@@ -182,3 +182,49 @@ fn broken_file_reports_every_problem_with_its_line() {
     lines.sort();
     assert_eq!(lines, vec![1, 3]);
 }
+
+#[test]
+fn baseline_sets_keep_own_rule_and_exception() {
+    let tmp = TempFolder::new("baseline-own");
+    let path = tmp.0.join("temperare.toml");
+    fs::write(&path, "version = 1\nbaseline = [\"standard@1\", \"house@1\"]\n\n[[rule]]\nid = \"own-rule\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"Fix it.\"\n\n[[exception]]\nrule = \"own-rule\"\npath = \"a.rs\"\nreason = \"legacy\"\napproved = \"reviewer\"\n").unwrap();
+    let file = RuleFile::read(&path).expect("known empty baseline sets and an own rule should read");
+    assert_eq!(file.rules.iter().map(|rule| rule.id.as_str()).collect::<Vec<_>>(), vec!["own-rule"]);
+    assert_eq!(file.exceptions.iter().map(|exception| exception.rule.as_str()).collect::<Vec<_>>(), vec!["own-rule"]);
+}
+
+#[test]
+fn baseline_sets_unknown_set_reports_entry_location_and_fix() {
+    let tmp = TempFolder::new("baseline-unknown");
+    let path = tmp.0.join("temperare.toml");
+    fs::write(&path, "version = 1\nbaseline = [\"nosuch@1\"]\n").unwrap();
+    let problems = RuleFile::read(&path).expect_err("unknown baseline set must be rejected");
+    assert_eq!(
+        problems.iter().map(|p| (p.line, p.col, p.what.as_str(), p.fix.as_str())).collect::<Vec<_>>(),
+        vec![(2, 13, "unknown baseline set \"nosuch\"", "Use one of: house, standard.")],
+    );
+}
+
+#[test]
+fn baseline_sets_unknown_override_reports_rule_location_and_fix() {
+    let tmp = TempFolder::new("baseline-override");
+    let path = tmp.0.join("temperare.toml");
+    fs::write(&path, "version = 1\nbaseline = [\"standard@1\"]\n[[override]]\nrule = \"tm-none\"\noff = true\n").unwrap();
+    let problems = RuleFile::read(&path).expect_err("override of an unknown baseline rule must be rejected");
+    assert_eq!(
+        problems.iter().map(|p| (p.line, p.col, p.what.as_str(), p.fix.as_str())).collect::<Vec<_>>(),
+        vec![(4, 8, "override of unknown baseline rule \"tm-none\": no taken set holds it", "Name the id of a rule in a set this file takes in baseline, or remove the [[override]].")],
+    );
+}
+
+#[test]
+fn baseline_sets_reserved_own_id_reports_id_location_and_fix() {
+    let tmp = TempFolder::new("baseline-reserved");
+    let path = tmp.0.join("temperare.toml");
+    fs::write(&path, "version = 1\n[[rule]]\nid = \"tm-mine\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"Fix it.\"\n").unwrap();
+    let problems = RuleFile::read(&path).expect_err("own rule ids must not use the baseline prefix");
+    assert_eq!(
+        problems.iter().map(|p| (p.line, p.col, p.what.as_str(), p.fix.as_str())).collect::<Vec<_>>(),
+        vec![(3, 6, "id \"tm-mine\" starts with \"tm-\", which is kept for baseline rules", "Give the rule an id that does not start with \"tm-\", or change the baseline rule with an [[override]].")],
+    );
+}

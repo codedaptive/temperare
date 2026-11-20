@@ -1,40 +1,59 @@
 //! `read_rule`: one `[[rule]]` table of the rule file.
 
+use super::bool_value::bool_value;
 use super::check_globs::check_globs;
 use super::check_keys::check_keys;
 use super::check_not_option::check_not_option;
+use super::engine_value::engine_value;
+use super::kind_value::kind_value;
 use super::kit_union::kit_union;
 use super::problem_at::problem_at;
 use super::required_string::required_string;
 use super::scope_or_problem::scope_or_problem;
+use super::severity_value::severity_value;
 use super::string_list::string_list;
 use super::string_value::string_value;
 use super::wrong_type::wrong_type;
-use crate::{Engine, Kind, Kit, Problem, Rule, Scope, Severity};
+use crate::{Kit, Problem, Rule, Scope};
 use toml::de::DeTable;
 
 const PLACE: &str = "[[rule]]";
-const RULE_KEYS: [&str; 12] = [
+/// The keys of a repository's own `[[rule]]`.
+const OWN_KEYS: [&str; 15] = [
     "id", "engine", "kind", "check", "config", "paths", "exclude", "kits", "outside_kits", "severity", "fix", "params",
+    "enforces", "leaves", "only_with_base",
+];
+/// The keys of a baseline set's `[[rule]]`: the own keys and `required_params`.
+const SET_KEYS: [&str; 16] = [
+    "id", "engine", "kind", "check", "config", "paths", "exclude", "kits", "outside_kits", "severity", "fix", "params",
+    "enforces", "leaves", "only_with_base", "required_params",
 ];
 
 /// The rule in `table`, whose `[[rule]]` header starts at byte `at`; `params` is its `params` as a plain table
-/// (empty when absent). Every check runs; any Problem leaves the rule out (None), and its scope is compiled only
-/// when there is none, excluding both `exclude` and the paths of the `outside_kits` kits.
+/// (empty when absent); `from_set` is true when the table comes from an embedded baseline set, whose ids start
+/// "tm-" and whose rules may declare `required_params`, and false for a repository's own file, whose ids may not
+/// start "tm-". Every check runs; any Problem leaves the rule out (None), and its scope is compiled only when there
+/// is none, excluding both `exclude` and the paths of the `outside_kits` kits.
 pub(crate) fn read_rule(
     text: &str,
     at: usize,
     table: &DeTable,
     kits: &[Kit],
     params: toml::Table,
+    from_set: bool,
     out: &mut Vec<Problem>,
 ) -> Option<Rule> {
     let before = out.len();
-    check_keys(text, table, &RULE_KEYS, PLACE, out);
+    check_keys(text, table, if from_set { &SET_KEYS } else { &OWN_KEYS }, PLACE, out);
     let id = required_string(text, table, "id", PLACE, at, out);
     if let Some((id, id_at)) = &id {
-        check_id(text, id, *id_at, out);
+        check_id(text, id, *id_at, from_set, out);
     }
+    let enforces = string_value(text, table, "enforces", out).map(|(s, _)| s);
+    let leaves = string_value(text, table, "leaves", out).map(|(s, _)| s);
+    let only_with_base = bool_value(text, table, "only_with_base", out).is_some_and(|(b, _)| b);
+    // In a repository's own file `required_params` is an unknown key, reported by check_keys alone.
+    let required_params = if from_set { string_list(text, table, "required_params", out) } else { Vec::new() };
     let engine = engine_value(text, table, at, out);
     let kind = kind_value(text, table, out);
     let check = required_string(text, table, "check", PLACE, at, out);
@@ -79,59 +98,32 @@ pub(crate) fn read_rule(
         fix,
         params,
         scope,
+        enforces,
+        leaves,
+        only_with_base,
+        required_params: required_params.into_iter().map(|(name, _)| name).collect(),
+        not_applicable: None,
     })
 }
 
-/// A Problem at `at` when `id` is empty or holds anything but a-z, 0-9 and '-'.
-fn check_id(text: &str, id: &str, at: usize, out: &mut Vec<Problem>) {
+/// A Problem at `at` when `id` is empty or holds anything but a-z, 0-9 and '-'; for a well-formed id, a Problem when
+/// a baseline set's id (`from_set`) does not start "tm-" or a repository's own id does.
+fn check_id(text: &str, id: &str, at: usize, from_set: bool, out: &mut Vec<Problem>) {
     let well_formed = !id.is_empty() && id.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-');
-    if !well_formed {
-        out.push(problem_at(
-            text,
-            at,
+    let (what, fix) = match (well_formed, from_set, id.starts_with("tm-")) {
+        (false, _, _) => (
             format!("malformed id \"{id}\": an id is one or more of a-z, 0-9 and '-'"),
             "Write the id in lower-case letters, digits and dashes, e.g. \"no-stored-bool\".",
-        ));
-    }
-}
-
-/// The rule's `engine`, which must be one of the five engine names.
-fn engine_value(text: &str, table: &DeTable, at: usize, out: &mut Vec<Problem>) -> Option<Engine> {
-    let (name, name_at) = required_string(text, table, "engine", PLACE, at, out)?;
-    let engine = Engine::from_name(&name);
-    if engine.is_none() {
-        out.push(problem_at(
-            text,
-            name_at,
-            format!("unknown engine \"{name}\""),
-            "Use one of: clippy, swiftlint, ruff, ast-grep, tessera.",
-        ));
-    }
-    engine
-}
-
-/// The rule's `kind`: Quality when absent; None (with a Problem) when it is not "quality" or "security".
-fn kind_value(text: &str, table: &DeTable, out: &mut Vec<Problem>) -> Option<Kind> {
-    if table.get("kind").is_none() {
-        return Some(Kind::Quality);
-    }
-    let (name, at) = string_value(text, table, "kind", out)?;
-    let kind = Kind::from_name(&name);
-    if kind.is_none() {
-        out.push(problem_at(text, at, format!("unknown kind \"{name}\""), "Use \"quality\" or \"security\"."));
-    }
-    kind
-}
-
-/// The rule's `severity`: Error when absent; None (with a Problem) when it is not "error" or "warning".
-fn severity_value(text: &str, table: &DeTable, out: &mut Vec<Problem>) -> Option<Severity> {
-    if table.get("severity").is_none() {
-        return Some(Severity::Error);
-    }
-    let (name, at) = string_value(text, table, "severity", out)?;
-    let severity = Severity::from_name(&name);
-    if severity.is_none() {
-        out.push(problem_at(text, at, format!("unknown severity \"{name}\""), "Use \"error\" or \"warning\"."));
-    }
-    severity
+        ),
+        (true, false, true) => (
+            format!("id \"{id}\" starts with \"tm-\", which is kept for baseline rules"),
+            "Give the rule an id that does not start with \"tm-\", or change the baseline rule with an [[override]].",
+        ),
+        (true, true, false) => (
+            format!("baseline rule id \"{id}\" does not start with \"tm-\""),
+            "Start every baseline rule's id with \"tm-\".",
+        ),
+        _ => return,
+    };
+    out.push(problem_at(text, at, what, fix));
 }

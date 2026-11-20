@@ -11,4 +11,7 @@ fn the_folder_is_kept_and_the_rest_is_empty() {
     assert_eq!(file.owner, None);
     assert!(file.rules.is_empty());
     assert!(file.exceptions.is_empty());
+    assert_eq!(file.baseline, Vec::<String>::new());
+    assert_eq!(file.retired, Vec::<String>::new());
+    assert_eq!(file.not_applicable_rules.len(), 0);
 }

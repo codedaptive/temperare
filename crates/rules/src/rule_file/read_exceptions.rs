@@ -13,7 +13,8 @@ use toml::de::DeTable;
 const PLACE: &str = "[[exception]]";
 const EXCEPTION_KEYS: [&str; 6] = ["rule", "path", "what", "reason", "approved", "expires"];
 
-/// The exceptions of the `[[exception]]` tables without problems; `rule_ids` holds the id of every `[[rule]]`.
+/// The exceptions of the `[[exception]]` tables without problems; `rule_ids` holds the id of every `[[rule]]` and
+/// every rule id of the taken baseline sets.
 pub(crate) fn read_exceptions(
     text: &str,
     root: &DeTable,

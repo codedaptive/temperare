@@ -6,8 +6,9 @@ use globset::GlobSet;
 
 impl Rule {
     /// A rule `id` that runs `engine` on `check`, with the rule file's defaults for kind (Quality) and severity
-    /// (Error), no config, no paths, excludes or kits, an empty fix (the rule file requires one) and no params, and a
-    /// scope covering every file. The scope is not rebuilt when a caller later sets `paths`, `exclude`, `kits` or
+    /// (Error), no config, no paths, excludes or kits, an empty fix (the rule file requires one) and no params, a
+    /// scope covering every file, no `enforces` or `leaves`, `only_with_base` false, no required params and
+    /// `not_applicable` None. The scope is not rebuilt when a caller later sets `paths`, `exclude`, `kits` or
     /// `outside_kits`: the caller sets `scope` with `Scope::build` for that.
     pub fn new(id: &str, engine: Engine, check: &str) -> Rule {
         Rule {
@@ -24,6 +25,11 @@ impl Rule {
             fix: String::new(),
             params: toml::Table::new(),
             scope: Scope { include: None, exclude: GlobSet::empty(), kits: None },
+            enforces: None,
+            leaves: None,
+            only_with_base: false,
+            required_params: Vec::new(),
+            not_applicable: None,
         }
     }
 }
