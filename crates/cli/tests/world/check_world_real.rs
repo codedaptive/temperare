@@ -92,8 +92,8 @@ fn toplevel_and_rev_parse_of_a_missing_folder_are_errors() {
     assert!((world.rev_parse)(&missing, "HEAD").is_err());
 }
 
-/// RIT: `engines::run_rules_counted`: `fs::canonicalize` (crates/engines/src/rule_folder.rs:11), procio wired in
-/// (crates/engines/src/run_rules_counted.rs:20-21).
+/// RIT: `engines::run_rules_counted`, through `run_rules_versioned` (which wires procio in) and `rule_folder`
+/// (`fs::canonicalize` of the rule file's folder).
 #[test]
 fn run_rules_of_a_rule_file_with_no_rules_is_empty() {
     let world = CheckWorld::real();
