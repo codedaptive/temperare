@@ -1,6 +1,6 @@
 //! The check's config and append-only log under a test-owned HOME.
 
-use super::super::run_check_savings_tests::{check, run, world, BODY};
+use super::super::run_check_savings_tests::{check, checked, printed_body, run, world, BODY};
 use super::super::CheckWorld;
 use crate::CheckArgs;
 use rules::{Engine, RelPath, RuleFile};
@@ -10,24 +10,6 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 fn output_tokens(chars: usize) -> usize { (chars + 2) / 4 }
-
-/// The printed JSON line without its `"saved"` member, and that member parsed.
-fn printed_body(stdout: &str) -> (String, serde_json::Value) {
-    let line = stdout.strip_suffix('\n').unwrap();
-    assert!(!line.contains('\n'), "stdout must end with exactly one newline");
-    let mut value: serde_json::Value = serde_json::from_str(stdout).unwrap();
-    let saved = value.as_object_mut().unwrap().remove("saved").unwrap();
-    let needle = format!("\"saved\":{saved}");
-    assert_eq!(line.matches(&needle).count(), 1, "the printed saved is not compact, or appears twice");
-    let (before, after) = line.split_once(&needle).unwrap();
-    let body = if let Some(before) = before.strip_suffix(',') {
-        format!("{before}{after}")
-    } else {
-        format!("{before}{}", after.strip_prefix(',').unwrap())
-    };
-    assert_eq!(serde_json::from_str::<serde_json::Value>(&body).unwrap(), value);
-    (body, saved)
-}
 
 static NEXT: AtomicU64 = AtomicU64::new(0);
 struct Home(PathBuf);
@@ -58,7 +40,7 @@ fn disabled_line_leaves_text_json_and_logging_available() {
     let home = Home::new();
     home.config("savings_line = false\n");
     let home_path = || Some(home.0.clone());
-    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| vec![run("q", Engine::Ruff, Some(400))];
+    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("q", Engine::Ruff, Some(400))]);
     let w = CheckWorld { home: &home_path, now: &|| 1795680000, run_rules: &runs, ..world() };
     assert_eq!(check(&CheckArgs::default(), &w), (0, BODY.into(), String::new()));
     let (code, out, err) = check(&CheckArgs { json: true, ..CheckArgs::default() }, &w);
@@ -84,7 +66,7 @@ fn disabled_line_leaves_text_json_and_logging_available() {
 fn disabled_switch_leaves_the_entire_saved_object_unchanged() {
     let home = Home::new();
     let home_path = || Some(home.0.clone());
-    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| vec![run("q", Engine::Ruff, Some(400))];
+    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("q", Engine::Ruff, Some(400))]);
     let w = CheckWorld { home: &home_path, now: &|| 1795680000, run_rules: &runs, ..world() };
     let args = CheckArgs { json: true, ..CheckArgs::default() };
     let (on_code, on_out, on_err) = check(&args, &w);
@@ -102,7 +84,7 @@ fn unknown_config_key_warns_once_and_keeps_the_default_line() {
     let home = Home::new();
     home.config("extra = true\n");
     let home_path = || Some(home.0.clone());
-    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| vec![run("q", Engine::Ruff, Some(400))];
+    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("q", Engine::Ruff, Some(400))]);
     let (code, out, err) = check(&CheckArgs::default(), &CheckWorld { home: &home_path, now: &|| 1795680000, run_rules: &runs, ..world() });
     assert_eq!(code, 0);
     assert_eq!(err, "tm: ignoring ~/.config/temperare/config.toml: unknown key `extra`\n");
@@ -114,7 +96,7 @@ fn unknown_config_key_warns_once_and_keeps_the_default_line() {
 fn json_unknown_config_key_warns_once_without_changing_the_report_or_exit() {
     let home = Home::new();
     let home_path = || Some(home.0.clone());
-    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| vec![run("q", Engine::Ruff, Some(400))];
+    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("q", Engine::Ruff, Some(400))]);
     let w = CheckWorld { home: &home_path, now: &|| 1795680000, run_rules: &runs, ..world() };
     let args = CheckArgs { json: true, ..CheckArgs::default() };
     let (baseline_code, baseline_out, baseline_err) = check(&args, &w);
@@ -134,7 +116,7 @@ fn json_invalid_toml_warns_once_when_an_engine_ran() {
     let home = Home::new();
     home.config("not = [toml\n");
     let home_path = || Some(home.0.clone());
-    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| vec![run("q", Engine::Ruff, Some(400))];
+    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("q", Engine::Ruff, Some(400))]);
     let w = CheckWorld { home: &home_path, now: &|| 1795680000, run_rules: &runs, ..world() };
     let (code, out, err) = check(&CheckArgs { json: true, ..CheckArgs::default() }, &w);
     assert_eq!(code, 0);
@@ -150,7 +132,7 @@ fn json_bad_config_is_not_read_when_no_engine_ran() {
     let home = Home::new();
     home.config("colour = true\n");
     let home_path = || Some(home.0.clone());
-    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| vec![run("q", Engine::Ruff, None)];
+    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("q", Engine::Ruff, None)]);
     let w = CheckWorld { home: &home_path, now: &|| 1795680000, run_rules: &runs, ..world() };
     let (code, out, err) = check(&CheckArgs { json: true, ..CheckArgs::default() }, &w);
     assert_eq!(code, 0);
@@ -166,7 +148,7 @@ fn failed_report_after_counted_runs_has_no_savings_in_either_format() {
     let calls = std::cell::Cell::new(0);
     let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| {
         calls.set(calls.get() + 1);
-        vec![run("q", Engine::Ruff, Some(400))]
+        checked(vec![run("q", Engine::Ruff, Some(400))])
     };
     let fail = |_: &RuleFile, _: Vec<(String, rules::RuleOutcome)>, _: Option<(&Path, &procio::Oid)>| {
         Err(report::ReportError::Git(procio::GitError::NotARepository { repo: cwd.0.clone() }))
@@ -197,7 +179,7 @@ fn savings_log_names_rule_file_folder_not_cwd() {
     let rules_path = rules_dir.0.join("temperare.toml");
     fs::write(&rules_path, "version = 1\n[[rule]]\nid = \"q\"\nengine = \"ruff\"\ncheck = \"F401\"\nfix = \"Remove import.\"\n").unwrap();
     let home_path = || Some(home.0.clone());
-    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| vec![run("q", Engine::Ruff, Some(400))];
+    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("q", Engine::Ruff, Some(400))]);
     let w = CheckWorld { home: &home_path, now: &|| 1795680000, read: &RuleFile::read, run_rules: &runs, ..world() };
     let mut args = CheckArgs::default();
     args.rules = Some(rules_path);
@@ -215,7 +197,7 @@ fn savings_log_names_rule_file_folder_not_cwd() {
 fn no_log_is_created_when_no_engine_ran() {
     let home = Home::new();
     let home_path = || Some(home.0.clone());
-    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| vec![run("q", Engine::Ruff, None)];
+    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("q", Engine::Ruff, None)]);
     let (code, out, _) = check(&CheckArgs::default(), &CheckWorld { home: &home_path, now: &|| 1795680000, run_rules: &runs, ..world() });
     assert_eq!((code, out.as_str()), (0, BODY));
     assert!(!home.log().exists());

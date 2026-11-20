@@ -1,13 +1,13 @@
 //! `CheckWorld`: what `tm check` needs from git, the disk, the engines, the report, HOME and the clock, as eight seams.
 
-use engines::RuleRun;
+use engines::CheckedRules;
 use procio::{GitError, Oid};
 use report::{Report, ReportError};
 use rules::{Problem, RelPath, RuleFile, RuleOutcome};
 use std::path::{Path, PathBuf};
 
 /// `CheckWorld::real()` wires `procio::toplevel`, `Path::is_file`, `RuleFile::read`, `procio::rev_parse`,
-/// `engines::run_rules_counted`, `report::build_report`, HOME from the environment and the system clock; a unit test
+/// `engines::run_rules_versioned`, `report::build_report`, HOME from the environment and the system clock; a unit test
 /// passes closures, so `tm check` is tested without running git or an engine, reading the disk or the environment,
 /// or looking at PATH.
 pub struct CheckWorld<'a> {
@@ -20,8 +20,9 @@ pub struct CheckWorld<'a> {
     /// The commit a revision names in a repository; None when it names none.
     pub rev_parse: &'a dyn Fn(&Path, &str) -> Result<Option<Oid>, GitError>,
     /// Every rule run by its engine over the rule file's folder (relative to the repository), cut to the paths given,
-    /// in rule-file order, each with its engine and the characters its counted run printed.
-    pub run_rules: &'a dyn Fn(&RuleFile, &Path, &[RelPath]) -> Vec<RuleRun>,
+    /// in rule-file order, each with its engine and the characters its counted run printed; and each distinct engine
+    /// the rules name, once, with its version (None when it could not be read).
+    pub run_rules: &'a dyn Fn(&RuleFile, &Path, &[RelPath]) -> CheckedRules,
     /// The report of the outcomes, new findings only when given `(repository, base commit)`.
     pub build_report:
         &'a dyn Fn(&RuleFile, Vec<(String, RuleOutcome)>, Option<(&Path, &Oid)>) -> Result<Report, ReportError>,

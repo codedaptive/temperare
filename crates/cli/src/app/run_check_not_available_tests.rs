@@ -35,7 +35,7 @@ fn check(not_available: Vec<NotAvailable>, json: bool) -> (u8, String, String) {
             Ok(RuleFile::parse(TEXT, Path::new("/repo")).unwrap())
         },
         rev_parse: &|_, _| unreachable!("rev_parse"),
-        run_rules: &|_, _, _| vec![],
+        run_rules: &|_, _, _| engines::CheckedRules { runs: vec![], engines: vec![] },
         build_report: &build_report,
         home: &|| None,
         now: &|| 0,
