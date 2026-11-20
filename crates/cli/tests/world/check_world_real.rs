@@ -1,5 +1,5 @@
 //! Tests of crates/cli/src/app/check_world_real.rs: each seam of `CheckWorld::real()` is wired to its real function.
-//! The file mixes kinds, each case marked: RITs (cli→procio/rules/engines, kept beside their caller) and
+//! The file mixes kinds, each case marked: RITs (cli→procio/rules/engines/report, kept beside their caller) and
 //! ZITs. `exists` and `read` are told from stubs on a file the tests write in a throwaway folder under the system
 //! temp folder, removed on drop; `run_rules` and `build_report` on a rule file with no rules in such a folder;
 //! `toplevel` and `rev_parse` are told by a folder that does not exist, where git fails. Nothing here needs a real
@@ -96,7 +96,7 @@ fn run_rules_of_a_rule_file_with_no_rules_is_empty() {
     assert!((world.run_rules)(&empty_rules(dir.0.clone(), Vec::new()), &dir.0, &[]).is_empty());
 }
 
-/// ZIT: no base returns pure `assemble_report` (crates/report/src/build_report.rs:19-20); the setup touches disk.
+/// RIT: no base returns pure `assemble_report` (crates/report/src/build_report.rs:19-20); the setup touches disk.
 #[test]
 fn build_report_with_no_base_counts_the_exception_in_force() {
     let world = CheckWorld::real();
