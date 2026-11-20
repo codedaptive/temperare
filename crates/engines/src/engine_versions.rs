@@ -30,5 +30,5 @@ fn version(engine: Engine, folder: Option<&Path>, host: &Host) -> Option<String>
     if availability_from(engine, host.on_path) != Availability::Available {
         return None;
     }
-    engine_version(entry_for(engine), folder?, host)
+    engine_version(entry_for(engine)?, folder?, host)
 }

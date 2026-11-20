@@ -14,14 +14,21 @@ const ENGINES: [(Engine, &str); 5] = [
 #[test]
 fn each_engine_maps_to_the_entry_serving_it() {
     for (engine, _) in ENGINES {
-        assert_eq!(entry_for(engine).engine, engine, "{engine:?}");
+        assert_eq!(entry_for(engine).unwrap().engine, engine, "{engine:?}");
     }
 }
 
 #[test]
 fn each_entry_is_named_by_its_rule_file_name() {
     for (engine, name) in ENGINES {
-        assert_eq!(entry_for(engine).name, name, "{engine:?}");
+        assert_eq!(entry_for(engine).unwrap().name, name, "{engine:?}");
         assert_eq!(serde_json::to_value(engine).unwrap(), name, "{engine:?}");
+    }
+}
+
+#[test]
+fn each_entry_name_is_the_engine_name() {
+    for (engine, _) in ENGINES {
+        assert_eq!(entry_for(engine).unwrap().name, engine.name(), "{engine:?}");
     }
 }

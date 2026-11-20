@@ -2,8 +2,8 @@
 
 use rules::Engine;
 
-/// One engine a check's rules name, with its version; report and cli read it as one item of the report's
-/// `engines: [{engine, version}]`.
+/// One engine a check's rules name, with its version: meant as one item of an `engines: [{engine, version}]` field
+/// the report does not have yet; nothing in report or cli reads it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EngineVersion {
     /// The engine.
