@@ -2,4 +2,8 @@
 //! `--lib integration::`.
 
 #[cfg(unix)]
+mod is_regular_file_tests;
+#[cfg(unix)]
 mod read_head_tests;
+#[cfg(unix)]
+mod shell_files_tests;

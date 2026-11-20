@@ -1,140 +1,114 @@
-//! ZUT for shell_files_with.rs with a fake host and a fake head reader: git's tracked listing read into the scripts
-//! kept, which paths are read, the command, git's failure. Nothing runs and no file is read.
-//!
-//! ls_files_tracked.bin: stdout of `git ls-files -z -t --cached --deleted` (git 2.56.0) in a throwaway repository
-//! tracking .gitignore, a.sh, d.sh (deleted from disk), notes (`plain text`) and run (first line
-//! `#!/usr/bin/env bash`), with an untracked u.sh that the tracked listing leaves out, exit 0.
+//! ZUT for shell_files_with.rs with fake probes: which listed paths are kept, by folder, regular file, extension and
+//! shebang, and which paths each probe is asked about. No git runs and no file is read.
 
 use super::shell_files_with;
-use crate::host::Host;
-use crate::types::Stop;
-use procio::{Cmd, Output, ProcError};
-use std::cell::{Cell, RefCell};
+use std::cell::RefCell;
 use std::collections::HashMap;
-use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
-const FOLDER: &str = "/no/such/engines-zut-folder";
+const TOP: &str = "/no/such/engines-zut-top";
 
-/// What one run gives: the result, the commands run, the paths the head reader was asked for, `raw_chars` after.
-struct Ran {
-    got: Result<Vec<PathBuf>, Stop>,
-    cmds: Vec<Cmd>,
-    asked: Vec<PathBuf>,
-    raw_chars: Option<usize>,
+/// What one call gives: the paths kept, and the full paths `regular` and `head` were asked about, in order.
+struct Listed {
+    got: Vec<PathBuf>,
+    regular_asked: Vec<PathBuf>,
+    head_asked: Vec<PathBuf>,
 }
 
-/// `shell_files_with` with git answering `answer` and the head reader giving `heads[name]` for `FOLDER/name`.
-fn run(answer: Output, heads: &[(&str, &[u8])]) -> Ran {
-    let cmds = RefCell::new(Vec::new());
-    let host_run = |cmd: &Cmd| -> Result<Output, ProcError> {
-        cmds.borrow_mut().push(cmd.clone());
-        Ok(answer.clone())
+/// `shell_files_with` on `listed` under `folder`, with `TOP/name` a regular file for each name in `regular` and
+/// `heads[name]` its first bytes.
+fn list(folder: &str, listed: &[&str], regular: &[&str], heads: &[(&str, &[u8])]) -> Listed {
+    let top = Path::new(TOP);
+    let regular: Vec<PathBuf> = regular.iter().map(|name| top.join(name)).collect();
+    let heads: HashMap<PathBuf, Vec<u8>> = heads.iter().map(|(name, bytes)| (top.join(name), bytes.to_vec())).collect();
+    let regular_asked = RefCell::new(Vec::new());
+    let head_asked = RefCell::new(Vec::new());
+    let is_regular = |path: &Path| {
+        regular_asked.borrow_mut().push(path.to_path_buf());
+        regular.iter().any(|known| known == path)
     };
-    let heads: HashMap<PathBuf, Vec<u8>> = heads.iter().map(|(name, bytes)| (Path::new(FOLDER).join(name), bytes.to_vec())).collect();
-    let asked = RefCell::new(Vec::new());
-    let head = |path: &Path| -> Option<Vec<u8>> {
-        asked.borrow_mut().push(path.to_path_buf());
+    let head = |path: &Path| {
+        head_asked.borrow_mut().push(path.to_path_buf());
         heads.get(path).cloned()
     };
-    let raw_chars = Cell::new(None);
-    let got = shell_files_with(Path::new(FOLDER), &Host { run: &host_run, on_path: &|_| true, raw_chars: &raw_chars }, &head);
-    Ran { got, cmds: cmds.into_inner(), asked: asked.into_inner(), raw_chars: raw_chars.get() }
-}
-
-fn answer(code: i32, stdout: &[u8], stderr: &[u8]) -> Output {
-    Output { code: Some(code), stdout: stdout.to_vec(), stderr: stderr.to_vec() }
-}
-
-fn tracked() -> Output {
-    answer(0, include_bytes!("fixtures/ls_files_tracked.bin"), b"")
+    let listed: Vec<PathBuf> = listed.iter().map(PathBuf::from).collect();
+    let got = shell_files_with(Path::new(folder), top, &listed, &is_regular, &head);
+    Listed { got, regular_asked: regular_asked.into_inner(), head_asked: head_asked.into_inner() }
 }
 
 fn paths(names: &[&str]) -> Vec<PathBuf> {
     names.iter().map(PathBuf::from).collect()
 }
 
-const GITIGNORE: (&str, &[u8]) = (".gitignore", b"i.sh\n");
-const NOTES: (&str, &[u8]) = ("notes", b"plain text\n");
-
 #[test]
-fn a_script_by_extension_and_one_by_shebang_are_kept_and_a_deleted_one_is_not() {
-    let ran = run(tracked(), &[GITIGNORE, NOTES, ("run", b"#!/usr/bin/env bash\necho run\n")]);
-    assert_eq!(ran.got, Ok(paths(&["a.sh", "run"])));
-    assert_eq!(ran.raw_chars, None);
+fn an_untracked_script_listed_after_the_tracked_ones_is_kept() {
+    let got = list(TOP, &["a.sh", "u.sh"], &["a.sh", "u.sh"], &[]).got;
+    assert_eq!(got, paths(&["a.sh", "u.sh"]));
 }
 
 #[test]
-fn only_the_extensionless_paths_are_read() {
-    let ran = run(tracked(), &[GITIGNORE, NOTES, ("run", b"#!/usr/bin/env bash\necho run\n")]);
-    let folder = Path::new(FOLDER);
-    assert_eq!(ran.asked, vec![folder.join(".gitignore"), folder.join("notes"), folder.join("run")]);
+fn a_symlinked_script_is_dropped_and_its_target_kept() {
+    let listed = list(TOP, &["a.sh", "link.sh"], &["a.sh"], &[]);
+    assert_eq!(listed.got, paths(&["a.sh"]));
+    assert_eq!(listed.regular_asked, paths(&["/no/such/engines-zut-top/a.sh", "/no/such/engines-zut-top/link.sh"]));
 }
 
 #[test]
-fn a_file_that_cannot_be_read_is_left_out() {
-    let ran = run(tracked(), &[GITIGNORE, NOTES]);
-    assert_eq!(ran.got, Ok(paths(&["a.sh"])));
+fn an_extensionless_symlink_is_dropped_and_its_head_never_read() {
+    let listed = list(TOP, &["runlink"], &[], &[("runlink", b"#!/bin/sh\n")]);
+    assert_eq!(listed.got, Vec::<PathBuf>::new());
+    assert_eq!(listed.head_asked, Vec::<PathBuf>::new());
 }
 
 #[test]
-fn a_shebang_of_another_shell_is_left_out() {
-    let ran = run(tracked(), &[GITIGNORE, NOTES, ("run", b"#!/bin/zsh\n")]);
-    assert_eq!(ran.got, Ok(paths(&["a.sh"])));
+fn a_path_outside_the_folder_is_dropped_and_not_probed() {
+    let listed = list("/no/such/engines-zut-top/sub", &["other/x.sh", "sub/s.sh"], &["other/x.sh", "sub/s.sh"], &[]);
+    assert_eq!(listed.got, paths(&["s.sh"]));
+    assert_eq!(listed.regular_asked, paths(&["/no/such/engines-zut-top/sub/s.sh"]));
 }
 
 #[test]
-fn git_lists_the_tracked_files_in_the_folder() {
-    let ran = run(answer(0, b"", b""), &[]);
-    assert_eq!(ran.cmds.len(), 1);
-    assert_eq!(ran.cmds[0].program, OsString::from("git"));
-    assert_eq!(ran.cmds[0].args, ["ls-files", "-z", "-t", "--cached", "--deleted"].map(OsString::from).to_vec());
-    assert_eq!(ran.cmds[0].cwd, Some(PathBuf::from(FOLDER)));
+fn a_vanished_path_is_dropped() {
+    let got = list(TOP, &["gone.sh", "a.sh"], &["a.sh"], &[]).got;
+    assert_eq!(got, paths(&["a.sh"]));
 }
 
 #[test]
-fn a_failed_git_is_failed_with_its_exit_code_and_stderr() {
-    let ran = run(answer(128, b"", b"fatal: not a git repository\n"), &[]);
-    assert_eq!(ran.got, Err(Stop::Failed { code: Some(128), stderr: "fatal: not a git repository\n".to_string() }));
-    assert_eq!(ran.raw_chars, None);
+fn an_extensionless_file_with_a_shell_shebang_is_kept() {
+    let listed = list(TOP, &["run"], &["run"], &[("run", b"#!/usr/bin/env bash\necho run\n")]);
+    assert_eq!(listed.got, paths(&["run"]));
+    assert_eq!(listed.head_asked, paths(&["/no/such/engines-zut-top/run"]));
 }
 
 #[test]
-fn a_failed_git_with_no_stderr_says_so() {
-    let ran = run(answer(1, b"", b""), &[]);
-    assert_eq!(ran.got, Err(Stop::Failed { code: Some(1), stderr: "git ls-files printed nothing on stderr".to_string() }));
+fn a_shebang_of_another_shell_is_dropped() {
+    let got = list(TOP, &["run"], &["run"], &[("run", b"#!/bin/zsh\n")]).got;
+    assert_eq!(got, Vec::<PathBuf>::new());
 }
 
 #[test]
-fn no_files_gives_none() {
-    let ran = run(answer(0, b"", b""), &[]);
-    assert_eq!(ran.got, Ok(vec![]));
+fn a_file_head_cannot_read_is_dropped() {
+    let got = list(TOP, &["run"], &["run"], &[]).got;
+    assert_eq!(got, Vec::<PathBuf>::new());
 }
 
 #[test]
-fn only_the_shell_extensions_are_kept() {
-    let stdout = b"H a.bash\0H b.ksh\0H c.dash\0H d.shx\0H e.py\0H sub/f.sh\0";
-    let ran = run(answer(0, stdout, b""), &[]);
-    assert_eq!(ran.got, Ok(paths(&["a.bash", "b.ksh", "c.dash", "sub/f.sh"])));
-    assert_eq!(ran.asked, Vec::<PathBuf>::new());
+fn only_the_shell_extensions_are_kept_and_their_heads_are_not_read() {
+    let names = ["a.bash", "b.ksh", "c.dash", "d.shx", "e.py"];
+    let listed = list(TOP, &names, &names, &[]);
+    assert_eq!(listed.got, paths(&["a.bash", "b.ksh", "c.dash"]));
+    assert_eq!(listed.head_asked, Vec::<PathBuf>::new());
 }
 
 #[test]
-fn a_file_named_sh_with_no_shebang_is_left_out() {
-    let ran = run(answer(0, b"H sh\0", b""), &[("sh", b"echo hi\n")]);
-    assert_eq!(ran.got, Ok(vec![]));
-}
-
-#[cfg(unix)]
-#[test]
-fn a_name_that_is_not_utf8_reaches_the_result_byte_for_byte() {
-    use std::os::unix::ffi::OsStrExt;
-    let ran = run(answer(0, b"H caf\xe9.sh\0", b""), &[]);
-    assert_eq!(ran.got, Ok(vec![PathBuf::from(std::ffi::OsStr::from_bytes(b"caf\xe9.sh"))]));
+fn paths_come_back_relative_to_the_folder() {
+    let got = list("/no/such/engines-zut-top/sub", &["sub/deep/d.sh", "sub/e.sh"], &["sub/deep/d.sh", "sub/e.sh"], &[]).got;
+    assert_eq!(got, paths(&["deep/d.sh", "e.sh"]));
 }
 
 #[test]
-fn untracked_and_other_tags_are_not_kept() {
-    let ran = run(answer(0, b"? u.sh\0S skip.sh\0M merge.sh\0C changed.sh\0K killed.sh\0", b""), &[]);
-    assert_eq!(ran.got, Ok(vec![]));
+fn nothing_listed_gives_none() {
+    let listed = list(TOP, &[], &[], &[]);
+    assert_eq!(listed.got, Vec::<PathBuf>::new());
+    assert_eq!(listed.regular_asked, Vec::<PathBuf>::new());
 }
