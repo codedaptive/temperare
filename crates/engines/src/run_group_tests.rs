@@ -1,0 +1,182 @@
+//! ZUT for run_group.rs: ruff rules of one group sharing one fake check run. The host is fake, so no engine runs,
+//! and the ruff flow reads no file, so the rule file's folder is a path that need not exist.
+
+use crate::host::Host;
+use crate::run_group::run_group;
+use crate::types::{EngineVersion, RuleRun};
+use procio::{Cmd, Output, ProcError};
+use rules::{Engine, Finding, Kind, RelPath, Rule, RuleFile, RuleOutcome, Severity};
+use std::cell::{Cell, RefCell};
+use std::path::Path;
+
+const FOLDER: &str = "/engines-zut-run-group";
+
+const RULES: &str = r#"version = 1
+owner = "repo"
+[[rule]]
+id = "refused"
+engine = "ruff"
+check = "flake8-bugbear"
+fix = "r"
+[[rule]]
+id = "none-compare"
+engine = "ruff"
+check = "E711"
+severity = "warning"
+fix = "f"
+[[rule]]
+id = "unused"
+engine = "ruff"
+check = "F401"
+severity = "warning"
+paths = ["src/**"]
+fix = "g"
+[[rule]]
+id = "newer"
+engine = "ruff"
+check = "ZZZ999"
+fix = "n"
+"#;
+
+/// 262 characters: an E711 hit in a.py, F401 hits in a.py and src/b.py.
+const BOTH: &str = r#"[{"code":"E711","filename":"a.py","location":{"row":1,"column":4},"message":"none"},{"code":"F401","filename":"a.py","location":{"row":2,"column":1},"message":"unused a"},{"code":"F401","filename":"src/b.py","location":{"row":3,"column":8},"message":"unused b"}]"#;
+
+/// 84 characters: the E711 hit alone.
+const E711: &str = r#"[{"code":"E711","filename":"a.py","location":{"row":1,"column":4},"message":"none"}]"#;
+
+/// 77 characters: ruff 0.17.4's words for an unknown selector in `--select`.
+const UNKNOWN: &str = "ruff failed\n  Cause: Unknown rule selector `ZZZ999` in `select` from the CLI\n";
+
+/// The rules of `RULES` with the given ids, in that order, and the rule file they come from.
+fn group(ids: &[&str]) -> (RuleFile, Vec<Rule>) {
+    let file = RuleFile::parse(RULES, Path::new(".")).unwrap();
+    let rules = ids.iter().map(|id| file.rules.iter().find(|rule| rule.id == *id).unwrap().clone()).collect();
+    (file, rules)
+}
+
+fn ok(code: i32, stdout: &str, stderr: &str) -> Result<Output, ProcError> {
+    Ok(Output { code: Some(code), stdout: stdout.as_bytes().to_vec(), stderr: stderr.as_bytes().to_vec() })
+}
+
+/// Each command's `--select=` argument, in the order the fake host was asked to run them.
+fn selects(cmd: &Cmd) -> String {
+    let select = cmd.args.iter().map(|arg| arg.to_string_lossy()).find(|arg| arg.starts_with("--select="));
+    select.unwrap_or_else(|| panic!("not a check run: {cmd:?}")).into_owned()
+}
+
+/// `run_group` over `ids` with `run` as the host's run and ruff on PATH when `ruff` is true.
+fn grouped(ids: &[&str], run: &dyn Fn(&Cmd) -> Result<Output, ProcError>, ruff: bool) -> Vec<RuleRun> {
+    let (file, rules) = group(ids);
+    let rules: Vec<&Rule> = rules.iter().collect();
+    let on_path = move |program: &str| ruff && program == "ruff";
+    let host = Host { run, on_path: &on_path, raw_chars: &Cell::new(Some(999)) };
+    let versions = [EngineVersion { engine: Engine::Ruff, version: Some("0.17.4".into()) }];
+    run_group(&file, &rules, Ok(Path::new(FOLDER)), &[], &host, &versions)
+}
+
+fn finding(rule: &str, path: &str, (line, col): (u32, u32), what: &str, fix: &str) -> Finding {
+    let mut finding =
+        Finding::new(rule, (Engine::Ruff, Kind::Quality, Severity::Warning), RelPath::new(path), line, Some(col), what, fix);
+    finding.owner = Some("repo".into());
+    finding
+}
+
+fn rule_run(rule: &str, outcome: RuleOutcome, raw_chars: Option<usize>) -> RuleRun {
+    RuleRun { rule: rule.into(), engine: Engine::Ruff, outcome, raw_chars }
+}
+
+#[test]
+fn one_run_answers_each_rule_with_its_own_codes_and_paths_and_counts_once() {
+    let ran = RefCell::new(Vec::new());
+    let run = |cmd: &Cmd| {
+        ran.borrow_mut().push(selects(cmd));
+        ok(1, BOTH, "")
+    };
+    let got = grouped(&["none-compare", "unused"], &run, true);
+    assert_eq!(got, vec![
+        rule_run("none-compare", RuleOutcome::Findings(vec![finding("none-compare", "a.py", (1, 4), "none", "f")]), Some(262)),
+        rule_run("unused", RuleOutcome::Findings(vec![finding("unused", "src/b.py", (3, 8), "unused b", "g")]), None),
+    ]);
+    assert_eq!(ran.into_inner(), vec!["--select=E711,F401"]);
+}
+
+#[test]
+fn a_run_not_found_makes_every_rule_not_available_uncounted() {
+    let runs = RefCell::new(0);
+    let run = |cmd: &Cmd| -> Result<Output, ProcError> {
+        *runs.borrow_mut() += 1;
+        Err(ProcError::NotFound { program: cmd.program.clone() })
+    };
+    let got = grouped(&["none-compare", "unused"], &run, true);
+    let absent = |rule: &str| RuleOutcome::NotAvailable { rule: rule.into(), engine: Engine::Ruff, why: "ruff not found on PATH".into() };
+    assert_eq!(got, vec![
+        rule_run("none-compare", absent("none-compare"), None),
+        rule_run("unused", absent("unused"), None),
+    ]);
+    assert_eq!(runs.into_inner(), 1);
+}
+
+#[test]
+fn output_no_reader_can_read_fails_every_rule() {
+    let runs = RefCell::new(0);
+    let run = |_: &Cmd| {
+        *runs.borrow_mut() += 1;
+        Ok(Output { code: Some(2), stdout: b"bad\xff".to_vec(), stderr: b"oops".to_vec() })
+    };
+    let got = grouped(&["none-compare", "unused"], &run, true);
+    let failed = |rule: &str| RuleOutcome::Failed { rule: rule.into(), engine: Engine::Ruff, code: Some(2), stderr: "oops".into() };
+    assert_eq!(got, vec![
+        rule_run("none-compare", failed("none-compare"), Some(8)),
+        rule_run("unused", failed("unused"), None),
+    ]);
+    assert_eq!(runs.into_inner(), 1);
+}
+
+#[test]
+fn an_unknown_check_falls_on_its_rule_and_the_rest_run_again_without_it() {
+    let ran = RefCell::new(Vec::new());
+    let run = |cmd: &Cmd| {
+        let select = selects(cmd);
+        ran.borrow_mut().push(select.clone());
+        match select.as_str() {
+            "--select=E711,ZZZ999" => ok(2, "", UNKNOWN),
+            "--select=E711" => ok(1, E711, ""),
+            other => panic!("unexpected check run: {other}"),
+        }
+    };
+    let got = grouped(&["none-compare", "newer"], &run, true);
+    let why = "ruff 0.17.4 does not know the check `ZZZ999`: Cause: Unknown rule selector `ZZZ999` in `select` from the CLI";
+    assert_eq!(got, vec![
+        rule_run("none-compare", RuleOutcome::Findings(vec![finding("none-compare", "a.py", (1, 4), "none", "f")]), Some(84)),
+        rule_run("newer", RuleOutcome::NotAvailable { rule: "newer".into(), engine: Engine::Ruff, why: why.into() }, Some(77)),
+    ]);
+    assert_eq!(ran.into_inner(), vec!["--select=E711,ZZZ999", "--select=E711"]);
+}
+
+#[test]
+fn a_rule_stopped_before_its_run_stays_out_of_it_and_the_count_goes_on_the_first_rule_run() {
+    let ran = RefCell::new(Vec::new());
+    let run = |cmd: &Cmd| {
+        ran.borrow_mut().push(selects(cmd));
+        ok(1, BOTH, "")
+    };
+    let got = grouped(&["refused", "none-compare", "unused"], &run, true);
+    let refusal = "ruff check `flake8-bugbear`: `flake8-bugbear` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects";
+    assert_eq!(got, vec![
+        rule_run("refused", RuleOutcome::Failed { rule: "refused".into(), engine: Engine::Ruff, code: None, stderr: refusal.into() }, None),
+        rule_run("none-compare", RuleOutcome::Findings(vec![finding("none-compare", "a.py", (1, 4), "none", "f")]), Some(262)),
+        rule_run("unused", RuleOutcome::Findings(vec![finding("unused", "src/b.py", (3, 8), "unused b", "g")]), None),
+    ]);
+    assert_eq!(ran.into_inner(), vec!["--select=E711,F401"]);
+}
+
+#[test]
+fn an_engine_not_available_runs_nothing() {
+    let run = |cmd: &Cmd| -> Result<Output, ProcError> { panic!("nothing may run: {cmd:?}") };
+    let got = grouped(&["none-compare", "unused"], &run, false);
+    let absent = |rule: &str| RuleOutcome::NotAvailable { rule: rule.into(), engine: Engine::Ruff, why: "ruff not found on PATH".into() };
+    assert_eq!(got, vec![
+        rule_run("none-compare", absent("none-compare"), None),
+        rule_run("unused", absent("unused"), None),
+    ]);
+}

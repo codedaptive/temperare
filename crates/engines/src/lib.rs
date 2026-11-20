@@ -5,6 +5,7 @@ pub mod clippy;
 pub mod entry;
 pub mod ruff;
 pub mod sarif;
+pub mod shellcheck;
 pub mod swiftlint;
 pub mod tessera;
 
@@ -18,15 +19,23 @@ mod findings_from;
 mod host;
 mod no_adapter_why;
 mod parse_failed;
+mod pick_at;
 mod printed_start;
+mod proc_error_copy;
 mod ran;
 mod rel_to_folder;
+mod replayed_run;
 mod rule_folder;
+mod run_group;
 mod run_rules_counted;
 mod run_rules_counted_with;
 mod run_rules_versioned;
 mod run_rules_versioned_with;
+mod shared_cmd;
+mod shared_groups;
+mod shares_with;
 mod types;
+mod union_args;
 
 pub use availability::availability;
 pub use entry::{entry_cmd, Entry, ParamArg, Params, Pick, ReadFn, TempFile, VersionProbe};
@@ -58,10 +67,26 @@ mod no_adapter_why_tests;
 #[cfg(test)]
 mod parse_failed_tests;
 #[cfg(test)]
+mod pick_at_tests;
+#[cfg(test)]
 mod printed_start_tests;
+#[cfg(test)]
+mod proc_error_copy_tests;
 #[cfg(test)]
 mod ran_tests;
 #[cfg(test)]
 mod rel_to_folder_tests;
 #[cfg(test)]
+mod replayed_run_tests;
+#[cfg(test)]
+mod run_group_tests;
+#[cfg(test)]
 mod run_rules_counted_with_tests;
+#[cfg(test)]
+mod shared_cmd_tests;
+#[cfg(test)]
+mod shared_groups_tests;
+#[cfg(test)]
+mod shares_with_tests;
+#[cfg(test)]
+mod union_args_tests;

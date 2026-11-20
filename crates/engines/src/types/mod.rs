@@ -9,6 +9,7 @@ mod hit;
 mod param_error;
 mod parse_error;
 mod rule_run;
+mod rule_run_new;
 mod stop;
 
 #[cfg(test)]
@@ -23,6 +24,8 @@ mod hit_tests;
 mod param_error_tests;
 #[cfg(test)]
 mod parse_error_tests;
+#[cfg(test)]
+mod rule_run_new_tests;
 #[cfg(test)]
 mod rule_run_tests;
 #[cfg(test)]

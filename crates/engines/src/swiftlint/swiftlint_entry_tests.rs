@@ -1,12 +1,14 @@
 //! ZUT for swiftlint_entry.rs: the command `entry_cmd` builds from `SWIFTLINT`, the version read from fixed output,
 //! and `run_plain(&SWIFTLINT, ..)` on a fake host: the command the host is given, findings read from captured output,
-//! garbage output, an unknown rule, a `custom_rules` check and a rule with a param refused before anything runs, an
-//! absent swiftlint, and the characters of the check run counted into the host. Nothing runs. `DIR` is the folder
+//! garbage output, an unknown rule, a `custom_rules` check and a rule with an unknown param or a refused threshold
+//! refused before anything runs, an absent swiftlint, the characters of the check run counted into the host, and
+//! the text each threshold sets. Nothing runs and nothing is written; a threshold run writes its temporary config, so
+//! it is the ZIT's (integration/swiftlint_threshold_tests.rs). `DIR` is the folder
 //! path the captured fixture's absolute paths start with (see parse_swiftlint_tests.rs); no folder is read, so it
 //! need not exist.
 
 use super::SWIFTLINT;
-use crate::entry::{entry_cmd, run_plain};
+use crate::entry::{entry_cmd, run_plain, Params, Reach};
 use crate::host::Host;
 use crate::types::{Hit, Stop};
 use procio::{Cmd, Output, ProcError};
@@ -216,10 +218,59 @@ fn swiftlint_not_found_counts_nothing() {
 }
 
 #[test]
-fn a_rule_with_a_param_is_failed_as_taking_none_and_nothing_runs() {
+fn a_rule_with_an_unknown_param_is_failed_naming_both_thresholds_and_nothing_runs() {
     let rules = format!("{NO_CONFIG}params = {{ only = [\"force_try\"] }}\n");
     let (got, chars, runs) = run_counted(&rules, captured);
-    let stderr = "swiftlint param only: a swiftlint rule takes no params".to_string();
+    let stderr = "swiftlint param only: a swiftlint rule reads only the `max_complexity`, `max_lines` param".to_string();
     assert_eq!(got, Err(Stop::Failed { code: None, stderr }));
     assert_eq!((chars, runs), (None, 0));
+}
+
+#[test]
+fn max_lines_on_cyclomatic_complexity_is_failed_and_nothing_runs() {
+    let rules = format!("{}params = {{ max_lines = 150 }}\n", NO_CONFIG.replace("force_cast", "cyclomatic_complexity"));
+    let (got, seen) = run_rule(&rules, captured);
+    let stderr = "swiftlint param max_lines: read only with check `file_length`".to_string();
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr }));
+    assert!(seen.is_none());
+}
+
+#[test]
+fn max_complexity_on_file_length_is_failed_and_nothing_runs() {
+    let rules = format!("{}params = {{ max_complexity = 3 }}\n", NO_CONFIG.replace("force_cast", "file_length"));
+    let (got, seen) = run_rule(&rules, captured);
+    let stderr = "swiftlint param max_complexity: read only with check `cyclomatic_complexity`".to_string();
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr }));
+    assert!(seen.is_none());
+}
+
+#[test]
+fn thresholds_out_of_range_are_failed_and_nothing_runs() {
+    let cases = [
+        ("cyclomatic_complexity", "max_complexity", "0", "1000"),
+        ("cyclomatic_complexity", "max_complexity", "1001", "1000"),
+        ("file_length", "max_lines", "0", "100000"),
+        ("file_length", "max_lines", "100001", "100000"),
+    ];
+    for (check, name, n, max) in cases {
+        let rules = format!("{}params = {{ {name} = {n} }}\n", NO_CONFIG.replace("force_cast", check));
+        let (got, seen) = run_rule(&rules, captured);
+        let stderr = format!("swiftlint param {name}: must be a whole number from 1 to {max}");
+        assert_eq!(got, Err(Stop::Failed { code: None, stderr }), "{name} = {n}");
+        assert!(seen.is_none(), "{name} = {n}");
+    }
+}
+
+#[test]
+fn each_threshold_sets_both_levels_of_its_check() {
+    let Params::Thresholds { thresholds, reach, .. } = SWIFTLINT.params else { panic!("{:?}", SWIFTLINT.params) };
+    let got: Vec<_> = thresholds.iter().map(|t| (t.name, t.check, t.max, (t.setting)(3))).collect();
+    assert_eq!(
+        got,
+        [
+            ("max_complexity", "cyclomatic_complexity", 1000, "cyclomatic_complexity:\n  warning: 3\n  error: 3\n".to_string()),
+            ("max_lines", "file_length", 100000, "file_length:\n  warning: 3\n  error: 3\n".to_string()),
+        ]
+    );
+    assert_eq!(reach, Reach::File { option: "--config=", ext: "yml", own: Some(".swiftlint.yml") });
 }

@@ -143,14 +143,19 @@ engine. [`ENGINES.md`](ENGINES.md) has each case.
 
 ### `params`
 
-- **clippy:** `allow`, a list of lints left out, such as `{ allow = ["clippy::module_inception"] }`. It is the only
-  param a clippy rule reads; any other name makes the rule fail, so a misspelt `allow` cannot pass unnoticed.
+- **clippy:** `allow`, a list of lints left out, such as `{ allow = ["clippy::module_inception"] }`; and `max_nesting`, a
+  whole number from 1 to 1000, read only with check `clippy::excessive_nesting`. Any other name makes the rule fail,
+  so a misspelt `allow` cannot pass unnoticed.
 - **ast-grep:** names for the rule file's placeholders. Each `{{name}}` in the YAML is replaced by the param of that
   name before ast-grep runs. A string goes in as written. A list of strings goes in as its items joined by `|`, each
   escaped so it matches literally, which drops into a `regex:` line as "any of these". A `{{name}}` with no param of
   that name makes the rule fail, and so does a param the YAML never names as `{{name}}`, so a misspelt param name
   cannot pass unnoticed.
-- **swiftlint, ruff:** none taken; any param fails the rule.
+- **swiftlint:** `max_complexity`, a whole number from 1 to 1000, read only with check `cyclomatic_complexity`; and
+  `max_lines`, a whole number from 1 to 100000, read only with check `file_length`. At most one threshold per rule;
+  any other param fails the rule.
+- **ruff:** `max_complexity`, a whole number from 1 to 1000, read only with check `C901`; any other param fails the
+  rule.
 - **tessera:** not read.
 
 ### Which files a rule covers

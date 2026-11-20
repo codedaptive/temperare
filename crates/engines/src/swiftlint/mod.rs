@@ -7,6 +7,8 @@ mod swiftlint_refusal;
 mod unknown_rule;
 
 #[cfg(test)]
+mod integration;
+#[cfg(test)]
 mod parse_swiftlint_tests;
 #[cfg(test)]
 mod swiftlint_entry_tests;

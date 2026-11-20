@@ -1,6 +1,7 @@
 //! ZIT for run_rules_versioned_with.rs: the engines' versions probed once each before the rules run, the probes not
-//! counted in any run, and a too-old rule's why naming the version read. The host is fake, so no engine runs; the rule
-//! file's folder is `/`, which always resolves.
+//! counted in any run, and a too-old rule's why naming the version read. The two ruff rules share a run that ruff
+//! fails on the unknown selector, so `too-old` counts that run and `clean` the rerun without it. The host is fake, so
+//! no engine runs; the rule file's folder is `/`, which always resolves.
 
 use crate::host::Host;
 use crate::run_rules_versioned_with::run_rules_versioned_with;
@@ -38,14 +39,19 @@ fn versions_are_probed_once_uncounted_and_name_the_too_old_check() {
     // 1000 characters: "ruff 1.2.3 " (11) then 989 more.
     let probe_stdout = format!("ruff 1.2.3 {}", "x".repeat(989));
     let probes = RefCell::new(0);
+    let selects = RefCell::new(Vec::new());
     let run = |cmd: &Cmd| {
+        let select = cmd.args.iter().find(|arg| arg.to_string_lossy().starts_with("--select="));
+        selects.borrow_mut().extend(select.map(|arg| arg.to_string_lossy().into_owned()));
         if cmd.args == vec!["--version"] {
             *probes.borrow_mut() += 1;
             output(0, &probe_stdout, "")
-        } else if cmd.args.iter().any(|arg| arg == "--select=E711") {
-            output(0, "[]", "")
-        } else if cmd.args.iter().any(|arg| arg == "--select=ZZZ999") {
+        } else if cmd.args.iter().any(|arg| arg == "--select=E711,ZZZ999") {
+            // The two ruff rules share one run; ruff fails it on the selector it does not know.
             output(2, "", "  Cause: Unknown rule selector `ZZZ999` in `select` from the CLI")
+        } else if cmd.args.iter().any(|arg| arg == "--select=E711") {
+            // The rerun without the unknown selector, which gives `clean` its own counted run.
+            output(0, "[]", "")
         } else {
             panic!("unexpected command: {cmd:?}")
         }
@@ -87,6 +93,7 @@ fn versions_are_probed_once_uncounted_and_name_the_too_old_check() {
         ],
     });
     assert_eq!(probes.into_inner(), 1);
+    assert_eq!(selects.into_inner(), ["--select=E711,ZZZ999", "--select=E711"]);
 }
 
 #[test]

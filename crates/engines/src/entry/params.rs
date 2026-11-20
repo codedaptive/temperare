@@ -1,6 +1,6 @@
 //! `Params`: which of a rule's `params` an engine accepts, and how each reaches it.
 
-use super::{ConfigParams, ParamArg};
+use super::{ConfigParams, ParamArg, Reach, Threshold};
 
 /// How a rule's `params` table reaches the engine. A param is never passed through as an argument the rule file
 /// wrote, and never dropped: each one an engine accepts is named here.
@@ -10,6 +10,9 @@ pub enum Params {
     /// listed is an error, so a misspelt name is never silently dropped. An engine that takes no params gives the
     /// empty list, so any param makes its rule fail.
     Args(&'static [ParamArg]),
+    /// `args` as `Args`; each threshold is a param holding one whole number for one check (`threshold_of`), which
+    /// reaches the engine by `reach` (`threshold_run`). A param in neither list is an error.
+    Thresholds { args: &'static [ParamArg], thresholds: &'static [Threshold], reach: Reach },
     /// tm writes the params into a temporary config file passed with an option, and removes it after the run
     /// (`temp_config`).
     Config(ConfigParams),

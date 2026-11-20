@@ -14,7 +14,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 /// `py/` belongs to py-zone, the rest to repo. Rule order: ruff findings, tessera, an absent swiftlint, a ruff rule
-/// whose run prints garbage.
+/// whose run prints garbage. `unused-import`'s config, which the fake host never reads, keeps the two ruff rules from
+/// sharing a run.
 const TEXT: &str = r#"version = 1
 owner = "repo"
 [kits.py]
@@ -41,6 +42,7 @@ fix = "f"
 id = "unused-import"
 engine = "ruff"
 check = "F401"
+config = "/no/such/engines-zut-unused-import.toml"
 fix = "f"
 "#;
 

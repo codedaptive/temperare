@@ -57,7 +57,7 @@ pub(super) fn run_rules_with_help(rules: &str, folder: &Path, help: Output, loca
 fn a_param_other_than_allow_is_failed_with_the_reason_and_nothing_runs() {
     let rules = rules_with(r#"{ alow = ["clippy::module_inception"] }"#);
     let (got, seen) = run_rules(&rules, Path::new("/engines-zut-no-such-folder/a"), output(0, b"", b""), output(0, b"", b""));
-    let want = "clippy param alow: a clippy rule reads only the `allow` param".to_string();
+    let want = "clippy param alow: a clippy rule reads only the `allow`, `max_nesting` param".to_string();
     assert_eq!(got, Err(Stop::Failed { code: None, stderr: want }));
     assert!(seen.is_empty());
 }
@@ -71,3 +71,37 @@ fn an_allow_that_is_not_a_list_is_failed_with_the_reason_and_nothing_runs() {
     assert!(seen.is_empty());
 }
 
+
+/// `RULES` with check `check` and a `params` line.
+fn rules_for(check: &str, params: &str) -> String {
+    rules_with(params).replace("clippy::bool_comparison", check)
+}
+
+/// `hits_clippy` on a folder that does not exist, whose rule must stop before anything runs.
+fn stopped(rules: &str) -> (Result<Vec<Hit>, Stop>, Vec<Cmd>) {
+    run_rules(rules, Path::new("/engines-zut-no-such-folder/a"), output(0, b"", b""), output(0, b"", b""))
+}
+
+#[test]
+fn a_max_nesting_of_0_is_failed_with_the_range_and_nothing_runs() {
+    let (got, seen) = stopped(&rules_for("clippy::excessive_nesting", "{ max_nesting = 0 }"));
+    let want = "clippy param max_nesting: must be a whole number from 1 to 1000".to_string();
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: want }));
+    assert!(seen.is_empty());
+}
+
+#[test]
+fn a_max_nesting_on_another_check_is_failed_with_its_check_and_nothing_runs() {
+    let (got, seen) = stopped(&rules_for("clippy::bool_comparison", "{ max_nesting = 3 }"));
+    let want = "clippy param max_nesting: read only with check `clippy::excessive_nesting`".to_string();
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: want }));
+    assert!(seen.is_empty());
+}
+
+#[test]
+fn an_unknown_param_beside_max_nesting_is_failed_naming_both_params_and_nothing_runs() {
+    let (got, seen) = stopped(&rules_for("clippy::excessive_nesting", "{ max_nesting = 3, foo = 1 }"));
+    let want = "clippy param foo: a clippy rule reads only the `allow`, `max_nesting` param".to_string();
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: want }));
+    assert!(seen.is_empty());
+}

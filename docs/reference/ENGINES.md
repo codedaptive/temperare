@@ -12,8 +12,9 @@ what is "not available" and what is "failed".
 - **A rule's value is passed as a value, not as an option.** A `check`, `config` or `params.allow` value that
   begins with `-` is a problem in the rule file, and nothing runs. Each value reaches the engine joined to its own
   flag, as in `--select=<check>`, so the engine reads it as that flag's value.
-- **One run per rule.** Rules are run in rule-file order, each on its own. Two rules on the same engine are two
-  runs.
+- **One run per rule, or one shared run.** Rules are run in rule-file order. Rules on the same engine with the same
+  config and params, and checks the engine reads together, make one run; each rule's findings still follow its own
+  paths and exceptions. Other rules on the same engine are separate runs.
 - **Run over the rule file's folder.** The engine checks the whole folder (clippy: the Cargo package that holds
   it). Temperare then keeps the findings that are inside that folder, in the files the rule covers (its `paths`,
   `exclude`, `kits`, `outside_kits`) and, when you gave paths on the command line, in those paths. Paths on the
@@ -23,8 +24,9 @@ what is "not available" and what is "failed".
   `ruff --version`, `ast-grep --version`. Tessera is not asked. The version is named in the reason of a check the
   engine does not know (below).
 - **No time limit.** `tm` waits for an engine as long as it runs.
-- **The engine's environment is yours.** Temperare adds nothing to it and passes no flag that turns off an engine's
-  own search for its configuration.
+- **The engine's environment is yours.** Temperare adds nothing to it, except that for a clippy rule with `max_nesting` it
+  sets `CLIPPY_CONF_DIR` for that run to a temporary folder holding `clippy.toml`, which clippy reads instead of the
+  repository's own `clippy.toml`. It passes no flag that turns off an engine's own search for its configuration.
 - **The engine's exit code is not the answer.** Linters exit non-zero when they find something. Temperare reads the
   output; a non-zero exit with output it can read is a normal result.
 - **The rule decides severity.** A finding's `severity`, `kind` and `fix` come from the rule in `temperare.toml`.
@@ -101,8 +103,9 @@ of the engine's stderr, or Temperare's own reason when the engine printed none o
 
   The rule also fails when `clippy-driver -W help` cannot be read or lists no lint or no group, and when clippy
   itself reports that it did not take `check` as named.
-- **`params`:** `allow`, a list of strings. Any other param, or an `allow` that is not a list of strings, fails the
-  rule before clippy runs.
+- **`params`:** `allow`, a list of strings; and `max_nesting`, a whole number from 1 to 1000, read only with check
+  `clippy::excessive_nesting` (tm writes it as `excessive-nesting-threshold` in `clippy.toml` for that run). Any other
+  param, or a bad value, fails the rule before clippy runs.
 - **`config`:** not used.
 - **A finding** is placed at the message's primary span. A message cargo prints once per target is reported once.
 - **Failed when** the build does not succeed. A build that failed has not linted everything, so it is not an
@@ -134,7 +137,9 @@ of the engine's stderr, or Temperare's own reason when the engine printed none o
   path that cannot be placed under the folder at all makes the rule Failed, never clean.
 - **`config`:** passed as written, so a relative path is taken from the rule file's folder. Temperare does not read
   or copy the file.
-- **`params`:** none taken; any param fails the rule.
+- **`params`:** `max_complexity`, a whole number from 1 to 1000, read only with check `cyclomatic_complexity`; and
+  `max_lines`, a whole number from 1 to 100000, read only with check `file_length`. At most one threshold per rule.
+  The threshold is written to a temporary config; any other param fails the rule.
 - **A finding** has no column when SwiftLint gives none, as for a violation of a whole line or file.
 
 ## ruff
@@ -162,7 +167,8 @@ of the engine's stderr, or Temperare's own reason when the engine printed none o
   often one newer than it. The reason quotes ruff's own line, which names the code.
 - **`config`:** passed as written, so a relative path is taken from the rule file's folder. Temperare does not read
   or copy the file.
-- **`params`:** none taken; any param fails the rule.
+- **`params`:** `max_complexity`, a whole number from 1 to 1000, read only with check `C901`, passed as
+  `--config=lint.mccabe.max-complexity=<n>`; any other param fails the rule.
 
 ## ast-grep
 

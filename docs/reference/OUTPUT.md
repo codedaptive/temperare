@@ -30,7 +30,7 @@ not available: file-erosion (tessera): Tessera's slop records are not defined ye
 failed: clippy-warnings (clippy), no exit code
 1 findings (1 error, 0 warning; 0 security), 1 silenced, 1 exceptions in force, 1 not available, 1 failed
 stderr of clippy-warnings (clippy):
-  clippy param alow: a clippy rule reads only the `allow` param
+  clippy param alow: a clippy rule reads only the `allow`, `max_nesting` param
 next: fix the findings above, or add an approved [[exception]] to /path/to/temperare.toml
 ```
 
@@ -72,7 +72,7 @@ The run above, as `--json` prints it (on one line; wrapped here to read):
       "code": null,
       "engine": "clippy",
       "rule": "clippy-warnings",
-      "stderr_tail": "clippy param alow: a clippy rule reads only the `allow` param"
+      "stderr_tail": "clippy param alow: a clippy rule reads only the `allow`, `max_nesting` param"
     }
   ],
   "findings": [

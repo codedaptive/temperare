@@ -30,7 +30,8 @@ pub struct Entry {
     /// Which of a rule's `params` the engine accepts, and how each reaches it.
     pub params: Params,
     /// The option a rule's `config` is joined to, with its `=` (`"--config="`), giving one argument after the
-    /// params; `None` when the engine is not given the rule's config.
+    /// params; `None` when the engine is not given the rule's config. On a threshold run the config argument comes
+    /// from `threshold_run`, ahead of the threshold, and `entry_cmd` gets none.
     pub config: Option<&'static str>,
     /// The fixed arguments that come last (ruff's `"."`).
     pub after: &'static [&'static str],

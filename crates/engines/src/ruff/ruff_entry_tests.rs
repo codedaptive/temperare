@@ -1,7 +1,8 @@
 //! ZUT for ruff_entry.rs: the command `entry_cmd` builds from `RUFF`, the version read from fixed output, and
 //! `run_plain(&RUFF, ..)` on a fake host: the command the host is given, findings read from captured output, garbage
-//! output, an absent ruff, a refused check, a rule with a param refused, an unknown selector, and the characters of
-//! the check run counted into the host. Nothing runs. `DIR` is the folder path the captured fixture's absolute paths
+//! output, an absent ruff, a refused check, an unknown selector, the characters of the check run counted into the
+//! host, the `max_complexity` threshold as an inline `--config` after the rule's config, and a threshold or param
+//! refused before anything runs. Nothing runs and nothing is written. `DIR` is the folder path the captured fixture's absolute paths
 //! start with (see parse_ruff_tests.rs); no folder is read, so it need not exist.
 
 use super::RUFF;
@@ -218,10 +219,88 @@ fn ruff_not_found_counts_nothing() {
 }
 
 #[test]
-fn a_rule_with_a_param_is_failed_as_taking_none_and_nothing_runs() {
+fn a_rule_with_an_unknown_param_is_failed_naming_max_complexity_and_nothing_runs() {
     let rules = format!("{NO_CONFIG}params = {{ select = \"E\" }}\n");
     let (got, chars, runs) = run_counted(&rules, captured);
-    let stderr = "ruff param select: a ruff rule takes no params".to_string();
+    let stderr = "ruff param select: a ruff rule reads only the `max_complexity` param".to_string();
     assert_eq!(got, Err(Stop::Failed { code: None, stderr }));
     assert_eq!((chars, runs), (None, 0));
+}
+
+#[test]
+fn an_unknown_param_foo_is_failed_and_nothing_runs() {
+    let rules = format!("{NO_CONFIG}params = {{ foo = 1 }}\n");
+    let (got, seen) = run_rule(&rules, captured);
+    let stderr = "ruff param foo: a ruff rule reads only the `max_complexity` param".to_string();
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr }));
+    assert!(seen.is_none());
+}
+
+#[test]
+fn max_complexity_on_c901_runs_once_with_the_inline_threshold_config_before_the_folder() {
+    let rules = format!("{}params = {{ max_complexity = 7 }}\n", NO_CONFIG.replace("E711", "C901"));
+    let (_, _, runs) = run_counted(&rules, || Ok(Output { code: Some(0), stdout: b"[]".to_vec(), stderr: Vec::new() }));
+    assert_eq!(runs, 1);
+    let cmd = run_rule(&rules, captured).1.unwrap();
+    assert_eq!(
+        cmd.args,
+        os(&[
+            "check",
+            "--no-cache",
+            "--output-format",
+            "json",
+            "--select=C901",
+            "--config=lint.mccabe.max-complexity=7",
+            "."
+        ])
+    );
+    assert!(cmd.env.is_empty(), "{:?}", cmd.env);
+}
+
+#[test]
+fn max_complexity_comes_after_the_rules_config_so_it_wins_over_the_same_key() {
+    let rules = format!("{}params = {{ max_complexity = 7 }}\n", WITH_CONFIG.replace("E711", "C901"));
+    let cmd = run_rule(&rules, captured).1.unwrap();
+    assert_eq!(
+        cmd.args,
+        os(&[
+            "check",
+            "--no-cache",
+            "--output-format",
+            "json",
+            "--select=C901",
+            "--config=ruff.toml",
+            "--config=lint.mccabe.max-complexity=7",
+            "."
+        ])
+    );
+}
+
+#[test]
+fn max_complexity_on_another_check_is_failed_and_nothing_runs() {
+    let rules = format!("{NO_CONFIG}params = {{ max_complexity = 7 }}\n");
+    let (got, seen) = run_rule(&rules, captured);
+    let stderr = "ruff param max_complexity: read only with check `C901`".to_string();
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr }));
+    assert!(seen.is_none());
+}
+
+#[test]
+fn max_complexity_outside_1_to_1000_is_failed_and_nothing_runs() {
+    let c901 = NO_CONFIG.replace("E711", "C901");
+    for n in ["0", "1001", "-3", "2.5", "\"7\""] {
+        let (got, seen) = run_rule(&format!("{c901}params = {{ max_complexity = {n} }}\n"), captured);
+        let stderr = "ruff param max_complexity: must be a whole number from 1 to 1000".to_string();
+        assert_eq!(got, Err(Stop::Failed { code: None, stderr }), "max_complexity = {n}");
+        assert!(seen.is_none(), "max_complexity = {n}");
+    }
+}
+
+#[test]
+fn max_complexity_at_1_and_1000_runs() {
+    let c901 = NO_CONFIG.replace("E711", "C901");
+    for (n, arg) in [("1", "--config=lint.mccabe.max-complexity=1"), ("1000", "--config=lint.mccabe.max-complexity=1000")] {
+        let cmd = run_rule(&format!("{c901}params = {{ max_complexity = {n} }}\n"), captured).1.unwrap();
+        assert_eq!(cmd.args[cmd.args.len() - 2], OsString::from(arg));
+    }
 }

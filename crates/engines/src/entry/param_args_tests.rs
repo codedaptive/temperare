@@ -1,9 +1,10 @@
 //! ZUT for param_args.rs: listed params to arguments in the list's order; an unlisted key, a param that is not a
 //! list of strings and params that are not a table are `Bad`, with clippy's texts; an empty list refuses any param
-//! as taking none; `Template` and `Config` give no arguments.
+//! as taking none; `Template` and `Config` give no arguments. A `Thresholds` entry's args work as `Args`, its
+//! threshold keys give no arguments, and a key in neither list is `Bad` naming both lists.
 
 use super::entry_cmd_tests::fake_entry;
-use super::{param_args, ConfigParams, Entry, ParamArg, Params, Pick};
+use super::{param_args, ConfigParams, Entry, ParamArg, Params, Pick, Reach, Threshold};
 use crate::ParamError;
 use serde_json::json;
 use std::ffi::OsString;
@@ -86,4 +87,32 @@ fn template_and_config_give_no_arguments_whatever_the_params() {
         let entry = fake_entry(Pick::Arg("--select="), params, None);
         assert_eq!(param_args(&entry, &json!({"anything": 1})), Ok(Vec::new()), "{params:?}");
     }
+}
+
+static NESTING: [Threshold; 1] =
+    [Threshold { name: "max_nesting", check: "nesting_depth", max: 9, setting: |n| format!("n={n}") }];
+
+fn thresholds_entry() -> Entry {
+    let params = Params::Thresholds { args: &ALLOW, thresholds: &NESTING, reach: Reach::Arg("--config=") };
+    fake_entry(Pick::Arg("--select="), params, None)
+}
+
+#[test]
+fn a_thresholds_entrys_args_become_arguments_and_its_threshold_gives_none() {
+    let got = param_args(&thresholds_entry(), &json!({"allow": ["a1", "a2"], "max_nesting": 3}));
+    assert_eq!(got, Ok(os(&["--allow=a1", "--allow=a2"])));
+    assert_eq!(param_args(&thresholds_entry(), &json!({"max_nesting": "not checked here"})), Ok(Vec::new()));
+}
+
+#[test]
+fn a_key_in_neither_list_is_bad_naming_the_args_then_the_thresholds() {
+    let got = param_args(&thresholds_entry(), &json!({"foo": 1}));
+    assert_eq!(got, bad("foo", "a lint rule reads only the `allow`, `max_nesting` param"));
+}
+
+#[test]
+fn a_thresholds_entry_with_both_lists_empty_takes_no_params() {
+    let params = Params::Thresholds { args: &[], thresholds: &[], reach: Reach::Arg("--config=") };
+    let entry = fake_entry(Pick::Arg("--select="), params, None);
+    assert_eq!(param_args(&entry, &json!({"foo": 1})), bad("foo", "a lint rule takes no params"));
 }
