@@ -135,9 +135,11 @@ A finding is kept only when it can be matched back to `check`: for clippy and Sw
 that lint or identifier, and for ruff the diagnostic's code starts with one of the parts of `check`.
 
 These are checked when the rule runs, not when the rule file is read. A `check` that cannot be matched (a clippy
-lint group or a name the toolchain does not list, `custom_rules`, a ruff rule name, an ast-grep file outside the
-rule file's folder) makes the rule "failed", exit 5, with the reason in the report. It never reads as clean, and
-`tm rules` does not report it. [`ENGINES.md`](ENGINES.md) has each case.
+lint group, `custom_rules`, a ruff rule name, an ast-grep file outside the rule file's folder) makes the rule
+"failed", exit 5, with the reason in the report. A `check` the installed clippy, SwiftLint or ruff does not know
+(a misspelt name, or one newer than that engine) makes the rule "not available", exit 3, with a reason naming the
+engine, its version and the check. Neither reads as clean, and `tm rules` reports neither, since it runs no
+engine. [`ENGINES.md`](ENGINES.md) has each case.
 
 ### `params`
 
@@ -146,7 +148,8 @@ rule file's folder) makes the rule "failed", exit 5, with the reason in the repo
 - **ast-grep:** names for the rule file's placeholders. Each `{{name}}` in the YAML is replaced by the param of that
   name before ast-grep runs. A string goes in as written. A list of strings goes in as its items joined by `|`, each
   escaped so it matches literally, which drops into a `regex:` line as "any of these". A `{{name}}` with no param of
-  that name makes the rule fail.
+  that name makes the rule fail, and so does a param the YAML never names as `{{name}}`, so a misspelt param name
+  cannot pass unnoticed.
 - **swiftlint, ruff:** none taken; any param fails the rule.
 - **tessera:** not read.
 
@@ -154,10 +157,10 @@ rule file's folder) makes the rule "failed", exit 5, with the reason in the repo
 
 A rule covers a file when all of these hold:
 
-1. the file matches one of `paths`, or `paths` is absent;
+1. the file matches one of `paths`, or `paths` is absent or empty;
 2. the file matches none of `exclude`;
 3. the file is in none of the `outside_kits` kits;
-4. `kits` is absent, or the file is in one of those kits.
+4. `kits` is absent or empty, or the file is in one of those kits.
 
 An engine runs over the rule file's whole folder. Findings in files the rule does not cover are dropped, and so are
 findings outside the rule file's folder.

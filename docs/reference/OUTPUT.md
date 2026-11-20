@@ -175,7 +175,7 @@ ran. The estimate is an upper bound: it is the saving against reading that outpu
 
 - **Characters** are Unicode characters (scalar values), not bytes. **Tokens** are characters / 4, rounded half up.
 - **K** is the number of engine runs whose output became findings: one per rule whose engine ran, whether it found
-  something, found nothing, or failed after it ran. A rule that was not available ran nothing.
+  something, found nothing, or failed after it ran. A rule whose engine ran and said it does not know the rule's check counts as a run; any other rule that was not available ran nothing.
 - **B**, the baseline, is the tokens of everything those runs printed, stdout and stderr together. Set-up runs
   (clippy's lint list and workspace lookup) and version checks are not counted.
 - **X** is the tokens of tm's own answer: in text, everything after the tokens-saved line; in JSON, the object as
@@ -280,7 +280,7 @@ The last line of text, and `next` in JSON, says what to do, by exit code:
 | 0 | `nothing to do` |
 | 1 | `fix the findings above, or add an approved [[exception]] to <rule file>` |
 | 2 | The fix for the error |
-| 3 | `install <engine>, <engine> (or run without those rules)`, naming each engine that was not available |
+| 3 | `install <engine>, <engine> (or run without those rules)`, naming each engine missing from PATH; any other reason is `<engine>: <reason>` |
 | 4 | `raise the security findings with their owner; work goes on` |
 | 5 | `see the engine output above` |
 
@@ -293,7 +293,9 @@ Tessera is never among the engines to install, because installing it changes not
 Only an engine missing from PATH is named to install. Any other reason is given as `<engine>: <reason>`, each once.
 A clippy rule in a folder with no `Cargo.toml` at or above it gives `clippy: no Cargo.toml at or above the rule
 file's folder, so put the rule file inside the Cargo project it checks (or run without those rules)`; the
-`not available:` line of that rule keeps the reason.
+`not available:` line of that rule keeps the reason. A `check` the installed engine does not know gives
+``ruff: ruff 0.17.4 does not know the check `ZZZ999`: <ruff's own line> (or run without those rules)``. The fix is a
+newer engine or a check it knows.
 
 For exit 5 the output meant is the `stderr of <rule> (<engine>):` lines of the text form, which are
 `failed[].stderr_tail` in the JSON.
