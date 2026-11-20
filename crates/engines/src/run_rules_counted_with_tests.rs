@@ -1,6 +1,6 @@
 //! ZUT for run_rules_counted_with.rs's `stopped`: a check the engine said it does not know becomes `NotAvailable`
 //! with a why naming the engine, its version from the versions given (`(version unknown)` without one) and the check;
-//! the other stops keep their kind. Nothing runs. The unknown-check path is that of clippy, swiftlint and ruff, the
+//! the other stops keep their kind. Nothing runs in these. The unknown-check path is that of clippy, swiftlint and ruff, the
 //! engines that can say a check is unknown: one test reaches it through `engine_hits` with swiftlint's output on a
 //! fake host, the others hand `stopped` a made-up stop for ruff and ast-grep. ast-grep has no such path itself: its
 //! check is the repository's YAML, and a YAML ast-grep rejects stays `Failed`.
@@ -89,3 +89,4 @@ fn an_engine_listed_with_no_version_is_version_unknown() {
         why: "ruff (version unknown) does not know the check `ZZZ999`: no".to_string(),
     });
 }
+

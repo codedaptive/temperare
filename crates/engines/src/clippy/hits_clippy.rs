@@ -5,7 +5,7 @@ use super::{
     parse_locate_workspace,
 };
 use crate::check_run::check_run;
-use crate::entry::{entry_cmd, param_args, param_why, Entry};
+use crate::entry::{entry_cmd, param_args, param_why, threshold_run, Entry};
 use crate::host::Host;
 use crate::parse_failed::parse_failed;
 use crate::ran::ran;
@@ -14,10 +14,12 @@ use rules::Rule;
 use std::ffi::OsStr;
 use std::path::Path;
 
-/// The `rule.check` hits under `folder` (canonical), with the lints `rule.params` names under `allow` turned off;
-/// `entry` is `CLIPPY`. In order, each step stopping the rule when it fails:
-/// 1. The params (`param_args`): a param other than `allow`, or an `allow` that is not a list of strings, is `Failed`
-///    with `param_why`'s text and nothing is run.
+/// The `rule.check` hits under `folder` (canonical), with the lints `rule.params` names under `allow` turned off and
+/// its `max_nesting` as the nesting threshold; `entry` is `CLIPPY`. In order, each step stopping the rule when it fails:
+/// 1. The params (`param_args`, then `threshold_run`): a param other than `allow` and `max_nesting`, an `allow` that
+///    is not a list of strings, or a `max_nesting` that is not a whole number from 1 to 1000 for check
+///    `clippy::excessive_nesting`, is `Failed` with `param_why`'s text and nothing is run; a threshold folder that
+///    cannot be written is `Failed` with `threshold_run`'s text.
 /// 2. The Cargo root, the nearest folder at or above `folder` holding a `Cargo.toml`: none is `NotAvailable`.
 /// 3. `clippy-driver -W help` (`lint_groups_cmd`) run in the Cargo root: it is a rustup proxy, as `cargo` is, so it
 ///    uses the toolchain the `cargo clippy` below uses, and lints and groups added by a newer toolchain are in that
@@ -34,10 +36,13 @@ use std::path::Path;
 ///    crate and what it depends on are built and that crate is linted. Its span paths are relative to the workspace
 ///    root that `locate-project` names, so the entry's reader reads them from there. No `CARGO_TARGET_DIR` is set:
 ///    cargo builds in the repository's own `target/` (settled S-21). The clippy run is the counted check run
-///    (`check_run`); the two runs before it are not.
+///    (`check_run`); the two runs before it are not. With a `max_nesting`, the check run's environment also holds
+///    `CLIPPY_CONF_DIR`, naming the temporary folder whose `clippy.toml` holds the threshold; the folder is removed
+///    right after the run, whatever its outcome.
 pub(crate) fn hits_clippy(entry: &Entry, rule: &Rule, folder: &Path, host: &Host) -> Result<Vec<Hit>, Stop> {
-    let allows = param_args(entry, &rule.params)
+    let mut args = param_args(entry, &rule.params)
         .map_err(|err| Stop::Failed { code: None, stderr: param_why(entry.name, err) })?;
+    let threshold = threshold_run(entry, rule, folder).map_err(|stderr| Stop::Failed { code: None, stderr })?;
     let root = cargo_root(folder)
         .ok_or_else(|| Stop::NotAvailable { why: "no Cargo.toml at or above the rule file's folder".to_string() })?;
     let help = ran(&lint_groups_cmd(&root), host)?;
@@ -55,7 +60,12 @@ pub(crate) fn hits_clippy(entry: &Entry, rule: &Rule, folder: &Path, host: &Host
     }
     let located = ran(&locate_workspace_cmd(&root), host)?;
     let workspace = parse_locate_workspace(&located).map_err(|err| parse_failed(&located, err))?;
-    let out = check_run(&entry_cmd(entry, OsStr::new(&rule.check), &allows, None, &root), host)?;
+    args.extend(threshold.iter().flat_map(|threshold| threshold.args.iter().cloned()));
+    let mut cmd = entry_cmd(entry, OsStr::new(&rule.check), &args, None, &root);
+    cmd.env.extend(threshold.iter().flat_map(|threshold| threshold.env.iter().cloned()));
+    let linted = check_run(&cmd, host);
+    drop(threshold);
+    let out = linted?;
     (entry.read)(&out, &rule.check, &workspace, folder).map_err(|err| parse_failed(&out, err))
 }
 

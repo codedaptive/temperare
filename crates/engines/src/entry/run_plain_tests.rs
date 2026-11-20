@@ -1,10 +1,11 @@
 //! ZUT for run_plain.rs with a fake entry and a fake host: each step's stop, the arguments reaching the command,
 //! the check run counted (and a refused one not), an unknown check, words about another check left to the reader,
-//! output the reader cannot read. No engine runs
-//! and no file is written; the config file's run is the ZIT's (integration/temp_config_tests.rs).
+//! output the reader cannot read, a threshold passed as an argument after the rule's config, a threshold out of range.
+//! No engine runs and no file is written; the config file's run and a threshold's file are the ZIT's
+//! (integration/temp_config_tests.rs, integration/run_plain_threshold_tests.rs).
 
 use super::entry_cmd_tests::fake_entry;
-use super::{run_plain, ConfigParams, Entry, ParamArg, Params, Pick};
+use super::{run_plain, ConfigParams, Entry, ParamArg, Params, Pick, Reach, Threshold};
 use crate::host::Host;
 use crate::types::{Hit, ParseError, Stop};
 use crate::ParamError;
@@ -138,4 +139,53 @@ fn output_the_reader_cannot_read_fails_with_the_exit_code() {
     assert_eq!(got, Err(Stop::Failed { code: Some(2), stderr: "not lint output".to_string() }));
     let (got, _, _) = run(&lint(), &rule("E711", ""), answer(2, "garbage", "lint: bad flag"));
     assert_eq!(got, Err(Stop::Failed { code: Some(2), stderr: "lint: bad flag".to_string() }));
+}
+
+static COMPLEXITY: [Threshold; 1] = [Threshold {
+    name: "max_complexity",
+    check: "C901",
+    max: 50,
+    setting: |n| format!("lint.mccabe.max-complexity={n}"),
+}];
+
+/// `lint()` with the `allow` param and a `max_complexity` threshold passed as a `--config=` argument.
+fn limited() -> Entry {
+    let params = Params::Thresholds { args: &ALLOW, thresholds: &COMPLEXITY, reach: Reach::Arg("--config=") };
+    Entry { params, ..lint() }
+}
+
+#[test]
+fn a_threshold_follows_the_params_and_the_rules_config_in_one_run() {
+    let rule = rule("C901", "config = \"lint.toml\"\nparams = { allow = [\"E1\"], max_complexity = 12 }\n");
+    let (got, ran, raw_chars) = run(&limited(), &rule, answer(0, "hit", ""));
+    let args =
+        ["check", "--select=C901", "--allow=E1", "--config=lint.toml", "--config=lint.mccabe.max-complexity=12", "."];
+    assert_eq!(ran.len(), 1);
+    assert_eq!(ran[0].args, args.map(OsString::from).to_vec());
+    assert!(ran[0].env.is_empty(), "{:?}", ran[0].env);
+    assert_eq!(raw_chars, Some(3));
+    let hit = Hit { path: RelPath::new("a.py"), line: Some(3), col: None, what: format!("C901 in {FOLDER}") };
+    assert_eq!(got, Ok(vec![hit]));
+}
+
+#[test]
+fn a_threshold_out_of_range_fails_and_nothing_runs() {
+    let (got, ran, _) = run(&limited(), &rule("C901", "params = { max_complexity = 0 }\n"), answer(0, "hit", ""));
+    assert_eq!(got, failed("lint param max_complexity: must be a whole number from 1 to 50"));
+    assert!(ran.is_empty(), "{ran:?}");
+}
+
+#[test]
+fn a_param_in_neither_list_fails_naming_the_args_and_the_thresholds() {
+    let (got, ran, _) = run(&limited(), &rule("C901", "params = { deny = [\"E1\"] }\n"), answer(0, "hit", ""));
+    assert_eq!(got, failed("lint param deny: a lint rule reads only the `allow`, `max_complexity` param"));
+    assert!(ran.is_empty(), "{ran:?}");
+}
+
+#[test]
+fn a_thresholds_entry_with_no_threshold_given_runs_as_args_with_the_rules_config() {
+    let rule = rule("C901", "config = \"lint.toml\"\nparams = { allow = [\"E1\"] }\n");
+    let (_, ran, _) = run(&limited(), &rule, answer(0, "hit", ""));
+    let args = ["check", "--select=C901", "--allow=E1", "--config=lint.toml", "."];
+    assert_eq!(ran[0].args, args.map(OsString::from).to_vec());
 }

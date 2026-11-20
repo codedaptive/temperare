@@ -254,7 +254,7 @@ approved = "who approved it"
 | `kits` | The rule applies only inside the named kits |
 | `outside_kits` | The rule applies everywhere except inside the named kits: "this is named only inside kit Y" |
 | `config` | The engine's own config file, passed to SwiftLint or ruff as written |
-| `params` | Values for the engine: names filled into an ast-grep rule (such as a list of type names), or `allow` for clippy (lints left out) |
+| `params` | Values for the engine: names filled into an ast-grep rule (such as a list of type names), `allow` (lints left out) and `max_nesting` for clippy, `max_complexity` for ruff and swiftlint, `max_lines` for swiftlint |
 
 `version = 1` is required, and so are a rule's `id`, `engine`, `check` and `fix`. A kit is a named set of paths,
 `[kits.<name>]`, with an optional `owner`. A finding's owner is the owner of the first kit that holds its file, else

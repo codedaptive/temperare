@@ -9,6 +9,9 @@ use std::cell::Cell;
 use std::fs;
 use std::path::Path;
 
+/// `bad-output` and `empty-output` each name a config of their own, which the fake host never reads: it keeps the
+/// ruff rules from sharing a run, so each prints its own output. `refused` shares with `found` but stops before
+/// running, so `found`'s run selects E711 alone.
 const RULES: &str = r#"version = 1
 owner = "repo"
 [[rule]]
@@ -21,11 +24,13 @@ fix = "f"
 id = "bad-output"
 engine = "ruff"
 check = "F401"
+config = "/no/such/engines-zit-bad-output.toml"
 fix = "f"
 [[rule]]
 id = "empty-output"
 engine = "ruff"
 check = "E501"
+config = "/no/such/engines-zit-empty-output.toml"
 fix = "f"
 [[rule]]
 id = "refused"
