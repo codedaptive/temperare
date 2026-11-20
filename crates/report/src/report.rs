@@ -7,7 +7,7 @@ use serde::{Serialize, Serializer};
 
 /// The report of one check. `exceptions_in_force` is always serialized, 0 included; `base` is left out when the
 /// check had no base commit and otherwise is the commit id's hex text.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct Report {
     /// The kept findings: on new lines when there is a base, and covered by no exception.
     pub findings: Vec<Finding>,

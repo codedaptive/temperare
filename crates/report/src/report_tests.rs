@@ -1,4 +1,5 @@
-//! Unit tests for report.rs: the exact JSON text of an empty report, with and without a base.
+//! Unit tests for report.rs: the exact JSON text of an empty report, with and without a base; the default is the
+//! empty report with no base.
 
 use crate::test_json::to_json;
 use crate::{Counts, Report};
@@ -48,4 +49,13 @@ fn a_base_serializes_as_its_hex_text() {
 fn exceptions_in_force_carries_its_count() {
     let report = Report { exceptions_in_force: 3, ..empty(None) };
     assert!(to_json(&report).contains(r#""exceptions_in_force":3,"#));
+}
+
+#[test]
+fn default_is_the_empty_report_with_no_base() {
+    assert_eq!(Report::default(), empty(None));
+    let expected = format!(
+        r#"{{"findings":[],"silenced":[],"exceptions_in_force":0,"not_available":[],"failed":[],"counts":{COUNTS}}}"#
+    );
+    assert_eq!(to_json(&Report::default()), expected);
 }
