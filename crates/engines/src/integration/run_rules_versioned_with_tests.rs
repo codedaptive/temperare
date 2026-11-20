@@ -76,7 +76,7 @@ fn versions_are_probed_once_uncounted_and_name_the_too_old_check() {
                 outcome: RuleOutcome::NotAvailable {
                     rule: "slop".into(),
                     engine: Engine::Tessera,
-                    why: crate::entry_for(Engine::Tessera).never.unwrap().into(),
+                    why: crate::entry_for(Engine::Tessera).unwrap().never.unwrap().into(),
                 },
                 raw_chars: None,
             },

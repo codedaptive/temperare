@@ -3,7 +3,6 @@
 
 use crate::engine_hits::engine_hits;
 use crate::entry::too_old_why;
-use crate::entry_for::entry_for;
 use crate::findings_from::findings_from;
 use crate::host::Host;
 use crate::rule_folder::rule_folder;
@@ -41,8 +40,8 @@ pub(crate) fn run_rules_counted_with(
 }
 
 /// The outcome of `rule` when it stopped without findings. A check the engine said it does not know is
-/// `NotAvailable`, with `too_old_why` naming the engine by its entry's name (`entry_for`) and its version, the first
-/// of `versions` for the rule's engine (`(version unknown)` when there is none or it is `None`).
+/// `NotAvailable`, with `too_old_why` naming the engine by its rule-file name (`Engine::name`) and its version, the
+/// first of `versions` for the rule's engine (`(version unknown)` when there is none or it is `None`).
 pub(crate) fn stopped(rule: &Rule, stop: Stop, versions: &[EngineVersion]) -> RuleOutcome {
     let (id, engine) = (rule.id.clone(), rule.engine);
     match stop {
@@ -50,7 +49,7 @@ pub(crate) fn stopped(rule: &Rule, stop: Stop, versions: &[EngineVersion]) -> Ru
         Stop::Failed { code, stderr } => RuleOutcome::Failed { rule: id, engine, code, stderr },
         Stop::UnknownCheck { said } => {
             let version = versions.iter().find(|v| v.engine == engine).and_then(|v| v.version.as_deref());
-            let why = too_old_why(entry_for(engine).name, version, &rule.check, &said);
+            let why = too_old_why(engine.name(), version, &rule.check, &said);
             RuleOutcome::NotAvailable { rule: id, engine, why }
         }
     }

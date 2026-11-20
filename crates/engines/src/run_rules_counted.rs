@@ -14,7 +14,8 @@ use std::path::Path;
 /// check; an engine that ran but gave no answer is `Failed`; otherwise `Findings`, empty when clean. Each run's
 /// `raw_chars` is what its engine's check run printed, `None` when that run did not run: summed over the rules it is
 /// the raw output a check read, and its `Some` values count the rules whose engine ran. The version probes are not
-/// counted. report and cli read each run's `rule`, `engine`, `outcome` and `raw_chars`.
+/// counted. cli reads each run's `rule` and `outcome` for the report, which gets only those pairs (`run_check`), and
+/// its `rule`, `engine` and `raw_chars` for the counts (`rule_counts`).
 pub fn run_rules_counted(file: &RuleFile, repo: &Path, only: &[RelPath]) -> Vec<RuleRun> {
     run_rules_versioned(file, repo, only).runs
 }

@@ -16,6 +16,7 @@ mod engine_versions;
 mod entry_for;
 mod findings_from;
 mod host;
+mod no_adapter_why;
 mod parse_failed;
 mod printed_start;
 mod ran;
@@ -52,6 +53,8 @@ mod findings_from_tests;
 mod host_tests;
 #[cfg(test)]
 mod integration;
+#[cfg(test)]
+mod no_adapter_why_tests;
 #[cfg(test)]
 mod parse_failed_tests;
 #[cfg(test)]
