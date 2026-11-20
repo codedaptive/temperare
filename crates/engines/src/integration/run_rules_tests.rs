@@ -1,10 +1,12 @@
-//! ZIT for run_rules.rs (`run_rules_with`): outcomes in rule-file order over mixed engines, findings filled and cut,
-//! absent and Tessera rules not available, garbage output failed, and an unresolvable folder. Integration, not unit:
-//! each test makes and removes a real canonical temp folder for the rule file's repository. The host is a fake and
-//! no engine runs; ruff's output is hand-built.
+//! ZIT for run_rules.rs, through `run_rules_counted_with` with each run read as `run_rules` reads it, (rule, outcome):
+//! outcomes in rule-file order over mixed engines, findings filled and cut, absent and Tessera rules not available,
+//! garbage output failed, and an unresolvable folder. Integration, not unit: each test makes and removes a real
+//! canonical temp folder for the rule file's repository. The host is a fake and no engine runs; ruff's output is
+//! hand-built.
 
 use crate::host::Host;
-use crate::run_rules::run_rules_with;
+use crate::run_rules_counted_with::run_rules_counted_with;
+use crate::RuleRun;
 use procio::{Cmd, Output, ProcError};
 use rules::{Engine, Finding, Kind, RelPath, RuleFile, RuleOutcome, Severity};
 use std::cell::Cell;
@@ -69,9 +71,15 @@ fn run(name: &str, only: &[&str]) -> Vec<(String, RuleOutcome)> {
     let file = RuleFile::parse(TEXT, Path::new("lint")).unwrap();
     let only: Vec<RelPath> = only.iter().map(|path| RelPath::new(path)).collect();
     let on_path = |program: &str| program == "ruff";
-    let got = run_rules_with(&file, &repo, &only, &Host { run: &fake_run, on_path: &on_path });
+    let host = Host { run: &fake_run, on_path: &on_path, raw_chars: &Cell::new(None) };
+    let got = outcomes(run_rules_counted_with(&file, &repo, &only, &host));
     fs::remove_dir_all(&repo).unwrap();
     got
+}
+
+/// Each run as `run_rules` gives it: its rule's id and outcome.
+fn outcomes(runs: Vec<RuleRun>) -> Vec<(String, RuleOutcome)> {
+    runs.into_iter().map(|run| (run.rule, run.outcome)).collect()
 }
 
 fn finding(owner: &str, path: &str, line: u32, col: u32, what: &str) -> Finding {
@@ -144,7 +152,8 @@ fn a_folder_that_cannot_be_resolved_fails_the_available_rules_and_runs_nothing()
         Err(ProcError::NotFound { program: "x".into() })
     };
     let on_path = |program: &str| program == "ruff";
-    let got = run_rules_with(&file, &repo, &[], &Host { run: &count, on_path: &on_path });
+    let host = Host { run: &count, on_path: &on_path, raw_chars: &Cell::new(None) };
+    let got = outcomes(run_rules_counted_with(&file, &repo, &[], &host));
     fs::remove_dir_all(&repo).unwrap();
     assert_eq!(runs.get(), 0);
     let ids: Vec<&str> = got.iter().map(|(id, _)| id.as_str()).collect();

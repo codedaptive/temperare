@@ -1,6 +1,6 @@
 //! ZUT for hits_swiftlint.rs: the command the host is given, findings read from captured output, garbage output, an
-//! unknown rule, a `custom_rules` check refused before anything runs, and an absent swiftlint. The host is a fake;
-//! nothing runs. `DIR` is the folder path the captured fixture's absolute paths start with (see
+//! unknown rule, a `custom_rules` check refused before anything runs, an absent swiftlint, and the characters of the
+//! check run counted into the host. The host is a fake; nothing runs. `DIR` is the folder path the captured fixture's absolute paths start with (see
 //! parse_swiftlint_tests.rs); no folder is read, so it need not exist.
 
 use super::hits_swiftlint;
@@ -8,7 +8,7 @@ use crate::host::Host;
 use crate::types::{Hit, Stop};
 use procio::{Cmd, Output, ProcError};
 use rules::{RelPath, RuleFile};
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
@@ -27,8 +27,27 @@ fn run_rule(text: &str, answer: impl Fn() -> Result<Output, ProcError>) -> (Resu
         answer()
     };
     let on_path = |_: &str| -> bool { panic!("hits_swiftlint looks nothing up on PATH") };
-    let got = hits_swiftlint(&file.rules[0], Path::new(DIR), &Host { run: &run, on_path: &on_path });
+    let got = hits_swiftlint(&file.rules[0], Path::new(DIR), &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) });
     (got, seen.into_inner())
+}
+
+/// `hits_swiftlint` for the one rule in `text`, as `run_rule` runs it; also the count the host holds after it and how
+/// many runs the host was asked for.
+fn run_counted(
+    text: &str,
+    answer: impl Fn() -> Result<Output, ProcError>,
+) -> (Result<Vec<Hit>, Stop>, Option<usize>, usize) {
+    let file = RuleFile::parse(text, Path::new(DIR)).unwrap();
+    let runs = Cell::new(0);
+    let run = |_: &Cmd| {
+        runs.set(runs.get() + 1);
+        answer()
+    };
+    let on_path = |_: &str| -> bool { panic!("hits_swiftlint looks nothing up on PATH") };
+    let raw_chars = Cell::new(None);
+    let host = Host { run: &run, on_path: &on_path, raw_chars: &raw_chars };
+    let got = hits_swiftlint(&file.rules[0], Path::new(DIR), &host);
+    (got, raw_chars.get(), runs.get())
 }
 
 fn captured() -> Result<Output, ProcError> {
@@ -105,4 +124,45 @@ fn custom_rules_check_is_refused_without_running_swiftlint() {
 fn swiftlint_not_found_is_not_available() {
     let (got, _) = run_rule(NO_CONFIG, || Err(ProcError::NotFound { program: "swiftlint".into() }));
     assert_eq!(got, Err(Stop::NotAvailable { why: "swiftlint not found on PATH".to_string() }));
+}
+
+#[test]
+fn the_check_run_counts_once_with_the_characters_of_stdout_and_stderr() {
+    // "[]" is 2 characters; "Done linting: café\n" is 19 characters in 20 bytes.
+    let (got, chars, runs) = run_counted(NO_CONFIG, || {
+        Ok(Output { code: Some(0), stdout: b"[]".to_vec(), stderr: "Done linting: café\n".as_bytes().to_vec() })
+    });
+    assert_eq!(got, Ok(Vec::new()));
+    assert_eq!((chars, runs), (Some(21), 1));
+}
+
+#[test]
+fn an_unknown_rule_failed_after_its_run_still_counts() {
+    // "[\n\n]" is 4 characters; the warning line with its newline is 55.
+    let rules = NO_CONFIG.replace("force_cast", "no_such_rule");
+    let (got, chars, _) = run_counted(&rules, || {
+        Ok(Output {
+            code: Some(0),
+            stdout: b"[\n\n]".to_vec(),
+            stderr: b"warning: 'no_such_rule' is not a valid rule identifier\n".to_vec(),
+        })
+    });
+    assert_eq!(got, Err(Stop::Failed {
+        code: Some(0),
+        stderr: "swiftlint check `no_such_rule` is not a rule this swiftlint knows (warning: 'no_such_rule' is not a valid rule identifier): tm cannot report it; name a rule `swiftlint rules` lists, or a custom rule the rule's config defines".to_string(),
+    }));
+    assert_eq!(chars, Some(59));
+}
+
+#[test]
+fn a_custom_rules_check_refused_before_its_run_counts_nothing() {
+    let rules = NO_CONFIG.replace("force_cast", "custom_rules");
+    let (_, chars, runs) = run_counted(&rules, captured);
+    assert_eq!((chars, runs), (None, 0));
+}
+
+#[test]
+fn swiftlint_not_found_counts_nothing() {
+    let (_, chars, _) = run_counted(NO_CONFIG, || Err(ProcError::NotFound { program: "swiftlint".into() }));
+    assert_eq!(chars, None);
 }
