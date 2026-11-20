@@ -1,8 +1,11 @@
 //! The report's new-only filter against repositories made for these tests.
 
+mod common;
+
 use std::ffi::OsString;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::time::SystemTime;
 
 use report::build_report;
 use rules::{Engine, Exception, Finding, Kind, RelPath, RuleFile, RuleOutcome, Severity};
@@ -102,7 +105,10 @@ fn new_lines_untracked_files_and_nested_repositories_are_kept() {
         finding("test-rule", "b.rs", 1),
         finding("test-rule", "a.rs", 2),
     ];
+    let before = SystemTime::now();
     let report = build_report(&rule_file(&repo.dir, vec![]), outcomes(findings), Some((&repo.dir, &base))).unwrap();
+    let after = SystemTime::now();
+    assert!(report.date == common::utc_date(before) || report.date == common::utc_date(after), "{}", report.date);
     let locations: Vec<_> = report.findings.iter().map(|f| (f.path.as_str(), f.line())).collect();
     assert_eq!(locations, vec![("a.rs", Some(2)), ("b.rs", Some(1)), ("nested/c.rs", Some(7))]);
     assert_eq!(report.counts.findings, 3);
@@ -123,6 +129,7 @@ fn base_filter_precedes_exception_matching() {
     .unwrap();
     assert!(old_only.findings.is_empty());
     assert!(old_only.silenced.is_empty());
+    assert!(old_only.silenced_by_rule.is_empty());
     assert_eq!(old_only.counts.silenced, 0);
 
     let report = build_report(
@@ -134,6 +141,7 @@ fn base_filter_precedes_exception_matching() {
     assert!(report.findings.is_empty());
     assert_eq!(report.counts.findings, 0);
     assert_eq!(report.counts.silenced, 1);
+    assert_eq!(report.silenced_by_rule, vec![report::RuleCount { rule: "new-rule".to_string(), count: 1 }]);
     assert_eq!(report.silenced.len(), 1);
     assert_eq!(report.silenced[0].finding.path.as_str(), "a.rs");
     assert_eq!(report.silenced[0].finding.line(), Some(2));
