@@ -14,7 +14,9 @@ fn exception(rule: &str, path: &str) -> Exception {
 }
 
 fn file(exceptions: Vec<Exception>) -> RuleFile {
-    RuleFile { folder: PathBuf::from("."), kits: Vec::new(), owner: None, rules: Vec::new(), exceptions }
+    let mut f = RuleFile::new(PathBuf::from("."));
+    f.exceptions = exceptions;
+    f
 }
 
 #[test]

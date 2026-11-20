@@ -25,6 +25,16 @@ fn the_rest_take_the_rule_files_defaults() {
 }
 
 #[test]
+fn the_baseline_fields_take_their_empty_values() {
+    let r = Rule::new("no-unwrap", Engine::Clippy, "clippy::unwrap_used");
+    assert_eq!(r.enforces, None);
+    assert_eq!(r.leaves, None);
+    assert!(!r.only_with_base);
+    assert_eq!(r.required_params, Vec::<String>::new());
+    assert_eq!(r.not_applicable, None);
+}
+
+#[test]
 fn the_rule_applies_to_any_path() {
     let r = Rule::new("no-unwrap", Engine::Clippy, "clippy::unwrap_used");
     for file in ["a.rs", "src/lib.rs", "crates/core/tests/x/y.txt", ".github/workflows/ci.yml"] {

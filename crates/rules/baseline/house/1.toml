@@ -1,0 +1,5 @@
+# The baseline set "house", version 1: our own preferences and house rules, not every team's.
+# A rule file takes it with `baseline = ["house@1"]`. Once released, this version is frozen; a change is version 2.
+# No rules yet.
+
+version = 1

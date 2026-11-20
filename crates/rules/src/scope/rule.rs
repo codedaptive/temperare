@@ -24,4 +24,14 @@ pub struct Rule {
     pub fix: String,
     pub params: toml::Table,
     pub scope: Scope,
+    /// The house-rule line or practice the rule enforces.
+    pub enforces: Option<String>,
+    /// What the rule's check does not cover.
+    pub leaves: Option<String>,
+    /// True when the rule reports only what a change adds.
+    pub only_with_base: bool,
+    /// Params the repository must give through an `[[override]]`; only a baseline set's rules have them.
+    pub required_params: Vec<String>,
+    /// Why the rule is not applicable (e.g. a required param not given); None when it applies.
+    pub not_applicable: Option<String>,
 }
