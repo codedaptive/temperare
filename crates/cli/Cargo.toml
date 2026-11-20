@@ -9,6 +9,7 @@ procio = { path = "../procio" }
 rules = { path = "../rules" }
 engines = { path = "../engines" }
 report = { path = "../report" }
+libc = "0.2"
 serde_json = "1"
 toml = "1"
 
