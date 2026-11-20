@@ -13,7 +13,7 @@ use std::time::Duration;
 fn ran_with(cmd: &Cmd, answer: impl Fn() -> Result<Output, ProcError>) -> Result<Output, Stop> {
     let run = |_: &Cmd| answer();
     let on_path = |_: &str| -> bool { panic!("ran looks nothing up on PATH") };
-    ran(cmd, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) })
+    ran(cmd, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None), base: None })
 }
 
 #[test]
@@ -31,7 +31,7 @@ fn the_host_runs_the_cmd_it_is_given() {
         Ok(Output { code: Some(0), stdout: Vec::new(), stderr: Vec::new() })
     };
     let on_path = |_: &str| false;
-    ran(&cmd, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) }).unwrap();
+    ran(&cmd, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None), base: None }).unwrap();
     assert_eq!(seen.into_inner(), Some(cmd));
 }
 

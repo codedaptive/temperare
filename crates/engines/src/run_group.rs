@@ -1,17 +1,16 @@
 //! `run_group`: the rules of one shared group run through one check run, each rule read as if it had run alone.
 
-use crate::engine_hits::engine_hits;
 use crate::entry_for::entry_for;
-use crate::findings_from::findings_from;
 use crate::host::Host;
 use crate::pick_at::pick_at;
 use crate::replayed_run::replayed_run;
-use crate::run_rules_counted_with::stopped;
+use crate::rule_host::rule_host;
+use crate::rule_run_of::rule_run_of;
 use crate::shared_cmd::shared_cmd;
-use crate::types::{EngineVersion, Hit, RuleRun, Stop};
+use crate::types::{EngineVersion, Hit, HitsFn, RuleRun, Stop};
 use crate::union_args::union_args;
 use procio::{Cmd, Output, ProcError};
-use rules::{RelPath, Rule, RuleFile, RuleOutcome};
+use rules::{RelPath, Rule, RuleFile};
 use std::cell::{Cell, RefCell};
 use std::io;
 use std::path::Path;
@@ -19,17 +18,18 @@ use std::path::Path;
 /// The commands already run, each with its result, replayed to every later rule that runs the same one.
 type Seen = RefCell<Vec<(Cmd, Result<Output, ProcError>)>>;
 
-/// One rule's flow: what `engine_hits` gave, and the characters its check run counted (`check_run`), if it read one.
+/// One rule's flow: what `hits` gave, and the characters its check run counted (`check_run`), if it read one.
 type Flowed = (Result<Vec<Hit>, Stop>, Option<usize>);
 
 /// One `RuleRun` per rule of `rules`, in the order given, for rules that pairwise share a run (`shares_with`, which
-/// is not checked here). Every rule goes through its engine's own flow (`engine_hits`) with a host of its own, so its
-/// refusal, params, unknown-check test and reader (which keeps only its own check's hits) apply as when it runs alone;
-/// only that host's `run` is shared. Any other command (clippy's `clippy-driver -W help`, `cargo locate-project`) runs
-/// through `host.run` once per distinct command and is replayed to the rest, in every pass.
+/// is not checked here), none of them refused (`run_rules_listed` settles those first). Every rule goes through its
+/// flow (`hits`, `engine_hits` in production) with a host of its own, made by `rule_host` in both passes, so it keeps
+/// the check's `on_path` and `base`, and its unknown-check test and reader (which keeps only its own check's hits)
+/// apply as when it runs alone; only its `run` is shared. Any other command (clippy's `clippy-driver -W help`,
+/// `cargo locate-project`) runs through `host.run` once per distinct command, replayed to the rest in every pass.
 /// 1. Probe pass: each rule's flow runs until its check run (`pick_at`), which is not run. A rule that stops before
-///    it (engine not available, folder unresolved, check refused, params wrong, a clippy lint group or unlisted lint)
-///    keeps that outcome, with no count, exactly as alone. Only the rules that reach their check run put their check
+///    it (no script in scope, engine not available, folder unresolved, a clippy lint group or unlisted lint) keeps
+///    that outcome, with no count, exactly as alone. Only the rules that reach their check run put their check
 ///    into the shared run, so a check that would stop before running never changes what the run does for the others.
 /// 2. Run pass: each rule that reached runs its flow again; its check run is replaced by one run over the distinct
 ///    checks of those rules (`union_args`, `shared_cmd`), run for real for the first and replayed to the rest.
@@ -43,7 +43,8 @@ type Flowed = (Result<Vec<Hit>, Stop>, Option<usize>);
 ///    real run, counted on the first rule it settles.
 ///
 /// A shared run that gives no output (program not found, timed out) reaches every rule that shares it as `ran`'s
-/// `Stop`, with no count; output no reader can read is each rule's own `Failed`.
+/// `Stop`, with no count; output no reader can read is each rule's own `Failed`. Each rule is settled from its flow by
+/// `rule_run_of`, in either pass, so a flow that ends in `Stop::NoFiles` carries its `no_files` flag.
 pub(crate) fn run_group(
     file: &RuleFile,
     rules: &[&Rule],
@@ -51,22 +52,22 @@ pub(crate) fn run_group(
     only: &[RelPath],
     host: &Host,
     versions: &[EngineVersion],
+    hits: &HitsFn,
 ) -> Vec<RuleRun> {
     let helpers: Seen = RefCell::new(Vec::new());
-    let outcome = |at: usize, got: Result<Vec<Hit>, Stop>| match got {
-        Ok(hits) => RuleOutcome::Findings(findings_from(file, rules[at], hits, only)),
-        Err(stop) => stopped(rules[at], stop, versions),
+    let run_of = |at: usize, got: Result<Vec<Hit>, Stop>, raw_chars: Option<usize>| {
+        (at, rule_run_of(file, rules[at], got, only, versions, raw_chars))
     };
     let mut done = Vec::new();
     let mut pending = Vec::new();
     for (at, rule) in rules.iter().enumerate() {
-        match probed(rule, folder, host, &helpers) {
+        match probed(rule, folder, host, &helpers, hits) {
             (_, true) => pending.push(at),
-            (got, false) => done.push((at, outcome(at, got), None)),
+            (got, false) => done.push(run_of(at, got, None)),
         }
     }
     while !pending.is_empty() {
-        let ran = run_pass(rules, &pending, folder, host, &helpers);
+        let ran = run_pass(rules, &pending, folder, host, &helpers, hits);
         let unknown = |(got, chars): &Flowed| matches!(got, Err(Stop::UnknownCheck { .. })) && chars.is_some();
         let some_unknown = ran.iter().any(unknown);
         let mut chars = ran.iter().find_map(|(_, chars)| *chars);
@@ -76,18 +77,22 @@ pub(crate) fn run_group(
                 rest.push(at);
                 continue;
             }
-            done.push((at, outcome(at, flowed.0), chars.take()));
+            done.push(run_of(at, flowed.0, chars.take()));
         }
         pending = rest;
     }
-    done.sort_by_key(|(at, _, _)| *at);
-    done.into_iter()
-        .map(|(at, outcome, raw_chars)| RuleRun { rule: rules[at].id.clone(), engine: rules[at].engine, outcome, raw_chars })
-        .collect()
+    done.sort_by_key(|(at, _)| *at);
+    done.into_iter().map(|(_, run)| run).collect()
 }
 
 /// The probe flow of `rule`, and whether it reached its check run, which answers as a run that could not start.
-fn probed(rule: &Rule, folder: Result<&Path, &Stop>, host: &Host, helpers: &Seen) -> (Result<Vec<Hit>, Stop>, bool) {
+fn probed(
+    rule: &Rule,
+    folder: Result<&Path, &Stop>,
+    host: &Host,
+    helpers: &Seen,
+    hits: &HitsFn,
+) -> (Result<Vec<Hit>, Stop>, bool) {
     let entry = entry_for(rule.engine);
     let reached = Cell::new(false);
     let run = |cmd: &Cmd| match entry.and_then(|entry| pick_at(entry, &rule.check, cmd)) {
@@ -97,12 +102,19 @@ fn probed(rule: &Rule, folder: Result<&Path, &Stop>, host: &Host, helpers: &Seen
         }
         None => replayed_run(helpers, cmd, cmd, host.run),
     };
-    let (got, _) = flowed(rule, folder, host.on_path, &run);
+    let (got, _) = flowed(rule, folder, host, &run, hits);
     (got, reached.get())
 }
 
 /// The flows of the rules at `pending`, in order, their check runs shared as one run over all their checks.
-fn run_pass(rules: &[&Rule], pending: &[usize], folder: Result<&Path, &Stop>, host: &Host, helpers: &Seen) -> Vec<Flowed> {
+fn run_pass(
+    rules: &[&Rule],
+    pending: &[usize],
+    folder: Result<&Path, &Stop>,
+    host: &Host,
+    helpers: &Seen,
+    hits: &HitsFn,
+) -> Vec<Flowed> {
     let checks: Vec<&str> = pending.iter().map(|at| rules[*at].check.as_str()).collect();
     let shared: Seen = RefCell::new(Vec::new());
     pending
@@ -117,19 +129,21 @@ fn run_pass(rules: &[&Rule], pending: &[usize], folder: Result<&Path, &Stop>, ho
                 }
                 None => replayed_run(helpers, cmd, cmd, host.run),
             };
-            flowed(rule, folder, host.on_path, &run)
+            flowed(rule, folder, host, &run, hits)
         })
         .collect()
 }
 
-/// `engine_hits` for `rule` through a host of its own, with a fresh count.
+/// `hits` for `rule` through a host of its own (`rule_host` of the check's `host`, with `run`), with a fresh
+/// count.
 fn flowed(
     rule: &Rule,
     folder: Result<&Path, &Stop>,
-    on_path: &dyn Fn(&str) -> bool,
+    host: &Host,
     run: &dyn Fn(&Cmd) -> Result<Output, ProcError>,
+    hits: &HitsFn,
 ) -> Flowed {
     let raw_chars = Cell::new(None);
-    let got = engine_hits(rule, folder, &Host { run, on_path, raw_chars: &raw_chars });
+    let got = hits(rule, folder, &rule_host(host, run, &raw_chars));
     (got, raw_chars.get())
 }

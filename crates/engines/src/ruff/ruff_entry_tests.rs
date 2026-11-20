@@ -1,6 +1,6 @@
 //! ZUT for ruff_entry.rs: the command `entry_cmd` builds from `RUFF`, the version read from fixed output, and
 //! `run_plain(&RUFF, ..)` on a fake host: the command the host is given, findings read from captured output, garbage
-//! output, an absent ruff, a refused check, an unknown selector, the characters of the check run counted into the
+//! output, an absent ruff, an unknown selector, the characters of the check run counted into the
 //! host, the `max_complexity` threshold as an inline `--config` after the rule's config, and a threshold or param
 //! refused before anything runs. Nothing runs and nothing is written. `DIR` is the folder path the captured fixture's absolute paths
 //! start with (see parse_ruff_tests.rs); no folder is read, so it need not exist.
@@ -30,7 +30,7 @@ fn run_rule(text: &str, answer: impl Fn() -> Result<Output, ProcError>) -> (Resu
         answer()
     };
     let on_path = |_: &str| -> bool { panic!("ruff's run looks nothing up on PATH") };
-    let host = Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) };
+    let host = Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None), base: None };
     let got = run_plain(&RUFF, &file.rules[0], Path::new(DIR), &host);
     (got, seen.into_inner())
 }
@@ -49,7 +49,7 @@ fn run_counted(
     };
     let on_path = |_: &str| -> bool { panic!("ruff's run looks nothing up on PATH") };
     let raw_chars = Cell::new(None);
-    let got = run_plain(&RUFF, &file.rules[0], Path::new(DIR), &Host { run: &run, on_path: &on_path, raw_chars: &raw_chars });
+    let got = run_plain(&RUFF, &file.rules[0], Path::new(DIR), &Host { run: &run, on_path: &on_path, raw_chars: &raw_chars, base: None });
     (got, raw_chars.get(), runs.get())
 }
 
@@ -170,22 +170,6 @@ fn ruff_not_found_is_not_available() {
 }
 
 #[test]
-fn d1_ruff_named_category_is_refused_without_running() {
-    let rules = "version = 1\n[[rule]]\nid = \"r\"\nengine = \"ruff\"\ncheck = \"flake8-bugbear\"\nfix = \"f\"\n";
-    let (got, seen) = run_rule(rules, captured);
-    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "ruff check `flake8-bugbear`: `flake8-bugbear` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects".to_string() }));
-    assert!(seen.is_none());
-}
-
-#[test]
-fn d1_ruff_mixed_invalid_selector_is_refused_without_running() {
-    let rules = "version = 1\n[[rule]]\nid = \"r\"\nengine = \"ruff\"\ncheck = \"E7,correctness\"\nfix = \"f\"\n";
-    let (got, seen) = run_rule(rules, captured);
-    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "ruff check `E7,correctness`: `correctness` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects".to_string() }));
-    assert!(seen.is_none());
-}
-
-#[test]
 fn the_check_run_counts_once_with_the_characters_of_stdout_and_stderr() {
     // "[]" is 2 characters; "warning: café\n" is 14 characters in 15 bytes.
     let (got, chars, runs) = run_counted(NO_CONFIG, || {
@@ -203,13 +187,6 @@ fn a_run_failed_on_its_output_still_counts() {
     });
     assert_eq!(got, Err(Stop::Failed { code: Some(2), stderr: "ruff failed: bad config".to_string() }));
     assert_eq!(chars, Some(30));
-}
-
-#[test]
-fn a_check_refused_before_its_run_counts_nothing() {
-    let rules = "version = 1\n[[rule]]\nid = \"r\"\nengine = \"ruff\"\ncheck = \"flake8-bugbear\"\nfix = \"f\"\n";
-    let (_, chars, runs) = run_counted(rules, captured);
-    assert_eq!((chars, runs), (None, 0));
 }
 
 #[test]

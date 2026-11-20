@@ -1,4 +1,4 @@
-//! ZUT for stop.rs: plain data; equality covers the variant and every field, `UnknownCheck` included.
+//! ZUT for stop.rs: plain data; equality covers the variant and every field, `UnknownCheck`, `NotListed` and `NoFiles` included.
 
 use super::Stop;
 
@@ -24,4 +24,26 @@ fn an_unknown_check_compares_by_what_the_engine_said_and_is_no_other_stop() {
     assert_ne!(unknown("Unknown rule selector: `ZZZ999`"), unknown("Unknown rule selector: `E711`"));
     assert_ne!(unknown("x"), Stop::NotAvailable { why: "x".to_string() });
     assert_ne!(unknown("x"), failed(None, "x"));
+}
+
+#[test]
+fn no_files_compares_by_its_reason_and_is_no_other_stop() {
+    let none = |why: &str| Stop::NoFiles { why: why.to_string() };
+    assert_eq!(none("no file its engine checks"), none("no file its engine checks"));
+    assert_ne!(none("no file its engine checks"), none("its paths match no file in the rule file's folder"));
+    assert_ne!(none("x"), Stop::NotAvailable { why: "x".to_string() });
+    assert_ne!(none("x"), Stop::UnknownCheck { said: "x".to_string() });
+    assert_ne!(none("x"), failed(None, "x"));
+}
+
+#[test]
+fn not_listed_compares_by_what_it_said_and_is_no_other_stop() {
+    let unlisted = |said: &str| Stop::NotListed { said: said.to_string() };
+    let sc9999 = "SC9999 is not in temperare's list of shellcheck codes (taken from shellcheck 9.9.9)";
+    assert_eq!(unlisted(sc9999), unlisted(sc9999));
+    assert_ne!(unlisted(sc9999), unlisted("SC9998 is not in temperare's list of shellcheck codes (taken from shellcheck 9.9.9)"));
+    assert_ne!(unlisted("x"), Stop::UnknownCheck { said: "x".to_string() });
+    assert_ne!(unlisted("x"), Stop::NotAvailable { why: "x".to_string() });
+    assert_ne!(unlisted("x"), Stop::NoFiles { why: "x".to_string() });
+    assert_ne!(unlisted("x"), failed(None, "x"));
 }

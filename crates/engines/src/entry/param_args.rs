@@ -1,6 +1,6 @@
 //! `param_args`: a rule's params as the arguments its engine takes them as.
 
-use super::{Entry, ParamArg, Params};
+use super::{Entry, ParamArg, Params, Threshold};
 use crate::ParamError;
 use serde::Serialize;
 use serde_json::{Map, Value};
@@ -12,25 +12,35 @@ use std::ffi::OsString;
 /// must serialize to an object (else `Bad` named `params`). A key neither list names is `Bad` rather than ignored,
 /// since a misspelt name would otherwise drop what the rule asked for: its why is `a <name> rule reads only the
 /// <names> param` (every arg name, then every threshold name), or `a <name> rule takes no params` when both lists
-/// are empty. A listed param that is not a list of strings is `Bad`. Every other `Params` kind gives no arguments.
+/// are empty. A listed param that is not a list of strings is `Bad`. For `Params::Flow`, the params must be an
+/// object whose keys are all in its `names` (else `Bad` with the same why, over `names`), then its `check` decides,
+/// its error returned as it is; it gives no arguments. `Params::Template` gives no arguments whatever the params.
 pub(crate) fn param_args<P: Serialize>(entry: &Entry, params: &P) -> Result<Vec<OsString>, ParamError> {
-    let (list, thresholds) = match entry.params {
-        Params::Args(list) => (list, &[][..]),
-        Params::Thresholds { args, thresholds, .. } => (args, thresholds),
-        Params::Config(_) | Params::Template => return Ok(Vec::new()),
+    let (list, names, check) = match entry.params {
+        Params::Args(list) => (list, names_of(list, &[]), None),
+        Params::Thresholds { args, thresholds, .. } => (args, names_of(args, thresholds), None),
+        Params::Flow { names, check } => (&[][..], names.to_vec(), Some(check)),
+        Params::Template => return Ok(Vec::new()),
     };
-    let names: Vec<&str> = list.iter().map(|arg| arg.name).chain(thresholds.iter().map(|t| t.name)).collect();
     let Ok(Value::Object(params)) = serde_json::to_value(params) else {
         return Err(bad("params", "not a table of named params"));
     };
     if let Some(key) = params.keys().find(|key| !names.contains(&key.as_str())) {
         return Err(bad(key, &unlisted_why(entry.name, &names)));
     }
+    if let Some(check) = check {
+        check(&params)?;
+    }
     let mut args = Vec::new();
     for arg in list {
         args.extend(items(&params, arg)?);
     }
     Ok(args)
+}
+
+/// Every arg name, then every threshold name.
+fn names_of(args: &[ParamArg], thresholds: &[Threshold]) -> Vec<&'static str> {
+    args.iter().map(|arg| arg.name).chain(thresholds.iter().map(|threshold| threshold.name)).collect()
 }
 
 /// The arguments of one listed param.

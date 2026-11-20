@@ -1,6 +1,7 @@
 //! ZUT for run_rules_counted_with.rs's `stopped`: a check the engine said it does not know becomes `NotAvailable`
 //! with a why naming the engine, its version from the versions given (`(version unknown)` without one) and the check;
-//! the other stops keep their kind. Nothing runs in these. The unknown-check path is that of clippy, swiftlint and ruff, the
+//! a check not in temperare's list of its engine's codes becomes `NotAvailable` with the engine and its version before
+//! what it said; `NoFiles` is no findings and the other stops keep their kind. No engine runs in these. The unknown-check path is that of clippy, swiftlint and ruff, the
 //! engines that can say a check is unknown: one test reaches it through `engine_hits` with swiftlint's output on a
 //! fake host, the others hand `stopped` a made-up stop for ruff and ast-grep. ast-grep has no such path itself: its
 //! check is the repository's YAML, and a YAML ast-grep rejects stays `Failed`.
@@ -31,7 +32,7 @@ fn a_swiftlint_rule_swiftlint_does_not_know_is_not_available_naming_engine_and_c
             stderr: b"warning: 'no_such_rule' is not a valid rule identifier\nValid rule identifiers:\nforce_cast\n".to_vec(),
         })
     };
-    let host = Host { run: &run, on_path: &|_| true, raw_chars: &Cell::new(None) };
+    let host = Host { run: &run, on_path: &|_| true, raw_chars: &Cell::new(None), base: None };
     let stop = engine_hits(&rule, Ok(Path::new(FOLDER)), &host).unwrap_err();
     assert_eq!(stopped(&rule, stop, &[]), RuleOutcome::NotAvailable {
         rule: "r".to_string(),
@@ -90,3 +91,41 @@ fn an_engine_listed_with_no_version_is_version_unknown() {
     });
 }
 
+#[test]
+fn no_files_is_no_findings() {
+    let rule = rule("shellcheck", "SC2086");
+    let got = stopped(&rule, Stop::NoFiles { why: "no file its engine checks".to_string() }, &[]);
+    assert_eq!(got, RuleOutcome::Findings(vec![]));
+}
+
+fn not_listed() -> Stop {
+    Stop::NotListed { said: "SC9999 is not in temperare's list of shellcheck codes (taken from shellcheck 9.9.9)".to_string() }
+}
+
+fn not_available(why: &str) -> RuleOutcome {
+    RuleOutcome::NotAvailable { rule: "r".to_string(), engine: Engine::ShellCheck, why: why.to_string() }
+}
+
+#[test]
+fn a_check_not_listed_names_its_engines_version_before_what_it_said() {
+    let versions = [EngineVersion { engine: Engine::ShellCheck, version: Some("0.11.0".to_string()) }];
+    let got = stopped(&rule("shellcheck", "SC9999"), not_listed(), &versions);
+    let why = "shellcheck 0.11.0: SC9999 is not in temperare's list of shellcheck codes (taken from shellcheck 9.9.9)";
+    assert_eq!(got, not_available(why));
+}
+
+#[test]
+fn a_check_not_listed_with_no_version_read_is_version_unknown() {
+    let versions = [EngineVersion { engine: Engine::ShellCheck, version: None }];
+    let got = stopped(&rule("shellcheck", "SC9999"), not_listed(), &versions);
+    let why = "shellcheck (version unknown): SC9999 is not in temperare's list of shellcheck codes (taken from shellcheck 9.9.9)";
+    assert_eq!(got, not_available(why));
+}
+
+#[test]
+fn a_check_not_listed_never_takes_another_engines_version() {
+    let versions = [EngineVersion { engine: Engine::Ruff, version: Some("1.2.3".to_string()) }];
+    let got = stopped(&rule("shellcheck", "SC9999"), not_listed(), &versions);
+    let why = "shellcheck (version unknown): SC9999 is not in temperare's list of shellcheck codes (taken from shellcheck 9.9.9)";
+    assert_eq!(got, not_available(why));
+}

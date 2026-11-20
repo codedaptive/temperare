@@ -54,7 +54,7 @@ fn run_rule(
         answer()
     };
     let on_path = |_: &str| -> bool { panic!("hits_ast_grep looks nothing up on PATH") };
-    let got = hits_ast_grep(&AST_GREP, &file.rules[0], &folder, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) });
+    let got = hits_ast_grep(&AST_GREP, &file.rules[0], &folder, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None), base: None });
     fs::remove_dir_all(&folder).unwrap();
     (got, folder, seen.into_inner())
 }
@@ -77,7 +77,7 @@ fn counted_ast_grep(
         runs.set(runs.get() + 1);
         answer()
     };
-    let host = Host { run: &run, on_path: &|_| panic!("unexpected PATH lookup"), raw_chars: &raw_chars };
+    let host = Host { run: &run, on_path: &|_| panic!("unexpected PATH lookup"), raw_chars: &raw_chars, base: None };
     let got = hits_ast_grep(&AST_GREP, &file.rules[0], &folder, &host);
     fs::remove_dir_all(&folder).unwrap();
     (got, raw_chars.get(), runs.get())
@@ -182,44 +182,31 @@ fn a_rule_yaml_that_cannot_be_read_is_failed_and_nothing_runs() {
     }
 }
 
-fn outside_case(test: &str, make_check: impl FnOnce(&Path) -> String) -> (Result<Vec<Hit>, Stop>, String) {
+fn outside_case(test: &str, make_check: impl FnOnce(&Path) -> String) -> Result<Vec<Hit>, Stop> {
     let root = std::env::temp_dir().join(format!("engines-zit-{}-ast-grep-reject-{test}", std::process::id()));
     fs::create_dir(&root).unwrap();
     let root = fs::canonicalize(root).unwrap();
     let folder = root.join("rules");
     fs::create_dir(&folder).unwrap();
     fs::write(root.join("outside.yml"), YAML).unwrap();
-    fs::write(folder.join("inside.yml"), YAML).unwrap();
     let check = make_check(&folder);
     let file = RuleFile::parse(&rule_text(&check, ""), &folder).unwrap();
     let run = |_: &Cmd| never_run();
     let on_path = |_: &str| -> bool { panic!("hits_ast_grep looks nothing up on PATH") };
-    let got = hits_ast_grep(&AST_GREP, &file.rules[0], &folder, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) });
+    let got = hits_ast_grep(&AST_GREP, &file.rules[0], &folder, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None), base: None });
     fs::remove_dir_all(&root).unwrap();
-    (got, check)
-}
-
-#[test]
-fn refuses_absolute_check_outside_folder() {
-    let (got, check) = outside_case("absolute-outside", |folder| folder.parent().unwrap().join("outside.yml").to_str().unwrap().to_string());
-    assert_eq!(got, Err(Stop::Failed { code: None, stderr: format!("ast-grep rule {check} is an absolute path: a check names a file inside the rule file's folder") }));
-}
-
-#[test]
-fn refuses_absolute_check_inside_folder() {
-    let (got, check) = outside_case("absolute-inside", |folder| folder.join("inside.yml").to_str().unwrap().to_string());
-    assert_eq!(got, Err(Stop::Failed { code: None, stderr: format!("ast-grep rule {check} is an absolute path: a check names a file inside the rule file's folder") }));
+    got
 }
 
 #[test]
 fn refuses_parent_check_outside_folder() {
-    let (got, _) = outside_case("parent", |_| "../outside.yml".to_string());
+    let got = outside_case("parent", |_| "../outside.yml".to_string());
     assert_eq!(got, Err(Stop::Failed { code: None, stderr: "ast-grep rule ../outside.yml is outside the rule file's folder".to_string() }));
 }
 
 #[test]
 fn refuses_symlink_check_outside_folder() {
-    let (got, _) = outside_case("symlink", |folder| {
+    let got = outside_case("symlink", |folder| {
         std::os::unix::fs::symlink(folder.parent().unwrap().join("outside.yml"), folder.join("link.yml")).unwrap();
         "link.yml".to_string()
     });

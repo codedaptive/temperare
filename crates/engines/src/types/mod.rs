@@ -1,15 +1,17 @@
-//! The adapters' shared value types: an engine's availability, one hit, the parse and param errors, why a rule
-//! stops without findings, one rule as it was run, one engine's version, and a whole check's runs with its engines'
-//! versions.
+//! The adapters' shared value types: an engine's availability, one hit, one rule's flow as a function, the parse and
+//! param errors, why a rule stops without findings, one rule as it was run (flagged when no file it checks exists),
+//! one engine's version, and a whole check's runs with its engines' versions.
 
 mod availability;
 mod checked_rules;
 mod engine_version;
 mod hit;
+mod hits_fn;
 mod param_error;
 mod parse_error;
 mod rule_run;
 mod rule_run_new;
+mod rule_run_with_no_files;
 mod stop;
 
 #[cfg(test)]
@@ -29,12 +31,15 @@ mod rule_run_new_tests;
 #[cfg(test)]
 mod rule_run_tests;
 #[cfg(test)]
+mod rule_run_with_no_files_tests;
+#[cfg(test)]
 mod stop_tests;
 
 pub use availability::Availability;
 pub use checked_rules::CheckedRules;
 pub use engine_version::EngineVersion;
 pub use hit::Hit;
+pub(crate) use hits_fn::HitsFn;
 pub use param_error::ParamError;
 pub use parse_error::ParseError;
 pub use rule_run::RuleRun;

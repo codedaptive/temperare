@@ -2,8 +2,7 @@
 
 use super::{EngineVersion, RuleRun};
 
-/// One check of a rule file: report and cli read `runs` for each rule's outcome and count, and `engines` as the
-/// report's `engines: [{engine, version}]`.
+/// One check of a rule file: each rule's run and each engine's version.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CheckedRules {
     /// Each rule's run, in rule-file order.

@@ -3,7 +3,7 @@
 
 use crate::host::Host;
 use crate::run_group::run_group;
-use crate::types::{EngineVersion, RuleRun};
+use crate::types::{EngineVersion, RuleRun, Stop};
 use procio::{Cmd, Output, ProcError};
 use rules::{Engine, Finding, Kind, RelPath, Rule, RuleFile, RuleOutcome, Severity};
 use std::cell::{Cell, RefCell};
@@ -14,10 +14,10 @@ const FOLDER: &str = "/engines-zut-run-group";
 const RULES: &str = r#"version = 1
 owner = "repo"
 [[rule]]
-id = "refused"
+id = "stopped"
 engine = "ruff"
-check = "flake8-bugbear"
-fix = "r"
+check = "B006"
+fix = "s"
 [[rule]]
 id = "none-compare"
 engine = "ruff"
@@ -69,9 +69,9 @@ fn grouped(ids: &[&str], run: &dyn Fn(&Cmd) -> Result<Output, ProcError>, ruff: 
     let (file, rules) = group(ids);
     let rules: Vec<&Rule> = rules.iter().collect();
     let on_path = move |program: &str| ruff && program == "ruff";
-    let host = Host { run, on_path: &on_path, raw_chars: &Cell::new(Some(999)) };
+    let host = Host { run, on_path: &on_path, raw_chars: &Cell::new(Some(999)), base: None };
     let versions = [EngineVersion { engine: Engine::Ruff, version: Some("0.17.4".into()) }];
-    run_group(&file, &rules, Ok(Path::new(FOLDER)), &[], &host, &versions)
+    run_group(&file, &rules, Ok(Path::new(FOLDER)), &[], &host, &versions, &crate::engine_hits::engine_hits)
 }
 
 fn finding(rule: &str, path: &str, (line, col): (u32, u32), what: &str, fix: &str) -> Finding {
@@ -82,7 +82,7 @@ fn finding(rule: &str, path: &str, (line, col): (u32, u32), what: &str, fix: &st
 }
 
 fn rule_run(rule: &str, outcome: RuleOutcome, raw_chars: Option<usize>) -> RuleRun {
-    RuleRun { rule: rule.into(), engine: Engine::Ruff, outcome, raw_chars }
+    RuleRun::new(rule.into(), Engine::Ruff, outcome, raw_chars)
 }
 
 #[test]
@@ -153,6 +153,9 @@ fn an_unknown_check_falls_on_its_rule_and_the_rest_run_again_without_it() {
     assert_eq!(ran.into_inner(), vec!["--select=E711,ZZZ999", "--select=E711"]);
 }
 
+/// A rule whose flow stops before its check run (here a `hits` that fails `stopped` and gives the rest to
+/// `engine_hits`) keeps its `Failed` with no count, its check stays out of the shared run, and the run's count goes on
+/// the first rule that ran.
 #[test]
 fn a_rule_stopped_before_its_run_stays_out_of_it_and_the_count_goes_on_the_first_rule_run() {
     let ran = RefCell::new(Vec::new());
@@ -160,10 +163,18 @@ fn a_rule_stopped_before_its_run_stays_out_of_it_and_the_count_goes_on_the_first
         ran.borrow_mut().push(selects(cmd));
         ok(1, BOTH, "")
     };
-    let got = grouped(&["refused", "none-compare", "unused"], &run, true);
-    let refusal = "ruff check `flake8-bugbear`: `flake8-bugbear` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects";
+    let hits = |rule: &Rule, folder: Result<&Path, &Stop>, host: &Host| match rule.id.as_str() {
+        "stopped" => Err(Stop::Failed { code: None, stderr: "stopped before its run".into() }),
+        _ => crate::engine_hits::engine_hits(rule, folder, host),
+    };
+    let (file, rules) = group(&["stopped", "none-compare", "unused"]);
+    let rules: Vec<&Rule> = rules.iter().collect();
+    let host = Host { run: &run, on_path: &|program| program == "ruff", raw_chars: &Cell::new(Some(999)), base: None };
+    let versions = [EngineVersion { engine: Engine::Ruff, version: Some("0.17.4".into()) }];
+    let got = run_group(&file, &rules, Ok(Path::new(FOLDER)), &[], &host, &versions, &hits);
+    let stopped = RuleOutcome::Failed { rule: "stopped".into(), engine: Engine::Ruff, code: None, stderr: "stopped before its run".into() };
     assert_eq!(got, vec![
-        rule_run("refused", RuleOutcome::Failed { rule: "refused".into(), engine: Engine::Ruff, code: None, stderr: refusal.into() }, None),
+        rule_run("stopped", stopped, None),
         rule_run("none-compare", RuleOutcome::Findings(vec![finding("none-compare", "a.py", (1, 4), "none", "f")]), Some(262)),
         rule_run("unused", RuleOutcome::Findings(vec![finding("unused", "src/b.py", (3, 8), "unused b", "g")]), None),
     ]);

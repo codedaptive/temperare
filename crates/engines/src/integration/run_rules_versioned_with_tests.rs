@@ -1,7 +1,9 @@
 //! ZIT for run_rules_versioned_with.rs: the engines' versions probed once each before the rules run, the probes not
 //! counted in any run, and a too-old rule's why naming the version read. The two ruff rules share a run that ruff
 //! fails on the unknown selector, so `too-old` counts that run and `clean` the rerun without it. The host is fake, so
-//! no engine runs; the rule file's folder is `/`, which always resolves.
+//! no engine runs; the rule file's folder is `/`, which always resolves. A ShellCheck code absent from the pending
+//! list also uses the single version probe, in a throwaway git repository the test makes and removes, holding one
+//! script, since its scripts are listed before the code is looked up in the list.
 
 use crate::host::Host;
 use crate::run_rules_versioned_with::run_rules_versioned_with;
@@ -9,6 +11,7 @@ use crate::types::{CheckedRules, EngineVersion, RuleRun};
 use procio::{Cmd, Output, ProcError};
 use rules::{Engine, RuleFile, RuleOutcome};
 use std::cell::{Cell, RefCell};
+use std::fs;
 use std::path::Path;
 
 const RULES: &str = r#"version = 1
@@ -56,36 +59,36 @@ fn versions_are_probed_once_uncounted_and_name_the_too_old_check() {
             panic!("unexpected command: {cmd:?}")
         }
     };
-    let host = Host { run: &run, on_path: &|program| program == "ruff", raw_chars: &Cell::new(None) };
+    let host = Host { run: &run, on_path: &|program| program == "ruff", raw_chars: &Cell::new(None), base: None };
     let got = run_rules_versioned_with(&file, Path::new("/"), &[], &host);
     assert_eq!(got, CheckedRules {
         runs: vec![
-            RuleRun {
-                rule: "clean".into(),
-                engine: Engine::Ruff,
-                outcome: RuleOutcome::Findings(vec![]),
-                raw_chars: Some(2),
-            },
-            RuleRun {
-                rule: "too-old".into(),
-                engine: Engine::Ruff,
-                outcome: RuleOutcome::NotAvailable {
+            RuleRun::new(
+                "clean".into(),
+                Engine::Ruff,
+                RuleOutcome::Findings(vec![]),
+                Some(2),
+            ),
+            RuleRun::new(
+                "too-old".into(),
+                Engine::Ruff,
+                RuleOutcome::NotAvailable {
                     rule: "too-old".into(),
                     engine: Engine::Ruff,
                     why: "ruff 1.2.3 does not know the check `ZZZ999`: Cause: Unknown rule selector `ZZZ999` in `select` from the CLI".into(),
                 },
-                raw_chars: Some(64),
-            },
-            RuleRun {
-                rule: "slop".into(),
-                engine: Engine::Tessera,
-                outcome: RuleOutcome::NotAvailable {
+                Some(64),
+            ),
+            RuleRun::new(
+                "slop".into(),
+                Engine::Tessera,
+                RuleOutcome::NotAvailable {
                     rule: "slop".into(),
                     engine: Engine::Tessera,
                     why: crate::entry_for(Engine::Tessera).unwrap().never.unwrap().into(),
                 },
-                raw_chars: None,
-            },
+                None,
+            ),
         ],
         engines: vec![
             EngineVersion { engine: Engine::Ruff, version: Some("1.2.3".into()) },
@@ -100,11 +103,48 @@ fn versions_are_probed_once_uncounted_and_name_the_too_old_check() {
 fn an_unresolved_folder_probes_nothing_and_fails_the_runs() {
     let file = RuleFile::parse(RULES, Path::new("no/such/engines-zut-folder")).unwrap();
     let run = |cmd: &Cmd| -> Result<Output, ProcError> { panic!("nothing may run: {cmd:?}") };
-    let host = Host { run: &run, on_path: &|_| true, raw_chars: &Cell::new(None) };
+    let host = Host { run: &run, on_path: &|_| true, raw_chars: &Cell::new(None), base: None };
     let got = run_rules_versioned_with(&file, Path::new("/"), &[], &host);
     assert_eq!(got.engines, vec![
         EngineVersion { engine: Engine::Ruff, version: None },
         EngineVersion { engine: Engine::Tessera, version: None },
     ]);
     assert!(matches!(got.runs[0].outcome, RuleOutcome::Failed { code: None, .. }), "{:?}", got.runs[0]);
+}
+
+#[test]
+fn shellcheck_unlisted_code_uses_one_version_probe() {
+    let root = std::env::temp_dir().join(format!("engines-zit-{}-shellcheck-unlisted", std::process::id()));
+    fs::create_dir(&root).unwrap();
+    let repo = fs::canonicalize(root).unwrap();
+    let init = procio::run(&Cmd { args: vec!["init".into(), "-q".into()], cwd: Some(repo.clone()), ..Cmd::new("git") });
+    assert_eq!(init.unwrap().code, Some(0));
+    fs::write(repo.join("quote.sh"), "#!/bin/sh\necho $1\n").unwrap();
+    let file = RuleFile::parse(r#"version = 1
+[[rule]]
+id = "quote"
+engine = "shellcheck"
+check = "SC2086"
+fix = "f"
+"#, Path::new(".")).unwrap();
+    let probes = Cell::new(0);
+    let run = |cmd: &Cmd| {
+        if cmd.program != "shellcheck" || cmd.args != vec!["--version"] {
+            panic!("unexpected command: {cmd:?}");
+        }
+        probes.set(probes.get() + 1);
+        Ok(Output { code: Some(0), stdout: include_bytes!("../shellcheck/fixtures/version.txt").to_vec(), stderr: vec![] })
+    };
+    let host = Host { run: &run, on_path: &|program| program == "shellcheck", raw_chars: &Cell::new(None), base: None };
+    let got = run_rules_versioned_with(&file, &repo, &[], &host);
+    fs::remove_dir_all(&repo).unwrap();
+    assert_eq!(probes.get(), 1);
+    assert_eq!(got, CheckedRules {
+        runs: vec![RuleRun::new("quote".into(), Engine::ShellCheck, RuleOutcome::NotAvailable {
+            rule: "quote".into(),
+            engine: Engine::ShellCheck,
+            why: "shellcheck 0.11.0: SC2086 is not in temperare's list of shellcheck codes (taken from shellcheck pending)".into(),
+        }, None)],
+        engines: vec![EngineVersion { engine: Engine::ShellCheck, version: Some("0.11.0".into()) }],
+    });
 }

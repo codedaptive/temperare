@@ -1,6 +1,6 @@
 //! `CLIPPY`: the clippy engine as an entry.
 
-use super::{hits_clippy, parse_clippy};
+use super::{clippy_refusal, hits_clippy, parse_clippy};
 use crate::entry::{version_word, Entry, ParamArg, Params, Pick, Reach, Threshold, VersionProbe};
 use rules::Engine;
 
@@ -11,7 +11,8 @@ use rules::Engine;
 /// by default; each `--allow`, one per item of the rule's `allow` param, comes after it because the later flag wins,
 /// so an allowed lint stays off even when the check (`warnings`, say) covers it. Each lint is joined to its flag with
 /// `=` so a value beginning with `-` is read as the lint name, never as an option. Clippy is available only when PATH
-/// holds `cargo-clippy`, which `cargo clippy` runs, and `clippy-driver`, which the flow runs for `-W help`.
+/// holds `cargo-clippy`, which `cargo clippy` runs, and `clippy-driver`, which the flow runs for `-W help`. A
+/// `rustdoc::` check is refused (`clippy_refusal`) before any flow: clippy never runs rustdoc lints.
 ///
 /// The `max_nesting` param, read only with check `clippy::excessive_nesting` (a `-` in the rule's check reads as `_`),
 /// is a whole number from 1 to 1000. tm writes `excessive-nesting-threshold = <n>` as `clippy.toml` into a temporary
@@ -40,7 +41,7 @@ pub static CLIPPY: Entry = Entry {
     config: None,
     after: &[],
     version: Some(VersionProbe { args: &["clippy", "--version"], read: version_word }),
-    refuse: |_| None,
+    refuse: clippy_refusal,
     unknown: |_, _| None,
     read: parse_clippy,
     run: hits_clippy,

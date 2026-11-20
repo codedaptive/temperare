@@ -30,9 +30,9 @@ fix = "f"
 "#;
 
 #[test]
-fn run_rules_versioned_reports_engines_and_preserves_counted_runs() {
+fn run_rules_versioned_reports_engines() {
     let root = std::env::temp_dir().join(format!(
-        "engines-zit-{}-run_rules_versioned_reports_engines_and_preserves_counted_runs",
+        "engines-zit-{}-run_rules_versioned_reports_engines",
         std::process::id()
     ));
     fs::create_dir(&root).unwrap();
@@ -49,7 +49,6 @@ fn run_rules_versioned_reports_engines_and_preserves_counted_runs() {
     let ruff_output = probe("ruff", "--version");
     let swiftlint_output = probe("swiftlint", "version");
     let got: crate::CheckedRules = crate::run_rules_versioned(&file, &repo, &[]);
-    let counted = crate::run_rules_counted(&file, &repo, &[]);
     fs::remove_dir_all(&repo).unwrap();
 
     let version = |output: Option<Output>, word: usize| -> Option<String> {
@@ -65,7 +64,6 @@ fn run_rules_versioned_reports_engines_and_preserves_counted_runs() {
         crate::EngineVersion { engine: Engine::Tessera, version: None },
         crate::EngineVersion { engine: Engine::SwiftLint, version: swiftlint_version },
     ]);
-    assert_eq!(got.runs, counted);
     assert_eq!(got.runs.len(), 4);
     match ruff_version {
         Some(version) => {

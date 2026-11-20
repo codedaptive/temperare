@@ -29,7 +29,7 @@ fn run_with(entry: &Entry, see: &dyn Fn(&Cmd)) {
         see(cmd);
         Ok(Output { code: Some(0), stdout: Vec::new(), stderr: Vec::new() })
     };
-    let host = Host { run: &run, on_path: &|_| true, raw_chars: &Cell::new(None) };
+    let host = Host { run: &run, on_path: &|_| true, raw_chars: &Cell::new(None), base: None };
     assert_eq!(run_plain(entry, &rule(), Path::new(FOLDER), &host), Ok(Vec::new()));
 }
 

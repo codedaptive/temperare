@@ -1,8 +1,8 @@
 //! ZUT for swiftlint_entry.rs: the command `entry_cmd` builds from `SWIFTLINT`, the version read from fixed output,
 //! and `run_plain(&SWIFTLINT, ..)` on a fake host: the command the host is given, findings read from captured output,
-//! garbage output, an unknown rule, a `custom_rules` check and a rule with an unknown param or a refused threshold
-//! refused before anything runs, an absent swiftlint, the characters of the check run counted into the host, and
-//! the text each threshold sets. Nothing runs and nothing is written; a threshold run writes its temporary config, so
+//! garbage output, an unknown rule, a rule with an unknown param or a refused threshold refused before anything
+//! runs, an absent swiftlint, the characters of the check run counted into the host, and the text each threshold sets.
+//! Nothing runs and nothing is written; a threshold run writes its temporary config, so
 //! it is the ZIT's (integration/swiftlint_threshold_tests.rs). `DIR` is the folder
 //! path the captured fixture's absolute paths start with (see parse_swiftlint_tests.rs); no folder is read, so it
 //! need not exist.
@@ -33,7 +33,7 @@ fn run_rule(text: &str, answer: impl Fn() -> Result<Output, ProcError>) -> (Resu
         answer()
     };
     let on_path = |_: &str| -> bool { panic!("swiftlint's run looks nothing up on PATH") };
-    let host = Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) };
+    let host = Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None), base: None };
     let got = run_plain(&SWIFTLINT, &file.rules[0], Path::new(DIR), &host);
     (got, seen.into_inner())
 }
@@ -52,7 +52,7 @@ fn run_counted(
     };
     let on_path = |_: &str| -> bool { panic!("swiftlint's run looks nothing up on PATH") };
     let raw_chars = Cell::new(None);
-    let host = Host { run: &run, on_path: &on_path, raw_chars: &raw_chars };
+    let host = Host { run: &run, on_path: &on_path, raw_chars: &raw_chars, base: None };
     let got = run_plain(&SWIFTLINT, &file.rules[0], Path::new(DIR), &host);
     (got, raw_chars.get(), runs.get())
 }
@@ -166,14 +166,6 @@ fn a_warning_about_another_id_is_left_to_the_reader() {
 }
 
 #[test]
-fn custom_rules_check_is_refused_without_running_swiftlint() {
-    let rules = NO_CONFIG.replace("force_cast", "custom_rules");
-    let (got, seen) = run_rule(&rules, || Ok(Output { code: Some(0), stdout: b"[]".to_vec(), stderr: Vec::new() }));
-    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "swiftlint check `custom_rules` names no rule swiftlint runs under --only-rule: name the custom rule's own identifier".to_string() }));
-    assert!(seen.is_none());
-}
-
-#[test]
 fn swiftlint_not_found_is_not_available() {
     let (got, _) = run_rule(NO_CONFIG, || Err(ProcError::NotFound { program: "swiftlint".into() }));
     assert_eq!(got, Err(Stop::NotAvailable { why: "swiftlint not found on PATH".to_string() }));
@@ -202,13 +194,6 @@ fn an_unknown_rule_stopped_after_its_run_still_counts() {
     });
     assert_eq!(got, Err(Stop::UnknownCheck { said: UNKNOWN_SAID.to_string() }));
     assert_eq!(chars, Some(59));
-}
-
-#[test]
-fn a_custom_rules_check_refused_before_its_run_counts_nothing() {
-    let rules = NO_CONFIG.replace("force_cast", "custom_rules");
-    let (_, chars, runs) = run_counted(&rules, captured);
-    assert_eq!((chars, runs), (None, 0));
 }
 
 #[test]

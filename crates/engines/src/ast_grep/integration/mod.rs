@@ -1,5 +1,8 @@
 //! The ast-grep adapter's in-crate zone integration tests (real filesystem).
 
+mod added_in_folder_tests;
+mod count_ast_grep_tests;
+mod hits_ast_grep_embedded_tests;
 mod hits_ast_grep_links_tests;
 mod hits_ast_grep_tests;
 mod open_in_folder_tests;

@@ -8,9 +8,7 @@ use rules::Rule;
 use std::path::Path;
 
 /// `run_shellcheck_with` on `shellcheck_codes.txt`, the list compiled in, listing the scripts with `shell_files`; a
-/// `RunFn`.
-// No entry runs it yet, because rules::Engine has no ShellCheck engine; only its tests call it.
-#[allow(dead_code)]
+/// `RunFn`, the flow of `SHELLCHECK`.
 pub(crate) fn run_shellcheck(entry: &Entry, rule: &Rule, folder: &Path, host: &Host) -> Result<Vec<Hit>, Stop> {
     run_shellcheck_with(include_str!("shellcheck_codes.txt"), &shell_files, entry, rule, folder, host)
 }

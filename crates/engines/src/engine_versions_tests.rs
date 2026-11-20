@@ -65,7 +65,7 @@ fn version(engine: Engine, version: Option<&str>) -> EngineVersion {
 fn each_engine_once_in_first_appearance_order_with_one_probe_each() {
     let seen = RefCell::new(Vec::new());
     let run = probes(&seen);
-    let host = Host { run: &run, on_path: &|_| true, raw_chars: &Cell::new(None) };
+    let host = Host { run: &run, on_path: &|_| true, raw_chars: &Cell::new(None), base: None };
     assert_eq!(engine_versions(&file(), Some(Path::new(FOLDER)), &host), vec![
         version(Engine::Ruff, Some("0.17.4")),
         version(Engine::SwiftLint, Some("0.59.1")),
@@ -78,7 +78,7 @@ fn each_engine_once_in_first_appearance_order_with_one_probe_each() {
 fn an_absent_engine_and_tessera_are_none_with_no_probe_run() {
     let seen = RefCell::new(Vec::new());
     let run = probes(&seen);
-    let host = Host { run: &run, on_path: &|program| program == "ruff", raw_chars: &Cell::new(None) };
+    let host = Host { run: &run, on_path: &|program| program == "ruff", raw_chars: &Cell::new(None), base: None };
     assert_eq!(engine_versions(&file(), Some(Path::new(FOLDER)), &host), vec![
         version(Engine::Ruff, Some("0.17.4")),
         version(Engine::SwiftLint, None),
@@ -91,7 +91,7 @@ fn an_absent_engine_and_tessera_are_none_with_no_probe_run() {
 fn an_unresolved_folder_gives_every_engine_none_with_no_probe_run() {
     let seen = RefCell::new(Vec::new());
     let run = probes(&seen);
-    let host = Host { run: &run, on_path: &|_| true, raw_chars: &Cell::new(None) };
+    let host = Host { run: &run, on_path: &|_| true, raw_chars: &Cell::new(None), base: None };
     assert_eq!(engine_versions(&file(), None, &host), vec![
         version(Engine::Ruff, None),
         version(Engine::SwiftLint, None),
@@ -108,7 +108,7 @@ fn a_probe_that_fails_gives_none_for_its_engine_only() {
         }
         Ok(Output { code: Some(0), stdout: b"0.59.1\n".to_vec(), stderr: vec![] })
     };
-    let host = Host { run: &run, on_path: &|_| true, raw_chars: &Cell::new(None) };
+    let host = Host { run: &run, on_path: &|_| true, raw_chars: &Cell::new(None), base: None };
     assert_eq!(engine_versions(&file(), Some(Path::new(FOLDER)), &host), vec![
         version(Engine::Ruff, None),
         version(Engine::SwiftLint, Some("0.59.1")),
@@ -121,7 +121,7 @@ fn the_probes_leave_the_count_untouched() {
     let seen = RefCell::new(Vec::new());
     let run = probes(&seen);
     let raw_chars = Cell::new(None);
-    let host = Host { run: &run, on_path: &|_| true, raw_chars: &raw_chars };
+    let host = Host { run: &run, on_path: &|_| true, raw_chars: &raw_chars, base: None };
     engine_versions(&file(), Some(Path::new(FOLDER)), &host);
     assert_eq!(raw_chars.get(), None);
 }
