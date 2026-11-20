@@ -1,12 +1,14 @@
 //! ZUT for run_shellcheck.rs on the compiled-in list, which is pending: it reads with no codes, so every well-formed
-//! code is not available and nothing but the version probe runs; a malformed check is still refused. No engine runs.
+//! code is not available, nothing but the version probe runs and no scripts are listed; a malformed check is still
+//! refused. No engine or git runs.
 
 use super::read_code_list;
 use super::run_shellcheck::run_shellcheck;
-use super::run_shellcheck_with_tests::{answers, entry, rule, run};
+use super::run_shellcheck_with_tests::{answers, entry, listed, rule, run};
 use crate::entry::Params;
 use crate::types::Stop;
 use std::ffi::OsString;
+use std::path::PathBuf;
 
 #[test]
 fn the_compiled_in_list_reads_as_pending_with_no_codes() {
@@ -29,6 +31,15 @@ fn every_well_formed_code_is_not_available_while_the_list_is_pending() {
         assert_eq!(ran[0].args, vec![OsString::from("--version")]);
         assert_eq!(raw_chars, None);
     }
+}
+
+#[test]
+fn the_scripts_are_never_listed_while_the_list_is_pending() {
+    let codes = include_str!("shellcheck_codes.txt");
+    let (got, _, _, asked) = listed(codes, Ok(vec![PathBuf::from("a.sh")]), &rule("SC2086", ""), &answers());
+    let why = "shellcheck 0.11.0: SC2086 is not in temperare's list of shellcheck codes (taken from shellcheck pending)";
+    assert_eq!(got, Err(Stop::NotAvailable { why: why.to_string() }));
+    assert!(asked.is_empty(), "{asked:?}");
 }
 
 #[test]
