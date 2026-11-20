@@ -1,5 +1,5 @@
 //! Tests of crates/cli/src/app/check_world_real.rs: each seam of `CheckWorld::real()` is wired to its real function.
-//! The file mixes kinds (rule 11), each case marked: RITs (cli→procio/rules/engines, owner Nagatha; S-38) and
+//! The file mixes kinds, each case marked: RITs (cli→procio/rules/engines, kept beside their caller) and
 //! ZITs. `exists` and `read` are told from stubs on a file the tests write in a throwaway folder under the system
 //! temp folder, removed on drop; `run_rules` and `build_report` on a rule file with no rules in such a folder;
 //! `toplevel` and `rev_parse` are told by a folder that does not exist, where git fails. Nothing here needs a real
