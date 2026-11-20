@@ -4,6 +4,7 @@ use crate::host::Host;
 use crate::ran::ran;
 use crate::types::Stop;
 use procio::{Cmd, Output, ProcError};
+use std::cell::Cell;
 use std::ffi::OsString;
 use std::io;
 use std::time::Duration;
@@ -12,7 +13,7 @@ use std::time::Duration;
 fn ran_with(cmd: &Cmd, answer: impl Fn() -> Result<Output, ProcError>) -> Result<Output, Stop> {
     let run = |_: &Cmd| answer();
     let on_path = |_: &str| -> bool { panic!("ran looks nothing up on PATH") };
-    ran(cmd, &Host { run: &run, on_path: &on_path })
+    ran(cmd, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) })
 }
 
 #[test]
@@ -30,7 +31,7 @@ fn the_host_runs_the_cmd_it_is_given() {
         Ok(Output { code: Some(0), stdout: Vec::new(), stderr: Vec::new() })
     };
     let on_path = |_: &str| false;
-    ran(&cmd, &Host { run: &run, on_path: &on_path }).unwrap();
+    ran(&cmd, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) }).unwrap();
     assert_eq!(seen.into_inner(), Some(cmd));
 }
 

@@ -4,6 +4,7 @@ use super::{
     cargo_root, clippy_allows, clippy_cmd, known_lint, lint_group, lint_groups_cmd, locate_workspace_cmd, parse_clippy,
     parse_lint_groups, parse_lints, parse_locate_workspace,
 };
+use crate::check_run::check_run;
 use crate::host::Host;
 use crate::parse_failed::parse_failed;
 use crate::ran::ran;
@@ -31,7 +32,7 @@ use std::path::Path;
 /// 6. `cargo locate-project --workspace`, then clippy, both in the Cargo root: only that crate and what it depends on
 ///    are built and that crate is linted. Its span paths are relative to the workspace root that `locate-project`
 ///    names, so they are read from there. No `CARGO_TARGET_DIR` is set: cargo builds in the repository's own
-///    `target/` (settled S-21).
+///    `target/` (settled S-21). The clippy run is the counted check run (`check_run`); the two runs before it are not.
 pub(crate) fn hits_clippy(rule: &Rule, folder: &Path, host: &Host) -> Result<Vec<Hit>, Stop> {
     let allows = clippy_allows(&rule.params).map_err(param_failed)?;
     let root = cargo_root(folder)
@@ -51,7 +52,7 @@ pub(crate) fn hits_clippy(rule: &Rule, folder: &Path, host: &Host) -> Result<Vec
     }
     let located = ran(&locate_workspace_cmd(&root), host)?;
     let workspace = parse_locate_workspace(&located).map_err(|err| parse_failed(&located, err))?;
-    let out = ran(&clippy_cmd(&rule.check, &allows, &root), host)?;
+    let out = check_run(&clippy_cmd(&rule.check, &allows, &root), host)?;
     parse_clippy(&out, &rule.check, &workspace, folder).map_err(|err| parse_failed(&out, err))
 }
 

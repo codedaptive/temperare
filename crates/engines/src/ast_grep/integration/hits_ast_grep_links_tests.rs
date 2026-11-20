@@ -5,7 +5,7 @@ use crate::host::Host;
 use crate::types::{Hit, Stop};
 use procio::{Cmd, Output};
 use rules::RuleFile;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::fs;
 
 const YAML: &str = "id: names\nlanguage: JavaScript\nrule:\n  regex: 'foo'\n";
@@ -31,7 +31,7 @@ fn run_case(name: &str, source_inside: bool, hard_link: bool) -> (Result<Vec<Hit
         Ok(Output { code: Some(0), stdout: Vec::new(), stderr: Vec::new() })
     };
     let on_path = |_: &str| -> bool { panic!("hits_ast_grep looks nothing up on PATH") };
-    let got = hits_ast_grep(&file.rules[0], &folder, &Host { run: &run, on_path: &on_path });
+    let got = hits_ast_grep(&file.rules[0], &folder, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) });
     fs::remove_dir_all(&root).unwrap();
     (got, seen.into_inner())
 }

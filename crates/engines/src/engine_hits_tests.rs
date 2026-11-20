@@ -7,7 +7,7 @@ use crate::host::Host;
 use crate::types::{Hit, Stop};
 use procio::{Cmd, Output, ProcError};
 use rules::RuleFile;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::ffi::OsString;
 use std::path::Path;
 
@@ -24,7 +24,8 @@ pub(crate) fn hits_of(engine: &str, check: &str, on_path: bool) -> (Result<Vec<H
         Ok(Output { code: Some(2), stdout: b"garbage".to_vec(), stderr: Vec::new() })
     };
     let lookup = |_: &str| on_path;
-    let got = engine_hits(&file.rules[0], Ok(Path::new(FOLDER)), &Host { run: &run, on_path: &lookup });
+    let got =
+        engine_hits(&file.rules[0], Ok(Path::new(FOLDER)), &Host { run: &run, on_path: &lookup, raw_chars: &Cell::new(None) });
     (got, ran.into_inner())
 }
 
@@ -36,7 +37,7 @@ fn hits_without_folder(engine: &str, check: &str, on_path: bool) -> Result<Vec<H
     let run = |_: &Cmd| -> Result<Output, ProcError> { panic!("nothing runs without a folder") };
     let lookup = |_: &str| on_path;
     let unresolved = Stop::Failed { code: None, stderr: "no folder".to_string() };
-    engine_hits(&file.rules[0], Err(&unresolved), &Host { run: &run, on_path: &lookup })
+    engine_hits(&file.rules[0], Err(&unresolved), &Host { run: &run, on_path: &lookup, raw_chars: &Cell::new(None) })
 }
 
 #[test]

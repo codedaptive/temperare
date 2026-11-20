@@ -1,9 +1,9 @@
 //! `hits_ast_grep`: one ast-grep rule, its params filled, run over its rule file's folder and read into hits.
 
 use super::{ast_grep_cmd, fill_params, parse_ast_grep, read_rule_yaml, TempRule};
+use crate::check_run::check_run;
 use crate::host::Host;
 use crate::parse_failed::parse_failed;
-use crate::ran::ran;
 use crate::types::{Hit, Stop};
 use crate::ParamError;
 use rules::Rule;
@@ -19,13 +19,14 @@ use std::path::Path;
 /// removed before this returns, whatever the outcome. A YAML that cannot be read, a param it names that the rule
 /// does not give or cannot fill, and a copy that cannot be written are `Failed` with no exit code; ast-grep absent
 /// is `NotAvailable`; output that is not ast-grep's JSON lines is `Failed` with its exit code.
+/// The ast-grep run is counted (`check_run`).
 pub(crate) fn hits_ast_grep(rule: &Rule, folder: &Path, host: &Host) -> Result<Vec<Hit>, Stop> {
     let check = &rule.check;
     let text = read_rule_yaml(folder, check).map_err(failed)?;
     let filled = fill_params(&text, &rule.params).map_err(|err| failed(param_why(err, check)))?;
     let temp = TempRule::write(&filled)
         .map_err(|err| failed(format!("cannot write the filled ast-grep rule {check}: {err}")))?;
-    let out = ran(&ast_grep_cmd(&temp.path, folder), host)?;
+    let out = check_run(&ast_grep_cmd(&temp.path, folder), host)?;
     drop(temp);
     parse_ast_grep(&out, folder, folder).map_err(|err| parse_failed(&out, err))
 }

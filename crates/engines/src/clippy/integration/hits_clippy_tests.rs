@@ -4,9 +4,13 @@
 //! `lint_groups_help.txt`, and cargo by its first argument (see hits_clippy_tests.rs); clippy's output is the captured
 //! `lint_and_other.jsonl` / `build_failed.jsonl` (see parse_clippy_tests.rs) or a hand-built message. A test that makes a folder removes it before asserting.
 
-use crate::clippy::hits_clippy_tests::{output, rules_with, run, run_rules};
+use crate::clippy::hits_clippy;
+use crate::clippy::hits_clippy_tests::{output, rules_with, run, run_rules, RULES};
+use crate::host::Host;
 use crate::types::{Hit, Stop};
-use rules::RelPath;
+use procio::{Cmd, Output, ProcError};
+use rules::{RelPath, RuleFile};
+use std::cell::{Cell, RefCell};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -36,6 +40,83 @@ fn tree(name: &str, manifests: &[&str]) -> PathBuf {
 
 fn manifest(root: &Path) -> Vec<u8> {
     format!("{}\n", root.join("Cargo.toml").display()).into_bytes()
+}
+
+/// `hits_clippy` for `check` over `root`, the fake host answering help and locate-project with non-empty output and
+/// the clippy check run with `clippy`; also the count the host holds after it and the commands it was given.
+fn counted_clippy(
+    check: &str,
+    root: &Path,
+    clippy: &dyn Fn() -> Result<Output, ProcError>,
+) -> (Result<Vec<Hit>, Stop>, Option<usize>, Vec<Cmd>) {
+    let file = RuleFile::parse(&RULES.replace("clippy::bool_comparison", check), root).unwrap();
+    let seen = RefCell::new(Vec::new());
+    let raw_chars = Cell::new(None);
+    let run = |cmd: &Cmd| -> Result<Output, ProcError> {
+        seen.borrow_mut().push(cmd.clone());
+        match (cmd.program.to_str(), cmd.args[0].to_str()) {
+            (Some("clippy-driver"), Some("-W")) => Ok(output(0, include_bytes!("../fixtures/lint_groups_help.txt"), b"help stderr")),
+            (Some("cargo"), Some("locate-project")) => Ok(output(0, &manifest(root), b"locate stderr")),
+            (Some("cargo"), Some("clippy")) => clippy(),
+            _ => panic!("unexpected command: {cmd:?}"),
+        }
+    };
+    let host = Host { run: &run, on_path: &|_| panic!("unexpected PATH lookup"), raw_chars: &raw_chars };
+    let got = hits_clippy(&file.rules[0], root, &host);
+    (got, raw_chars.get(), seen.into_inner())
+}
+
+/// A clean clippy check run: 42 characters of stdout and "é!", 2 characters, of stderr.
+fn finished() -> Result<Output, ProcError> {
+    Ok(output(0, br#"{"reason":"build-finished","success":true}"#, "é!".as_bytes()))
+}
+
+#[test]
+fn counted_clippy_excludes_help_and_locate_and_counts_check_streams() {
+    let root = tree("counted", &["."]);
+    let (got, chars, seen) = counted_clippy("clippy::bool_comparison", &root, &finished);
+    fs::remove_dir_all(&root).unwrap();
+    assert_eq!(got, Ok(vec![]));
+    assert_eq!(chars, Some(44));
+    assert_eq!(seen.len(), 3);
+    assert_eq!(seen[0].program, "clippy-driver");
+    assert_eq!(seen[1].args[0], "locate-project");
+    assert_eq!(seen[2].args[0], "clippy");
+}
+
+#[test]
+fn counted_clippy_check_run_that_cannot_start_counts_nothing_though_help_and_locate_printed() {
+    let root = tree("counted-no-start", &["."]);
+    let cannot_start = || Err(ProcError::Spawn { program: "cargo".into(), io: std::io::Error::other("permission denied") });
+    let (got, chars, seen) = counted_clippy("clippy::bool_comparison", &root, &cannot_start);
+    fs::remove_dir_all(&root).unwrap();
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "cargo: could not run: permission denied".to_string() }));
+    assert_eq!(chars, None);
+    assert_eq!(seen.len(), 3);
+    assert_eq!(seen[2].args[0], "clippy");
+}
+
+#[test]
+fn counted_clippy_check_run_not_found_counts_nothing_though_help_and_locate_printed() {
+    let root = tree("counted-not-found", &["."]);
+    let (got, chars, seen) =
+        counted_clippy("clippy::bool_comparison", &root, &|| Err(ProcError::NotFound { program: "cargo".into() }));
+    fs::remove_dir_all(&root).unwrap();
+    assert_eq!(got, Err(Stop::NotAvailable { why: "cargo not found on PATH".to_string() }));
+    assert_eq!(chars, None);
+    assert_eq!(seen.len(), 3);
+    assert_eq!(seen[2].args[0], "clippy");
+}
+
+#[test]
+fn counted_clippy_group_refusal_excludes_help() {
+    let root = tree("counted-group", &["."]);
+    let (got, chars, seen) = counted_clippy("clippy::style", &root, &finished);
+    fs::remove_dir_all(&root).unwrap();
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "clippy check `clippy::style` is a lint group: tm cannot tell its lints from other warnings, so it cannot report it; name each lint, or use `warnings`".into() }));
+    assert_eq!(chars, None);
+    assert_eq!(seen.len(), 1);
+    assert_eq!(seen[0].program, "clippy-driver");
 }
 
 #[test]

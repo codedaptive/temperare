@@ -8,7 +8,7 @@ use crate::host::Host;
 use crate::types::{Hit, Stop};
 use procio::{Cmd, Output, ProcError};
 use rules::RuleFile;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::path::Path;
 
 pub(super) const RULES: &str = "version = 1\n[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"clippy::bool_comparison\"\nfix = \"f\"\n";
@@ -49,7 +49,7 @@ pub(super) fn run_rules_with_help(rules: &str, folder: &Path, help: Output, loca
         }
     };
     let on_path = |_: &str| -> bool { panic!("hits_clippy looks nothing up on PATH") };
-    let got = hits_clippy(&file.rules[0], folder, &Host { run: &run, on_path: &on_path });
+    let got = hits_clippy(&file.rules[0], folder, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) });
     (got, seen.into_inner())
 }
 

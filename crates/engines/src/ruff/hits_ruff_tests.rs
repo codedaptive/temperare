@@ -1,5 +1,5 @@
-//! ZUT for hits_ruff.rs: the command the host is given, findings read from captured output, garbage output and an
-//! absent ruff. The host is a fake; nothing runs. `DIR` is the folder path the captured fixture's
+//! ZUT for hits_ruff.rs: the command the host is given, findings read from captured output, garbage output, an
+//! absent ruff, and the characters of the check run counted into the host. The host is a fake; nothing runs. `DIR` is the folder path the captured fixture's
 //! absolute paths start with (see parse_ruff_tests.rs); no folder is read, so it need not exist.
 
 use super::hits_ruff;
@@ -7,7 +7,7 @@ use crate::host::Host;
 use crate::types::{Hit, Stop};
 use procio::{Cmd, Output, ProcError};
 use rules::{RelPath, RuleFile};
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
@@ -26,8 +26,26 @@ fn run_rule(text: &str, answer: impl Fn() -> Result<Output, ProcError>) -> (Resu
         answer()
     };
     let on_path = |_: &str| -> bool { panic!("hits_ruff looks nothing up on PATH") };
-    let got = hits_ruff(&file.rules[0], Path::new(DIR), &Host { run: &run, on_path: &on_path });
+    let got = hits_ruff(&file.rules[0], Path::new(DIR), &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) });
     (got, seen.into_inner())
+}
+
+/// `hits_ruff` for the one rule in `text`, as `run_rule` runs it; also the count the host holds after it and how many
+/// runs the host was asked for.
+fn run_counted(
+    text: &str,
+    answer: impl Fn() -> Result<Output, ProcError>,
+) -> (Result<Vec<Hit>, Stop>, Option<usize>, usize) {
+    let file = RuleFile::parse(text, Path::new(DIR)).unwrap();
+    let runs = Cell::new(0);
+    let run = |_: &Cmd| {
+        runs.set(runs.get() + 1);
+        answer()
+    };
+    let on_path = |_: &str| -> bool { panic!("hits_ruff looks nothing up on PATH") };
+    let raw_chars = Cell::new(None);
+    let got = hits_ruff(&file.rules[0], Path::new(DIR), &Host { run: &run, on_path: &on_path, raw_chars: &raw_chars });
+    (got, raw_chars.get(), runs.get())
 }
 
 fn captured() -> Result<Output, ProcError> {
@@ -96,4 +114,37 @@ fn d1_ruff_mixed_invalid_selector_is_refused_without_running() {
     let (got, seen) = run_rule(rules, captured);
     assert_eq!(got, Err(Stop::Failed { code: None, stderr: "ruff check `E7,correctness`: `correctness` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects".to_string() }));
     assert!(seen.is_none());
+}
+
+#[test]
+fn the_check_run_counts_once_with_the_characters_of_stdout_and_stderr() {
+    // "[]" is 2 characters; "warning: café\n" is 14 characters in 15 bytes.
+    let (got, chars, runs) = run_counted(NO_CONFIG, || {
+        Ok(Output { code: Some(0), stdout: b"[]".to_vec(), stderr: "warning: café\n".as_bytes().to_vec() })
+    });
+    assert_eq!(got, Ok(Vec::new()));
+    assert_eq!((chars, runs), (Some(16), 1));
+}
+
+#[test]
+fn a_run_failed_on_its_output_still_counts() {
+    // "garbage" is 7 characters, "ruff failed: bad config" 23.
+    let (got, chars, _) = run_counted(NO_CONFIG, || {
+        Ok(Output { code: Some(2), stdout: b"garbage".to_vec(), stderr: b"ruff failed: bad config".to_vec() })
+    });
+    assert_eq!(got, Err(Stop::Failed { code: Some(2), stderr: "ruff failed: bad config".to_string() }));
+    assert_eq!(chars, Some(30));
+}
+
+#[test]
+fn a_check_refused_before_its_run_counts_nothing() {
+    let rules = "version = 1\n[[rule]]\nid = \"r\"\nengine = \"ruff\"\ncheck = \"flake8-bugbear\"\nfix = \"f\"\n";
+    let (_, chars, runs) = run_counted(rules, captured);
+    assert_eq!((chars, runs), (None, 0));
+}
+
+#[test]
+fn ruff_not_found_counts_nothing() {
+    let (_, chars, _) = run_counted(NO_CONFIG, || Err(ProcError::NotFound { program: "ruff".into() }));
+    assert_eq!(chars, None);
 }
