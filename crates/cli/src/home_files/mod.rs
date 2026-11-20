@@ -2,6 +2,7 @@
 
 mod append_savings_log;
 mod parse_user_config;
+mod same_file;
 mod savings_line_on;
 mod savings_log_line;
 
@@ -10,9 +11,12 @@ mod integration;
 #[cfg(test)]
 mod parse_user_config_tests;
 #[cfg(test)]
+mod savings_line_on_tests;
+#[cfg(test)]
 mod savings_log_line_tests;
 
 pub use append_savings_log::append_savings_log;
 pub(crate) use parse_user_config::parse_user_config;
+pub(crate) use same_file::same_file;
 pub use savings_line_on::savings_line_on;
 pub use savings_log_line::savings_log_line;
