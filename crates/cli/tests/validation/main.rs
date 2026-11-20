@@ -1,11 +1,12 @@
 //! Validation: tests that run the built `temperare` binary.
 //!
 //! `cli_check` and `cli_tm` run `temperare` with engines stubbed on PATH, except cli_check's `real_ruff_` cases;
-//! `savings_real_engine` and those cases run the real ruff.
+//! `savings_real_engine`, `done_10_shared_run` and those cases run the real ruff.
 //!
-//! Acceptance: the mission's Done list (MISSION-temperare-2026-11-16, Done 1-8), run against the built `temperare` with the
-//! real engines, each case in a throwaway repository it makes and removes. Validation, not a unit or integration test:
-//! a run of the shipped binary, written by the orchestrator (SPEC-cli, Tests). `make accept` runs it.
+//! Acceptance: the mission's Done list (MISSION-temperare-2026-11-16, Done 1-8 and Done 10's shared run), run against
+//! the built `temperare` with the real engines, each case in a throwaway repository it makes and removes. Validation,
+//! not a unit or integration test: a run of the shipped binary, written by the orchestrator (SPEC-cli, Tests).
+//! `make accept` runs it.
 //! No codeteam variable reaches `temperare` in any case (Done 6): each case passes only the variables it sets (`env.rs`
 //! for the acceptance cases, `install_temp_home.rs` its own).
 //!
@@ -41,6 +42,7 @@ mod done_5_exception;
 mod done_6_alone;
 mod done_7_security;
 mod done_8_named_inside;
+mod done_10_shared_run;
 
 // The install on the built binary, into a throwaway HOME.
 mod install_temp_home;

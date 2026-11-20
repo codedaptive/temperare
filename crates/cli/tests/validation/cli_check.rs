@@ -246,7 +246,7 @@ fn savings_text_line_is_hand_counted_and_json_savings_follow_the_printed_body() 
     assert_eq!(saved["output_tokens"], tokens);
     assert_eq!(saved["tokens_saved"], tokens_saved);
     assert_eq!(saved["percent"], percent(tokens_saved, 93));
-    assert!(stdout.starts_with("[temperare] tokens saved ≈ 61 (65%) — this output ≈ 32 tok"), "{stdout}");
+    assert!(stdout.starts_with("[temperare] tokens saved ≈ 53 (56%) — this output ≈ 40 tok"), "{stdout}");
 }
 
 #[test]
@@ -255,7 +255,7 @@ fn savings_config_disables_the_text_line() {
     fs::create_dir_all(home.join(".config/temperare")).unwrap();
     fs::write(home.join(".config/temperare/config.toml"), "savings_line = false\n").unwrap();
     let stdout = text(&savings_check(&repo, &home, &[]), 0);
-    assert!(stdout.starts_with("0 findings"), "{stdout}");
+    assert!(stdout.starts_with("engines: ruff (version unknown)\n0 findings"), "{stdout}");
     assert!(!stdout.contains("tokens saved"), "{stdout}");
 }
 
@@ -441,7 +441,7 @@ fix = "Remove the unsupported parameter."
     }
     assert_eq!(output.code, Some(5), "{stdout}\n{}", String::from_utf8_lossy(&output.stderr));
     assert!(stdout.contains("failed: param-rule (ruff), no exit code"), "{stdout}");
-    assert!(stdout.contains("stderr of param-rule (ruff):\n  ruff param foo: a ruff rule takes no params"), "{stdout}");
+    assert!(stdout.contains("stderr of param-rule (ruff):\n  ruff param foo: a ruff rule reads only the `max_complexity` param"), "{stdout}");
     assert_eq!(stdout.lines().last(), Some("next: see the engine output above"));
     assert!(!stdout.contains("[temperare] tokens saved"), "{stdout}");
     let json = crate::run_clean::run_clean(env!("CARGO_BIN_EXE_temperare"), &["check", "--json"], repo.path(), crate::env::tm_env(None, home.path()));
@@ -449,4 +449,10 @@ fix = "Remove the unsupported parameter."
     let value: serde_json::Value = serde_json::from_slice(&json.stdout).unwrap();
     assert_eq!(value["saved"]["engine_runs"], 0);
     assert_eq!(value["saved"]["counted"], serde_json::json!([{ "rule": "param-rule", "engine": "ruff", "chars": 0 }]));
+    let failed = value["failed"].as_array().unwrap_or_else(|| panic!("{}", String::from_utf8_lossy(&json.stdout)));
+    assert_eq!(failed.len(), 1, "{}", String::from_utf8_lossy(&json.stdout));
+    assert_eq!(failed[0]["rule"], "param-rule", "{}", String::from_utf8_lossy(&json.stdout));
+    assert_eq!(failed[0]["engine"], "ruff", "{}", String::from_utf8_lossy(&json.stdout));
+    let tail = failed[0]["stderr_tail"].as_str().unwrap_or_else(|| panic!("{}", String::from_utf8_lossy(&json.stdout)));
+    assert!(tail.contains("ruff param foo: a ruff rule reads only the `max_complexity` param"), "{}", String::from_utf8_lossy(&json.stdout));
 }

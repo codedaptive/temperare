@@ -2,9 +2,9 @@
 
 use super::{RuleCount, Savings};
 
-/// The `Savings` for `counts` and `output_chars`: K the counts whose engine ran, baseline characters the sum of every
-/// count's `chars` (saturating), tokens at characters / 4 rounded half up, N = B - X floored at 0, P = N * 100 / B
-/// rounded down (0 when B is 0), with no overflow for large inputs.
+/// The `Savings` for `counts` and `output_chars`: K the counts that ran (have a counted run), baseline
+/// characters the sum of every count's `chars` (saturating), tokens at characters / 4 rounded half up, N = B - X
+/// floored at 0, P = N * 100 / B rounded down (0 when B is 0), with no overflow for large inputs.
 pub fn savings_from(counts: &[RuleCount], output_chars: u64) -> Savings {
     let baseline_chars = counts.iter().fold(0u64, |sum, count| sum.saturating_add(count.chars));
     let baseline_tokens = tokens(baseline_chars);

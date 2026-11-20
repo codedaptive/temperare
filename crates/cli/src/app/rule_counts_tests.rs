@@ -6,9 +6,9 @@ use rules::{Engine, RuleOutcome};
 #[test]
 fn preserves_order_engine_names_and_distinguishes_absent_from_empty_runs() {
     let runs = vec![
-        RuleRun { rule: "missing".into(), engine: Engine::Ruff, outcome: RuleOutcome::Findings(vec![]), raw_chars: None },
-        RuleRun { rule: "empty".into(), engine: Engine::AstGrep, outcome: RuleOutcome::Findings(vec![]), raw_chars: Some(0) },
-        RuleRun { rule: "output".into(), engine: Engine::Ruff, outcome: RuleOutcome::Findings(vec![]), raw_chars: Some(123) },
+        RuleRun::new("missing".into(), Engine::Ruff, RuleOutcome::Findings(vec![]), None),
+        RuleRun::new("empty".into(), Engine::AstGrep, RuleOutcome::Findings(vec![]), Some(0)),
+        RuleRun::new("output".into(), Engine::Ruff, RuleOutcome::Findings(vec![]), Some(123)),
     ];
     assert_eq!(rule_counts(&runs), vec![
         RuleCount { rule: "missing".into(), engine: "ruff".into(), chars: 0, ran: false },

@@ -3,7 +3,7 @@
 
 use super::{run_check, CheckWorld};
 use crate::CheckArgs;
-use engines::RuleRun;
+use engines::{CheckedRules, RuleRun};
 use procio::{GitError, Oid};
 use report::{Failed, NotAvailable, Report, ReportError};
 use rules::{Engine, Finding, Kind, Problem, RelPath, RuleFile, RuleOutcome, Severity};
@@ -43,8 +43,8 @@ fn read(path: &Path) -> Result<RuleFile, Vec<Problem>> {
     Ok(RuleFile::parse(TEXT, Path::new("/repo")).unwrap())
 }
 
-fn no_runs(_: &RuleFile, _: &Path, _: &[RelPath]) -> Vec<RuleRun> {
-    Vec::new()
+fn no_runs(_: &RuleFile, _: &Path, _: &[RelPath]) -> CheckedRules {
+    CheckedRules { runs: vec![], engines: vec![] }
 }
 
 fn clean(_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>) -> Result<Report, ReportError> {
@@ -207,7 +207,7 @@ fn kind_security_passes_only_the_security_rules_to_run_rules() {
     let ids = RefCell::new(Vec::new());
     let run_rules = |rf: &RuleFile, _: &Path, _: &[RelPath]| {
         ids.borrow_mut().extend(rf.rules.iter().map(|r| r.id.clone()));
-        Vec::new()
+        CheckedRules { runs: vec![], engines: vec![] }
     };
     let w = CheckWorld { run_rules: &run_rules, ..world() };
     let (code, _, _) = check(&CheckArgs { kind: Some(Kind::Security), ..CheckArgs::default() }, &w);
@@ -221,7 +221,7 @@ fn paths_reach_run_rules_as_paths_under_the_folder_and_outcomes_reach_the_report
     let run_rules = |_: &RuleFile, repo: &Path, only: &[RelPath]| {
         *seen.borrow_mut() = Some((repo.to_path_buf(), only.to_vec()));
         let outcome = RuleOutcome::Findings(vec![]);
-        vec![RuleRun { rule: "q".to_string(), engine: Engine::Ruff, outcome, raw_chars: None }]
+        CheckedRules { runs: vec![RuleRun::new("q".to_string(), Engine::Ruff, outcome, None)], engines: vec![] }
     };
     let build_report = |_: &RuleFile, outcomes: Outcomes, _: Option<(&Path, &Oid)>| {
         assert_eq!(outcomes, vec![("q".to_string(), RuleOutcome::Findings(vec![]))]);
