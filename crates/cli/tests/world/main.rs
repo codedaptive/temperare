@@ -1,5 +1,5 @@
-//! Tests of tm's real worlds: `CheckWorld::real()` and `RulesWorld::real()` wired to real disk, git, engines and
-//! report, on folders the tests make under the system temp folder and remove. This target holds both kinds beside
+//! Tests of tm's real worlds: `CheckWorld::real()` (git, disk, engines, report) and `RulesWorld::real()` (git, disk,
+//! engines), on folders the tests make under the system temp folder and remove. This target holds both kinds beside
 //! their caller, because there is no separate group for tests between crates: RITs (cli→procio/rules/engines/report)
 //! and ZITs. Each file and case says which.
 
