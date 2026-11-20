@@ -1,5 +1,5 @@
 //! ZUT for rules_world_real.rs: the Tessera seam of RulesWorld::real() answers "not available" without a PATH lookup
-//! (crates/engines/src/availability.rs:10 builds the `procio::which` closure; :17-18 return for Tessera before it
+//! (crates/engines/src/availability.rs:11 builds the `procio::which` closure; :19-21 return for Tessera before it
 //! runs). The other seams are tested in tests/world/rules_world_real.rs (RIT, and ZIT for `exists`).
 
 use super::RulesWorld;

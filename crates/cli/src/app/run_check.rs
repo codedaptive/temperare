@@ -3,21 +3,30 @@
 use super::discover_rule_file::discover_rule_file;
 use super::only_paths::only_paths;
 use super::resolve_base::resolve_base;
+use super::rule_counts::rule_counts;
 use super::select_rules::select_rules;
 use super::write_failure::write_failure;
 use super::write_problems::write_problems;
 use super::CheckWorld;
-use crate::{check_json, exit_code, failed_tails, next_step, CheckArgs, UsageError};
+use crate::{
+    append_savings_log, check_json, exit_code, failed_tails, next_step, saved_json, savings_from, savings_line_on,
+    savings_log_line, tokens_saved_line, CheckArgs, RuleCount, Savings, UsageError,
+};
+use serde_json::Value;
 use std::io::Write;
 use std::path::Path;
 
 /// Finds and reads the rule file, keeps the rules of `--kind`, turns the paths into paths under the rule file's
 /// folder and resolves `--base` before any engine runs; then runs the rules and prints the report as text, followed
 /// by each failed rule's stderr tail and a `next:` line, or as one JSON object carrying `exit` and `next` (the tails
-/// are its failed rules' `stderr_tail`), and returns the report's exit code. A rule file that cannot be found, a path
-/// outside its folder, a base that does not resolve or a report that cannot be built is a usage error on `err` (and,
-/// under `--json`, an `{"error", "exit", "next"}` object on `out`); a rule file with problems lists them on `out`.
-/// Both exit 2. Write errors are ignored: a closed pipe is not tm's failure.
+/// are its failed rules' `stderr_tail`), and returns the report's exit code. The text opens with the tokens-saved line
+/// when at least one engine ran and the switch under HOME is on; the JSON object always carries `saved`. When at least
+/// one engine ran, text or JSON, the switch is read, so a config it cannot use warns once on `err` (under `--json` the
+/// switch's value changes nothing), and one line goes to the savings log under HOME, naming the rule file's folder as
+/// an absolute path. A rule file that cannot be found, a path outside its folder, a base that does not resolve or a
+/// report that cannot be built is a usage error on `err` (and, under `--json`, an `{"error", "exit", "next"}` object
+/// on `out`); a rule file with problems lists them on `out`. Both exit 2, with no savings line and no log line. Write
+/// errors are ignored: a closed pipe is not tm's failure.
 pub fn run_check(args: &CheckArgs, cwd: &Path, world: &CheckWorld, out: &mut dyn Write, err: &mut dyn Write) -> u8 {
     let path = match discover_rule_file(args.rules.as_deref(), cwd, &|| (world.toplevel)(cwd), world.exists) {
         Ok(path) => path,
@@ -35,7 +44,9 @@ pub fn run_check(args: &CheckArgs, cwd: &Path, world: &CheckWorld, out: &mut dyn
         Ok(base) => base,
         Err(e) => return write_failure(&e, args.json, out, err),
     };
-    let outcomes = (world.run_rules)(&rf, cwd, &only);
+    let runs = (world.run_rules)(&rf, cwd, &only);
+    let counts = rule_counts(&runs);
+    let outcomes = runs.into_iter().map(|run| (run.rule, run.outcome)).collect();
     let report = match (world.build_report)(&rf, outcomes, base.as_ref().map(|(top, oid)| (top.as_path(), oid))) {
         Ok(report) => report,
         Err(r) => {
@@ -48,10 +59,66 @@ pub fn run_check(args: &CheckArgs, cwd: &Path, world: &CheckWorld, out: &mut dyn
     };
     let exit = exit_code(&report);
     let next = next_step(exit, None, &path, &report.not_available);
-    if args.json {
-        let _ = writeln!(out, "{}", check_json(&report, exit, &next));
+    let home = (world.home)();
+    let savings = if args.json {
+        write_json(check_json(&report, exit, &next), &counts, home.as_deref(), out, err)
     } else {
-        let _ = writeln!(out, "{}{}next: {next}", report::render_text(&report), failed_tails(&report));
+        write_text(
+            &format!("{}{}next: {next}\n", report::render_text(&report), failed_tails(&report)),
+            &counts,
+            home.as_deref(),
+            out,
+            err,
+        )
+    };
+    if savings.engine_runs >= 1 {
+        append_savings_log(
+            home.as_deref(),
+            &savings_log_line((world.now)(), &cwd.join(&rf.folder), savings.output_tokens, savings.baseline_tokens),
+        );
     }
     exit
+}
+
+/// Prints `object` on one line with `saved` added, its output characters counted on the object as printed without
+/// `saved` and without the newline; returns the savings. When an engine ran, the switch under `home` is read for its
+/// warning on `err` alone, as text reads it: its value changes nothing in the object.
+fn write_json(
+    mut object: Value,
+    counts: &[RuleCount],
+    home: Option<&Path>,
+    out: &mut dyn Write,
+    err: &mut dyn Write,
+) -> Savings {
+    let savings = savings_from(counts, char_count(&object.to_string()));
+    if savings.engine_runs >= 1 {
+        savings_line_on(home, err);
+    }
+    if let Value::Object(map) = &mut object {
+        map.insert("saved".to_string(), saved_json(counts, &savings));
+    }
+    let _ = writeln!(out, "{object}");
+    savings
+}
+
+/// Prints `body`, opened by the savings line when an engine ran and the switch under `home` is on (the switch is
+/// read only then); the output characters are `body`'s. Returns the savings.
+fn write_text(
+    body: &str,
+    counts: &[RuleCount],
+    home: Option<&Path>,
+    out: &mut dyn Write,
+    err: &mut dyn Write,
+) -> Savings {
+    let savings = savings_from(counts, char_count(body));
+    if savings.engine_runs >= 1 && savings_line_on(home, err) {
+        let _ = writeln!(out, "{}", tokens_saved_line(&savings));
+    }
+    let _ = out.write_all(body.as_bytes());
+    savings
+}
+
+/// The characters (Unicode scalar values) of `text`.
+fn char_count(text: &str) -> u64 {
+    u64::try_from(text.chars().count()).unwrap_or(u64::MAX)
 }

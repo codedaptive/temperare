@@ -1,22 +1,11 @@
 //! ZUT for exit_code.rs: every S-15 row alone, and the precedence between them (WO-cli-1b2 contract).
 
 use super::exit_code::exit_code;
-use report::{Counts, Failed, NotAvailable, Report};
+use report::{Failed, NotAvailable, Report};
 use rules::{Engine, Finding, Kind, RelPath, Severity};
 
 fn finding(kind: Kind, severity: Severity) -> Finding {
-    Finding {
-        rule: "r1".to_string(),
-        engine: Engine::Ruff,
-        kind,
-        severity,
-        owner: None,
-        path: RelPath::new("a.py"),
-        line: 3,
-        col: Some(1),
-        what: "something".to_string(),
-        fix: "fix it".to_string(),
-    }
+    Finding::new("r1", (Engine::Ruff, kind, severity), RelPath::new("a.py"), 3, Some(1), "something", "fix it")
 }
 
 fn failed() -> Failed {
@@ -28,25 +17,8 @@ fn not_available() -> NotAvailable {
 }
 
 fn report(findings: Vec<Finding>, failed: Vec<Failed>, not_available: Vec<NotAvailable>) -> Report {
-    Report {
-        findings,
-        silenced: vec![],
-        exceptions_in_force: 0,
-        not_available,
-        failed,
-        base: None,
-        // All zero on purpose: exit_code reads the lists, never the counts.
-        counts: Counts {
-            findings: 0,
-            errors: 0,
-            warnings: 0,
-            quality: 0,
-            security: 0,
-            silenced: 0,
-            not_available: 0,
-            failed: 0,
-        },
-    }
+    // Counts left all zero on purpose: exit_code reads the lists, never the counts.
+    Report { findings, failed, not_available, ..Default::default() }
 }
 
 #[test]

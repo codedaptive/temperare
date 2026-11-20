@@ -3,9 +3,10 @@
 
 use serde_json::Value;
 
-use crate::env::clean_env;
+use crate::env::tm_env;
 use crate::repo::Repo;
 use crate::run_clean::run_clean;
+use crate::temp_home::TempHome;
 
 pub struct Answer {
     pub code: i32,
@@ -33,14 +34,16 @@ impl Answer {
     }
 }
 
-/// `tm <args>` in `repo`, in the clean environment.
+/// `tm <args>` in `repo`, in the clean environment with a HOME made for this run (`tm_env`).
 pub fn tm(repo: &Repo, args: &[&str]) -> Answer {
     tm_with_path(repo, args, None)
 }
 
-/// As `tm`, with PATH replaced whole.
+/// As `tm`, with PATH replaced whole. Each run gets its own empty HOME, removed after it: no acceptance run sees the
+/// real HOME's ~/.config or ~/.local.
 pub fn tm_with_path(repo: &Repo, args: &[&str], path: Option<&str>) -> Answer {
-    let out = run_clean(env!("CARGO_BIN_EXE_temperare"), args, repo.path(), clean_env(path));
+    let home = TempHome::new();
+    let out = run_clean(env!("CARGO_BIN_EXE_temperare"), args, repo.path(), tm_env(path, home.path()));
     let code = out.code.expect("tm ended by a signal");
     let stderr = String::from_utf8_lossy(&out.stderr).to_string();
     let json: Value = serde_json::from_slice(&out.stdout).unwrap_or_else(|e| {

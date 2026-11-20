@@ -7,33 +7,18 @@ use std::collections::BTreeSet;
 
 fn report(base: Option<procio::Oid>) -> Report {
     Report {
-        findings: vec![Finding {
-            rule: "no-print".to_string(),
-            engine: Engine::Ruff,
-            kind: Kind::Quality,
-            severity: Severity::Error,
-            owner: None,
-            path: RelPath::new("a.py"),
-            line: 7,
-            col: Some(3),
-            what: "print found".to_string(),
-            fix: "use logging".to_string(),
-        }],
-        silenced: vec![],
-        exceptions_in_force: 0,
-        not_available: vec![],
-        failed: vec![],
+        findings: vec![Finding::new(
+            "no-print",
+            (Engine::Ruff, Kind::Quality, Severity::Error),
+            RelPath::new("a.py"),
+            7,
+            Some(3),
+            "print found",
+            "use logging",
+        )],
         base,
-        counts: Counts {
-            findings: 1,
-            errors: 1,
-            warnings: 0,
-            quality: 1,
-            security: 0,
-            silenced: 0,
-            not_available: 0,
-            failed: 0,
-        },
+        counts: Counts { findings: 1, errors: 1, quality: 1, ..Default::default() },
+        ..Default::default()
     }
 }
 

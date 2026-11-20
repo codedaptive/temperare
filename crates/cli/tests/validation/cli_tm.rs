@@ -29,6 +29,7 @@ rule = "lint-all"
 path = "src/legacy.rs"
 reason = "Legacy code."
 approved = "reviewer 2026-11-17"
+expires = "2099-12-31"
 "#;
 
 const BAD_RULES: &str = "version = 2\n\ncolour = \"blue\"\n";

@@ -11,7 +11,7 @@ const TESSERA_NOT_YET: &str = "Tessera's checks are not available yet";
 /// The end of the why engines gives when a program is missing (crates/engines/src/availability.rs and
 /// crates/engines/src/ran.rs): installing the engine is the fix.
 const NOT_ON_PATH: &str = " not found on PATH";
-/// Engines' why for a clippy rule with no Cargo project, the text at crates/engines/src/clippy/hits_clippy.rs:38. If
+/// Engines' why for a clippy rule with no Cargo project, the text at crates/engines/src/clippy/hits_clippy.rs:39. If
 /// that text drifts, the entry still gets the generic `<name>: <why>` form.
 const NO_CARGO_PROJECT: &str = "no Cargo.toml at or above the rule file's folder";
 

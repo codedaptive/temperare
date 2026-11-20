@@ -30,6 +30,7 @@ dependencies = [
  "report",
  "rules",
  "serde_json",
+ "toml",
 ]
 
 [[package]]

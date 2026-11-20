@@ -3,8 +3,9 @@
 
 use super::{run_check, CheckWorld};
 use crate::CheckArgs;
+use engines::RuleRun;
 use procio::{GitError, Oid};
-use report::{Counts, Failed, NotAvailable, Report, ReportError};
+use report::{Failed, NotAvailable, Report, ReportError};
 use rules::{Engine, Finding, Kind, Problem, RelPath, RuleFile, RuleOutcome, Severity};
 use serde_json::json;
 use std::cell::{Cell, RefCell};
@@ -42,7 +43,7 @@ fn read(path: &Path) -> Result<RuleFile, Vec<Problem>> {
     Ok(RuleFile::parse(TEXT, Path::new("/repo")).unwrap())
 }
 
-fn no_outcomes(_: &RuleFile, _: &Path, _: &[RelPath]) -> Outcomes {
+fn no_runs(_: &RuleFile, _: &Path, _: &[RelPath]) -> Vec<RuleRun> {
     Vec::new()
 }
 
@@ -50,52 +51,36 @@ fn clean(_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>) -> Result<Report, 
     Ok(report(vec![], vec![]))
 }
 
-/// A world that finds and reads the rule file, runs no rule and reports nothing; `rev_parse` panics.
+/// A world that finds and reads the rule file, runs no rule, reports nothing and has no HOME; `rev_parse` panics.
 fn world() -> CheckWorld<'static> {
     CheckWorld {
         toplevel: &top,
         exists: &there,
         read: &read,
         rev_parse: &|_, _| unreachable!("rev_parse"),
-        run_rules: &no_outcomes,
+        run_rules: &no_runs,
         build_report: &clean,
+        home: &|| None,
+        now: &|| 0,
     }
 }
 
 fn report(findings: Vec<Finding>, not_available: Vec<NotAvailable>) -> Report {
-    Report {
-        findings,
-        silenced: vec![],
-        exceptions_in_force: 0,
-        not_available,
-        failed: vec![],
-        base: None,
-        counts: Counts {
-            findings: 0,
-            errors: 0,
-            warnings: 0,
-            quality: 0,
-            security: 0,
-            silenced: 0,
-            not_available: 0,
-            failed: 0,
-        },
-    }
+    Report { findings, not_available, ..Default::default() }
 }
 
 fn quality_error() -> Finding {
-    Finding {
-        rule: "q".to_string(),
-        engine: Engine::Ruff,
-        kind: Kind::Quality,
-        severity: Severity::Error,
-        owner: Some("core".to_string()),
-        path: RelPath::new("a.py"),
-        line: 7,
-        col: Some(3),
-        what: "unused import".to_string(),
-        fix: "Remove the import.".to_string(),
-    }
+    let mut f = Finding::new(
+        "q",
+        (Engine::Ruff, Kind::Quality, Severity::Error),
+        RelPath::new("a.py"),
+        7,
+        Some(3),
+        "unused import",
+        "Remove the import.",
+    );
+    f.owner = Some("core".to_string());
+    f
 }
 
 /// Runs `tm check` in /repo; (exit, out, err).
@@ -235,7 +220,8 @@ fn paths_reach_run_rules_as_paths_under_the_folder_and_outcomes_reach_the_report
     let seen = RefCell::new(None);
     let run_rules = |_: &RuleFile, repo: &Path, only: &[RelPath]| {
         *seen.borrow_mut() = Some((repo.to_path_buf(), only.to_vec()));
-        vec![("q".to_string(), RuleOutcome::Findings(vec![]))]
+        let outcome = RuleOutcome::Findings(vec![]);
+        vec![RuleRun { rule: "q".to_string(), engine: Engine::Ruff, outcome, raw_chars: None }]
     };
     let build_report = |_: &RuleFile, outcomes: Outcomes, _: Option<(&Path, &Oid)>| {
         assert_eq!(outcomes, vec![("q".to_string(), RuleOutcome::Findings(vec![]))]);

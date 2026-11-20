@@ -14,9 +14,10 @@ use procio::{run, Cmd, ProcError};
 use serde_json::Value;
 
 use crate::clean_cmd::clean_cmd;
-use crate::env::clean_env;
+use crate::env::tm_env;
 use crate::repo::Repo;
 use crate::run_clean::run_clean;
+use crate::temp_home::TempHome;
 
 static HEAD: Once = Once::new();
 
@@ -79,7 +80,8 @@ pub fn write_head_once(parts: &Path) {
 fn engine_lines() -> Vec<String> {
     let repo = Repo::new();
     repo.write("temperare.toml", RULES);
-    let out = run_clean(env!("CARGO_BIN_EXE_temperare"), &["rules", "--json"], repo.path(), clean_env(None));
+    let home = TempHome::new();
+    let out = run_clean(env!("CARGO_BIN_EXE_temperare"), &["rules", "--json"], repo.path(), tm_env(None, home.path()));
     let listing: Value = match serde_json::from_slice(&out.stdout) {
         Ok(listing) => listing,
         Err(e) => return vec![format!("- engines: not recorded; tm rules --json printed no JSON ({e})")],
@@ -107,9 +109,10 @@ fn engine_line(rule: &Value) -> String {
 /// gets; "no version printed" when it prints nothing; "not installed" when procio finds no such program; procio's
 /// error when it gives no answer otherwise; the exit code when the program fails.
 fn version(program: &str, args: &[&str]) -> String {
+    let home = TempHome::new();
     let cmd = Cmd {
         timeout: Some(Duration::from_secs(120)),
-        ..clean_cmd(OsString::from(program), args, &std::env::temp_dir(), clean_env(None))
+        ..clean_cmd(OsString::from(program), args, &std::env::temp_dir(), tm_env(None, home.path()))
     };
     match run(&cmd) {
         Err(ProcError::NotFound { .. }) => "not installed".to_string(),
