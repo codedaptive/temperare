@@ -26,13 +26,14 @@ pub fn render_text(report: &Report) -> String {
     text
 }
 
+/// A finding with no line prints line 0: `path:0`.
 fn finding_block(finding: &Finding) -> String {
     let col = finding.col.map(|col| format!(":{col}")).unwrap_or_default();
     let owner = finding.owner.as_ref().map(|owner| format!("  owner {owner}")).unwrap_or_default();
     format!(
         "{}:{}{col}  {} {} {}{owner}\n  {}\n  fix: {}\n\n",
         finding.path.as_str(),
-        finding.line,
+        finding.line().unwrap_or(0),
         severity_name(finding.severity),
         kind_name(finding.kind),
         finding.rule,

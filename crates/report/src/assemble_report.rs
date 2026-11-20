@@ -2,17 +2,18 @@
 
 use crate::{split_by_exceptions, stderr_tail, Counts, Failed, NotAvailable, Report, Silenced};
 use procio::Oid;
-use rules::{Finding, RuleFile, RuleOutcome};
+use rules::{Date, Finding, RuleFile, RuleOutcome};
 
 /// The report of `outcomes`. Their findings go through `keep_new` first, so a finding it drops is neither kept nor
-/// silenced nor counted; the rest are split by the rule file's exceptions. Findings, and silenced ones by their
-/// finding, are sorted by path, line, col (none first) and rule; not-available and failed rules by rule. The sorts
-/// are stable, so the same input gives the same report. Each outcome carries its own rule, so the tuple's name is
-/// not read. Pure: it runs nothing and reads no file.
+/// silenced nor counted; the rest are split by the rule file's exceptions (`RuleFile::exception_on`, given `day`).
+/// Findings, and silenced ones by their finding, are sorted by path, line, col (none first) and rule; not-available and
+/// failed rules by rule. The sorts are stable, so the same input gives the same report. Each outcome carries its own
+/// rule, so the tuple's name is not read. Pure: it runs nothing and reads no file.
 pub(crate) fn assemble_report(
     rules: &RuleFile,
     outcomes: Vec<(String, RuleOutcome)>,
     base: Option<Oid>,
+    day: Date,
     keep_new: impl FnOnce(Vec<Finding>) -> Vec<Finding>,
 ) -> Report {
     let mut findings = Vec::new();
@@ -27,7 +28,7 @@ pub(crate) fn assemble_report(
             }
         }
     }
-    let (mut kept, silenced) = split_by_exceptions(rules, keep_new(findings));
+    let (mut kept, silenced) = split_by_exceptions(rules, keep_new(findings), day);
     let mut silenced: Vec<Silenced> =
         silenced.into_iter().map(|(finding, exception)| Silenced { finding, exception }).collect();
     kept.sort_by(|a, b| place(a).cmp(&place(b)));
@@ -45,7 +46,7 @@ pub(crate) fn assemble_report(
     }
 }
 
-/// The report's order key for a finding.
-fn place(finding: &Finding) -> (&str, u32, Option<u32>, &str) {
-    (finding.path.as_str(), finding.line, finding.col, &finding.rule)
+/// The report's order key for a finding. `Option`'s order puts a finding with no line or col before any with one.
+fn place(finding: &Finding) -> (&str, Option<u32>, Option<u32>, &str) {
+    (finding.path.as_str(), finding.line(), finding.col, &finding.rule)
 }

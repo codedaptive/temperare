@@ -27,18 +27,27 @@ fn empty() -> Report {
 }
 
 fn finding(severity: Severity, kind: Kind, owner: Option<&str>, col: Option<u32>) -> Finding {
-    Finding {
-        rule: "no-unwrap".to_string(),
-        engine: Engine::Clippy,
-        kind,
-        severity,
-        owner: owner.map(str::to_string),
-        path: RelPath::new("src/main.rs"),
-        line: 12,
+    finding_at(12, severity, kind, owner, col)
+}
+
+fn finding_at(
+    line: impl Into<Option<u32>>,
+    severity: Severity,
+    kind: Kind,
+    owner: Option<&str>,
+    col: Option<u32>,
+) -> Finding {
+    let mut finding = Finding::new(
+        "no-unwrap",
+        (Engine::Clippy, kind, severity),
+        RelPath::new("src/main.rs"),
+        line,
         col,
-        what: "used unwrap".to_string(),
-        fix: "return an error".to_string(),
-    }
+        "used unwrap",
+        "return an error",
+    );
+    finding.owner = owner.map(str::to_string);
+    finding
 }
 
 fn not_available(engine: Engine) -> NotAvailable {
@@ -75,6 +84,22 @@ fn a_finding_without_col_or_owner_leaves_both_out() {
 }
 
 #[test]
+fn a_finding_with_no_line_prints_line_zero() {
+    let report = Report {
+        findings: vec![
+            finding_at(None, Severity::Error, Kind::Quality, None, Some(5)),
+            finding_at(None, Severity::Warning, Kind::Quality, None, None),
+        ],
+        ..empty()
+    };
+    let expected = "src/main.rs:0:5  error quality no-unwrap\n  used unwrap\n  fix: return an error\n\n\
+src/main.rs:0  warning quality no-unwrap\n  used unwrap\n  fix: return an error\n\n"
+        .to_string()
+        + ZERO_COUNTS;
+    assert_eq!(render_text(&report), expected);
+}
+
+#[test]
 fn findings_keep_report_order() {
     let report = Report {
         findings: vec![
@@ -92,13 +117,7 @@ src/main.rs:12:1  error security no-unwrap\n  used unwrap\n  fix: return an erro
 
 #[test]
 fn a_silenced_finding_is_not_listed() {
-    let exception = Exception {
-        rule: "no-unwrap".to_string(),
-        path: RelPath::new("src/main.rs"),
-        what: None,
-        reason: "startup only".to_string(),
-        approved: "maintainer, 2026-11-17".to_string(),
-    };
+    let exception = Exception::new("no-unwrap", "src/main.rs", "startup only", "maintainer, 2026-11-17");
     let silenced = Silenced { finding: finding(Severity::Error, Kind::Quality, None, None), exception };
     let report = Report { silenced: vec![silenced], ..empty() };
     assert_eq!(render_text(&report), ZERO_COUNTS);

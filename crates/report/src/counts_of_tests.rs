@@ -4,18 +4,7 @@ use crate::Counts;
 use rules::{Engine, Finding, Kind, RelPath, Severity};
 
 fn finding(kind: Kind, severity: Severity) -> Finding {
-    Finding {
-        rule: "r".to_string(),
-        engine: Engine::Ruff,
-        kind,
-        severity,
-        owner: None,
-        path: RelPath::new("a.py"),
-        line: 1,
-        col: None,
-        what: "w".to_string(),
-        fix: "f".to_string(),
-    }
+    Finding::new("r", (Engine::Ruff, kind, severity), RelPath::new("a.py"), 1, None, "w", "f")
 }
 
 #[test]
