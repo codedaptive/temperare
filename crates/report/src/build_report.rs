@@ -6,13 +6,14 @@ use rules::{Date, RuleFile, RuleOutcome};
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-/// The report of `outcomes` under `rules`, its exceptions looked up with `RuleFile::exception_on` for today's UTC day,
-/// read once from the clock. With no base every finding is new and nothing else is run or read. With a base,
-/// `(repository, resolved base id)`, only findings on lines added since the base are new: lines git adds against it in
-/// the work tree, untracked files whole, and every path under an untracked nested repository. Finding paths are
-/// relative to the rule file's folder, so the folder is canonicalized (a relative one against the current directory)
-/// and taken relative to the repository top. A failed git call is `ReportError::Git`; a folder that cannot be
-/// canonicalized or lies outside the repository is `ReportError::Folder`.
+/// The report of `outcomes` under `rules`, its exceptions looked up with `RuleFile::exception_on` given today's UTC day
+/// (read once from the clock); expiry is not judged until rules' step (3): exception_on ignores the day until then.
+/// With no base every finding is new and nothing else is run or read. With a base, `(repository, resolved base id)`,
+/// only findings on lines added since the base are new: lines git adds against it in the work tree, untracked files
+/// whole, and every path under an untracked nested repository. Finding paths are relative to the rule file's folder, so
+/// the folder is canonicalized (a relative one against the current directory) and taken relative to the repository top.
+/// A failed git call is `ReportError::Git`; a folder that cannot be canonicalized or lies outside the repository is
+/// `ReportError::Folder`.
 pub fn build_report(
     rules: &RuleFile,
     outcomes: Vec<(String, RuleOutcome)>,

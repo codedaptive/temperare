@@ -22,8 +22,6 @@ mod utc_day;
 #[cfg(test)]
 mod assemble_report_tests;
 #[cfg(test)]
-mod build_report_tests;
-#[cfg(test)]
 mod counts_of_tests;
 #[cfg(test)]
 mod counts_tests;

@@ -1,7 +1,7 @@
-//! Unit tests for build_report.rs: the no-base path, which runs no program and reads no file (it reads only the clock,
-//! for today's UTC day). The base path is proved by the integration test (tests/new_only.rs).
+//! Integration test of build_report's no-base path. It is here, not with the unit tests, because build_report reads
+//! the clock for today's UTC day.
 
-use crate::build_report;
+use report::build_report;
 use rules::{Engine, Finding, Kind, RelPath, RuleFile, RuleOutcome, Severity};
 use std::path::PathBuf;
 
