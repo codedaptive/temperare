@@ -1,6 +1,6 @@
 //! Validation: tests that run the built `temperare` binary.
 //!
-//! `cli_check` and `cli_tm` are cli's runs of `temperare` with the engines stubbed on PATH.
+//! `cli_check` and `cli_tm` run `temperare` with engines stubbed on PATH; `savings_real_engine` checks savings with ruff.
 //!
 //! Acceptance: the mission's Done list (MISSION-temperare-2026-11-16, Done 1-8), run against the built `temperare` with the
 //! real engines, each case in a throwaway repository it makes and removes. Validation, not a unit or integration test:
@@ -14,6 +14,7 @@
 
 mod cli_check;
 mod cli_tm;
+mod savings_real_engine;
 
 mod check;
 mod check_drop;
@@ -25,6 +26,7 @@ mod env;
 mod on_tm_path;
 mod repo;
 mod run_clean;
+mod temp_home;
 mod tm;
 mod tm_lines;
 mod write_head_once;

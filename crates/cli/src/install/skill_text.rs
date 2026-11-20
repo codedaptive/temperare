@@ -1,9 +1,11 @@
 //! `SKILL_TEXT`: the Claude Code skill `temperare install` writes into each harness it wires (S-32, S-33).
 
-/// The skill file's whole text: YAML front matter (`name`, `description`), then how to run Temperare and read its
-/// exit codes. It teaches the commands as `temperare`, the name that answers wherever it is installed: `tm` exists
-/// only where install made the link. A Rust constant, compiled in: the repository holds no SKILL.md (S-33). The exit codes are S-15's,
-/// as crates/cli/src/output/exit_code.rs gives them.
+/// The skill file's whole text: YAML front matter (`name`, `description`), then how to run Temperare, the tokens-saved
+/// line `temperare check`'s text opens with when an engine ran, and its ask (sum the lines, tell the user at the end of
+/// the reply), that `--json` carries the numbers as `saved` instead, that `savings_line = false` turns line and ask
+/// off, and how to read the exit codes. It teaches the commands as `temperare`, the name that answers wherever it is installed: `tm` exists only
+/// where install made the link. A Rust constant, compiled in: the repository holds no SKILL.md (S-33). The exit codes
+/// are S-15's, as crates/cli/src/output/exit_code.rs gives them.
 pub const SKILL_TEXT: &str = "\
 ---
 name: temperare
@@ -23,6 +25,14 @@ The rules come from `temperare.toml` at the top of the git repository.
 - `temperare check [--base <rev>] [--json] [<path>...]`: check the repository, or only the paths given. With
   `--base`, only violations new since that commit are reported. `--json` prints the report as JSON.
 - `temperare rules`: list the rules in force and whether each one's engine is available.
+
+## Tokens saved
+
+When an engine ran, the first line of `temperare check`'s text output estimates the tokens it saved:
+`[temperare] tokens saved ≈ N (P%) — this output ≈ X tok vs the raw output of K engine run(s) ≈ B tok (estimate).`
+It is followed by an ask: at the end of your reply, tell the user the total temperare tokens saved this turn, the sum
+of each such line across your temperare calls. With `--json` there is no line: the object carries the numbers as
+`saved`. `savings_line = false` in `~/.config/temperare/config.toml` turns the line and its ask off.
 
 ## Exit codes
 

@@ -22,6 +22,7 @@ rule = \"q\"
 path = \"old.py\"
 reason = \"legacy\"
 approved = \"Bob, 2026-11-17\"
+expires = \"2099-12-31\"
 ";
 
 fn file() -> RuleFile {

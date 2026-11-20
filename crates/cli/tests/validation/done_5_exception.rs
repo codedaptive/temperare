@@ -19,6 +19,7 @@ rule = "no-none-compare"
 path = "legacy.py"
 reason = "the legacy module is rewritten in 2.0"
 approved = "reviewer 2026-11-17"
+expires = "2099-12-31"
 "#;
 
 /// `tm check --json` over a repository holding `legacy` as legacy.py, recorded in `check`.
