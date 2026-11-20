@@ -19,10 +19,10 @@ what is "not available" and what is "failed".
   it). Temperare then keeps the findings that are inside that folder, in the files the rule covers (its `paths`,
   `exclude`, `kits`, `outside_kits`) and, when you gave paths on the command line, in those paths. Paths on the
   command line narrow the result; they do not make the engines do less work.
-- **Its version is read once per check.** Before the rules run, each engine named by the rules this check
-  runs is asked its version once, in the rule file's folder, when it is available: `cargo clippy --version`, `swiftlint version`,
-  `ruff --version`, `ast-grep --version`. Tessera is not asked. The version is named in the reason of a check the
-  engine does not know (below).
+- **Its version is read once per check.** Before the rules run, each engine named by the rules this check runs is
+  asked its version once, in the rule file's folder, when it is available: `cargo clippy --version`,
+  `swiftlint version`, `ruff --version`, `ast-grep --version`. Tessera, and an engine with no adapter yet, is not
+  asked. The version is named in the reason of a check the engine does not know (below).
 - **No time limit.** `tm` waits for an engine as long as it runs.
 - **The engine's environment is yours.** Temperare adds nothing to it, except that for a clippy rule with `max_nesting` it
   sets `CLIPPY_CONF_DIR` for that run to a temporary folder holding `clippy.toml`, which clippy reads instead of the
@@ -44,6 +44,7 @@ Neither is ever "clean".
 | `no Cargo.toml at or above the rule file's folder` | A clippy rule in a folder that is not inside a Cargo package |
 | ``<engine> <version> does not know the check `<check>`: <what it said>`` | The installed clippy, SwiftLint or ruff does not know the rule's `check`: a name it does not have, often because it is older than the rule. `<version>` is `(version unknown)` when the version could not be read |
 | `Tessera's slop records are not defined yet` | Every rule with `engine = "tessera"` |
+| `no adapter for <engine> in this build` | Every rule whose engine the rule file accepts and this `tm` cannot run yet: `golangci-lint`, `pylint`, `clang-tidy`, `oclint` and `shellcheck` ([below](#engines-with-no-adapter-yet)) |
 
 An engine too old for a rule is not available rather than failed: the fix is a newer engine, or a `check` this one
 knows. ast-grep and Tessera have no such case: an ast-grep `check` is your own YAML, which ast-grep either reads or
@@ -121,7 +122,7 @@ of the engine's stderr, or Temperare's own reason when the engine printed none o
 - **What runs:**
 
   ```
-  swiftlint lint --reporter json --quiet --only-rule=<check> [--config=<config>]
+  swiftlint lint --reporter json --quiet --only-rule=<check> [--config=<config>] [--config=<threshold file>]
   ```
 - **`check`:** one SwiftLint rule identifier, such as `force_cast`. Violations with exactly that identifier are the
   findings. For a custom rule, write the custom rule's own identifier.
@@ -139,7 +140,11 @@ of the engine's stderr, or Temperare's own reason when the engine printed none o
   or copy the file.
 - **`params`:** `max_complexity`, a whole number from 1 to 1000, read only with check `cyclomatic_complexity`; and
   `max_lines`, a whole number from 1 to 100000, read only with check `file_length`. At most one threshold per rule.
-  The threshold is written to a temporary config; any other param fails the rule.
+  The threshold is written to a temporary `.yml` file that sets the check's warning and error levels both to it, and
+  that file is passed as the last `--config=`, so it wins over the rule's `config`. A rule with a threshold and no
+  `config` passes the folder's own `.swiftlint.yml` first, when there is one, since an explicit `--config` would
+  otherwise make SwiftLint skip it. No config of yours is changed, and the temporary file is removed after the run.
+  A threshold out of range or with another check, and any other param, fail the rule before SwiftLint runs.
 - **A finding** has no column when SwiftLint gives none, as for a violation of a whole line or file.
 
 ## ruff
@@ -149,7 +154,7 @@ of the engine's stderr, or Temperare's own reason when the engine printed none o
 - **What runs:**
 
   ```
-  ruff check --no-cache --output-format json --select=<check> [--config=<config>] .
+  ruff check --no-cache --output-format json --select=<check> [--config=<config>] [--config=lint.mccabe.max-complexity=<n>] .
   ```
 
   `--no-cache` keeps ruff from leaving a `.ruff_cache` folder in the code it checks.
@@ -168,7 +173,9 @@ of the engine's stderr, or Temperare's own reason when the engine printed none o
 - **`config`:** passed as written, so a relative path is taken from the rule file's folder. Temperare does not read
   or copy the file.
 - **`params`:** `max_complexity`, a whole number from 1 to 1000, read only with check `C901`, passed as
-  `--config=lint.mccabe.max-complexity=<n>`; any other param fails the rule.
+  `--config=lint.mccabe.max-complexity=<n>` after the rule's `config`. ruff lays that over the config file, so the
+  threshold wins over the same key set there, and nothing is written. A threshold out of range or with another check,
+  and any other param, fail the rule before ruff runs.
 
 ## ast-grep
 
@@ -288,6 +295,17 @@ A run with a Tessera rule therefore ends with exit 3, unless a quality error (1)
 first. The `next:` line says `Tessera's checks are not available yet` and does not ask you to install it. To get an
 exit 0, leave Tessera rules out of the rule file, or check with a rule file that has none
 (`--rules <path>`).
+
+## Engines with no adapter yet
+
+A rule may name `golangci-lint`, `pylint`, `clang-tidy`, `oclint` or `shellcheck`. The rule file accepts these
+names, so a rule written for one of them needs no change when its adapter lands. Until then this `tm` cannot run
+them: the rule is reported "not available" with the reason `no adapter for <engine> in this build`, whether or
+not the engine is installed, and nothing is run. `tm rules` shows the same reason.
+
+A run with such a rule ends with exit 3, unless a quality error (1) or a failed engine (5) comes first. The `next:`
+line says `<engine>: no adapter for <engine> in this build (or run without those rules)`; installing the engine
+changes nothing.
 
 ## The engines version 0.1.0 was accepted with
 

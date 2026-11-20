@@ -42,9 +42,11 @@ sources.
 - Exit 3 and exit 5 are never clean: the code was not fully checked.
 - A rule fails (exit 5) when its engine gives no answer that can be read, or when its check cannot be matched back
   to findings: a clippy lint group, SwiftLint's custom_rules, a ruff rule name in place of a code, an ast-grep rule
-  file outside the rule file's folder. It fails too on a param its engine does not take: swiftlint and ruff take
-  none, clippy takes only allow, and ast-grep only the names its YAML has as {{name}}. The reason is in
-  failed[].stderr_tail.
+  file outside the rule file's folder. It fails too on a param its engine does not take, or a bad value: clippy
+  takes allow, and max_nesting (1-1000) with check clippy::excessive_nesting; swiftlint takes max_complexity
+  (1-1000) with check cyclomatic_complexity, or max_lines (1-100000) with check file_length; ruff takes
+  max_complexity (1-1000) with check C901; ast-grep takes only the names its YAML has as {{name}}. A threshold wins
+  over the rule's config, and no config file of the repository is changed. The reason is in failed[].stderr_tail.
 - A check the installed clippy, swiftlint or ruff does not know (a misspelt name, or one newer than the engine) is
   not available (exit 3), with a why naming the engine, its version and the check.
 - check, by engine: clippy, one lint or warnings; swiftlint, one rule identifier; ruff, a rule code, a code prefix,
@@ -69,6 +71,9 @@ sources.
   savings_line = false in ~/.config/temperare/config.toml turns the line off.
 - Rules with engine = "tessera" are accepted and are always reported "not available" today, whether or not Tessera
   is installed.
+- Rules with engine = "golangci-lint", "pylint", "clang-tidy", "oclint" or "shellcheck" are accepted and reported
+  "not available" (no adapter for <engine> in this build) until each adapter lands, whether or not the engine is
+  installed.
 
 ## Version note
 
