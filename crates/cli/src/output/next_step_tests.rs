@@ -115,6 +115,35 @@ fn exit_3_with_an_unknown_why_gives_the_engine_and_its_why() {
 }
 
 #[test]
+fn next_step_unknown_check_gives_the_engine_and_the_cause() {
+    assert_eq!(
+        next_step(
+            3,
+            None,
+            file(),
+            &[entry(Engine::Ruff, "ruff 0.6.9 does not know the check `F999`: Unknown rule selector `F999` in `select` from the CLI")],
+        ),
+        "ruff: ruff 0.6.9 does not know the check `F999`: Unknown rule selector `F999` in `select` from the CLI (or run without those rules)"
+    );
+}
+
+#[test]
+fn next_step_missing_engine_and_unknown_check_combine_into_one_next_step() {
+    assert_eq!(
+        next_step(
+            3,
+            None,
+            file(),
+            &[
+                entry(Engine::Ruff, "ruff 0.6.9 does not know the check `F999`: Unknown rule selector `F999` in `select` from the CLI"),
+                absent(Engine::SwiftLint),
+            ],
+        ),
+        "install swiftlint; ruff: ruff 0.6.9 does not know the check `F999`: Unknown rule selector `F999` in `select` from the CLI (or run without those rules)"
+    );
+}
+
+#[test]
 fn exit_3_names_the_same_cause_once() {
     assert_eq!(
         next_step(3, None, file(), &[entry(Engine::Clippy, CARGO_WHY), entry(Engine::Clippy, CARGO_WHY)]),

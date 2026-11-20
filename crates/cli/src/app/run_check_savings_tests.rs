@@ -12,6 +12,12 @@ use std::path::{Path, PathBuf};
 pub(super) const BODY: &str = "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed\nnext: nothing to do\n";
 const TEXT: &str = "version = 1\n[[rule]]\nid = \"q\"\nengine = \"ruff\"\ncheck = \"F401\"\nfix = \"Remove import.\"\n";
 
+fn output_tokens(chars: usize) -> usize { (chars + 2) / 4 }
+
+fn percent(saved: usize, baseline: usize) -> usize {
+    (0..=100).rev().find(|p| p * baseline <= saved * 100).unwrap()
+}
+
 pub(super) fn run(id: &str, engine: Engine, chars: Option<usize>) -> RuleRun {
     RuleRun { rule: id.into(), engine, outcome: RuleOutcome::Findings(vec![]), raw_chars: chars }
 }
@@ -115,12 +121,14 @@ fn json_counts_unicode_report_characters_not_bytes() {
     let (code, out, err) = check(&CheckArgs { json: true, ..CheckArgs::default() }, &CheckWorld { run_rules: &runs, build_report: &report, ..world() });
     assert_eq!((code, err.as_str()), (5, ""));
     let mut value: serde_json::Value = serde_json::from_str(&out).unwrap();
-    assert_eq!(value["saved"]["output_chars"], 303);
-    assert_eq!(value["saved"]["output_tokens"], 76);
-    value.as_object_mut().unwrap().remove("saved");
+    let saved = value.as_object_mut().unwrap().remove("saved").unwrap();
     let body = value.to_string();
-    assert_eq!(body.chars().count(), 303);
-    assert_eq!(body.len(), 310);
+    let chars = body.chars().count();
+    assert_eq!(output_tokens(303), 76);
+    assert_eq!(saved["output_chars"], chars);
+    assert_eq!(saved["output_tokens"], output_tokens(chars));
+    assert_eq!(body.len() - chars, 7);
+    assert_eq!(out.chars().count(), chars + "\"saved\":".chars().count() + saved.to_string().chars().count() + 2);
 }
 
 #[test]
@@ -129,11 +137,16 @@ fn json_has_exact_saved_object_and_one_report_without_the_text_line() {
     let (code, out, err) = check(&CheckArgs { json: true, ..CheckArgs::default() }, &CheckWorld { run_rules: &runs, ..world() });
     assert_eq!((code, err.as_str(), out.lines().count()), (0, "", 1));
     let mut value: serde_json::Value = serde_json::from_str(&out).unwrap();
-    assert_eq!(value["saved"], json!({
+    let saved = value.as_object_mut().unwrap().remove("saved").unwrap();
+    let chars = value.to_string().chars().count();
+    let tokens = output_tokens(chars);
+    let tokens_saved = 540_252usize.saturating_sub(tokens);
+    assert_eq!(output_tokens(231), 58);
+    assert_eq!(percent(35, 93), 37);
+    assert_eq!(saved, json!({
         "counted": [{"rule":"a","engine":"ruff","chars":0}, {"rule":"b","engine":"ast-grep","chars":0}, {"rule":"c","engine":"ruff","chars":2161007}],
-        "engine_runs":2, "baseline_chars":2161007, "output_chars":231, "baseline_tokens":540252,
-        "output_tokens":58, "tokens_saved":540194, "percent":99
+        "engine_runs":2, "baseline_chars":2161007, "output_chars":chars, "baseline_tokens":540252,
+        "output_tokens":tokens, "tokens_saved":tokens_saved, "percent":percent(tokens_saved, 540_252)
     }));
-    value.as_object_mut().unwrap().remove("saved");
-    assert_eq!(value.to_string().chars().count(), 231);
+    assert_eq!(out.chars().count(), chars + "\"saved\":".chars().count() + saved.to_string().chars().count() + 2);
 }

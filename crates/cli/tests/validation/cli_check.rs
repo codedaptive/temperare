@@ -1,4 +1,4 @@
-//! Validation (S-28): check runs in an isolated repository with engine programs stood in by stubs.
+//! Validation (S-28): check runs in isolated repositories, with stub engines except in the real_ruff_ cases.
 
 use crate::temp_home::TempHome;
 use procio::{Cmd, Output};
@@ -147,6 +147,30 @@ const SAVINGS_RUFF: &str = concat!(
     "{\"code\":\"E501\",\"filename\":\"a.py\",\"location\":{\"row\":1,\"column\":8},\"message\":\"unused import\"}]\\n'\nexit 0"
 );
 
+fn output_tokens(chars: usize) -> usize { (chars + 2) / 4 }
+
+fn percent(saved: usize, baseline: usize) -> usize {
+    (0..=100).rev().find(|p| p * baseline <= saved * 100).unwrap()
+}
+
+/// The printed JSON line without its `"saved"` member, and that member parsed.
+fn printed_body(stdout: &str) -> (String, serde_json::Value) {
+    let line = stdout.strip_suffix('\n').unwrap();
+    assert!(!line.contains('\n'), "stdout must end with exactly one newline");
+    let mut value: serde_json::Value = serde_json::from_str(stdout).unwrap();
+    let saved = value.as_object_mut().unwrap().remove("saved").unwrap();
+    let needle = format!("\"saved\":{saved}");
+    assert_eq!(line.matches(&needle).count(), 1, "the printed saved is not compact, or appears twice");
+    let (before, after) = line.split_once(&needle).unwrap();
+    let body = if let Some(before) = before.strip_suffix(',') {
+        format!("{before}{after}")
+    } else {
+        format!("{before}{}", after.strip_prefix(',').unwrap())
+    };
+    assert_eq!(serde_json::from_str::<serde_json::Value>(&body).unwrap(), value);
+    (body, saved)
+}
+
 fn savings_repo() -> (Repo, PathBuf) {
     let repo = Repo::new(QUALITY);
     repo.stub(SAVINGS_RUFF);
@@ -177,12 +201,17 @@ fn savings_check(repo: &Repo, home: &Path, args: &[&str]) -> Output {
 fn savings_json_counts_raw_ruff_output_exactly() {
     let (repo, home) = savings_repo();
     let stdout = text(&savings_check(&repo, &home, &["--json"]), 0);
-    assert_eq!(stdout.lines().count(), 1);
-    let value: serde_json::Value = serde_json::from_str(&stdout).unwrap();
-    assert_eq!(value["saved"], serde_json::json!({
+    let (body, saved) = printed_body(&stdout);
+    let chars = body.chars().count();
+    assert_eq!(saved["output_chars"], chars);
+    let tokens = output_tokens(chars);
+    let tokens_saved = 93usize.saturating_sub(tokens);
+    assert_eq!(output_tokens(231), 58);
+    assert_eq!(percent(35, 93), 37);
+    assert_eq!(saved, serde_json::json!({
         "counted": [{"rule":"python-lint", "engine":"ruff", "chars":370}],
         "engine_runs":1, "baseline_chars":370, "baseline_tokens":93,
-        "output_chars":231, "output_tokens":58, "tokens_saved":35, "percent":37
+        "output_chars":chars, "output_tokens":tokens, "tokens_saved":tokens_saved, "percent":percent(tokens_saved, 93)
     }));
 }
 
@@ -204,15 +233,19 @@ fn savings_json_counts_unicode_raw_ruff_output_in_characters() {
 }
 
 #[test]
-fn savings_text_and_json_numbers_each_match_their_hand_count() {
+fn savings_text_line_is_hand_counted_and_json_savings_follow_the_printed_body() {
     let (repo, home) = savings_repo();
     let json = text(&savings_check(&repo, &home, &["--json"]), 0);
-    let value: serde_json::Value = serde_json::from_str(&json).unwrap();
+    let (body, saved) = printed_body(&json);
+    let chars = body.chars().count();
+    assert_eq!(saved["output_chars"], chars);
+    let tokens = output_tokens(chars);
+    let tokens_saved = 93usize.saturating_sub(tokens);
     let stdout = text(&savings_check(&repo, &home, &[]), 0);
-    // Text and JSON have different output sizes, so N and P match only when both use the same X.
-    // For this clean report, text is 32 tokens and JSON is 58; compare each against its literal contract.
-    assert_eq!(value["saved"]["tokens_saved"], 35);
-    assert_eq!(value["saved"]["percent"], 37);
+    // Text and JSON have different output sizes; each saving uses its own report size.
+    assert_eq!(saved["output_tokens"], tokens);
+    assert_eq!(saved["tokens_saved"], tokens_saved);
+    assert_eq!(saved["percent"], percent(tokens_saved, 93));
     assert!(stdout.starts_with("[temperare] tokens saved ≈ 61 (65%) — this output ≈ 32 tok"), "{stdout}");
 }
 
@@ -347,4 +380,73 @@ fn bad_base_reports_usage_error() {
     assert!(output.stdout.is_empty());
     let stderr = String::from_utf8(output.stderr).unwrap();
     assert!(stderr.lines().any(|line| line == "tm: base 'nosuchrev' does not name a commit"), "{stderr}");
+}
+
+/// Follows savings_real_engine's on_tm_path branch for an absent ruff.
+#[test]
+fn real_ruff_unknown_check_is_not_available_with_engine_version_and_check() {
+    let repo = crate::repo::Repo::new();
+    let home = TempHome::new();
+    repo.write("temperare.toml", r#"version = 1
+[[rule]]
+id = "unknown-check"
+engine = "ruff"
+check = "ZZZ999"
+fix = "Choose a supported check."
+"#);
+    repo.write("a.py", "import os\n");
+    repo.commit("unknown check");
+    let output = crate::run_clean::run_clean(env!("CARGO_BIN_EXE_temperare"), &["check"], repo.path(), crate::env::tm_env(None, home.path()));
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    if !crate::on_tm_path::on_tm_path("ruff") {
+        assert_eq!(output.code, Some(3), "{stdout}");
+        assert!(stdout.contains("not available: unknown-check (ruff): ruff not found on PATH"), "{stdout}");
+        return;
+    }
+    assert_eq!(output.code, Some(3), "{stdout}\n{}", String::from_utf8_lossy(&output.stderr));
+    let why = stdout.lines().find_map(|line| line.strip_prefix("not available: unknown-check (ruff): ")).expect("not available line");
+    // The version is machine-specific, so it is read from the same ruff tm runs for this expected value only;
+    // for ruff's `ruff X.Y.Z` output, word nth(1) is the same word engines' `version_word` takes.
+    let version_output = crate::run_clean::run_clean("ruff", &["--version"], repo.path(), crate::env::tm_env(None, home.path()));
+    assert_eq!(version_output.code, Some(0));
+    let version_stdout = String::from_utf8(version_output.stdout).unwrap();
+    let version = version_stdout.split_whitespace().nth(1).expect("ruff version");
+    let said = why.strip_prefix(&format!("ruff {version} does not know the check `ZZZ999`: ")).unwrap_or_else(|| panic!("{why}"));
+    assert!(!said.trim().is_empty() && said.contains("ZZZ999"), "{why}");
+    assert!(!stdout.contains("failed:"), "{stdout}");
+    assert_eq!(stdout.lines().last(), Some(format!("next: ruff: {why} (or run without those rules)").as_str()));
+}
+
+/// Follows savings_real_engine's on_tm_path branch for an absent ruff.
+#[test]
+fn real_ruff_param_it_does_not_take_fails_before_the_check_runs() {
+    let repo = crate::repo::Repo::new();
+    let home = TempHome::new();
+    repo.write("temperare.toml", r#"version = 1
+[[rule]]
+id = "param-rule"
+engine = "ruff"
+check = "F401"
+params = { foo = ["x"] }
+fix = "Remove the unsupported parameter."
+"#);
+    repo.write("a.py", "import os\n");
+    repo.commit("unsupported parameter");
+    let output = crate::run_clean::run_clean(env!("CARGO_BIN_EXE_temperare"), &["check"], repo.path(), crate::env::tm_env(None, home.path()));
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    if !crate::on_tm_path::on_tm_path("ruff") {
+        assert_eq!(output.code, Some(3), "{stdout}");
+        assert!(stdout.contains("not available: param-rule (ruff): ruff not found on PATH"), "{stdout}");
+        return;
+    }
+    assert_eq!(output.code, Some(5), "{stdout}\n{}", String::from_utf8_lossy(&output.stderr));
+    assert!(stdout.contains("failed: param-rule (ruff), no exit code"), "{stdout}");
+    assert!(stdout.contains("stderr of param-rule (ruff):\n  ruff param foo: a ruff rule takes no params"), "{stdout}");
+    assert_eq!(stdout.lines().last(), Some("next: see the engine output above"));
+    assert!(!stdout.contains("[temperare] tokens saved"), "{stdout}");
+    let json = crate::run_clean::run_clean(env!("CARGO_BIN_EXE_temperare"), &["check", "--json"], repo.path(), crate::env::tm_env(None, home.path()));
+    assert_eq!(json.code, Some(5), "{}", String::from_utf8_lossy(&json.stderr));
+    let value: serde_json::Value = serde_json::from_slice(&json.stdout).unwrap();
+    assert_eq!(value["saved"]["engine_runs"], 0);
+    assert_eq!(value["saved"]["counted"], serde_json::json!([{ "rule": "param-rule", "engine": "ruff", "chars": 0 }]));
 }

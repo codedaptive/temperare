@@ -319,7 +319,7 @@ fn a_failed_engine_exits_5_with_its_stderr_tail_between_the_counts_and_next() {
             rule: "q".to_string(),
             engine: Engine::Ruff,
             code: Some(2),
-            stderr_tail: "ruff: unknown rule F999".to_string(),
+            stderr_tail: "ruff: Failed to parse /repo/pyproject.toml".to_string(),
         }];
         r.counts.failed = 1;
         Ok(r)
@@ -331,7 +331,7 @@ fn a_failed_engine_exits_5_with_its_stderr_tail_between_the_counts_and_next() {
             "failed: q (ruff), exit 2\n\
              0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, \
              1 failed\n\
-             stderr of q (ruff):\n  ruff: unknown rule F999\n\
+             stderr of q (ruff):\n  ruff: Failed to parse /repo/pyproject.toml\n\
              next: see the engine output above\n"
                 .to_string(),
             String::new()

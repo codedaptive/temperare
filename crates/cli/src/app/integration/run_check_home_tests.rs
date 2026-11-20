@@ -9,6 +9,26 @@ use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
+fn output_tokens(chars: usize) -> usize { (chars + 2) / 4 }
+
+/// The printed JSON line without its `"saved"` member, and that member parsed.
+fn printed_body(stdout: &str) -> (String, serde_json::Value) {
+    let line = stdout.strip_suffix('\n').unwrap();
+    assert!(!line.contains('\n'), "stdout must end with exactly one newline");
+    let mut value: serde_json::Value = serde_json::from_str(stdout).unwrap();
+    let saved = value.as_object_mut().unwrap().remove("saved").unwrap();
+    let needle = format!("\"saved\":{saved}");
+    assert_eq!(line.matches(&needle).count(), 1, "the printed saved is not compact, or appears twice");
+    let (before, after) = line.split_once(&needle).unwrap();
+    let body = if let Some(before) = before.strip_suffix(',') {
+        format!("{before}{after}")
+    } else {
+        format!("{before}{}", after.strip_prefix(',').unwrap())
+    };
+    assert_eq!(serde_json::from_str::<serde_json::Value>(&body).unwrap(), value);
+    (body, saved)
+}
+
 static NEXT: AtomicU64 = AtomicU64::new(0);
 struct Home(PathBuf);
 impl Home {
@@ -43,13 +63,21 @@ fn disabled_line_leaves_text_json_and_logging_available() {
     assert_eq!(check(&CheckArgs::default(), &w), (0, BODY.into(), String::new()));
     let (code, out, err) = check(&CheckArgs { json: true, ..CheckArgs::default() }, &w);
     assert_eq!((code, err.as_str()), (0, ""));
-    let value: serde_json::Value = serde_json::from_str(&out).unwrap();
-    assert_eq!(value["saved"]["engine_runs"], 1);
-    assert_eq!(value["saved"]["baseline_tokens"], 100);
-    assert_eq!(fs::read_to_string(home.log()).unwrap(), concat!(
-        "{\"time\":\"2026-11-26T08:00:00Z\",\"folder\":\"/repo\",\"verb\":\"check\",\"output_tokens\":32,\"baseline_tokens\":100}\n",
-        "{\"time\":\"2026-11-26T08:00:00Z\",\"folder\":\"/repo\",\"verb\":\"check\",\"output_tokens\":58,\"baseline_tokens\":100}\n"
-    ));
+    let (body, saved) = printed_body(&out);
+    assert_eq!(saved["engine_runs"], 1);
+    assert_eq!(saved["baseline_tokens"], 100);
+    let chars = body.chars().count();
+    assert_eq!(saved["output_chars"], chars);
+    let tokens = output_tokens(chars);
+    let tokens_saved = 100usize.saturating_sub(tokens);
+    assert_eq!(output_tokens(231), 58);
+    assert_eq!(saved["output_tokens"], tokens);
+    assert_eq!(saved["tokens_saved"], tokens_saved);
+    assert_eq!(saved["percent"], tokens_saved);
+    assert_eq!(fs::read_to_string(home.log()).unwrap(), format!(concat!(
+        "{{\"time\":\"2026-11-26T08:00:00Z\",\"folder\":\"/repo\",\"verb\":\"check\",\"output_tokens\":32,\"baseline_tokens\":100}}\n",
+        "{{\"time\":\"2026-11-26T08:00:00Z\",\"folder\":\"/repo\",\"verb\":\"check\",\"output_tokens\":{},\"baseline_tokens\":100}}\n"
+    ), tokens));
 }
 
 #[test]

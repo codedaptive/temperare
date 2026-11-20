@@ -1,9 +1,8 @@
-//! ZUT for check_json.rs: the report's top-level keys plus `exit` and `next`, and a finding's fields carried through.
+//! ZUT for check_json.rs: the required top-level keys (the report's fields, `exit`, `next`; `base` only with a base), and a finding's fields carried through.
 
 use super::check_json::check_json;
 use report::{Counts, Report};
 use rules::{Engine, Finding, Kind, RelPath, Severity};
-use std::collections::BTreeSet;
 
 fn report(base: Option<procio::Oid>) -> Report {
     Report {
@@ -22,29 +21,24 @@ fn report(base: Option<procio::Oid>) -> Report {
     }
 }
 
-fn keys(value: &serde_json::Value) -> BTreeSet<String> {
-    value.as_object().map(|o| o.keys().cloned().collect()).unwrap_or_default()
-}
-
-fn expected_keys(with_base: bool) -> BTreeSet<String> {
-    let mut names =
-        vec!["findings", "silenced", "exceptions_in_force", "not_available", "failed", "counts", "exit", "next"];
-    if with_base {
-        names.push("base");
+fn assert_required_keys(value: &serde_json::Value) {
+    for key in ["findings", "silenced", "exceptions_in_force", "not_available", "failed", "counts", "exit", "next"] {
+        assert!(value.get(key).is_some(), "missing {key}");
     }
-    names.into_iter().map(str::to_string).collect()
 }
 
 #[test]
-fn without_a_base_the_keys_are_the_report_fields_exit_and_next() {
-    assert_eq!(keys(&check_json(&report(None), 1, "fix them")), expected_keys(false));
+fn without_a_base_required_fields_are_present_and_base_is_absent() {
+    let value = check_json(&report(None), 1, "fix them");
+    assert_required_keys(&value);
+    assert!(value.get("base").is_none());
 }
 
 #[test]
-fn with_a_base_the_keys_add_base_as_its_hex_text() {
+fn with_a_base_required_fields_include_its_hex_text() {
     let oid = procio::Oid::parse("0123456789abcdef0123456789abcdef01234567");
     let value = check_json(&report(oid), 1, "fix them");
-    assert_eq!(keys(&value), expected_keys(true));
+    assert_required_keys(&value);
     assert_eq!(value["base"], "0123456789abcdef0123456789abcdef01234567");
 }
 

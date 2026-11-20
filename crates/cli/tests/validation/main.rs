@@ -1,6 +1,7 @@
 //! Validation: tests that run the built `temperare` binary.
 //!
-//! `cli_check` and `cli_tm` run `temperare` with engines stubbed on PATH; `savings_real_engine` checks savings with ruff.
+//! `cli_check` and `cli_tm` run `temperare` with engines stubbed on PATH, except cli_check's `real_ruff_` cases;
+//! `savings_real_engine` and those cases run the real ruff.
 //!
 //! Acceptance: the mission's Done list (MISSION-temperare-2026-11-16, Done 1-8), run against the built `temperare` with the
 //! real engines, each case in a throwaway repository it makes and removes. Validation, not a unit or integration test:
