@@ -1,4 +1,4 @@
-//! ZIT for temp_rule_drop.rs on real temp files: dropping a rule removes its file, and a file already gone is no panic.
+//! Zone integration tests for temp_rule_drop.rs on real temp files: dropping a rule removes its file, and a file already gone is no panic.
 
 use super::super::TempRule;
 

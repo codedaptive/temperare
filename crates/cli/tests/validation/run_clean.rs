@@ -1,4 +1,4 @@
-//! Runs a program for acceptance through procio, the one place that starts programs (S-26), in an environment of
+//! Runs a program for acceptance through procio, the one place that starts programs, in an environment of
 //! exactly the given variables (`clean_cmd`).
 
 use std::ffi::OsString;

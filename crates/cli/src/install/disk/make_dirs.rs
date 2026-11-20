@@ -1,6 +1,6 @@
 //! `make_dirs`: a folder and its missing ancestors, each one created put on the install record.
 //!
-//! No sibling ZUT: it writes to the disk, which a unit test may not (rule 11), so the zone integration target
+//! No sibling unit test: it writes to the disk, which a unit test may not, so the zone integration target
 //! `tests/install` (uninstall.rs: a folder install made goes, one that was there stays) proves it on a temporary HOME.
 
 use std::fs;

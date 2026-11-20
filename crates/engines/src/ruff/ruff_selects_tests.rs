@@ -1,4 +1,4 @@
-//! ZUT for ruff_selects.rs: which codes a `--select` list selects, the cases written out from the contract.
+//! Unit tests for ruff_selects.rs: which codes a `--select` list selects, the cases written out from the contract.
 
 use super::ruff_selects;
 

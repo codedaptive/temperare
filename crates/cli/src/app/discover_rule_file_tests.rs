@@ -1,4 +1,4 @@
-//! ZUT for discover_rule_file.rs: each way to the rule file and each error, with git and the disk as closures.
+//! Unit tests for discover_rule_file.rs: each way to the rule file and each error, with git and the disk as closures.
 
 use super::discover_rule_file;
 use crate::UsageError;

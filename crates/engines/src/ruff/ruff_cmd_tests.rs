@@ -1,4 +1,4 @@
-//! ZUT for ruff_cmd.rs: the program, arguments and working directory of a ruff run.
+//! Unit tests for ruff_cmd.rs: the program, arguments and working directory of a ruff run.
 
 use super::ruff_cmd;
 use std::ffi::OsString;

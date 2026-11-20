@@ -1,4 +1,4 @@
-//! ZUT for scope_or_problem.rs. The Err case is a plain Err: no test builds a glob set big enough to hit
+//! Unit tests for scope_or_problem.rs. The Err case is a plain Err: no test builds a glob set big enough to hit
 //! globset's size limit.
 
 use super::scope_or_problem::scope_or_problem;

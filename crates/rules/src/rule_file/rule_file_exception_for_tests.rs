@@ -1,4 +1,4 @@
-//! ZUT for rule_file_exception_for.rs.
+//! Unit tests for rule_file_exception_for.rs.
 
 use crate::{Engine, Exception, Finding, Kind, RelPath, RuleFile, Severity};
 use std::path::PathBuf;

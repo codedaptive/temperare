@@ -1,4 +1,4 @@
-//! ZUT for lint_group.rs: checks, dashed and underscored, against a given group list.
+//! Unit tests for lint_group.rs: checks, dashed and underscored, against a given group list.
 
 use super::lint_group;
 

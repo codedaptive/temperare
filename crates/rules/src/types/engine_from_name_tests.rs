@@ -1,4 +1,4 @@
-//! ZUT for engine_from_name.rs: the five rule-file names, and None for anything else.
+//! Unit tests for engine_from_name.rs: the five rule-file names, and None for anything else.
 
 use super::Engine;
 

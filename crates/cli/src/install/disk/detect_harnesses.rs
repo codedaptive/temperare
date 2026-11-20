@@ -1,6 +1,6 @@
 //! `detect_harnesses`: the harnesses whose folder is in HOME.
 //!
-//! No sibling ZUT: it reads the disk, which a unit test may not (rule 11), so the zone integration target
+//! No sibling unit test: it reads the disk, which a unit test may not, so the zone integration target
 //! `tests/install` (harnesses.rs) proves it on a temporary HOME.
 
 use std::path::Path;

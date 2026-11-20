@@ -31,7 +31,7 @@ use std::path::Path;
 /// 6. `cargo locate-project --workspace`, then clippy, both in the Cargo root: only that crate and what it depends on
 ///    are built and that crate is linted. Its span paths are relative to the workspace root that `locate-project`
 ///    names, so they are read from there. No `CARGO_TARGET_DIR` is set: cargo builds in the repository's own
-///    `target/` (settled S-21).
+///    `target/`.
 pub(crate) fn hits_clippy(rule: &Rule, folder: &Path, host: &Host) -> Result<Vec<Hit>, Stop> {
     let allows = clippy_allows(&rule.params).map_err(param_failed)?;
     let root = cargo_root(folder)

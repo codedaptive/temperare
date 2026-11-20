@@ -1,4 +1,4 @@
-//! ZUT for usage.rs: USAGE has each command line, the rule-file line and the line on when tm answers exactly, each
+//! Unit tests for usage.rs: USAGE has each command line, the rule-file line and the line on when tm answers exactly, each
 //! a whole line.
 
 use super::USAGE;

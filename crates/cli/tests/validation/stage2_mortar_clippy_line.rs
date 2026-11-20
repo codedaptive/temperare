@@ -1,5 +1,5 @@
-//! Objective tatertot 2.1 (Orc-Codeteam-jj #209): mortar's check line, `cargo clippy --all-targets -- -D warnings
-//! -A clippy::result_large_err -A clippy::module_inception`, as one rule (S-30): `check = "warnings"` with
+//! Mortar's check line, `cargo clippy --all-targets -- -D warnings
+//! -A clippy::result_large_err -A clippy::module_inception`, as one rule: `check = "warnings"` with
 //! `params.allow`. Over all targets, so a warning in test code is reported; the two allowed lints are not; a lib
 //! warning that two targets compile is one finding; each `what` starts with its lint code. A second rule, every warning
 //! with no allow, shows the allowed lints do fire on this crate, so their absence above is the allow's doing.
@@ -72,7 +72,7 @@ fn mortars_clippy_line_reports_test_code_and_not_the_allowed_lints() {
     let args = ["check", "--json"];
     let a = tm(&repo, &args);
     check.saw_tm(&args, a.code, &a.json);
-    assert_eq!(a.code, 1, "a quality error is the refusal (S-15): {:#}\n{}", a.json, a.stderr);
+    assert_eq!(a.code, 1, "a quality error is the refusal: {:#}\n{}", a.json, a.stderr);
     let f = a.findings();
     assert_eq!(
         lints(f, "mortar-clippy"),

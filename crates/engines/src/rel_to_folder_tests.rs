@@ -1,4 +1,4 @@
-//! ZUT for rel_to_folder.rs: absolute and relative engine paths made relative to the rule file's folder.
+//! Unit tests for rel_to_folder.rs: absolute and relative engine paths made relative to the rule file's folder.
 
 use crate::rel_to_folder::rel_to_folder;
 use rules::RelPath;

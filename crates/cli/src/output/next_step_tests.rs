@@ -1,4 +1,4 @@
-//! ZUT for next_step.rs: the next-step text for every exit code, each expected line a literal.
+//! Unit tests for next_step.rs: the next-step text for every exit code, each expected line a literal.
 
 use super::next_step;
 use report::NotAvailable;

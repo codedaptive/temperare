@@ -1,4 +1,4 @@
-//! ZUT for install_paths_under.rs: every path under one HOME, as the install contract names them.
+//! Unit tests for install_paths_under.rs: every path under one HOME, as the install contract names them.
 
 use std::path::{Path, PathBuf};
 

@@ -1,4 +1,4 @@
-//! ZUT for harness_folder.rs: each harness's folder.
+//! Unit tests for harness_folder.rs: each harness's folder.
 
 use super::Harness;
 

@@ -1,4 +1,4 @@
-//! ZUT for rel_path_as_str.rs: the text of the path as built.
+//! Unit tests for rel_path_as_str.rs: the text of the path as built.
 
 use super::RelPath;
 

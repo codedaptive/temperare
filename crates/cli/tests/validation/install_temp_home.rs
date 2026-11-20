@@ -1,4 +1,4 @@
-//! Validation (creator #265; S-32, S-33, S-37): the built binary's `install -y` and `uninstall` in a throwaway HOME
+//! Validation: the built binary's `install -y` and `uninstall` in a throwaway HOME
 //! that holds a Claude Code folder, with a PATH of ~/.local/bin, /usr/bin and /bin. Install places the real file
 //! `temperare` and the link `tm` in ~/.local/bin and writes the skill; `tm --version` through the link answers as the
 //! built binary does, and the install record is written. Uninstall removes the binary, the link, the skill, the record
@@ -61,7 +61,7 @@ fn install_y_places_temperare_tm_and_the_skill_and_uninstall_removes_them() {
     assert_ne!(meta.permissions().mode() & 0o111, 0, "temperare is executable");
     assert_eq!(fs::read(&bin).unwrap(), fs::read(built).unwrap(), "the placed file is the built binary");
     let link_meta = fs::symlink_metadata(&link).unwrap_or_else(|e| panic!("no {}: {e}\n{said}", link.display()));
-    assert!(link_meta.file_type().is_symlink(), "tm is a symlink, never a hard link (S-32)");
+    assert!(link_meta.file_type().is_symlink(), "tm is a symlink, never a hard link");
     assert_eq!(fs::canonicalize(&link).unwrap(), bin, "tm points at the placed temperare");
     let skill_text = fs::read_to_string(&skill).unwrap_or_else(|e| panic!("no {}: {e}\n{said}", skill.display()));
     assert!(skill_text.starts_with("---\nname: temperare\n"), "the skill names temperare: {skill_text}");

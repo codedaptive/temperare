@@ -6,7 +6,7 @@ use rules::Engine;
 use std::path::Path;
 
 /// `ruff check --no-cache --output-format json --select=<check>`, then `--config=<config>` when given, then `.`,
-/// run in `folder`. `--no-cache` leaves no `.ruff_cache/` in the checked folder (settled S-21). `config` is passed as
+/// run in `folder`. `--no-cache` leaves no `.ruff_cache/` in the checked folder. `config` is passed as
 /// written (relative to `folder`); it is never read or copied here. Each rule value is joined to its option with `=`
 /// so a value beginning with `-` is read as the value, never as an option (ruff answers `--select=--fix` with
 /// "Unknown rule selector").

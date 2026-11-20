@@ -1,6 +1,6 @@
 //! The tessera adapter: builds the `ts slop --json` command, which no rule runs.
 //! It has no parser: Tessera's slop records are not defined yet, so `hits_tessera` makes every tessera rule not
-//! available and `ts` is never run (settled S-20).
+//! available and `ts` is never run.
 
 mod hits_tessera;
 mod tessera_cmd;

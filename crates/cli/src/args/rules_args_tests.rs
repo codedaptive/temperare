@@ -1,4 +1,4 @@
-//! ZUT for rules_args.rs: the default is no rule file and text output.
+//! Unit tests for rules_args.rs: the default is no rule file and text output.
 
 use super::RulesArgs;
 

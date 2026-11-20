@@ -1,4 +1,4 @@
-//! ZUT for problems_json.rs: the object holds the rule file and each problem in order.
+//! Unit tests for problems_json.rs: the object holds the rule file and each problem in order.
 
 use super::problems_json;
 use serde_json::json;

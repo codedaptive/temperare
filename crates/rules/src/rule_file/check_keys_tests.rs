@@ -1,4 +1,4 @@
-//! ZUT for check_keys.rs.
+//! Unit tests for check_keys.rs.
 
 use super::check_keys::check_keys;
 use toml::de::DeTable;

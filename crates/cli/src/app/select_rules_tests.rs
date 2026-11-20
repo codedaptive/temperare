@@ -1,4 +1,4 @@
-//! ZUT for select_rules.rs, on a rule file parsed from text with one quality and one security rule and an exception.
+//! Unit tests for select_rules.rs, on a rule file parsed from text with one quality and one security rule and an exception.
 
 use super::select_rules::select_rules;
 use rules::{Kind, RuleFile};

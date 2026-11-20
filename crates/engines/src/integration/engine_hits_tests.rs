@@ -1,4 +1,4 @@
-//! ZIT for engine_hits.rs: an available engine goes to an adapter that reads the disk, given a folder that does not
+//! Zone integration tests for engine_hits.rs: an available engine goes to an adapter that reads the disk, given a folder that does not
 //! exist.
 
 use crate::engine_hits_tests::{hits_of, not_available};

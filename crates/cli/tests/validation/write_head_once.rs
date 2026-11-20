@@ -1,4 +1,4 @@
-//! `write_head_once`: the head lines of the `make accept` report that only the checks can see (S-31): the built
+//! `write_head_once`: the head lines of the `make accept` report that only the checks can see: the built
 //! `temperare`'s version, then each engine as that `temperare` sees it, from `temperare rules --json` over one rule per engine: the engine's
 //! version when `temperare` says it is available, else "not available" with `temperare`'s reason. Written once per run, to
 //! `00-head.md` in the parts folder; `scripts/accept.sh` puts the commit, the date and the test run's exit code above
@@ -56,7 +56,7 @@ fix = "none"
 
 /// For each of `temperare`'s five engines, by its rule-file name: the program it runs as (engines' `program`) and the
 /// arguments that print its version. Tessera's is asked only once `temperare` says Tessera is available, which it does not
-/// yet (S-20).
+/// yet.
 const VERSIONS: [(&str, &str, &[&str]); 5] = [
     ("clippy", "cargo", &["clippy", "--version"]),
     ("swiftlint", "swiftlint", &["version"]),

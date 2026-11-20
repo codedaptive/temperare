@@ -1,5 +1,5 @@
 //! Done 4: an absent engine. "A rule whose linter is not installed, and a rule that needs Tessera with no Tessera, each
-//! report 'not available'." Not available is never clean (mission 5): its own exit code, 3 (S-15).
+//! report 'not available'." Not available is never clean: its own exit code, 3.
 
 use crate::check::Check;
 use crate::repo::Repo;

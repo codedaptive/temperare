@@ -1,4 +1,4 @@
-//! ZUT for fill_params.rs: string and list params, the regex escape, unknown and bad params, unclosed braces.
+//! Unit tests for fill_params.rs: string and list params, the regex escape, unknown and bad params, unclosed braces.
 
 use serde_json::json;
 

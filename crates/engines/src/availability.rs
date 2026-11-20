@@ -6,7 +6,7 @@ use rules::Engine;
 
 /// Whether `engine` can be run here, from a PATH lookup only (nothing is run). Clippy needs both `cargo-clippy` and
 /// `clippy-driver`; the others need the program they run as. Tessera is never available: its slop records are not
-/// defined yet, so there is nothing to read from `ts` (settled S-20).
+/// defined yet, so there is nothing to read from `ts`.
 pub fn availability(engine: Engine) -> Availability {
     availability_from(engine, |name| procio::which(name).is_some())
 }

@@ -1,4 +1,4 @@
-//! ZUT for harness_name.rs: each harness's `--target` name.
+//! Unit tests for harness_name.rs: each harness's `--target` name.
 
 use super::Harness;
 

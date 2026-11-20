@@ -1,4 +1,4 @@
-//! ZUT for run_install.rs: the exact lines `failed` writes on `err`, and its exit 1.
+//! Unit tests for run_install.rs: the exact lines `failed` writes on `err`, and its exit 1.
 
 use super::run_install::failed;
 

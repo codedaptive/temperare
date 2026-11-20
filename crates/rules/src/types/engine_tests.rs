@@ -1,4 +1,4 @@
-//! ZUT for engine.rs: each variant serializes to its rule-file name (SPEC-rules: the engine names).
+//! Unit tests for engine.rs: each variant serializes to its rule-file name.
 
 use super::Engine;
 use serde::Serialize;

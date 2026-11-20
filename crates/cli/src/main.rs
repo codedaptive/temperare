@@ -1,4 +1,4 @@
-//! temperare: the binary; tm is its short name (a symlink, S-32). A thin shell: it reads the command line and the
+//! temperare: the binary; tm is its short name (a symlink). A thin shell: it reads the command line and the
 //! current folder, and the work is in the library's `run`, whose answer is the exit code.
 
 fn main() {

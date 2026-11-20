@@ -1,4 +1,4 @@
-//! ZUT for required_string.rs.
+//! Unit tests for required_string.rs.
 
 use super::required_string::required_string;
 use toml::de::DeTable;

@@ -1,4 +1,4 @@
-//! ZUT for kind.rs: each variant serializes to its rule-file name and reads back from it.
+//! Unit tests for kind.rs: each variant serializes to its rule-file name and reads back from it.
 
 use super::Kind;
 use serde::{Deserialize, Serialize};

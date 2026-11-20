@@ -1,4 +1,4 @@
-//! ZUT for rel_path_new.rs: '\\' becomes '/', every leading "./" goes, nothing else changes.
+//! Unit tests for rel_path_new.rs: '\\' becomes '/', every leading "./" goes, nothing else changes.
 
 use super::RelPath;
 

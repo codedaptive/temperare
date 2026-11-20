@@ -1,4 +1,4 @@
-//! ZUT for stop.rs: plain data; equality covers the variant and every field.
+//! Unit tests for stop.rs: plain data; equality covers the variant and every field.
 
 use super::Stop;
 

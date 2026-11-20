@@ -1,4 +1,4 @@
-//! ZUT for uninstall_order.rs: the first list is files and links in order, then the folders that do not hold the
+//! Unit tests for uninstall_order.rs: the first list is files and links in order, then the folders that do not hold the
 //! record, deepest first, then the record last; the second is the folders that hold the record, deepest first.
 
 use std::path::{Path, PathBuf};

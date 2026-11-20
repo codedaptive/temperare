@@ -1,5 +1,5 @@
 #!/bin/sh
-# accept.sh REPORT: `make accept` (mission, Done; S-31, SPEC-accept). Runs the validation target
+# accept.sh REPORT: `make accept`, the acceptance run. Runs the validation target
 # crates/cli/tests/validation through test_one.sh, as before, so the tests print on the terminal as they did; one line
 # naming the report follows. Each acceptance case writes its part into a temporary folder this script names in
 # ACCEPT_PARTS (crates/cli/tests/validation: check_new.rs names the part, check_drop.rs writes it). Then it writes
@@ -8,7 +8,7 @@
 # lists is in the report, in its order: with its part, or NOT RUN when it wrote none (a filtered run, a test target
 # that did not build, a part that could not be written) or when its part was cut short before a whole Result line.
 # The script exits with the test run's exit code when it failed; else 3 when any check is NOT RUN, said on stderr,
-# since a check not run has not passed (S-34); else 0. When the report cannot be written it exits non-zero with the
+# since a check not run has not passed; else 0. When the report cannot be written it exits non-zero with the
 # reason on stderr.
 # The commit is HEAD when the current folder is the top of a git checkout, noted when a file there differs from it,
 # a deleted one included. In a jj folder jj answers, comparing only the files the folder holds, so a file a sparse
@@ -77,7 +77,7 @@ sections() {
 sections > "$parts/sections.md" || not_written "could not assemble the sections from $list"
 
 # The number of cases whose result is `<$1>`: one result per case, its last whole Result line, so a part cut short
-# inside its own NOT RUN line is counted once (Kong #315).
+# inside its own NOT RUN line is counted once.
 count() {
     grep -c "^Result: $1" "$parts/results.txt"
 }
@@ -87,7 +87,7 @@ count() {
     echo
     echo "- Commit: $commit"
     echo "- Date: $(date '+%Y-%m-%d %H:%M:%S %z')"
-    echo "- Test run: crates/cli/tests/validation (these checks and cli's own tests of the built temperare, S-28), exit $rc"
+    echo "- Test run: crates/cli/tests/validation (these checks and cli's own tests of the built temperare), exit $rc"
     if [ -f "$parts/00-head.md" ]; then
         cat "$parts/00-head.md"
     else
@@ -103,7 +103,7 @@ cp "$parts/report.md" "$report" || not_written "could not copy it there"
 echo "accept: report written to $report"
 not_run=$(count 'NOT RUN')
 if [ "$rc" -eq 0 ] && [ "$not_run" -ne 0 ]; then
-    echo "accept: $not_run checks did not run (the report says why); make accept passes only when all ran (S-34)" >&2
+    echo "accept: $not_run checks did not run (the report says why); make accept passes only when all ran" >&2
     exit 3
 fi
 exit "$rc"

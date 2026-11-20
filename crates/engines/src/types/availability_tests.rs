@@ -1,4 +1,4 @@
-//! ZUT for availability.rs: plain data; equality tells the two cases and different reasons apart.
+//! Unit tests for availability.rs: plain data; equality tells the two cases and different reasons apart.
 
 use super::Availability;
 

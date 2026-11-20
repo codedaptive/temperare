@@ -1,4 +1,4 @@
-//! ZUT for parse_rules_args.rs: `--rules <path>` and `--json`; anything else is a usage error.
+//! Unit tests for parse_rules_args.rs: `--rules <path>` and `--json`; anything else is a usage error.
 
 use std::path::PathBuf;
 

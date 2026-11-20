@@ -1,14 +1,14 @@
-//! Validation (S-28): tests that run the built `temperare` binary.
+//! Validation: tests that run the built `temperare` binary.
 //!
 //! `cli_check` and `cli_tm` are cli's runs of `temperare` with the engines stubbed on PATH.
 //!
-//! Acceptance: the mission's Done list (MISSION-temperare-2026-11-16, Done 1-8), run against the built `temperare` with the
+//! Acceptance: the acceptance list (Done 1-8), run against the built `temperare` with the
 //! real engines, each case in a throwaway repository it makes and removes. Validation, not a unit or integration test:
-//! a run of the shipped binary (rule 11), written by the orchestrator (SPEC-cli, Tests). `make accept` runs it.
+//! a run of the shipped binary. `make accept` runs it.
 //! No codeteam variable reaches `temperare` in any case (Done 6): each case passes only the variables it sets (`env.rs`
 //! for the acceptance cases, `install_temp_home.rs` its own).
 //!
-//! The report (S-31, SPEC-accept): each acceptance case records what it set up and saw in a `Check`, which writes the
+//! The report: each acceptance case records what it set up and saw in a `Check`, which writes the
 //! case's part when ACCEPT_PARTS names a folder; `scripts/accept.sh` sets it and assembles the parts into the report,
 //! one entry for every case checks.txt lists.
 
@@ -39,8 +39,8 @@ mod done_6_alone;
 mod done_7_security;
 mod done_8_named_inside;
 
-// The install on the built binary, into a throwaway HOME (creator #265).
+// The install on the built binary, into a throwaway HOME.
 mod install_temp_home;
 
-// Objective tatertot Stage 2 cases on the built temperare (#209).
+// Cases from a real project's checks, on the built temperare.
 mod stage2_mortar_clippy_line;

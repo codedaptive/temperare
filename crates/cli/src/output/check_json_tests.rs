@@ -1,4 +1,4 @@
-//! ZUT for check_json.rs: the report's top-level keys plus `exit` and `next`, and a finding's fields carried through.
+//! Unit tests for check_json.rs: the report's top-level keys plus `exit` and `next`, and a finding's fields carried through.
 
 use super::check_json::check_json;
 use report::{Counts, Report};

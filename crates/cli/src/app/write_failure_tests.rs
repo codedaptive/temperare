@@ -1,4 +1,4 @@
-//! ZUT for write_failure.rs: the usage error on stderr, the `--json` object on stdout, and exit 2.
+//! Unit tests for write_failure.rs: the usage error on stderr, the `--json` object on stdout, and exit 2.
 
 use super::write_failure::write_failure;
 use crate::UsageError;

@@ -1,4 +1,4 @@
-//! ZUT for ran.rs: each way the host's run can end, read as output or a `Stop`. The host is a fake; nothing runs.
+//! Unit tests for ran.rs: each way the host's run can end, read as output or a `Stop`. The host is a fake; nothing runs.
 
 use crate::host::Host;
 use crate::ran::ran;

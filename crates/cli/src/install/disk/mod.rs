@@ -1,6 +1,6 @@
 //! The install steps that touch the disk: finding harnesses and another tm, making folders, reading the install record,
 //! writing a file through a temporary file, placing and removing.
-//! None has a ZUT (each reads or writes the disk); the zone integration target `tests/install` covers them.
+//! None has a unit test (each reads or writes the disk); the zone integration target `tests/install` covers them.
 
 mod apply_install;
 mod apply_uninstall;

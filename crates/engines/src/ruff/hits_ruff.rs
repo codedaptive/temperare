@@ -10,7 +10,7 @@ use std::path::Path;
 
 /// The hits of `rule` under `folder` (canonical): ruff runs there through `host` with the rule's check and, when the
 /// rule gives one, its config. A check tm cannot match to its findings (`ruff_refusal`) is `Failed` with no exit code,
-/// and nothing runs (settled S-35). ruff absent is `NotAvailable`; a run that could not start, or output that is not
+/// and nothing runs. ruff absent is `NotAvailable`; a run that could not start, or output that is not
 /// ruff's JSON, is `Failed`.
 pub(crate) fn hits_ruff(rule: &Rule, folder: &Path, host: &Host) -> Result<Vec<Hit>, Stop> {
     if let Some(why) = ruff_refusal(&rule.check) {

@@ -1,4 +1,4 @@
-//! ZUT for only_paths.rs: relative, `./`, `../`, trailing-slash and absolute paths under the folder, a path outside
+//! Unit tests for only_paths.rs: relative, `./`, `../`, trailing-slash and absolute paths under the folder, a path outside
 //! it, and the folder itself. Pure: nothing is read from disk, so the folders named here need not exist.
 
 use super::only_paths::only_paths;

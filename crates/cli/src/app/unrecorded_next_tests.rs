@@ -1,4 +1,4 @@
-//! ZUT for unrecorded_next.rs: safe removal instructions for added files, links and folders.
+//! Unit tests for unrecorded_next.rs: safe removal instructions for added files, links and folders.
 
 use std::path::PathBuf;
 

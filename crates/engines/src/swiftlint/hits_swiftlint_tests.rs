@@ -1,4 +1,4 @@
-//! ZUT for hits_swiftlint.rs: the command the host is given, findings read from captured output, garbage output, an
+//! Unit tests for hits_swiftlint.rs: the command the host is given, findings read from captured output, garbage output, an
 //! unknown rule, a `custom_rules` check refused before anything runs, and an absent swiftlint. The host is a fake;
 //! nothing runs. `DIR` is the folder path the captured fixture's absolute paths start with (see
 //! parse_swiftlint_tests.rs); no folder is read, so it need not exist.

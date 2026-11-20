@@ -1,4 +1,4 @@
-//! ZUT for severity_from_name.rs: "error", "warning", and None for anything else.
+//! Unit tests for severity_from_name.rs: "error", "warning", and None for anything else.
 
 use super::Severity;
 

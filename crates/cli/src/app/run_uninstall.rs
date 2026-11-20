@@ -1,4 +1,4 @@
-//! `run_uninstall`: `temperare uninstall` from the install record to the exit code (S-32).
+//! `run_uninstall`: `temperare uninstall` from the install record to the exit code.
 //!
 //! `failed`, the two lines it writes on a failure, is unit-tested in the sibling run_uninstall_tests.rs; the disk steps
 //! it runs are covered by the zone integration target `tests/install` (uninstall.rs) on a temporary HOME. The removal

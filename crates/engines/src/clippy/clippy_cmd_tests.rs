@@ -1,4 +1,4 @@
-//! ZUT for clippy_cmd.rs: the command, its full arguments with and without allows, and where it runs.
+//! Unit tests for clippy_cmd.rs: the command, its full arguments with and without allows, and where it runs.
 
 use super::clippy_cmd;
 use std::ffi::OsString;

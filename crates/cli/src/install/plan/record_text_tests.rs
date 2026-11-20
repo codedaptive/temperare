@@ -1,4 +1,4 @@
-//! ZUT for record_text.rs: one line per entry, in order, each written once; a link line carries its target after
+//! Unit tests for record_text.rs: one line per entry, in order, each written once; a link line carries its target after
 //! a tab; an entry whose path is not UTF-8 or holds a newline, return or tab is left out, so parse_record (pure)
 //! reads back no injected entry.
 

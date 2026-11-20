@@ -40,7 +40,7 @@ fn a_clippy_lint_is_reported_with_its_rule_place_and_fix() {
     let args = ["check", "--json"];
     let a = tm(&repo, &args);
     check.saw_tm(&args, a.code, &a.json);
-    assert_eq!(a.code, 1, "a quality error is the refusal (S-15): {:#}\n{}", a.json, a.stderr);
+    assert_eq!(a.code, 1, "a quality error is the refusal: {:#}\n{}", a.json, a.stderr);
     let f = a.findings();
     assert_eq!(f.len(), 1, "one finding: {:#}", a.json);
     assert_eq!(f[0]["rule"], "no-bool-compare");

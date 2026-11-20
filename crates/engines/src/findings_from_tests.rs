@@ -1,4 +1,4 @@
-//! ZUT for findings_from.rs: every field filled from the rule, the owner and the hit; hits cut by the rule's scope and
+//! Unit tests for findings_from.rs: every field filled from the rule, the owner and the hit; hits cut by the rule's scope and
 //! by `only` (a file or a folder entry); hit order kept. The rule file is built by `RuleFile::parse` on in-memory text.
 
 use crate::findings_from::findings_from;

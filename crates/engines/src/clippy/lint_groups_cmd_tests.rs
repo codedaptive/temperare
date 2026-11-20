@@ -1,4 +1,4 @@
-//! ZUT for lint_groups_cmd.rs: the program, its arguments and where it runs.
+//! Unit tests for lint_groups_cmd.rs: the program, its arguments and where it runs.
 
 use super::lint_groups_cmd;
 use std::ffi::OsString;

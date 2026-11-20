@@ -1,4 +1,4 @@
-//! ZIT for rule_folder.rs: a relative and an absolute folder, both canonical, on a temp tree the test makes and
+//! Zone integration tests for rule_folder.rs: a relative and an absolute folder, both canonical, on a temp tree the test makes and
 //! removes; a folder that does not exist is an error.
 
 use crate::rule_folder::rule_folder;

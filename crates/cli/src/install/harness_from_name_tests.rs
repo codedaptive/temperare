@@ -1,4 +1,4 @@
-//! ZUT for harness_from_name.rs: each name read back; any other text is no harness.
+//! Unit tests for harness_from_name.rs: each name read back; any other text is no harness.
 
 use super::Harness;
 

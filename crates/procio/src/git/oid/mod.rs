@@ -1,6 +1,6 @@
 //! `Oid` and its methods, one impl per file.
 
-// The file is named after its symbol (small-files rule 2), so the module shares its folder's name.
+// The file is named after its symbol, so the module shares its folder's name.
 #[allow(clippy::module_inception)]
 mod oid;
 mod oid_as_str;

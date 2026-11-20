@@ -1,4 +1,4 @@
-//! ZUT for harness_skill_file.rs: the skill file is under the harness folder in the base given.
+//! Unit tests for harness_skill_file.rs: the skill file is under the harness folder in the base given.
 
 use std::path::{Path, PathBuf};
 

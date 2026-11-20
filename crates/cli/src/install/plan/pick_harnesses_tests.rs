@@ -1,4 +1,4 @@
-//! ZUT for pick_harnesses.rs: the numbered prompt and each kind of answer, from in-memory input.
+//! Unit tests for pick_harnesses.rs: the numbered prompt and each kind of answer, from in-memory input.
 
 use super::pick_harnesses;
 use crate::Harness;

@@ -1,4 +1,4 @@
-//! ZIT for opening ast-grep rules without following symlinks.
+//! Zone integration tests for opening ast-grep rules without following symlinks.
 #![cfg(unix)]
 
 use super::super::open_in_folder::open_in_folder;

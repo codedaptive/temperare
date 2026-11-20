@@ -1,4 +1,4 @@
-//! `Finding`: one thing an engine found, in codeteam's finding fields.
+//! `Finding`: one thing an engine found, with the fields a report gives each finding.
 
 use super::{Engine, Kind, RelPath, Severity};
 use serde::{Deserialize, Serialize};

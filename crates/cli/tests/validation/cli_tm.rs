@@ -1,4 +1,4 @@
-//! Validation (S-28): tm's pieces work together on a throwaway repository, from discovery via git and
+//! Validation: tm's pieces work together on a throwaway repository, from discovery via git and
 //! RuleFile::read to the rules listing and exit codes; and the listing's engine availability, with stub engines on a
 //! PATH set for the child only. Every program starts through procio::run with a cleared environment.
 

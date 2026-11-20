@@ -1,4 +1,4 @@
-//! `InstallPaths`: where install puts the binary, the `tm` link and its record (S-32).
+//! `InstallPaths`: where install puts the binary, the `tm` link and its record.
 
 use std::path::PathBuf;
 

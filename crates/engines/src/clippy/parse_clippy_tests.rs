@@ -1,8 +1,8 @@
-//! ZUT for parse_clippy.rs, on `cargo clippy --message-format=json --quiet -- -W clippy::bool_comparison` output
+//! Unit tests for parse_clippy.rs, on `cargo clippy --message-format=json --quiet -- -W clippy::bool_comparison` output
 //! captured once from tiny crates: `lint_and_other.jsonl` (exit 0; a bool_comparison at src/lib.rs:3:5 and an
 //! unused_variables warning at src/lib.rs:2:9), `clean.jsonl` (exit 0; no messages) and `build_failed.jsonl`
 //! (exit 101; an E0425 error and build-finished success false). The capture crate's folder was `CAPTURED`.
-//! `clippy_cmd` now passes `--warn=<check>` and `--allow=<lint>` (S-35); clippy reads both spellings the same way, so
+//! `clippy_cmd` now passes `--warn=<check>` and `--allow=<lint>`; clippy reads both spellings the same way, so
 //! the captures stand for today's run.
 //! `all_targets_warnings.jsonl` was not captured: no capture folder was available, so it is hand-built in the shape of
 //! a `cargo clippy --all-targets` capture of a crate in `ALL_TARGETS`. Its compiler-messages: from the lib target an

@@ -1,6 +1,6 @@
 //! `write_through_temp`: puts a whole file at a path through a temporary file beside it, never a partial one.
 //!
-//! No sibling ZUT: it writes to the disk, which a unit test may not (rule 11), so the zone integration target
+//! No sibling unit test: it writes to the disk, which a unit test may not, so the zone integration target
 //! `tests/install` proves it on a temporary HOME: placement.rs and harnesses.rs for the files install places, record.rs
 //! for the install record `run_install` writes through it, temp_mode.rs for the temporary file's mode, end_modes.rs
 //! for the placed files' modes under umask 002 and 077.
@@ -18,7 +18,7 @@ const TEMP_MODE: u32 = 0o600;
 /// `pid` this process's id, `n` counting up from 0 past names already taken); it is created exclusively and written
 /// through that handle, so nothing already there, a symlink included, is followed or overwritten. On unix the
 /// temporary file is created and then set to 0o600 through that handle while it is written; after the copy and
-/// before the rename it is set to 0o755 with `executable`, else 0o644 (S-43). Both modes are set explicitly through
+/// before the rename it is set to 0o755 with `executable`, else 0o644. Both modes are set explicitly through
 /// the handle, so the umask does not reduce them. On a failure only the temporary file this call created is removed.
 pub(crate) fn write_through_temp(dest: &Path, source: &mut dyn Read, executable: bool) -> io::Result<()> {
     let (temp, mut file) = create_temp(dest)?;
@@ -57,7 +57,7 @@ fn create_temp(dest: &Path) -> io::Result<(PathBuf, File)> {
     }
 }
 
-/// The mode a placed file ends with (S-43): 0o755 for the binary, 0o644 for skill files and the install record.
+/// The mode a placed file ends with: 0o755 for the binary, 0o644 for skill files and the install record.
 fn final_mode(executable: bool) -> u32 {
     if executable { 0o755 } else { 0o644 }
 }

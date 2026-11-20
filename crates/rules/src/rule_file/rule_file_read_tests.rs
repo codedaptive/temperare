@@ -1,4 +1,4 @@
-//! ZUT for rule_file_read.rs: the unreadable path (reading a real file is the ZIT's, tests/read_rule_file.rs).
+//! Unit tests for rule_file_read.rs: the unreadable path (reading a real file is the integration test's, tests/read_rule_file.rs).
 
 use crate::{Problem, RuleFile};
 use std::path::Path;

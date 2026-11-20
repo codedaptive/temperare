@@ -1,6 +1,6 @@
 //! `apply_uninstall`: removes the recorded entries from the disk.
 //!
-//! No sibling ZUT: it removes from the disk, which a unit test may not (rule 11), so the zone integration target
+//! No sibling unit test: it removes from the disk, which a unit test may not, so the zone integration target
 //! `tests/install` (uninstall.rs) proves it on a temporary HOME.
 
 use std::fs;

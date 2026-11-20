@@ -1,4 +1,4 @@
-//! ZUT for parse_failed.rs: the exit code kept, and the engine's stderr preferred over the parser's why.
+//! Unit tests for parse_failed.rs: the exit code kept, and the engine's stderr preferred over the parser's why.
 
 use crate::parse_failed::parse_failed;
 use crate::types::{ParseError, Stop};

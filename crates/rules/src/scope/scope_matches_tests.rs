@@ -1,4 +1,4 @@
-//! ZUT for scope_matches.rs.
+//! Unit tests for scope_matches.rs.
 
 use crate::{RelPath, Scope};
 

@@ -1,4 +1,4 @@
-//! ZIT for hits_clippy.rs. These are integration, not unit: the real `cargo_root` reads real folders, a canonical temp
+//! Zone integration tests for hits_clippy.rs. These are integration, not unit: the real `cargo_root` reads real folders, a canonical temp
 //! folder of empty `Cargo.toml` files or, for the no-`Cargo.toml` test, the real ancestors of a missing path. The others compose `hits_clippy` with the real `clippy_allows`,
 //! `parse_lint_groups`, `lint_group`, `parse_lints`, `known_lint` and `parse_clippy`. The fake host answers clippy-driver help with the captured
 //! `lint_groups_help.txt`, and cargo by its first argument (see hits_clippy_tests.rs); clippy's output is the captured

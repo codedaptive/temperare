@@ -1,4 +1,4 @@
-//! ZUT for rule_file.rs: `folder` is the folder the file was parsed with, so paths in the file resolve against it.
+//! Unit tests for rule_file.rs: `folder` is the folder the file was parsed with, so paths in the file resolve against it.
 
 use crate::RuleFile;
 use std::path::{Path, PathBuf};

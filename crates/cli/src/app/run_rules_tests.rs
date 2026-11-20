@@ -1,4 +1,4 @@
-//! ZUT for run_rules.rs: the listing, the problems and the discovery errors, as text and as JSON, with git, the disk
+//! Unit tests for run_rules.rs: the listing, the problems and the discovery errors, as text and as JSON, with git, the disk
 //! and engine availability as closures and rule files parsed from literal TOML.
 
 use super::{run_rules, RulesWorld};

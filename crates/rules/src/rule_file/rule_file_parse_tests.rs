@@ -1,4 +1,4 @@
-//! ZUT for rule_file_parse.rs: one case per check of SPEC-rules WO-rules-2 and the `kind` and `owner` checks, on
+//! Unit tests for rule_file_parse.rs: the numbered checks one case each, then wrong types, `kind`, `owner`, syntax errors and problem order, on
 //! in-memory text, with the expected line and column written out.
 
 use crate::{Engine, Kind, Problem, RelPath, RuleFile, Severity};
@@ -204,7 +204,7 @@ fn a_file_with_only_the_version_is_valid_and_empty() {
     assert!(file.kits.is_empty() && file.rules.is_empty() && file.exceptions.is_empty());
 }
 
-/// The SPEC's example rule file (WO-rules-1).
+/// A full example rule file, with a comment on each part.
 const SPEC_EXAMPLE: &str = r#"version = 1
 
 [kits.core]                      # optional: a named set of paths

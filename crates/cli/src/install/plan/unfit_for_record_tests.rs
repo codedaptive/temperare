@@ -1,4 +1,4 @@
-//! ZUT for unfit_for_record.rs: a path that is not UTF-8, or holds a newline, carriage return or tab anywhere, is
+//! Unit tests for unfit_for_record.rs: a path that is not UTF-8, or holds a newline, carriage return or tab anywhere, is
 //! unfit; a plain path, spaces and other control characters are not.
 
 use std::path::Path;

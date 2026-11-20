@@ -1,4 +1,4 @@
-//! ZUT for string_value.rs.
+//! Unit tests for string_value.rs.
 
 use super::string_value::string_value;
 use toml::de::DeTable;

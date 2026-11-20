@@ -1,4 +1,4 @@
-//! ZUT for hits_tessera.rs: every tessera rule is not available with the S-20 text, and nothing is run or looked up.
+//! Unit tests for hits_tessera.rs: every tessera rule is not available, saying why, and nothing is run or looked up.
 
 use super::hits_tessera;
 use crate::host::Host;

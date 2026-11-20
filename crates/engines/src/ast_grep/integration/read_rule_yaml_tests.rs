@@ -1,4 +1,4 @@
-//! ZIT for read_rule_yaml: the checked open across real files, parent paths and hard links.
+//! Zone integration tests for read_rule_yaml: the checked open across real files, parent paths and hard links.
 
 use super::super::read_rule_yaml::read_rule_yaml;
 use std::fs;

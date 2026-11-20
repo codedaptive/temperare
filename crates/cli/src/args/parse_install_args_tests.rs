@@ -1,4 +1,4 @@
-//! ZUT for parse_install_args.rs: each flag of tm install, the one value --mode and --location take, the --target
+//! Unit tests for parse_install_args.rs: each flag of tm install, the one value --mode and --location take, the --target
 //! list, and the usage errors.
 
 use super::parse_install_args::parse_install_args;

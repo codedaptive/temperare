@@ -1,4 +1,4 @@
-//! `plan_install`: what `temperare install` will place, link and wire, from the host and the flags (S-32).
+//! `plan_install`: what `temperare install` will place, link and wire, from the host and the flags.
 
 use std::path::{Path, PathBuf};
 

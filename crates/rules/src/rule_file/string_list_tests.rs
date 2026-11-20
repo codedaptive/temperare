@@ -1,4 +1,4 @@
-//! ZUT for string_list.rs.
+//! Unit tests for string_list.rs.
 
 use super::string_list::string_list;
 use toml::de::DeTable;

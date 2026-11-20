@@ -1,4 +1,4 @@
-//! ZUT for choose_targets.rs: --target, -y, the picker and the no-terminal case, with their notes.
+//! Unit tests for choose_targets.rs: --target, -y, the picker and the no-terminal case, with their notes.
 
 use super::choose_targets;
 use crate::{Harness, InstallArgs};

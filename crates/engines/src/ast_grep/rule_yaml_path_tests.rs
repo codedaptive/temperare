@@ -1,4 +1,4 @@
-//! ZUT for rule_yaml_path: absolute checks are rejected without filesystem access.
+//! Unit tests for rule_yaml_path: absolute checks are rejected without filesystem access.
 
 use super::rule_yaml_path::rule_yaml_path;
 use std::path::Path;

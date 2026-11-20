@@ -1,4 +1,4 @@
-//! ZUT for parse_lint_groups.rs. The fixture is stdout from `clippy-driver -W help`, clippy 0.1.95, exit 0: 13 rustc
+//! Unit tests for parse_lint_groups.rs. The fixture is stdout from `clippy-driver -W help`, clippy 0.1.95, exit 0: 13 rustc
 //! groups and 10 clippy groups.
 
 use super::parse_lint_groups;

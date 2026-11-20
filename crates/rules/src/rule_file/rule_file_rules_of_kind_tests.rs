@@ -1,4 +1,4 @@
-//! ZUT for rule_file_rules_of_kind.rs. The RuleFile is built by `RuleFile::parse` on in-memory text.
+//! Unit tests for rule_file_rules_of_kind.rs. The RuleFile is built by `RuleFile::parse` on in-memory text.
 
 use crate::{Kind, RuleFile};
 use std::path::Path;

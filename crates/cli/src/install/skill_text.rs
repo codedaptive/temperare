@@ -1,9 +1,9 @@
-//! `SKILL_TEXT`: the Claude Code skill `temperare install` writes into each harness it wires (S-32, S-33).
+//! `SKILL_TEXT`: the Claude Code skill `temperare install` writes into each harness it wires.
 
 /// The skill file's whole text: YAML front matter (`name`, `description`), then how to run Temperare and read its
 /// exit codes. It teaches the commands as `temperare`, the name that answers wherever it is installed: `tm` exists
-/// only where install made the link. A Rust constant, compiled in: the repository holds no SKILL.md (S-33). The exit codes are S-15's,
-/// as crates/cli/src/output/exit_code.rs gives them.
+/// only where install made the link. A Rust constant, compiled in: the repository holds no SKILL.md. The exit codes
+/// are the ones crates/cli/src/output/exit_code.rs gives.
 pub const SKILL_TEXT: &str = "\
 ---
 name: temperare

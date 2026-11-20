@@ -1,6 +1,6 @@
 //! `apply_install`: carries out an install plan on the disk: the binary, the `tm` link, the skill files.
 //!
-//! No sibling ZUT: it writes to the disk, which a unit test may not (rule 11), so the zone integration target
+//! No sibling unit test: it writes to the disk, which a unit test may not, so the zone integration target
 //! `tests/install` (placement.rs, harnesses.rs, uninstall.rs) proves it on a temporary HOME.
 
 use std::fs::{self, File};

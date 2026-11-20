@@ -1,4 +1,4 @@
-//! ZUT for plan_install.rs: placement, the tm link and its clash, skill paths and the PATH note, from a made-up host.
+//! Unit tests for plan_install.rs: placement, the tm link and its clash, skill paths and the PATH note, from a made-up host.
 
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};

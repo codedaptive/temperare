@@ -1,4 +1,4 @@
-//! ZUT for finding.rs: the serialized field names and values (codeteam's finding fields), and `owner` and `col` left
+//! Unit tests for finding.rs: the serialized field names and values (the fields a report gives each finding), and `owner` and `col` left
 //! out when None. Serialized with toml (serde_json is not a dependency); the serde names are the same.
 
 use super::{Engine, Finding, Kind, RelPath, Severity};

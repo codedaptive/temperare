@@ -1,4 +1,4 @@
-//! ZUT for check_args.rs: the default is no flags and no paths.
+//! Unit tests for check_args.rs: the default is no flags and no paths.
 
 use super::CheckArgs;
 

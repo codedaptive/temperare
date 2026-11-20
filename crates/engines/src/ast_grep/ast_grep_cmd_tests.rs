@@ -1,4 +1,4 @@
-//! ZUT for ast_grep_cmd.rs: the program, arguments and working folder of the scan command.
+//! Unit tests for ast_grep_cmd.rs: the program, arguments and working folder of the scan command.
 
 use std::path::{Path, PathBuf};
 

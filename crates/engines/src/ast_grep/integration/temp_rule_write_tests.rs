@@ -1,4 +1,4 @@
-//! ZIT for temp_rule_write.rs (and the plain struct in temp_rule.rs) on real temp files: the file's place, name and contents.
+//! Zone integration tests for temp_rule_write.rs (and the plain struct in temp_rule.rs) on real temp files: the file's place, name and contents.
 
 use super::super::TempRule;
 

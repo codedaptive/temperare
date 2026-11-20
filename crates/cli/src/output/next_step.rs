@@ -5,7 +5,7 @@ use report::NotAvailable;
 use rules::Engine;
 use std::path::Path;
 
-/// Tessera's checks never run yet (S-20): every tessera entry is not available whatever its why, so exit 3 never
+/// Tessera's checks never run yet: every tessera entry is not available whatever its why, so exit 3 never
 /// tells the user to install it.
 const TESSERA_NOT_YET: &str = "Tessera's checks are not available yet";
 /// The end of the why engines gives when a program is missing (crates/engines/src/availability.rs and

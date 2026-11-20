@@ -1,4 +1,4 @@
-//! Validation (S-28): check runs in an isolated repository with engine programs stood in by stubs.
+//! Validation: check runs in an isolated repository with engine programs stood in by stubs.
 
 use procio::{Cmd, Output};
 use std::ffi::{OsStr, OsString};

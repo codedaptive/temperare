@@ -1,4 +1,4 @@
-//! ZUT for exit_code.rs: every S-15 row alone, and the precedence between them (WO-cli-1b2 contract).
+//! Unit tests for exit_code.rs: every exit code's condition alone, and the precedence between them.
 
 use super::exit_code::exit_code;
 use report::{Counts, Failed, NotAvailable, Report};

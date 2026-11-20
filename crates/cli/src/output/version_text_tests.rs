@@ -1,4 +1,4 @@
-//! ZUT for version_text.rs: the long name, the version, then the commit in brackets.
+//! Unit tests for version_text.rs: the long name, the version, then the commit in brackets.
 
 use super::version_text;
 

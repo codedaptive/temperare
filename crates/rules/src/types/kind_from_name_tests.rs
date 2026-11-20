@@ -1,4 +1,4 @@
-//! ZUT for kind_from_name.rs: "quality", "security", and None for anything else.
+//! Unit tests for kind_from_name.rs: "quality", "security", and None for anything else.
 
 use super::Kind;
 

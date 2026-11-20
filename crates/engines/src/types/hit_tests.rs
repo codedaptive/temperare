@@ -1,4 +1,4 @@
-//! ZUT for hit.rs: plain data; equality covers every field, the column included.
+//! Unit tests for hit.rs: plain data; equality covers every field, the column included.
 
 use super::Hit;
 use rules::RelPath;

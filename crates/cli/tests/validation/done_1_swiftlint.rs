@@ -1,10 +1,10 @@
-//! Done 1 (SwiftLint) (S-31, SPEC-accept WO-orc-accept-2): the stock linter check with SwiftLint run for real. One
+//! Done 1 (SwiftLint): the stock linter check with SwiftLint run for real. One
 //! rule, `engine = "swiftlint"`, `check = "force_cast"`: a Swift file holding `as!` is reported with its rule, path,
 //! line and fix, exit 1; a Swift file without it passes, exit 0. The repository holds no `.swiftlint.yml`. Only when
 //! swiftlint is not on the PATH `temperare` gets (`on_tm_path`, which runs nothing) is a case NOT RUN, with `temperare`'s reason,
 //! never PASS; `temperare` must then report the rule not available. With swiftlint there, the case asserts as usual.
-//! On macOS a third case puts the repository under /private/tmp, whose paths SwiftLint prints without `/private`
-//! (Designer #476, engines #477): the finding is still reported, never dropped as outside the folder.
+//! On macOS a third case puts the repository under /private/tmp, whose paths SwiftLint prints without `/private`:
+//! the finding is still reported, never dropped as outside the folder.
 
 use crate::check::Check;
 use crate::on_tm_path::on_tm_path;
@@ -73,7 +73,7 @@ fn a_force_cast_is_reported_with_its_rule_place_and_fix() {
         check.not_run(why);
         return;
     }
-    assert_eq!(a.code, 1, "a quality error is the refusal (S-15): {:#}\n{}", a.json, a.stderr);
+    assert_eq!(a.code, 1, "a quality error is the refusal: {:#}\n{}", a.json, a.stderr);
     let f = a.findings();
     assert_eq!(f.len(), 1, "one finding, in Cast.swift; Safe.swift passes: {:#}", a.json);
     assert_eq!(f[0]["rule"], "no-force-cast");

@@ -1,4 +1,4 @@
-//! ZUT for scope_build.rs.
+//! Unit tests for scope_build.rs.
 
 use crate::Scope;
 

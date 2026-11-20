@@ -1,5 +1,5 @@
-//! ZUT for availability.rs: engine program lookups, including both Clippy programs, exact absence reasons, and
-//! Tessera never available (settled S-20).
+//! Unit tests for availability.rs: engine program lookups, including both Clippy programs, exact absence reasons, and
+//! Tessera never available.
 
 use crate::availability::availability_from;
 use crate::types::Availability;

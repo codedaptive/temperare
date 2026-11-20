@@ -1,4 +1,4 @@
-//! ZUT for parse_lints.rs. The fixture is stdout from `clippy-driver -W help`, clippy 0.1.95, exit 0.
+//! Unit tests for parse_lints.rs. The fixture is stdout from `clippy-driver -W help`, clippy 0.1.95, exit 0.
 
 use super::parse_lints;
 use procio::Output;

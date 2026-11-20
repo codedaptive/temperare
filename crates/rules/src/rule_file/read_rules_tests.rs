@@ -1,4 +1,4 @@
-//! ZUT for read_rules.rs.
+//! Unit tests for read_rules.rs.
 
 use super::read_rules::read_rules;
 use std::collections::BTreeSet;

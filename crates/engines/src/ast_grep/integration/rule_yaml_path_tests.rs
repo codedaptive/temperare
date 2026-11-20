@@ -1,4 +1,4 @@
-//! ZIT for rule_yaml_path: canonical containment across real files and symlinks.
+//! Zone integration tests for rule_yaml_path: canonical containment across real files and symlinks.
 
 use super::super::rule_yaml_path::rule_yaml_path;
 use std::fs;

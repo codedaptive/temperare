@@ -1,4 +1,4 @@
-//! ZUT for known_lint.rs.
+//! Unit tests for known_lint.rs.
 
 use super::known_lint;
 

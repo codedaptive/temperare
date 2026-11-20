@@ -1,4 +1,4 @@
-//! ZIT for rule_yaml_text: an opened rule YAML checked by its own link count on real files (Unix).
+//! Zone integration tests for rule_yaml_text: an opened rule YAML checked by its own link count on real files (Unix).
 #![cfg(unix)]
 
 use super::super::rule_yaml_text::rule_yaml_text;

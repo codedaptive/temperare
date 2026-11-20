@@ -1,4 +1,4 @@
-//! ZUT for rule_applies.rs.
+//! Unit tests for rule_applies.rs.
 
 use crate::{Engine, Kind, RelPath, Rule, Scope, Severity};
 

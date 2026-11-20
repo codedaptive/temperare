@@ -1,4 +1,4 @@
-//! ZUT for flag_value.rs: the next argument is the value unless it is missing or starts with '-'.
+//! Unit tests for flag_value.rs: the next argument is the value unless it is missing or starts with '-'.
 
 use super::flag_value::flag_value;
 use super::UsageError;

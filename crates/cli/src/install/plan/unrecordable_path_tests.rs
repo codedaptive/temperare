@@ -1,4 +1,4 @@
-//! ZUT for unrecordable_path.rs: the first path, in the order record, place, link, link target, skills, that is not
+//! Unit tests for unrecordable_path.rs: the first path, in the order record, place, link, link target, skills, that is not
 //! UTF-8 or holds a newline, a carriage return or a tab; none when every path is clean.
 
 use std::path::{Path, PathBuf};

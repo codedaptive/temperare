@@ -1,4 +1,4 @@
-//! ZUT for clippy_allows.rs: no params, the `allow` list in order, an unknown key, a bad `allow`, non-table params.
+//! Unit tests for clippy_allows.rs: no params, the `allow` list in order, an unknown key, a bad `allow`, non-table params.
 
 use serde_json::json;
 

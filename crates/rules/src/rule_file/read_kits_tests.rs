@@ -1,4 +1,4 @@
-//! ZUT for read_kits.rs.
+//! Unit tests for read_kits.rs.
 
 use super::read_kits::read_kits;
 use crate::{Kit, Problem, RelPath};

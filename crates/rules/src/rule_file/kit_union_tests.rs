@@ -1,4 +1,4 @@
-//! ZUT for kit_union.rs.
+//! Unit tests for kit_union.rs.
 
 use super::kit_union::kit_union;
 use crate::Kit;

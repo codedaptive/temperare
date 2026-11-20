@@ -1,5 +1,5 @@
 //! Done 2: new violations only. "With one violation at the base commit and one added after it, only the added one is
-//! reported." A violation in a new, untracked file is new too (S-14, S-19).
+//! reported." A violation in a new, untracked file is new too: the base has no version of it.
 
 use crate::check::Check;
 use crate::repo::Repo;
@@ -75,5 +75,5 @@ fn a_base_that_does_not_resolve_is_a_usage_error() {
     let args = ["check", "--json", "--base", "no-such-commit"];
     let a = tm(&repo, &args);
     check.saw_tm(&args, a.code, &a.json);
-    assert_eq!(a.code, 2, "never an empty report (SPEC-report WO-report-3, S-15): {:#}", a.json);
+    assert_eq!(a.code, 2, "never an empty report: {:#}", a.json);
 }

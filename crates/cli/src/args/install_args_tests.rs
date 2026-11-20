@@ -1,4 +1,4 @@
-//! ZUT for install_args.rs: the default is a plain install: place, link, no target named, HOME, ask.
+//! Unit tests for install_args.rs: the default is a plain install: place, link, no target named, HOME, ask.
 
 use super::InstallArgs;
 

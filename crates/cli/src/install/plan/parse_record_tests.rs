@@ -1,4 +1,4 @@
-//! ZUT for parse_record.rs: the record's lines back to entries; other lines skipped; repeats once.
+//! Unit tests for parse_record.rs: the record's lines back to entries; other lines skipped; repeats once.
 
 use std::path::PathBuf;
 

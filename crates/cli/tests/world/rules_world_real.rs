@@ -1,8 +1,9 @@
 //! Tests of crates/cli/src/app/rules_world_real.rs: each disk and git seam of `RulesWorld::real()` is wired to its
-//! real function. The file mixes kinds (rule 11), each case marked: RITs (cli→procio/rules, owner Nagatha; S-38) and
-//! a ZIT. `exists` and `read` are real disk functions, so the only way to tell them from a stub is to use them on
-//! files: the tests write those in a throwaway folder under the system temp folder and remove it. `toplevel` runs git
-//! (found on PATH), which fails on a folder that does not exist; nothing here needs a real repository.
+//! real function. The file mixes kinds, each case marked: cross-crate integration tests (cli→procio/rules)
+//! and a zone integration test. `exists` and `read` are real disk functions, so the only way to tell them from a
+//! stub is to use them on files: the tests write those in a throwaway folder under the system temp folder and
+//! remove it. `toplevel` runs git (found on PATH), which fails on a folder that does not exist; nothing here
+//! needs a real repository.
 
 use cli::RulesWorld;
 use std::fs;
@@ -62,7 +63,7 @@ impl Drop for TempFolder {
     }
 }
 
-/// ZIT: the seam is `Path::is_file`, std only (crates/cli/src/app/rules_world_real.rs:13).
+/// Zone integration test: the seam is `Path::is_file`, std only (crates/cli/src/app/rules_world_real.rs:13).
 #[test]
 fn exists_is_true_for_a_file_only() {
     let world = RulesWorld::real();
@@ -74,7 +75,7 @@ fn exists_is_true_for_a_file_only() {
     assert!(!(world.exists)(&dir.0.join("missing.toml")));
 }
 
-/// RIT: `RuleFile::read` reads the disk (crates/rules/src/rule_file/rule_file_read.rs:11).
+/// Cross-crate integration test: `RuleFile::read` reads the disk (crates/rules/src/rule_file/rule_file_read.rs:11).
 #[test]
 fn read_reads_a_rule_file_from_disk() {
     let world = RulesWorld::real();
@@ -86,7 +87,7 @@ fn read_reads_a_rule_file_from_disk() {
     assert_eq!(ids, vec!["lint-all"]);
 }
 
-/// RIT: `RuleFile::read` reads the disk (crates/rules/src/rule_file/rule_file_read.rs:11).
+/// Cross-crate integration test: `RuleFile::read` reads the disk (crates/rules/src/rule_file/rule_file_read.rs:11).
 #[test]
 fn read_of_a_missing_file_is_one_problem_at_line_zero() {
     let world = RulesWorld::real();
@@ -97,7 +98,7 @@ fn read_of_a_missing_file_is_one_problem_at_line_zero() {
     assert!(problems[0].what.starts_with("cannot read"), "what: {}", problems[0].what);
 }
 
-/// RIT: git runs (crates/procio/src/git/ops/toplevel.rs:13-16).
+/// Cross-crate integration test: git runs (crates/procio/src/git/ops/toplevel.rs:13-16).
 #[test]
 fn toplevel_of_a_missing_folder_is_an_error() {
     let world = RulesWorld::real();

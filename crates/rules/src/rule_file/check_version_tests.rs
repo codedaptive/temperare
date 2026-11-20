@@ -1,4 +1,4 @@
-//! ZUT for check_version.rs.
+//! Unit tests for check_version.rs.
 
 use super::check_version::check_version;
 use crate::Problem;

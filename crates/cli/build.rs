@@ -1,7 +1,8 @@
-//! cli's build script: compiles the commit into the binary as `TEMPERARE_COMMIT`, for `temperare --version`
-//! (S-32, S-33), and whether it was built in a git checkout as `TEMPERARE_CHECKOUT` (`yes` or `no`), which the
-//! version tests read. git runs through procio (S-26); this file only reads the `.git` file's `gitdir:` line and the
-//! git folder's `commondir`, to tell cargo which paths change when the commit does.
+//! cli's build script: compiles the commit into the binary as `TEMPERARE_COMMIT`, for `temperare --version`,
+//! and whether it was built in a git checkout as `TEMPERARE_CHECKOUT` (`yes` or `no`), which the
+//! version tests read. git runs through procio, the one place that starts programs; this file only reads the
+//! `.git` file's `gitdir:` line and the git folder's `commondir`, to tell cargo which paths change when the commit
+//! does.
 
 use std::fs;
 use std::path::{Path, PathBuf};

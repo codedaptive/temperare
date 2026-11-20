@@ -1,5 +1,5 @@
 //! Done 5: an exception. "An approved exception in the rule file silences its finding and is counted in the report."
-//! Every report counts the exceptions in force (mission 4), with or without a finding to silence.
+//! Every report counts the exceptions in force, with or without a finding to silence.
 
 use crate::check::Check;
 use crate::repo::Repo;
@@ -18,7 +18,7 @@ fix = "Compare with `is None`."
 rule = "no-none-compare"
 path = "legacy.py"
 reason = "the legacy module is rewritten in 2.0"
-approved = "Orc-Temperare acceptance"
+approved = "acceptance test"
 "#;
 
 /// `tm check --json` over a repository holding `legacy` as legacy.py, recorded in `check`.
@@ -56,5 +56,5 @@ fn the_exceptions_in_force_are_counted_with_nothing_to_silence() {
     );
     let a = check_legacy(&mut check, "def old(x):\n    return x is None\n");
     assert_eq!(a.code, 0, "clean: {:#}", a.json);
-    assert_eq!(a.json["exceptions_in_force"], 1, "always counted (mission 4): {:#}", a.json);
+    assert_eq!(a.json["exceptions_in_force"], 1, "always counted: {:#}", a.json);
 }

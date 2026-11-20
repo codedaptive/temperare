@@ -1,4 +1,4 @@
-//! ZUT for parse_ast_grep.rs, given ast-grep 0.51.1's real output captured once (fixtures/): a two-document rule
+//! Unit tests for parse_ast_grep.rs, given ast-grep 0.51.1's real output captured once (fixtures/): a two-document rule
 //! (JavaScript `js-names` with a message, Python `py-names` without one) over `a.js` and `b.py`, exit 0; a rule
 //! matching nothing, exit 0 with empty stdout; and a rule YAML ast-grep cannot parse, exit 8 with only stderr.
 

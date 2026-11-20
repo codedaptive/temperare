@@ -1,4 +1,4 @@
-//! ZUT for program.rs: the program each engine runs as (the plan's table).
+//! Unit tests for program.rs: the program each engine runs as (the plan's table).
 
 use crate::program::program;
 use rules::Engine;

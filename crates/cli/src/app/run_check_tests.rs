@@ -1,4 +1,4 @@
-//! ZUT for run_check.rs, with closure worlds: no git, no disk, no PATH. Every run is in /repo with the rule file
+//! Unit tests for run_check.rs, with closure worlds: no git, no disk, no PATH. Every run is in /repo with the rule file
 //! /repo/temperare.toml parsed from literal TOML; a seam a test must not reach panics.
 
 use super::{run_check, CheckWorld};

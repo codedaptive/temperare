@@ -1,4 +1,4 @@
-//! ZUT for check_security_owner.rs, with the expected line and column written out.
+//! Unit tests for check_security_owner.rs, with the expected line and column written out.
 
 use super::check_security_owner::check_security_owner;
 use crate::Problem;

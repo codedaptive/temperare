@@ -1,4 +1,4 @@
-//! ZUT for harness_all.rs: the three harnesses, in order.
+//! Unit tests for harness_all.rs: the three harnesses, in order.
 
 use super::Harness;
 

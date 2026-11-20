@@ -1,4 +1,4 @@
-//! ZUT for problem_line.rs: the `file:line:col  what  fix` format.
+//! Unit tests for problem_line.rs: the `file:line:col  what  fix` format.
 
 use super::problem_line;
 use std::path::Path;

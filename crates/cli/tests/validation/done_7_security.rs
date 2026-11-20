@@ -1,6 +1,6 @@
-//! Done 7: a security rule (mission must match 9). "A finding of a rule of kind `security` is reported with its
+//! Done 7: a security rule. "A finding of a rule of kind `security` is reported with its
 //! severity, location and owner, and the run does not end with the refusing exit code. The same rule run alone over
-//! the tree reports the same finding." Security-only exits 4, never 1 (S-15); the owner is the file's (S-9, S-12).
+//! the tree reports the same finding." Security-only exits 4, never 1; the owner is the file's.
 
 use crate::check::Check;
 use crate::repo::Repo;
@@ -33,7 +33,7 @@ fn a_security_finding_is_reported_with_severity_place_and_owner_and_never_refuse
     let args = ["check", "--json"];
     let a = tm(&repo, &args);
     check.saw_tm(&args, a.code, &a.json);
-    assert_eq!(a.code, 4, "security alone never refuses (S-15): {:#}\n{}", a.json, a.stderr);
+    assert_eq!(a.code, 4, "security alone never refuses: {:#}\n{}", a.json, a.stderr);
     let f = a.findings();
     assert_eq!(f.len(), 1, "one finding: {:#}", a.json);
     assert_eq!(f[0]["rule"], "no-hardcoded-password");

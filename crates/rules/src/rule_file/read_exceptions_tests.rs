@@ -1,4 +1,4 @@
-//! ZUT for read_exceptions.rs.
+//! Unit tests for read_exceptions.rs.
 
 use super::read_exceptions::read_exceptions;
 use crate::{Exception, RelPath};

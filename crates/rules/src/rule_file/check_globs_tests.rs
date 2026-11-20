@@ -1,4 +1,4 @@
-//! ZUT for check_globs.rs.
+//! Unit tests for check_globs.rs.
 
 use super::check_globs::check_globs;
 

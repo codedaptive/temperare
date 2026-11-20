@@ -1,4 +1,4 @@
-//! ZUT for rule_outcome.rs: the exact JSON text of each variant (external tagging, snake_case tags, `code` null when
+//! Unit tests for rule_outcome.rs: the exact JSON text of each variant (external tagging, snake_case tags, `code` null when
 //! None, never left out), and a toml round trip back to the same value (the JSON text is not read back). The crate
 //! may depend only on serde, toml and globset, so serde_json is not available: a compact test-only JSON writer below
 //! pins the JSON text and covers the serde calls these values make; any other call is an error.

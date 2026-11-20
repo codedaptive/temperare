@@ -1,9 +1,9 @@
-//! ZUT for parse_ruff.rs: real ruff 0.17.4 output, captured once, read into hits.
+//! Unit tests for parse_ruff.rs: real ruff 0.17.4 output, captured once, read into hits.
 //!
 //! e711_and_f401.json: `ruff check --no-cache --output-format json --select E711,F401 example.py`, exit 1.
 //! clean.json: `ruff check --no-cache --output-format json --select E711 clean.py`, exit 0.
 //! e7_prefix.json: `ruff check --no-cache --output-format json --select E7 .`, exit 1.
-//! `ruff_cmd` passes these values as `--select=E711` and so on (S-35); ruff reads both spellings the same way, so
+//! `ruff_cmd` passes these values as `--select=E711` and so on; ruff reads both spellings the same way, so
 //! the captures stand for today's run.
 //! In e711_and_f401.json the capture's home-folder paths are replaced by `/work/project`, so they and `DIR` start
 //! with it. e7_prefix.json is the exception: it keeps its capture folder, the temp folder `/private/tmp/d1-ruff-probe`,

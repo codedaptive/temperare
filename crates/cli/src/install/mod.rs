@@ -1,4 +1,4 @@
-//! `temperare install` and `uninstall` (S-32): the harnesses, the machine as input (`InstallHost`), the install
+//! `temperare install` and `uninstall`: the harnesses, the machine as input (`InstallHost`), the install
 //! paths, the plan and its record, the skill text; the pure plan in plan/, the disk steps in disk/.
 
 mod disk;

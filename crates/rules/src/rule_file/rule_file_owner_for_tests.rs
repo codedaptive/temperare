@@ -1,4 +1,4 @@
-//! ZUT for rule_file_owner_for.rs. Each RuleFile is built by `RuleFile::parse` on in-memory text; the expected owners
+//! Unit tests for rule_file_owner_for.rs. Each RuleFile is built by `RuleFile::parse` on in-memory text; the expected owners
 //! are the spec's rule: the first kit in file order whose paths hold the file, else the top-level owner.
 
 use crate::{RelPath, RuleFile};

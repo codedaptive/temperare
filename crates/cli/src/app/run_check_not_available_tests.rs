@@ -1,4 +1,4 @@
-//! ZUT for run_check.rs's exit-3 next line, using closure worlds without disk, git or PATH.
+//! Unit tests for run_check.rs's exit-3 next line, using closure worlds without disk, git or PATH.
 
 use super::{run_check, CheckWorld};
 use crate::CheckArgs;

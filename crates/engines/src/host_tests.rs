@@ -1,4 +1,4 @@
-//! ZUT for host.rs: a Host built from closures calls them, giving their answers back unchanged.
+//! Unit tests for host.rs: a Host built from closures calls them, giving their answers back unchanged.
 
 use crate::host::Host;
 use procio::{Cmd, Output, ProcError};

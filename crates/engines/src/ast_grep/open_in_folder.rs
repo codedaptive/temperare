@@ -1,6 +1,6 @@
 //! `open_in_folder`: opens a rule YAML by walking down from "/", following no symlink on the way.
 //!
-//! Why `unsafe` (S-41): std has no `openat` and no way to refuse a symlink in a middle component, so on Unix this
+//! Why `unsafe`: std has no `openat` and no way to refuse a symlink in a middle component, so on Unix this
 //! file calls libc's `openat` directly. Each `unsafe` block holds that one call or the one wrap of its result.
 
 use std::fs::File;

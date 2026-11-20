@@ -1,4 +1,4 @@
-//! ZUT for kit_holds.rs.
+//! Unit tests for kit_holds.rs.
 
 use crate::{Kit, RelPath, Scope};
 

@@ -1,4 +1,4 @@
-//! ZUT for wrong_type.rs.
+//! Unit tests for wrong_type.rs.
 
 use super::wrong_type::wrong_type;
 use toml::de::DeTable;

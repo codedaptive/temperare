@@ -1,4 +1,4 @@
-//! ZUT for severity.rs: each variant serializes to its rule-file name.
+//! Unit tests for severity.rs: each variant serializes to its rule-file name.
 
 use super::Severity;
 use serde::Serialize;

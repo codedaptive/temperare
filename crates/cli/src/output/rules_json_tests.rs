@@ -1,4 +1,4 @@
-//! ZUT for rules_json.rs: the object's fields, from rule files parsed from literal TOML (no disk) and engine
+//! Unit tests for rules_json.rs: the object's fields, from rule files parsed from literal TOML (no disk) and engine
 //! availability from closures (never the real PATH).
 
 use super::rules_json;

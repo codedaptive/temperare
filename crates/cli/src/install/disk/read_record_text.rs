@@ -1,6 +1,6 @@
 //! `read_record_text`: the text of the install record, refusing anything at its path that is not a plain file.
 //!
-//! No sibling ZUT: it reads the disk, which a unit test may not (rule 11), so the zone integration target
+//! No sibling unit test: it reads the disk, which a unit test may not, so the zone integration target
 //! `tests/install` (record.rs, uninstall.rs) proves it on a temporary HOME.
 
 use std::fs::{self, File};

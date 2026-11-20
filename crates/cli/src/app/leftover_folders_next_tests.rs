@@ -1,4 +1,4 @@
-//! ZUT for leftover_folders_next.rs: exact guidance for remaining recorded folders.
+//! Unit tests for leftover_folders_next.rs: exact guidance for remaining recorded folders.
 
 use std::path::Path;
 

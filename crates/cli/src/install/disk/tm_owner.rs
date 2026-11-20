@@ -1,6 +1,6 @@
 //! `tm_owner`: another program that answers to `tm` on PATH.
 //!
-//! No sibling ZUT: it reads the disk, which a unit test may not (rule 11), so the zone integration target
+//! No sibling unit test: it reads the disk, which a unit test may not, so the zone integration target
 //! `tests/install` (placement.rs: the clash, `--short-name`, our own link on PATH, an empty PATH, an unset PATH, empty
 //! and relative PATH entries) proves it on a temporary HOME.
 

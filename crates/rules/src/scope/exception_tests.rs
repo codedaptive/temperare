@@ -1,4 +1,4 @@
-//! ZUT for exception.rs.
+//! Unit tests for exception.rs.
 
 use crate::{Exception, RelPath};
 

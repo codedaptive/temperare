@@ -1,4 +1,4 @@
-# The acceptance checks of the make accept report (S-31), in report order: one line per case, order|case|section.
+# The acceptance checks of the make accept report, in report order: one line per case, order|case|section.
 # Check::new looks its case up here for the part's order; scripts/accept.sh lists every case here in the report,
 # NOT RUN when the case wrote no part. A case that is not listed here panics in Check::new.
 10|a_clippy_lint_is_reported_with_its_rule_place_and_fix|Done 1: a stock linter through a rule file (clippy)
@@ -16,4 +16,4 @@
 60|tm_checks_a_plain_git_repository_with_only_path_and_home|Done 6: alone
 70|a_security_finding_is_reported_with_severity_place_and_owner_and_never_refuses|Done 7: a security rule
 80|a_command_named_only_inside_one_kit_is_reported_in_another_and_passes_inside|Done 8: named only inside
-90|mortars_clippy_line_reports_test_code_and_not_the_allowed_lints|S-30: mortar's clippy line (objective tatertot 2.1)
+90|mortars_clippy_line_reports_test_code_and_not_the_allowed_lints|Mortar's clippy line

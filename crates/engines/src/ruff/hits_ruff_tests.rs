@@ -1,4 +1,4 @@
-//! ZUT for hits_ruff.rs: the command the host is given, findings read from captured output, garbage output and an
+//! Unit tests for hits_ruff.rs: the command the host is given, findings read from captured output, garbage output and an
 //! absent ruff. The host is a fake; nothing runs. `DIR` is the folder path the captured fixture's
 //! absolute paths start with (see parse_ruff_tests.rs); no folder is read, so it need not exist.
 

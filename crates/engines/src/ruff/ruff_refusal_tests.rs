@@ -1,4 +1,4 @@
-//! ZUT for ruff_refusal.rs: which checks are refused and the reason given, the cases written out from the contract.
+//! Unit tests for ruff_refusal.rs: which checks are refused and the reason given, the cases written out from the contract.
 
 use super::ruff_refusal;
 

@@ -1,4 +1,4 @@
-//! ZUT for check_not_option.rs, with the expected line and column written out.
+//! Unit tests for check_not_option.rs, with the expected line and column written out.
 
 use super::check_not_option::check_not_option;
 use crate::Problem;

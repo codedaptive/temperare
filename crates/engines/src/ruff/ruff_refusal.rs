@@ -3,7 +3,7 @@
 /// The reason `check` is refused, naming its first comma part that is neither `ALL` nor a rule code or code prefix
 /// (one or more ASCII uppercase letters, then zero or more ASCII digits: `E`, `E7`, `PLC0414`); None when every part
 /// is one. ruff in preview mode also selects by rule name and category (`correctness`), whose findings carry codes
-/// no prefix test can tie back to the check (settled S-35).
+/// no prefix test can tie back to the check.
 pub(crate) fn ruff_refusal(check: &str) -> Option<String> {
     let part = check.split(',').find(|part| *part != "ALL" && !is_code_prefix(part))?;
     Some(format!(

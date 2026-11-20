@@ -1,4 +1,4 @@
-//! ZUT for serde_name.rs: a JSON string gives its text; anything else, or an error, gives "".
+//! Unit tests for serde_name.rs: a JSON string gives its text; anything else, or an error, gives "".
 
 use super::serde_name::serde_name;
 use serde_json::json;

@@ -1,4 +1,4 @@
-//! ZUT for printed_start.rs: which stream is quoted and where it is cut.
+//! Unit tests for printed_start.rs: which stream is quoted and where it is cut.
 
 use crate::printed_start::printed_start;
 use procio::Output;

@@ -1,4 +1,4 @@
-//! ZUT for parse_locate_workspace.rs. `locate_workspace.txt` is the stdout of `cargo locate-project --workspace
+//! Unit tests for parse_locate_workspace.rs. `locate_workspace.txt` is the stdout of `cargo locate-project --workspace
 //! --message-format plain`, captured once (exit 0) from the `member/` folder of a throwaway workspace; `CAPTURED` is
 //! the root path it names; no test reads that folder. The other outputs are hand-built.
 //! The capture's home-folder path is replaced by `/work/project`, so it and `CAPTURED` start with it.

@@ -1,4 +1,4 @@
-//! ZUT for install_host_real.rs: `host_from`, the decision `InstallHost::real` makes from the values it reads (no
+//! Unit tests for install_host_real.rs: `host_from`, the decision `InstallHost::real` makes from the values it reads (no
 //! environment is read here): each value in its field, and each cause's own `what` and `fix`.
 
 use std::ffi::OsString;

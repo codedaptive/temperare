@@ -1,4 +1,4 @@
-//! ZUT for read_rule.rs.
+//! Unit tests for read_rule.rs.
 
 use super::read_rule::read_rule;
 use crate::{Engine, Kind, Kit, Problem, RelPath, Rule, Severity};

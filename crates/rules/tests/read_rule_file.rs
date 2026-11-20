@@ -1,7 +1,7 @@
-//! ZIT (rule 11): `RuleFile::read` on a real `temperare.toml` in a throwaway folder. Proves the pieces of the rules
+//! Zone integration test: `RuleFile::read` on a real `temperare.toml` in a throwaway folder. Proves the pieces of the rules
 //! crate work together on a file read from disk: the folder it exposes resolves the rule's `check` file, the read
 //! rules scope paths by include, exclude and kit, the read exceptions match findings, and a broken file reports
-//! every problem with its line (SPEC-rules WO-rules-1..4, Tests).
+//! every problem with its line.
 
 use rules::{Engine, Finding, Kind, RelPath, RuleFile, Severity};
 use std::fs;

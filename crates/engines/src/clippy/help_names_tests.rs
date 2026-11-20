@@ -1,4 +1,4 @@
-//! ZUT for help_names.rs, on small hand-written help texts in the shape `clippy-driver -W help` prints.
+//! Unit tests for help_names.rs, on small hand-written help texts in the shape `clippy-driver -W help` prints.
 
 use super::help_names;
 

@@ -1,4 +1,4 @@
-//! ZUT for swiftlint_cmd.rs: the program, arguments and working directory of a swiftlint run.
+//! Unit tests for swiftlint_cmd.rs: the program, arguments and working directory of a swiftlint run.
 
 use super::swiftlint_cmd;
 use std::ffi::OsString;

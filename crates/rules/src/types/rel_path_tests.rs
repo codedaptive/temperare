@@ -1,4 +1,4 @@
-//! ZUT for rel_path.rs: a RelPath serializes as its bare text (serde transparent).
+//! Unit tests for rel_path.rs: a RelPath serializes as its bare text (serde transparent).
 
 use super::RelPath;
 use serde::Serialize;

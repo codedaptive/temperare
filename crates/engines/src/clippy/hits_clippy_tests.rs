@@ -1,4 +1,4 @@
-//! ZUT for hits_clippy.rs. The fake host answers clippy-driver help from a capture and cargo commands by first argument.
+//! Unit tests for hits_clippy.rs. The fake host answers clippy-driver help from a capture and cargo commands by first argument.
 //! The help fixture is stdout from `clippy-driver -W help`, clippy 0.1.95 via rustup in /tmp, exit 0, empty stderr.
 //! These tests reach no real Cargo tree: each stops on invalid params before any command runs.
 //! Shared helpers are `pub(super)` for the real-tree integration tests.

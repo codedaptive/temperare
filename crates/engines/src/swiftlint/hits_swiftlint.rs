@@ -12,7 +12,7 @@ use std::path::Path;
 /// when the rule gives one, its config. swiftlint absent is `NotAvailable`; a run that could not start, or output
 /// that is not swiftlint's JSON or puts a checked violation outside `folder`, is `Failed`. A check swiftlint does not
 /// know is `Failed` with swiftlint's exit code and a message naming the check and quoting swiftlint's warning line,
-/// not its list of valid ids. A check of `custom_rules` is `Failed` before anything runs (S-35): under `--only-rule`
+/// not its list of valid ids. A check of `custom_rules` is `Failed` before anything runs: under `--only-rule`
 /// that name runs no custom rule, so swiftlint reports nothing and the rule could match nothing.
 pub(crate) fn hits_swiftlint(rule: &Rule, folder: &Path, host: &Host) -> Result<Vec<Hit>, Stop> {
     if rule.check == "custom_rules" {

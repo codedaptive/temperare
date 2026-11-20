@@ -1,4 +1,4 @@
-//! ZUT for write_problems.rs: one problem as text and as the `--json` object, each with exit 2.
+//! Unit tests for write_problems.rs: one problem as text and as the `--json` object, each with exit 2.
 
 use super::write_problems::write_problems;
 use rules::Problem;

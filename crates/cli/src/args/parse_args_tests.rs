@@ -1,4 +1,4 @@
-//! ZUT for parse_args.rs: help and version forms, dispatch to each command (install and uninstall included), flags
+//! Unit tests for parse_args.rs: help and version forms, dispatch to each command (install and uninstall included), flags
 //! given twice, unknown commands.
 
 use std::path::PathBuf;

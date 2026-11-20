@@ -25,7 +25,7 @@ struct Violation {
 /// `folder` the rule file's folder, both canonical. A violation's path is placed under `folder` as printed or, when
 /// that fails, with a leading `/private` removed from `cwd` and `folder`: on macOS swiftlint prints `/tmp/...` and
 /// `/var/...` for files under the canonical `/private/tmp/...` and `/private/var/...`. A checked violation whose path
-/// is under `folder` in neither form is a `ParseError` naming that path, never a dropped finding (S-35).
+/// is under `folder` in neither form is a `ParseError` naming that path, never a dropped finding.
 /// Every violation swiftlint reports for one valid `--only-rule` id carries that id, so keeping `rule_id == check`
 /// drops nothing for the checks that reach here: a `custom_rules` check, whose violations carry the custom rule's own
 /// id, is refused before running by `hits_swiftlint`. swiftlint given an id it does not know warns on stderr that

@@ -1,4 +1,4 @@
-//! ZUT for parse_check_args.rs: the four flags, paths in order, the kind names, and the usage errors.
+//! Unit tests for parse_check_args.rs: the four flags, paths in order, the kind names, and the usage errors.
 
 use std::path::PathBuf;
 

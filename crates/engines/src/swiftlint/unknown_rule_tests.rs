@@ -1,4 +1,4 @@
-//! ZUT for unknown_rule.rs: swiftlint's unknown-id warning picked out of its stderr.
+//! Unit tests for unknown_rule.rs: swiftlint's unknown-id warning picked out of its stderr.
 
 use super::unknown_rule::unknown_rule;
 use procio::Output;

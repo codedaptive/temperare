@@ -1,4 +1,4 @@
-//! ZUT for resolve_base.rs, with closure worlds: no git, no disk, no PATH. A seam a test must not reach panics.
+//! Unit tests for resolve_base.rs, with closure worlds: no git, no disk, no PATH. A seam a test must not reach panics.
 
 use super::resolve_base::resolve_base;
 use super::CheckWorld;

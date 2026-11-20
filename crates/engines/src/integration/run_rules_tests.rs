@@ -1,4 +1,4 @@
-//! ZIT for run_rules.rs (`run_rules_with`): outcomes in rule-file order over mixed engines, findings filled and cut,
+//! Zone integration tests for run_rules.rs (`run_rules_with`): outcomes in rule-file order over mixed engines, findings filled and cut,
 //! absent and Tessera rules not available, garbage output failed, and an unresolvable folder. Integration, not unit:
 //! each test makes and removes a real canonical temp folder for the rule file's repository. The host is a fake and
 //! no engine runs; ruff's output is hand-built.

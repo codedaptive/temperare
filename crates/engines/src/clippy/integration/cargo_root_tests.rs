@@ -1,4 +1,4 @@
-//! ZIT for cargo_root.rs: the nearest folder holding a Cargo.toml, on a temp tree the test makes and removes.
+//! Zone integration tests for cargo_root.rs: the nearest folder holding a Cargo.toml, on a temp tree the test makes and removes.
 
 use crate::clippy::cargo_root;
 use std::fs;

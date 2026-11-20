@@ -1,4 +1,4 @@
-//! `parse_args`: tm's arguments to a `Command`, by hand on std (S-16).
+//! `parse_args`: tm's arguments to a `Command`, by hand on std, with no argument-parsing crate.
 
 use super::parse_check_args::parse_check_args;
 use super::parse_install_args::parse_install_args;

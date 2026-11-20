@@ -1,5 +1,5 @@
-//! ZUT for engine_hits.rs: an absent engine stops before anything runs, with availability's why; Tessera is never
-//! available (S-20); ruff and SwiftLint go to their own adapters; an unresolved folder fails only an available
+//! Unit tests for engine_hits.rs: an absent engine stops before anything runs, with availability's why; Tessera is never
+//! available; ruff and SwiftLint go to their own adapters; an unresolved folder fails only an available
 //! engine. The host is a fake; nothing runs.
 
 use crate::engine_hits::engine_hits;

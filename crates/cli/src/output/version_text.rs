@@ -1,4 +1,4 @@
-//! `version_text`: the line `temperare --version` prints (S-32).
+//! `version_text`: the line `temperare --version` prints.
 
 /// `temperare <version> (<commit>)`: the workspace version and the commit the binary was built from (`unknown` when
 /// the build could not read it).

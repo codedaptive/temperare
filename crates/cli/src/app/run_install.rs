@@ -1,4 +1,4 @@
-//! `run_install`: `temperare install` from the host and the flags to the exit code (S-32).
+//! `run_install`: `temperare install` from the host and the flags to the exit code.
 //!
 //! `failed`, the two lines it writes on a failure, is unit-tested in the sibling run_install_tests.rs, and the `next:`
 //! line for a record that is not written in unrecorded_next_tests.rs; the disk steps it runs are covered by the zone

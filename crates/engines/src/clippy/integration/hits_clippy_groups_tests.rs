@@ -1,4 +1,4 @@
-//! ZIT for clippy group discovery on real temporary Cargo trees with a fake host.
+//! Zone integration tests for clippy group discovery on real temporary Cargo trees with a fake host.
 //! The help fixture is stdout from `clippy-driver -W help`, clippy 0.1.95 via rustup in /tmp, exit 0, empty stderr.
 
 use crate::clippy::hits_clippy_tests::{output, run_rules_with_help, RULES};

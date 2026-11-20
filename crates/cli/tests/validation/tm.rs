@@ -1,4 +1,4 @@
-//! Runs the built `temperare` in a throwaway repository and reads its `--json` answer (SPEC-cli WO-cli-3: the report, plus
+//! Runs the built `temperare` in a throwaway repository and reads its `--json` answer (the report, plus
 //! `exit` and `next`; nothing else on stdout).
 
 use serde_json::Value;
@@ -52,7 +52,7 @@ pub fn tm_with_path(repo: &Repo, args: &[&str], path: Option<&str>) -> Answer {
     assert_eq!(json["exit"], code, "the JSON's exit is the process's exit code: {json:#}");
     assert!(
         json["next"].as_str().is_some_and(|s| !s.is_empty()),
-        "every answer names the next step (mission 7): {json:#}"
+        "every answer names the next step: {json:#}"
     );
     Answer { code, json, stderr }
 }

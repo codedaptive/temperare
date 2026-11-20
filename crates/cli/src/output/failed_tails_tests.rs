@@ -1,4 +1,4 @@
-//! ZUT for failed_tails.rs: each failed rule's stderr tail as indented text, in report order.
+//! Unit tests for failed_tails.rs: each failed rule's stderr tail as indented text, in report order.
 
 use super::failed_tails::failed_tails;
 use report::{Counts, Failed, Report};

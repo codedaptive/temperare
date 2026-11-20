@@ -1,9 +1,9 @@
-//! ZUT for parse_swiftlint.rs: captured and inline swiftlint JSON read into hits.
+//! Unit tests for parse_swiftlint.rs: captured and inline swiftlint JSON read into hits.
 //!
 //! force_cast_and_others.json: `swiftlint lint --reporter json --quiet --no-cache --config two.yml Example.swift
 //! NoNewline.swift` (two.yml's only_rules: force_cast, trailing_whitespace, trailing_newline), exit 2.
 //! clean.json: `swiftlint lint --reporter json --quiet --no-cache --only-rule force_cast Clean.swift`, exit 0.
-//! `swiftlint_cmd` now passes `--only-rule=<check>` and `--config=<config>` (S-35); swiftlint reads both spellings the
+//! `swiftlint_cmd` now passes `--only-rule=<check>` and `--config=<config>`; swiftlint reads both spellings the
 //! same way, so the captures stand for today's run.
 //! The captures' home-folder paths are replaced by `/work/project`, so they and `DIR` start with it.
 

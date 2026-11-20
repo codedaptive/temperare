@@ -1,4 +1,4 @@
-//! ZIT for hits_ast_grep.rs. These are integration, not unit: each test makes a real canonical temp folder that
+//! Zone integration tests for hits_ast_grep.rs. These are integration, not unit: each test makes a real canonical temp folder that
 //! `hits_ast_grep` reads the rule YAML from through the real `read_rule_yaml`, fills it from the rule's params into a
 //! real temporary copy that exists while the host runs and is gone after, on every path; param and read errors; a
 //! check that names a file outside the folder is refused and nothing runs; garbage output and an absent ast-grep.

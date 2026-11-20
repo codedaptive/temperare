@@ -1,4 +1,4 @@
-//! ZIT for lint discovery: `hits_clippy` with the real `parse_lints` and `known_lint`, the captured clippy-driver
+//! Zone integration tests for lint discovery: `hits_clippy` with the real `parse_lints` and `known_lint`, the captured clippy-driver
 //! help and a fake process host. An unlisted, renamed or rustdoc check is refused after the help and before
 //! locate-project; a listed lint runs help, locate-project and clippy.
 

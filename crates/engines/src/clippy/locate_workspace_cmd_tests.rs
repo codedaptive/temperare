@@ -1,4 +1,4 @@
-//! ZUT for locate_workspace_cmd.rs: the command, its arguments and where it runs.
+//! Unit tests for locate_workspace_cmd.rs: the command, its arguments and where it runs.
 
 use super::locate_workspace_cmd;
 use std::ffi::OsString;

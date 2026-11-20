@@ -1,4 +1,4 @@
-//! ZUT for write_usage_error.rs: the two lines tm prints for a usage error.
+//! Unit tests for write_usage_error.rs: the two lines tm prints for a usage error.
 
 use super::write_usage_error::write_usage_error;
 use crate::UsageError;

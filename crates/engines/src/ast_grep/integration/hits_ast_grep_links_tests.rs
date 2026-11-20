@@ -1,4 +1,4 @@
-//! ZIT for ast-grep rule YAML hard links on real temporary trees, with a fake host.
+//! Zone integration tests for ast-grep rule YAML hard links on real temporary trees, with a fake host.
 
 use super::super::hits_ast_grep;
 use crate::host::Host;

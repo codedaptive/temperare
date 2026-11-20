@@ -1,4 +1,4 @@
-//! ZUT for parse_error.rs: plain data; equality is by its why.
+//! Unit tests for parse_error.rs: plain data; equality is by its why.
 
 use super::ParseError;
 

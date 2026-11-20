@@ -1,4 +1,4 @@
-//! ZUT for param_error.rs: plain data; the two cases and their fields tell errors apart.
+//! Unit tests for param_error.rs: plain data; the two cases and their fields tell errors apart.
 
 use super::ParamError;
 

@@ -1,4 +1,4 @@
-//! ZIT for lint_groups_cmd.rs and parse_lint_groups.rs on the real toolchain: `clippy-driver -W help` run in a
+//! Zone integration tests for lint_groups_cmd.rs and parse_lint_groups.rs on the real toolchain: `clippy-driver -W help` run in a
 //! canonical temp folder the test makes and removes, read into the group list.
 
 use crate::clippy::{lint_groups_cmd, parse_lint_groups};

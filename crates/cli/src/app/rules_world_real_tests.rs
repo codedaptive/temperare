@@ -1,6 +1,7 @@
-//! ZUT for rules_world_real.rs: the Tessera seam of RulesWorld::real() answers "not available" without a PATH lookup
+//! Unit tests for rules_world_real.rs: the Tessera seam of RulesWorld::real() answers "not available" without a PATH lookup
 //! (crates/engines/src/availability.rs:10 builds the `procio::which` closure; :17-18 return for Tessera before it
-//! runs). The other seams are tested in tests/world/rules_world_real.rs (RIT, and ZIT for `exists`).
+//! runs). The other seams are tested in tests/world/rules_world_real.rs (cross-crate integration tests, and a zone
+//! integration test for `exists`).
 
 use super::RulesWorld;
 use engines::Availability;

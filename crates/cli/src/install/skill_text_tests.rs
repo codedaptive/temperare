@@ -1,4 +1,4 @@
-//! ZUT for skill_text.rs: the front matter a harness reads, the commands (as `temperare`) and exit codes the skill
+//! Unit tests for skill_text.rs: the front matter a harness reads, the commands (as `temperare`) and exit codes the skill
 //! must teach, and when `tm` answers.
 
 use super::SKILL_TEXT;

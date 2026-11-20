@@ -1,4 +1,4 @@
-//! ZUT for tessera_cmd.rs: the command, its arguments and where it runs.
+//! Unit tests for tessera_cmd.rs: the command, its arguments and where it runs.
 
 use super::tessera_cmd;
 use std::ffi::OsString;

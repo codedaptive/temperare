@@ -1,4 +1,4 @@
-//! rules: the rule file: read it, check it, scope a rule by path and kit, exceptions; the rule and finding types. Depends on no workspace crate (serde, toml and globset only, S-1). See the Temperare mission (Layout).
+//! rules: the rule file: read it, check it, scope a rule by path and kit, exceptions; the rule and finding types. Depends on no workspace crate (serde, toml and globset only).
 
 mod rule_file;
 mod scope;
