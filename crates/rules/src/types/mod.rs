@@ -2,6 +2,7 @@
 
 mod engine;
 mod engine_from_name;
+mod engine_name;
 mod engine_needs_graph;
 mod finding;
 mod finding_line;
@@ -18,6 +19,8 @@ mod severity_from_name;
 
 #[cfg(test)]
 mod engine_from_name_tests;
+#[cfg(test)]
+mod engine_name_tests;
 #[cfg(test)]
 mod engine_needs_graph_tests;
 #[cfg(test)]
