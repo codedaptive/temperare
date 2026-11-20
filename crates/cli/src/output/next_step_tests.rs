@@ -15,14 +15,14 @@ fn entry(engine: Engine, why: &str) -> NotAvailable {
     NotAvailable { rule: "r".to_string(), engine, why: why.to_string() }
 }
 
-/// An engine whose program is missing, with the why engines gives for it.
+/// An engine whose program is missing, with the why engines gives for it (`<program> not found on
+/// PATH`); the program is `Engine::name` except for Clippy (`cargo-clippy`) and Tessera (`ts`; engines
+/// never reports Tessera this way, so its why is made up here).
 fn absent(engine: Engine) -> NotAvailable {
     let program = match engine {
         Engine::Clippy => "cargo-clippy",
-        Engine::SwiftLint => "swiftlint",
-        Engine::Ruff => "ruff",
-        Engine::AstGrep => "ast-grep",
         Engine::Tessera => "ts",
+        other => other.name(),
     };
     entry(engine, &format!("{program} not found on PATH"))
 }
