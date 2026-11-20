@@ -1,5 +1,5 @@
 //! ZUT for engine_hits.rs: an absent engine stops before anything runs, with availability's why; Tessera is never
-//! available (S-20); ruff and SwiftLint go to their own adapters; an unresolved folder fails only an available
+//! available (S-20); ruff and SwiftLint go to their entries' flows; an unresolved folder fails only an available
 //! engine. The host is a fake; nothing runs.
 
 use crate::engine_hits::engine_hits;
@@ -82,7 +82,7 @@ fn tessera_is_not_available_even_with_everything_on_path_and_runs_nothing() {
 }
 
 #[test]
-fn ruff_and_swiftlint_go_to_their_own_adapters() {
+fn ruff_and_swiftlint_go_to_their_entries_flows() {
     for program in ["ruff", "swiftlint"] {
         let (got, ran) = hits_of(program, "E711", true);
         assert_eq!(ran, vec![OsString::from(program)]);

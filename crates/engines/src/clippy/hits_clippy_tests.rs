@@ -3,7 +3,7 @@
 //! These tests reach no real Cargo tree: each stops on invalid params before any command runs.
 //! Shared helpers are `pub(super)` for the real-tree integration tests.
 
-use super::hits_clippy;
+use super::{hits_clippy, CLIPPY};
 use crate::host::Host;
 use crate::types::{Hit, Stop};
 use procio::{Cmd, Output, ProcError};
@@ -49,7 +49,7 @@ pub(super) fn run_rules_with_help(rules: &str, folder: &Path, help: Output, loca
         }
     };
     let on_path = |_: &str| -> bool { panic!("hits_clippy looks nothing up on PATH") };
-    let got = hits_clippy(&file.rules[0], folder, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) });
+    let got = hits_clippy(&CLIPPY, &file.rules[0], folder, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) });
     (got, seen.into_inner())
 }
 

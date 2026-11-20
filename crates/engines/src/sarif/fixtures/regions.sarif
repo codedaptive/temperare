@@ -1,0 +1,61 @@
+{
+  "version": "2.1.0",
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "runs": [
+    {
+      "tool": { "driver": { "name": "handwritten" } },
+      "results": [
+        {
+          "ruleId": "R1",
+          "message": { "text": "first" },
+          "locations": [
+            { "physicalLocation": { "artifactLocation": { "uri": "file:///work/project/src/a.py" }, "region": { "startLine": 3, "startColumn": 5 } } },
+            { "physicalLocation": { "artifactLocation": { "uri": "file:///work/project/src/second_location.py" }, "region": { "startLine": 99, "startColumn": 99 } } }
+          ]
+        },
+        {
+          "rule": { "id": "R2" },
+          "message": { "text": "second" },
+          "locations": [
+            { "physicalLocation": { "artifactLocation": { "uri": "src/b.py", "uriBaseId": "%SRCROOT%" }, "region": { "startLine": 7 } } }
+          ]
+        },
+        {
+          "ruleId": "R1",
+          "message": { "text": "spaced" },
+          "locations": [
+            { "physicalLocation": { "artifactLocation": { "uri": "file:///work/project/my%20dir/c.py" }, "region": { "startLine": 1, "startColumn": 2 } } }
+          ]
+        },
+        {
+          "ruleId": "R1",
+          "message": { "text": "outside" },
+          "locations": [
+            { "physicalLocation": { "artifactLocation": { "uri": "file:///elsewhere/d.py" }, "region": { "startLine": 4, "startColumn": 4 } } }
+          ]
+        },
+        {
+          "ruleId": "R3",
+          "message": { "text": "nowhere" }
+        },
+        {
+          "message": { "text": "no rule" },
+          "locations": [
+            { "physicalLocation": { "artifactLocation": { "uri": "file:///work/project/e.py" }, "region": { "startLine": 5, "startColumn": 5 } } }
+          ]
+        }
+      ]
+    },
+    {
+      "tool": { "driver": { "name": "handwritten" } },
+      "results": [
+        {
+          "ruleId": "R2",
+          "locations": [
+            { "physicalLocation": { "artifactLocation": { "uri": "file:///work/project/z.py" }, "region": { "startLine": 9, "startColumn": 1 } } }
+          ]
+        }
+      ]
+    }
+  ]
+}

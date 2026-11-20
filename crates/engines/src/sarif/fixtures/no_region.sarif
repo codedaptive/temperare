@@ -1,0 +1,17 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": { "driver": { "name": "handwritten" } },
+      "results": [
+        {
+          "ruleId": "R1",
+          "message": { "text": "whole file" },
+          "locations": [
+            { "physicalLocation": { "artifactLocation": { "uri": "file:///work/project/f.py" } } }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -99,7 +99,7 @@ fn hit(message: Message, check: &str, cwd: &Path, folder: &Path) -> Option<Hit> 
     let span = message.spans.into_iter().find(|span| span.is_primary)?;
     Some(Hit {
         path: rel_to_folder(cwd, folder, &span.file_name)?,
-        line: span.line_start,
+        line: Some(span.line_start),
         col: Some(span.column_start),
         what,
     })

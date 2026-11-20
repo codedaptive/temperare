@@ -1,0 +1,18 @@
+//! `Params`: which of a rule's `params` an engine accepts, and how each reaches it.
+
+use super::{ConfigParams, ParamArg};
+
+/// How a rule's `params` table reaches the engine. A param is never passed through as an argument the rule file
+/// wrote, and never dropped: each one an engine accepts is named here.
+#[derive(Debug, Clone, Copy)]
+pub enum Params {
+    /// Each listed param is a list of strings, each item one argument `{flag}{item}` (`param_args`); a param not
+    /// listed is an error, so a misspelt name is never silently dropped. An engine that takes no params gives the
+    /// empty list, so any param makes its rule fail.
+    Args(&'static [ParamArg]),
+    /// tm writes the params into a temporary config file passed with an option, and removes it after the run
+    /// (`temp_config`).
+    Config(ConfigParams),
+    /// The params fill the `{{name}}`s of the engine's check file (ast-grep); the entry's own flow does it.
+    Template,
+}

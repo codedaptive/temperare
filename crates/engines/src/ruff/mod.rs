@@ -1,24 +1,25 @@
-//! The ruff adapter: builds the `ruff check` command, runs it for a rule and reads its JSON output into hits.
+//! The ruff adapter: the ruff entry (its `ruff check` command, the checks it refuses, ruff's unknown-selector words)
+//! and the reader of its JSON output.
 
-mod hits_ruff;
 mod parse_ruff;
-mod ruff_cmd;
+mod ruff_entry;
 mod ruff_refusal;
 mod ruff_selects;
+mod unknown_selector;
 
-#[cfg(test)]
-mod hits_ruff_tests;
 #[cfg(test)]
 mod parse_ruff_tests;
 #[cfg(test)]
-mod ruff_cmd_tests;
+mod ruff_entry_tests;
 #[cfg(test)]
 mod ruff_refusal_tests;
 #[cfg(test)]
 mod ruff_selects_tests;
+#[cfg(test)]
+mod unknown_selector_tests;
 
-pub(crate) use hits_ruff::hits_ruff;
 pub use parse_ruff::parse_ruff;
-pub use ruff_cmd::ruff_cmd;
+pub use ruff_entry::RUFF;
 pub(crate) use ruff_refusal::ruff_refusal;
 pub(crate) use ruff_selects::ruff_selects;
+pub(crate) use unknown_selector::unknown_selector;
