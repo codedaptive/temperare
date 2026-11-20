@@ -12,9 +12,16 @@ what is "not available" and what is "failed".
 - **A rule's value is passed as a value, not as an option.** A `check`, `config` or `params.allow` value that
   begins with `-` is a problem in the rule file, and nothing runs. Each value reaches the engine joined to its own
   flag, as in `--select=<check>`, so the engine reads it as that flag's value.
-- **One run per rule, or one shared run.** Rules are run in rule-file order. Rules on the same engine with the same
-  config and params, and checks the engine reads together, make one run; each rule's findings still follow its own
-  paths and exceptions. Other rules on the same engine are separate runs.
+- **One run per rule, or one shared run.** Rules share one run of their engine only when that run gives each of
+  them what it would get alone: the same engine, the same `config` and the same `params`, no param Temperare writes
+  to a temporary file or folder, and the same check or checks the engine reads together. When the two checks
+  differ: for clippy, neither check is `warnings`. For ruff, the codes do not overlap, neither selects `RUF100`, and no pair ruff
+  calls incompatible is split. For SwiftLint, neither check is `superfluous_disable_command`. For ast-grep, the
+  same rule file with no params. Tessera, and an engine with no adapter yet, never share. Each rule still keeps only its own check's
+  findings, in its own paths and with its own exceptions. Every other rule runs alone.
+- **The order of runs.** A rule joins the first group, in rule-file order, whose rules can all share with it. The
+  groups run one after another, in the order of each group's first rule, and the rule runs' results are kept in
+  rule-file order; the report sorts findings as OUTPUT.md describes.
 - **Run over the rule file's folder.** The engine checks the whole folder (clippy: the Cargo package that holds
   it). Temperare then keeps the findings that are inside that folder, in the files the rule covers (its `paths`,
   `exclude`, `kits`, `outside_kits`) and, when you gave paths on the command line, in those paths. Paths on the
@@ -26,7 +33,13 @@ what is "not available" and what is "failed".
 - **No time limit.** `tm` waits for an engine as long as it runs.
 - **The engine's environment is yours.** Temperare adds nothing to it, except that for a clippy rule with `max_nesting` it
   sets `CLIPPY_CONF_DIR` for that run to a temporary folder holding `clippy.toml`, which clippy reads instead of the
-  repository's own `clippy.toml`. It passes no flag that turns off an engine's own search for its configuration.
+  repository's own `clippy.toml`.
+- **The engine finds its own configuration,** as it does when you run it yourself, except where the rule says
+  otherwise. A rule's `config` is passed to SwiftLint or ruff as its config file. A SwiftLint threshold passes a
+  config file of its own, after the folder's `.swiftlint.yml` when there is one and the rule has no `config` (see
+  [swiftlint](#swiftlint)). A clippy `max_nesting` replaces the repository's `clippy.toml` for that run, as above.
+  A ruff threshold is layered over the rule's `config`, or over the config ruff finds when the rule has none, and
+  turns nothing off.
 - **The engine's exit code is not the answer.** Linters exit non-zero when they find something. Temperare reads the
   output; a non-zero exit with output it can read is a normal result.
 - **The rule decides severity.** A finding's `severity`, `kind` and `fix` come from the rule in `temperare.toml`.

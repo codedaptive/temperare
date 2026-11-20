@@ -118,6 +118,7 @@ the owner of the findings in its files.
 | `outside_kits` | no | Kit names. The rule never covers a file held by one of these kits |
 | `config` | no | The engine's own config file. Passed to `swiftlint` and `ruff` as written; the other engines do not take one |
 | `params` | no | A table of values for the engine. See below |
+| `only_with_base` | no | `true` or `false` (the default). With `true` the rule reports only what a change adds, so it needs `--base`. Without `--base` the rule reports nothing, not even a failure, and is listed under `not_applicable` ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)) |
 
 Any other key is a problem.
 

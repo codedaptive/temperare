@@ -207,7 +207,7 @@ The arithmetic, the JSON fields and the log line: [`docs/reference/OUTPUT.md`](d
 | Flag | Meaning |
 |---|---|
 | `--rules <path>` | The rule file to read. Without it: `temperare.toml` at the top of the git repository that holds the current folder |
-| `--base <rev>` | A commit, branch or tag. Only findings on lines added since it are reported: lines that differ between that commit and your working tree, committed or not, and every line of an untracked file git does not ignore |
+| `--base <rev>` | A commit, branch or tag. Only findings on lines added since it are reported: lines that differ between that commit and your working tree, committed or not, and every line of an untracked file git does not ignore. Without it, a rule with `only_with_base = true` reports nothing and is listed under `not_applicable` |
 | `--kind quality\|security` | Run only the rules of that kind. `--kind security` is the security rules alone over the tree |
 | `--json` | Print the report as one JSON object on one line |
 | `<path>...` | Files or folders. Findings are cut to these paths. The engines still run over the rule file's whole folder |
