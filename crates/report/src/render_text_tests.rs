@@ -144,6 +144,7 @@ fn the_counts_line_carries_each_count_in_its_place() {
             silenced: 2,
             not_available: 7,
             failed: 8,
+            not_applicable: 10,
         },
         ..empty()
     };

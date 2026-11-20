@@ -10,6 +10,7 @@ mod failed;
 mod fold_untracked;
 mod folder_from_top;
 mod keep_added;
+mod not_applicable;
 mod not_available;
 mod render_text;
 mod report;
@@ -41,6 +42,8 @@ mod fold_untracked_tests;
 mod folder_from_top_tests;
 #[cfg(test)]
 mod keep_added_tests;
+#[cfg(test)]
+mod not_applicable_tests;
 #[cfg(test)]
 mod not_available_tests;
 #[cfg(test)]
@@ -81,6 +84,7 @@ pub use counts::Counts;
 pub use engine_version::EngineVersion;
 pub use failed::Failed;
 pub use keep_added::keep_added;
+pub use not_applicable::NotApplicable;
 pub use not_available::NotAvailable;
 pub use render_text::render_text;
 pub use report::Report;

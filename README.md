@@ -282,8 +282,8 @@ Every key, the glob rules and every problem `tm` reports: [`docs/reference/RULE_
 | 4 | The only errors are security findings. A security finding is reported with its severity, place and owner, and never refuses |
 | 5 | A rule failed: its engine gave no answer, or its `check` could not be used |
 
-When more than one applies, the first of 2, 1, 5, 3, 4 wins. So exit 0 and exit 4 both mean every rule ran. Exit 1
-does not: read the `not available` and `failed` counts as well.
+When more than one applies, the first of 2, 1, 5, 3, 4 wins. So exit 0 and exit 4 both mean every rule ran or is listed under
+`not_applicable`. Exit 1 does not: read the `not available` and `failed` counts as well.
 
 `tm check` ends with a `next:` line that says what to do, and `--json` carries the same text as `next` beside
 `exit`. For a failed rule the text also prints why, under the counts line. The text and JSON shapes in full:

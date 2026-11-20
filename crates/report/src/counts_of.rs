@@ -5,7 +5,13 @@ use rules::{Finding, Kind, Severity};
 
 impl Counts {
     /// Counts the kept `findings` (all, by severity, by kind) and carries the other lists' lengths as given.
-    pub(crate) fn of(findings: &[Finding], silenced: usize, not_available: usize, failed: usize) -> Counts {
+    pub(crate) fn of(
+        findings: &[Finding],
+        silenced: usize,
+        not_available: usize,
+        failed: usize,
+        not_applicable: usize,
+    ) -> Counts {
         let count = |keep: fn(&Finding) -> bool| findings.iter().filter(|f| keep(f)).count();
         Counts {
             findings: findings.len(),
@@ -16,6 +22,7 @@ impl Counts {
             silenced,
             not_available,
             failed,
+            not_applicable,
         }
     }
 }
