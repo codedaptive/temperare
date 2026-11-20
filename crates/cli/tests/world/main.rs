@@ -1,6 +1,6 @@
 //! Tests of tm's real worlds: `CheckWorld::real()` and `RulesWorld::real()` wired to real disk, git, engines and
 //! report, on folders the tests make under the system temp folder and remove. This target holds both kinds beside
-//! their caller (rule 11; S-38: there is no RIT group): RITs (cli→procio/rules/engines, owner Nagatha) and
+//! their caller, because there is no separate group for tests between crates: RITs (cli→procio/rules/engines) and
 //! ZITs. Each file and case says which.
 
 mod check_world_real;
