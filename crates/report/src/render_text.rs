@@ -1,16 +1,18 @@
 //! `render_text`: the report as the text a person reads.
 
-use crate::{Failed, NotAvailable, Report};
+use crate::{EngineVersion, Failed, NotAvailable, Report};
 use rules::{Finding, Kind, Severity};
 
 /// The report as text: a three-line block and a blank line per kept finding, one line per not-available rule, one
-/// line per failed rule, then the counts line. Silenced findings are counted, not listed; a failed rule's stderr
-/// tail is printed by the caller (cli's `failed_tails`), and `--json` carries it. Every line ends with '\n'.
+/// line per failed rule, one line naming the engines that ran and their versions (none when no engine ran), then
+/// the counts line. Silenced findings are counted, not listed; a failed rule's stderr tail is printed by the caller
+/// (cli's `failed_tails`), and `--json` carries it. Every line ends with '\n'.
 pub fn render_text(report: &Report) -> String {
     let mut text = String::new();
     report.findings.iter().for_each(|finding| text.push_str(&finding_block(finding)));
     report.not_available.iter().for_each(|rule| text.push_str(&not_available_line(rule)));
     report.failed.iter().for_each(|rule| text.push_str(&failed_line(rule)));
+    text.push_str(&engines_line(&report.engines));
     let counts = &report.counts;
     text.push_str(&format!(
         "{} findings ({} error, {} warning; {} security), {} silenced, {} exceptions in force, {} not available, {} failed\n",
@@ -49,6 +51,21 @@ fn not_available_line(rule: &NotAvailable) -> String {
 fn failed_line(rule: &Failed) -> String {
     let code = rule.code.map(|code| format!("exit {code}")).unwrap_or_else(|| "no exit code".to_string());
     format!("failed: {} ({}), {code}\n", rule.rule, rule.engine.name())
+}
+
+/// The engines in the report's order, joined by ", "; an empty list gives no line.
+fn engines_line(engines: &[EngineVersion]) -> String {
+    if engines.is_empty() {
+        return String::new();
+    }
+    let named: Vec<String> = engines
+        .iter()
+        .map(|one| match &one.version {
+            Some(version) => format!("{} {version}", one.engine.name()),
+            None => format!("{} (version unknown)", one.engine.name()),
+        })
+        .collect();
+    format!("engines: {}\n", named.join(", "))
 }
 
 /// Severity's and kind's rule-file names; `rules` reads them (`from_name`) and writes them through `Serialize`, but

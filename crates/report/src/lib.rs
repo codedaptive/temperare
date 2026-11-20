@@ -4,6 +4,8 @@ mod assemble_report;
 mod build_report;
 mod counts;
 mod counts_of;
+mod date_text;
+mod engine_version;
 mod failed;
 mod fold_untracked;
 mod folder_from_top;
@@ -14,7 +16,9 @@ mod report;
 mod report_error;
 mod report_error_display;
 mod report_error_source;
+mod rule_count;
 mod silenced;
+mod silenced_by_rule;
 mod split_by_exceptions;
 mod stderr_tail;
 mod utc_day;
@@ -25,6 +29,10 @@ mod assemble_report_tests;
 mod counts_of_tests;
 #[cfg(test)]
 mod counts_tests;
+#[cfg(test)]
+mod date_text_tests;
+#[cfg(test)]
+mod engine_version_tests;
 #[cfg(test)]
 mod failed_tests;
 #[cfg(test)]
@@ -46,6 +54,10 @@ mod report_error_tests;
 #[cfg(test)]
 mod report_tests;
 #[cfg(test)]
+mod rule_count_tests;
+#[cfg(test)]
+mod silenced_by_rule_tests;
+#[cfg(test)]
 mod silenced_tests;
 #[cfg(test)]
 mod split_by_exceptions_tests;
@@ -57,18 +69,22 @@ mod test_json;
 mod utc_day_tests;
 
 use assemble_report::assemble_report;
+use date_text::date_text;
 use fold_untracked::fold_untracked;
 use folder_from_top::folder_from_top;
+use silenced_by_rule::silenced_by_rule;
 use stderr_tail::stderr_tail;
 use utc_day::utc_day;
 
 pub use build_report::build_report;
 pub use counts::Counts;
+pub use engine_version::EngineVersion;
 pub use failed::Failed;
 pub use keep_added::keep_added;
 pub use not_available::NotAvailable;
 pub use render_text::render_text;
 pub use report::Report;
 pub use report_error::ReportError;
+pub use rule_count::RuleCount;
 pub use silenced::Silenced;
 pub use split_by_exceptions::split_by_exceptions;

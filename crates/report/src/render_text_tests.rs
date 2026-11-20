@@ -1,29 +1,12 @@
 //! Unit tests for render_text.rs: whole expected texts, written out by hand from the text format's contract.
 
-use crate::{render_text, Counts, Failed, NotAvailable, Report, Silenced};
+use crate::{render_text, Counts, EngineVersion, Failed, NotAvailable, Report, Silenced};
 use rules::{Engine, Exception, Finding, Kind, RelPath, Severity};
 
 const ZERO_COUNTS: &str = "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed\n";
 
 fn empty() -> Report {
-    Report {
-        findings: Vec::new(),
-        silenced: Vec::new(),
-        exceptions_in_force: 0,
-        not_available: Vec::new(),
-        failed: Vec::new(),
-        base: None,
-        counts: Counts {
-            findings: 0,
-            errors: 0,
-            warnings: 0,
-            quality: 0,
-            security: 0,
-            silenced: 0,
-            not_available: 0,
-            failed: 0,
-        },
-    }
+    Report::default()
 }
 
 fn finding(severity: Severity, kind: Kind, owner: Option<&str>, col: Option<u32>) -> Finding {
@@ -189,5 +172,47 @@ not available: r1 (ast-grep): not installed\n\
 not available: r1 (tessera): not installed\n"
         .to_string()
         + ZERO_COUNTS;
+    assert_eq!(render_text(&report), expected);
+}
+
+fn ran(engine: Engine, version: Option<&str>) -> EngineVersion {
+    EngineVersion { engine, version: version.map(str::to_string) }
+}
+
+#[test]
+fn the_engines_line_lists_each_engine_and_version_in_report_order() {
+    let engines = vec![ran(Engine::AstGrep, Some("0.39.1")), ran(Engine::Ruff, Some("0.6.0"))];
+    let report = Report { engines, ..empty() };
+    assert_eq!(render_text(&report), "engines: ast-grep 0.39.1, ruff 0.6.0\n".to_string() + ZERO_COUNTS);
+}
+
+#[test]
+fn the_engines_line_is_not_sorted() {
+    let engines = vec![ran(Engine::Ruff, Some("0.6.0")), ran(Engine::AstGrep, Some("0.39.1"))];
+    let report = Report { engines, ..empty() };
+    assert_eq!(render_text(&report), "engines: ruff 0.6.0, ast-grep 0.39.1\n".to_string() + ZERO_COUNTS);
+}
+
+#[test]
+fn an_engine_without_a_version_says_version_unknown() {
+    let report = Report { engines: vec![ran(Engine::Clippy, None)], ..empty() };
+    assert_eq!(render_text(&report), "engines: clippy (version unknown)\n".to_string() + ZERO_COUNTS);
+}
+
+#[test]
+fn an_empty_engine_list_prints_no_engines_line() {
+    let report = Report { engines: Vec::new(), ..empty() };
+    assert_eq!(render_text(&report), ZERO_COUNTS);
+}
+
+#[test]
+fn the_engines_line_comes_after_failed_lines_and_before_counts() {
+    let report = Report {
+        failed: vec![failed(Some(2))],
+        engines: vec![ran(Engine::Ruff, Some("0.6.0")), ran(Engine::Clippy, None)],
+        ..empty()
+    };
+    let expected =
+        "failed: r2 (ruff), exit 2\nengines: ruff 0.6.0, clippy (version unknown)\n".to_string() + ZERO_COUNTS;
     assert_eq!(render_text(&report), expected);
 }
