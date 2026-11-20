@@ -43,7 +43,15 @@ fn an_unknown_engine_is_none_with_a_problem_at_the_value() {
             line: 2,
             col: 10,
             what: "unknown engine \"lint\"".to_string(),
-            fix: "Use one of: clippy, swiftlint, ruff, ast-grep, tessera.".to_string(),
+            fix: "Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck."
+                .to_string(),
         }]
     );
+}
+
+#[test]
+fn a_new_engine_name_is_read() {
+    let (engine, out) = read("engine = \"shellcheck\"\n", 0);
+    assert_eq!(engine, Some(Engine::ShellCheck));
+    assert_eq!(out, vec![]);
 }

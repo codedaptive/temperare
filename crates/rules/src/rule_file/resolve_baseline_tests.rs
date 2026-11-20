@@ -12,11 +12,13 @@ const ALPHA: BaselineSet = BaselineSet {
     version: 1,
     text: "version = 1\nretired = [\"tm-old-a\"]\n[[rule]]\nid = \"tm-a1\"\nengine = \"ruff\"\ncheck = \"a1\"\nfix = \"f\"\n\
            [[rule]]\nid = \"tm-a2\"\nengine = \"ruff\"\ncheck = \"a2\"\nfix = \"f\"\nrequired_params = [\"types\"]\n",
+    yaml: &[],
 };
 const BETA: BaselineSet = BaselineSet {
     name: "beta",
     version: 1,
     text: "version = 1\nretired = [\"tm-old-b\"]\n[[rule]]\nid = \"tm-b1\"\nengine = \"clippy\"\ncheck = \"b1\"\nfix = \"f\"\n",
+    yaml: &[],
 };
 /// Holds `tm-a1` as ALPHA does, with another check.
 const DUP: BaselineSet = BaselineSet {
@@ -24,8 +26,9 @@ const DUP: BaselineSet = BaselineSet {
     version: 1,
     text: "version = 1\n[[rule]]\nid = \"tm-d1\"\nengine = \"ruff\"\ncheck = \"d1\"\nfix = \"f\"\n\
            [[rule]]\nid = \"tm-a1\"\nengine = \"ruff\"\ncheck = \"from-dup\"\nfix = \"f\"\n",
+    yaml: &[],
 };
-const BROKEN: BaselineSet = BaselineSet { name: "broken", version: 2, text: "version = 1\ncolour = 1\n" };
+const BROKEN: BaselineSet = BaselineSet { name: "broken", version: 2, text: "version = 1\ncolour = 1\n", yaml: &[] };
 
 /// Two entries: the first string starts at byte 12 (column 13), the second at byte 23 (column 24); the override's
 /// rule string at byte 55 (line 3, column 8).
@@ -130,12 +133,14 @@ const SEC: BaselineSet = BaselineSet {
     name: "sec",
     version: 1,
     text: "version = 1\n[[rule]]\nid = \"tm-x1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"x1\"\nfix = \"f\"\n",
+    yaml: &[],
 };
 /// Another security rule, `tm-y1`.
 const SEC2: BaselineSet = BaselineSet {
     name: "sec2",
     version: 1,
     text: "version = 1\n[[rule]]\nid = \"tm-y1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"y1\"\nfix = \"f\"\n",
+    yaml: &[],
 };
 /// A security rule, `tm-n1`, that needs the param `types`.
 const SEC_NEEDS: BaselineSet = BaselineSet {
@@ -143,6 +148,7 @@ const SEC_NEEDS: BaselineSet = BaselineSet {
     version: 1,
     text: "version = 1\n[[rule]]\nid = \"tm-n1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"n1\"\nfix = \"f\"\n\
            required_params = [\"types\"]\n",
+    yaml: &[],
 };
 
 #[test]
@@ -189,15 +195,16 @@ fn two_sets_with_security_rules_give_the_first_entry() {
     assert_eq!(resolved.security_at, Some(12));
 }
 
-/// A rule `tm-t1` that requires `types` and carries a default for it in its own params.
+/// A rule `tm-t1` that requires `types` and carries a default for it in its own params; the set carries its YAML.
 const DEFAULTED: BaselineSet = BaselineSet {
     name: "defaulted",
     version: 1,
     text: "version = 1\n[[rule]]\nid = \"tm-t1\"\nengine = \"ast-grep\"\ncheck = \"t1\"\nfix = \"f\"\n\
            params = { types = [\"X\"] }\nrequired_params = [\"types\"]\n",
+    yaml: &[("t1", "rule: t1\n")],
 };
 /// Retires `tm-b1`, which BETA gives.
-const RETIRES_B1: BaselineSet = BaselineSet { name: "ret", version: 1, text: "version = 1\nretired = [\"tm-b1\"]\n" };
+const RETIRES_B1: BaselineSet = BaselineSet { name: "ret", version: 1, text: "version = 1\nretired = [\"tm-b1\"]\n", yaml: &[] };
 
 #[test]
 fn a_set_default_does_not_give_a_required_param() {
@@ -238,12 +245,14 @@ const QZ: BaselineSet = BaselineSet {
     name: "qz",
     version: 1,
     text: "version = 1\n[[rule]]\nid = \"tm-z1\"\nengine = \"ruff\"\ncheck = \"z1\"\nfix = \"f\"\n",
+    yaml: &[],
 };
 /// `tm-z1` as a security rule.
 const SZ: BaselineSet = BaselineSet {
     name: "sz",
     version: 1,
     text: "version = 1\n[[rule]]\nid = \"tm-z1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"z1\"\nfix = \"f\"\n",
+    yaml: &[],
 };
 
 #[test]

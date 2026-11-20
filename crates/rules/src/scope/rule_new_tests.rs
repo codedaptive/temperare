@@ -32,6 +32,7 @@ fn the_baseline_fields_take_their_empty_values() {
     assert!(!r.only_with_base);
     assert_eq!(r.required_params, Vec::<String>::new());
     assert_eq!(r.not_applicable, None);
+    assert_eq!(r.embedded_yaml(), None);
 }
 
 #[test]

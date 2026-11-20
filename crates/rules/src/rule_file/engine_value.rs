@@ -8,7 +8,7 @@ use toml::de::DeTable;
 /// The table the key belongs to, named in the missing-key Problem.
 const PLACE: &str = "[[rule]]";
 
-/// The rule's `engine`, which must be one of the five engine names; `at` is the byte offset of the rule's header,
+/// The rule's `engine`, which must be one of the engine names; `at` is the byte offset of the rule's header,
 /// where a missing `engine` is reported.
 pub(crate) fn engine_value(text: &str, table: &DeTable, at: usize, out: &mut Vec<Problem>) -> Option<Engine> {
     let (name, name_at) = required_string(text, table, "engine", PLACE, at, out)?;
@@ -18,7 +18,7 @@ pub(crate) fn engine_value(text: &str, table: &DeTable, at: usize, out: &mut Vec
             text,
             name_at,
             format!("unknown engine \"{name}\""),
-            "Use one of: clippy, swiftlint, ruff, ast-grep, tessera.",
+            "Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck.",
         ));
     }
     engine

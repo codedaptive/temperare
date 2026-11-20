@@ -10,7 +10,7 @@ engine = \"clippy\"\ncheck = \"clippy::b\"\nfix = \"Fix b.\"\nrequired_params = 
 id = \"tm-a\"\nengine = \"ruff\"\ncheck = \"E1\"\nfix = \"Fix a.\"\n";
 
 fn set(text: &'static str) -> BaselineSet {
-    BaselineSet { name: "test", version: 1, text }
+    BaselineSet { name: "test", version: 1, text, yaml: &[] }
 }
 
 fn problem(line: usize, col: usize, what: &str, fix: &str) -> Problem {
@@ -92,6 +92,44 @@ fn problems_come_back_sorted_by_line_and_column() {
         problem(3, 1, "unknown key `colour` in the top level", fix),
     ];
     assert_eq!(problems("version = 1\nretired = [\"old\"]\ncolour = 1\n"), expected);
+}
+
+#[test]
+fn an_ast_grep_rule_whose_yaml_the_set_does_not_carry_is_a_problem_sorted_with_the_others() {
+    let text = "version = 1\ncolour = 1\nretired = [\"old\"]\n[[rule]]\nid = \"tm-a\"\nengine = \"ast-grep\"\n\
+                check = \"a.yml\"\nfix = \"f\"\n";
+    let unknown_fix = "Remove it, or use one of: version, rule, retired.";
+    // `retired = [` is 11 chars, so "old" starts at column 12; `check = ` is 8 chars, so "a.yml" starts at column 9.
+    let expected = vec![
+        problem(2, 1, "unknown key `colour` in the top level", unknown_fix),
+        problem(3, 12, "retired id \"old\" does not start with \"tm-\"", PREFIX_FIX),
+        problem(
+            7,
+            9,
+            "check \"a.yml\" names a YAML file that baseline set test@1 does not carry",
+            "Put a.yml in crates/rules/baseline/test/1/ and list it in the set's yaml in EMBEDDED_SETS, or correct check.",
+        ),
+    ];
+    assert_eq!(problems(text), expected);
+}
+
+/// An ast-grep rule and a clippy rule naming the same carried path.
+const CARRIED: BaselineSet = BaselineSet {
+    name: "test",
+    version: 1,
+    text: "version = 1\n[[rule]]\nid = \"tm-a\"\nengine = \"ast-grep\"\ncheck = \"rust/a.yml\"\nfix = \"f\"\n\
+           [[rule]]\nid = \"tm-c\"\nengine = \"clippy\"\ncheck = \"rust/a.yml\"\nfix = \"f\"\n",
+    yaml: &[("other.yml", "rule: other\n"), ("rust/a.yml", "id: a\nlanguage: rust\nrule:\n  pattern: $X.unwrap()\n")],
+};
+
+#[test]
+fn an_ast_grep_rule_comes_back_with_the_carried_yaml_and_a_clippy_rule_with_none() {
+    let (rules, _) = load_set(&CARRIED).unwrap_or_else(|p| panic!("valid set, but: {p:?}"));
+    assert_eq!(rules[0].id, "tm-a");
+    assert_eq!(rules[0].embedded_yaml(), Some("id: a\nlanguage: rust\nrule:\n  pattern: $X.unwrap()\n"));
+    assert_eq!(rules[0].check, "rust/a.yml");
+    assert_eq!(rules[1].id, "tm-c");
+    assert_eq!(rules[1].embedded_yaml(), None);
 }
 
 #[test]

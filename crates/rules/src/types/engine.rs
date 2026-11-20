@@ -16,4 +16,14 @@ pub enum Engine {
     AstGrep,
     #[serde(rename = "tessera")]
     Tessera,
+    #[serde(rename = "golangci-lint")]
+    GolangciLint,
+    #[serde(rename = "pylint")]
+    Pylint,
+    #[serde(rename = "clang-tidy")]
+    ClangTidy,
+    #[serde(rename = "oclint")]
+    Oclint,
+    #[serde(rename = "shellcheck")]
+    ShellCheck,
 }

@@ -274,19 +274,22 @@ const SETS: &[BaselineSet] = &[
         version: 1,
         text: "version = 1\nretired = [\"tm-s-old\"]\n[[rule]]\nid = \"tm-s1\"\nengine = \"clippy\"\ncheck = \"s1\"\n\
                fix = \"f\"\npaths = [\"**/*.rs\"]\nparams = { limit = 10, keep = \"k\" }\n",
+        yaml: &[],
     },
-    BaselineSet { name: "standard", version: 2, text: "version = 1\n" },
+    BaselineSet { name: "standard", version: 2, text: "version = 1\n", yaml: &[] },
     BaselineSet {
         name: "house",
         version: 1,
         text: "version = 1\nretired = [\"tm-h-old\"]\n[[rule]]\nid = \"tm-h1\"\nengine = \"ruff\"\ncheck = \"h1\"\nfix = \"f\"\n\
                [[rule]]\nid = \"tm-h2\"\nengine = \"ast-grep\"\ncheck = \"h2\"\nfix = \"f\"\nrequired_params = [\"entity_types\"]\n",
+        yaml: &[("h2", "rule: h2\n")],
     },
-    BaselineSet { name: "broken", version: 1, text: "version = 1\ncolour = 1\n" },
+    BaselineSet { name: "broken", version: 1, text: "version = 1\ncolour = 1\n", yaml: &[] },
     BaselineSet {
         name: "dup",
         version: 1,
         text: "version = 1\n[[rule]]\nid = \"tm-s1\"\nengine = \"ruff\"\ncheck = \"other\"\nfix = \"f\"\n",
+        yaml: &[],
     },
 ];
 
@@ -472,17 +475,20 @@ const SECURITY_SETS: &[BaselineSet] = &[
         name: "plain",
         version: 1,
         text: "version = 1\n[[rule]]\nid = \"tm-p1\"\nengine = \"ruff\"\ncheck = \"p1\"\nfix = \"f\"\n",
+        yaml: &[],
     },
     BaselineSet {
         name: "guard",
         version: 1,
         text: "version = 1\n[[rule]]\nid = \"tm-g1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"g1\"\nfix = \"f\"\n",
+        yaml: &[],
     },
     BaselineSet {
         name: "guardneeds",
         version: 1,
         text: "version = 1\n[[rule]]\nid = \"tm-n1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"n1\"\nfix = \"f\"\n\
                required_params = [\"types\"]\n",
+        yaml: &[],
     },
 ];
 
@@ -550,6 +556,7 @@ fn baseline_set_default_for_a_required_param_leaves_the_rule_not_applicable() {
         version: 1,
         text: "version = 1\n[[rule]]\nid = \"tm-t1\"\nengine = \"ast-grep\"\ncheck = \"t1\"\nfix = \"f\"\n\
                params = { types = [\"X\"] }\nrequired_params = [\"types\"]\n",
+        yaml: &[("t1", "rule: t1\n")],
     }];
     let file = parse_with_sets("version = 1\nbaseline = [\"defaulted@1\"]\n", Path::new("."), &sets)
         .unwrap_or_else(|p| panic!("valid: {p:?}"));
@@ -566,12 +573,14 @@ fn baseline_security_copy_dropped_as_a_duplicate_needs_no_owner() {
             name: "qz",
             version: 1,
             text: "version = 1\n[[rule]]\nid = \"tm-z1\"\nengine = \"ruff\"\ncheck = \"z1\"\nfix = \"f\"\n",
+            yaml: &[],
         },
         BaselineSet {
             name: "sz",
             version: 1,
             text: "version = 1\n[[rule]]\nid = \"tm-z1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"z1\"\n\
                    fix = \"f\"\n",
+            yaml: &[],
         },
     ];
     let found = parse_with_sets("version = 1\nbaseline = [\"qz@1\", \"sz@1\"]\n", Path::new("."), &sets)

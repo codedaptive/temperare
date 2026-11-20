@@ -2,11 +2,13 @@
 
 mod apply_override;
 mod baseline_set;
+mod baseline_set_yaml_for;
 mod bool_value;
 mod check_globs;
 mod check_keys;
 mod check_not_option;
 mod check_security_owner;
+mod check_set_yaml;
 mod check_version;
 mod date_value;
 mod embedded_sets;
@@ -50,6 +52,8 @@ mod apply_override_tests;
 #[cfg(test)]
 mod baseline_set_tests;
 #[cfg(test)]
+mod baseline_set_yaml_for_tests;
+#[cfg(test)]
 mod bool_value_tests;
 #[cfg(test)]
 mod check_globs_tests;
@@ -59,6 +63,8 @@ mod check_keys_tests;
 mod check_not_option_tests;
 #[cfg(test)]
 mod check_security_owner_tests;
+#[cfg(test)]
+mod check_set_yaml_tests;
 #[cfg(test)]
 mod check_version_tests;
 #[cfg(test)]
@@ -125,6 +131,8 @@ mod rule_file_new_tests;
 mod rule_file_owner_for_tests;
 #[cfg(test)]
 mod rule_file_parse_tests;
+#[cfg(test)]
+mod rule_file_parse_yaml_tests;
 #[cfg(test)]
 mod rule_file_read_tests;
 #[cfg(test)]
