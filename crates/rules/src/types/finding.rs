@@ -17,6 +17,7 @@ pub struct Finding {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub owner: Option<String>,
     pub path: RelPath,
+    /// 1-based, or 0 when built with None; read it through `Finding::line` and build with `Finding::new`.
     pub line: u32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub col: Option<u32>,

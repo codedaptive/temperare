@@ -1,11 +1,11 @@
-//! `Rule`: one `[[rule]]` of the rule file.
+//! `Rule`: one rule, as a `[[rule]]` of the rule file or built by `Rule::new`.
 
 use super::Scope;
 use crate::{Engine, Kind, Severity};
 
-/// A rule as read from the rule file, with its compiled scope. Empty `paths` covers every file; empty `kits` sets no
-/// kit limit; empty `outside_kits` excludes no kit; `kind` is Quality and `severity` Error when the rule file gives
-/// none.
+/// A rule, as read from the rule file or built by `Rule::new`, with its compiled scope. Empty `paths` covers every
+/// file; empty `kits` sets no kit limit; empty `outside_kits` excludes no kit; `kind` is Quality and `severity` Error
+/// when the rule file gives none.
 #[derive(Debug, Clone)]
 pub struct Rule {
     pub id: String,

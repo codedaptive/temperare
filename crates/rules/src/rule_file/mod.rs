@@ -5,6 +5,7 @@ mod check_keys;
 mod check_not_option;
 mod check_security_owner;
 mod check_version;
+mod date_value;
 mod kit;
 mod kit_holds;
 mod kit_union;
@@ -17,7 +18,9 @@ mod required_string;
 #[allow(clippy::module_inception)]
 mod rule_file;
 mod rule_file_exception_for;
+mod rule_file_exception_on;
 mod rule_file_exceptions_in_force;
+mod rule_file_new;
 mod rule_file_owner_for;
 mod rule_file_parse;
 mod rule_file_read;
@@ -37,6 +40,8 @@ mod check_not_option_tests;
 mod check_security_owner_tests;
 #[cfg(test)]
 mod check_version_tests;
+#[cfg(test)]
+mod date_value_tests;
 #[cfg(test)]
 mod kit_holds_tests;
 #[cfg(test)]
@@ -66,7 +71,11 @@ mod wrong_type_tests;
 #[cfg(test)]
 mod rule_file_exception_for_tests;
 #[cfg(test)]
+mod rule_file_exception_on_tests;
+#[cfg(test)]
 mod rule_file_exceptions_in_force_tests;
+#[cfg(test)]
+mod rule_file_new_tests;
 #[cfg(test)]
 mod rule_file_owner_for_tests;
 #[cfg(test)]
