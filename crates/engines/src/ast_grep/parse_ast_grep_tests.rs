@@ -19,7 +19,7 @@ fn output(code: Option<i32>, stdout: &[u8], stderr: &[u8]) -> Output {
 }
 
 fn hit(path: &str, line: u32, col: u32, what: &str) -> Hit {
-    Hit { path: RelPath::new(path), line, col: Some(col), what: what.to_string() }
+    Hit { path: RelPath::new(path), line: Some(line), col: Some(col), what: what.to_string() }
 }
 
 #[test]

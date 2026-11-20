@@ -65,17 +65,16 @@ fn counted_runs_keep_order_outcomes_and_distinguish_empty_from_not_run() {
     };
     let raw_chars = Cell::new(None);
     let host = Host { run: &run, on_path: &|program| program == "ruff", raw_chars: &raw_chars };
-    let got = run_rules_counted_with(&file, &repo, &[], &host);
+    let got = run_rules_counted_with(&file, &repo, &[], &host, &[]);
     fs::remove_dir_all(&repo).unwrap();
 
+    let quality_warning = (Engine::Ruff, Kind::Quality, Severity::Warning);
+    let mut found = Finding::new("found", quality_warning, RelPath::new("a.py"), 1, Some(2), "é", "f");
+    found.owner = Some("repo".into());
     assert_eq!(got, vec![
         RuleRun {
             rule: "found".into(), engine: Engine::Ruff,
-            outcome: RuleOutcome::Findings(vec![Finding {
-                rule: "found".into(), engine: Engine::Ruff, kind: Kind::Quality,
-                severity: Severity::Warning, owner: Some("repo".into()), path: RelPath::new("a.py"),
-                line: 1, col: Some(2), what: "é".into(), fix: "f".into(),
-            }]),
+            outcome: RuleOutcome::Findings(vec![found]),
             raw_chars: Some(81),
         },
         RuleRun {

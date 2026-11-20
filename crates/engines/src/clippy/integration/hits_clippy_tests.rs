@@ -1,10 +1,10 @@
 //! ZIT for hits_clippy.rs. These are integration, not unit: the real `cargo_root` reads real folders, a canonical temp
-//! folder of empty `Cargo.toml` files or, for the no-`Cargo.toml` test, the real ancestors of a missing path. The others compose `hits_clippy` with the real `clippy_allows`,
+//! folder of empty `Cargo.toml` files or, for the no-`Cargo.toml` test, the real ancestors of a missing path. The others compose `hits_clippy` with `CLIPPY` and the real `param_args`,
 //! `parse_lint_groups`, `lint_group`, `parse_lints`, `known_lint` and `parse_clippy`. The fake host answers clippy-driver help with the captured
-//! `lint_groups_help.txt`, and cargo by its first argument (see hits_clippy_tests.rs); clippy's output is the captured
+//! `lint_groups_help.txt`, and cargo by its first argument (see clippy/hits_clippy_tests.rs); clippy's output is the captured
 //! `lint_and_other.jsonl` / `build_failed.jsonl` (see parse_clippy_tests.rs) or a hand-built message. A test that makes a folder removes it before asserting.
 
-use crate::clippy::hits_clippy;
+use crate::clippy::{hits_clippy, CLIPPY};
 use crate::clippy::hits_clippy_tests::{output, rules_with, run, run_rules, RULES};
 use crate::host::Host;
 use crate::types::{Hit, Stop};
@@ -62,7 +62,7 @@ fn counted_clippy(
         }
     };
     let host = Host { run: &run, on_path: &|_| panic!("unexpected PATH lookup"), raw_chars: &raw_chars };
-    let got = hits_clippy(&file.rules[0], root, &host);
+    let got = hits_clippy(&CLIPPY, &file.rules[0], root, &host);
     (got, raw_chars.get(), seen.into_inner())
 }
 
@@ -131,7 +131,7 @@ fn a_single_crate_is_linted_in_its_own_folder_with_paths_from_there() {
     let root = tree("single", &["."]);
     let (got, seen) = run(&root, output(0, &manifest(&root), b""), output(0, LINT_AND_OTHER, b""));
     fs::remove_dir_all(&root).unwrap();
-    assert_eq!(got, Ok(vec![Hit { path: RelPath::new("src/lib.rs"), line: 3, col: Some(5), what: FOUND.to_string() }]));
+    assert_eq!(got, Ok(vec![Hit { path: RelPath::new("src/lib.rs"), line: Some(3), col: Some(5), what: FOUND.to_string() }]));
     let args: Vec<_> = seen.iter().map(|cmd| cmd.args[0].clone()).collect();
     assert_eq!(args, ["-W", "locate-project", "clippy"]);
     assert_eq!(seen[0].program, "clippy-driver");
@@ -148,7 +148,7 @@ fn a_member_crate_is_linted_alone_and_its_paths_are_read_from_the_workspace_root
     let folder = root.join("member");
     let (got, seen) = run(&folder, output(0, &manifest(&root), b""), output(0, MEMBER_LINT.as_bytes(), b""));
     fs::remove_dir_all(&root).unwrap();
-    assert_eq!(got, Ok(vec![Hit { path: RelPath::new("src/lib.rs"), line: 3, col: Some(5), what: FOUND.to_string() }]));
+    assert_eq!(got, Ok(vec![Hit { path: RelPath::new("src/lib.rs"), line: Some(3), col: Some(5), what: FOUND.to_string() }]));
     assert_eq!(seen.len(), 3);
     assert_eq!(seen[0].cwd.as_deref(), Some(folder.as_path()));
     assert_eq!(seen[1].cwd.as_deref(), Some(folder.as_path()));
@@ -162,7 +162,7 @@ fn a_rule_folder_below_the_cargo_root_runs_clippy_in_the_cargo_root() {
     fs::create_dir(&folder).unwrap();
     let (got, seen) = run(&folder, output(0, &manifest(&root), b""), output(0, LINT_AND_OTHER, b""));
     fs::remove_dir_all(&root).unwrap();
-    assert_eq!(got, Ok(vec![Hit { path: RelPath::new("lib.rs"), line: 3, col: Some(5), what: FOUND.to_string() }]));
+    assert_eq!(got, Ok(vec![Hit { path: RelPath::new("lib.rs"), line: Some(3), col: Some(5), what: FOUND.to_string() }]));
     assert_eq!(seen.len(), 3);
     assert_eq!(seen[2].cwd.as_deref(), Some(root.as_path()));
 }
@@ -193,7 +193,7 @@ fn the_allowed_lints_reach_clippy_as_allow_values_after_the_check() {
     let rules = rules_with(r#"{ allow = ["clippy::result_large_err", "clippy::module_inception"] }"#);
     let (got, seen) = run_rules(&rules, &root, output(0, &manifest(&root), b""), output(0, LINT_AND_OTHER, b""));
     fs::remove_dir_all(&root).unwrap();
-    assert_eq!(got, Ok(vec![Hit { path: RelPath::new("src/lib.rs"), line: 3, col: Some(5), what: FOUND.to_string() }]));
+    assert_eq!(got, Ok(vec![Hit { path: RelPath::new("src/lib.rs"), line: Some(3), col: Some(5), what: FOUND.to_string() }]));
     assert_eq!(seen.len(), 3);
     let tail: Vec<_> = seen[2].args.iter().skip(5).filter_map(|arg| arg.to_str()).collect();
     assert_eq!(tail, ["--warn=clippy::bool_comparison", "--allow=clippy::result_large_err", "--allow=clippy::module_inception"]);

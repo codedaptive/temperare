@@ -5,7 +5,7 @@
 //! The host is a fake; no engine runs. Matches come from the captured fixtures (see parse_ast_grep_tests.rs), whose
 //! paths are relative to where ast-grep ran. Each test removes its folder.
 
-use super::super::hits_ast_grep;
+use super::super::{hits_ast_grep, AST_GREP};
 use crate::host::Host;
 use crate::types::{Hit, Stop};
 use procio::{Cmd, Output, ProcError};
@@ -54,7 +54,7 @@ fn run_rule(
         answer()
     };
     let on_path = |_: &str| -> bool { panic!("hits_ast_grep looks nothing up on PATH") };
-    let got = hits_ast_grep(&file.rules[0], &folder, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) });
+    let got = hits_ast_grep(&AST_GREP, &file.rules[0], &folder, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) });
     fs::remove_dir_all(&folder).unwrap();
     (got, folder, seen.into_inner())
 }
@@ -78,7 +78,7 @@ fn counted_ast_grep(
         answer()
     };
     let host = Host { run: &run, on_path: &|_| panic!("unexpected PATH lookup"), raw_chars: &raw_chars };
-    let got = hits_ast_grep(&file.rules[0], &folder, &host);
+    let got = hits_ast_grep(&AST_GREP, &file.rules[0], &folder, &host);
     fs::remove_dir_all(&folder).unwrap();
     (got, raw_chars.get(), runs.get())
 }
@@ -117,7 +117,7 @@ fn never_run() -> Result<Output, ProcError> {
 }
 
 fn hit(path: &str, line: u32, col: u32, what: &str) -> Hit {
-    Hit { path: RelPath::new(path), line, col: Some(col), what: what.to_string() }
+    Hit { path: RelPath::new(path), line: Some(line), col: Some(col), what: what.to_string() }
 }
 
 #[test]
@@ -194,7 +194,7 @@ fn outside_case(test: &str, make_check: impl FnOnce(&Path) -> String) -> (Result
     let file = RuleFile::parse(&rule_text(&check, ""), &folder).unwrap();
     let run = |_: &Cmd| never_run();
     let on_path = |_: &str| -> bool { panic!("hits_ast_grep looks nothing up on PATH") };
-    let got = hits_ast_grep(&file.rules[0], &folder, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) });
+    let got = hits_ast_grep(&AST_GREP, &file.rules[0], &folder, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) });
     fs::remove_dir_all(&root).unwrap();
     (got, check)
 }

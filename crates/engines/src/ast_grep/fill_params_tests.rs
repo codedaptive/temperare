@@ -1,4 +1,5 @@
-//! ZUT for fill_params.rs: string and list params, the regex escape, unknown and bad params, unclosed braces.
+//! ZUT for fill_params.rs: string and list params, the regex escape, unknown and bad params, a param the YAML never
+//! names, unclosed braces.
 
 use serde_json::json;
 
@@ -72,4 +73,24 @@ fn an_unclosed_open_brace_pair_stays_as_written() {
 fn text_with_no_braces_comes_back_unchanged() {
     let yaml = "id: plain\nlanguage: Rust\nrule:\n  pattern: foo($A)\n";
     assert_eq!(fill_params(yaml, &json!({})), Ok(yaml.to_string()));
+}
+
+#[test]
+fn a_param_the_yaml_never_names_is_bad_listing_its_placeholders_in_order_once() {
+    let got = fill_params("b: {{ beta }}\na: {{alpha}}\nb2: {{beta}}\n", &json!({"alpha": "1", "beta": "2", "gamma": "3"}));
+    let why = "the rule YAML has no {{gamma}}; its placeholders are {{beta}}, {{alpha}}";
+    assert_eq!(got, Err(ParamError::Bad { name: "gamma".to_string(), why: why.to_string() }));
+}
+
+#[test]
+fn a_param_given_to_a_yaml_with_no_placeholders_is_bad() {
+    let got = fill_params("id: plain\nrule:\n  pattern: foo($A)\n", &json!({"names": ["x"]}));
+    let why = "the rule YAML has no {{names}} and no placeholders";
+    assert_eq!(got, Err(ParamError::Bad { name: "names".to_string(), why: why.to_string() }));
+}
+
+#[test]
+fn an_unknown_placeholder_is_reported_before_an_unused_param() {
+    let got = fill_params("a {{missing}} b", &json!({"extra": "1"}));
+    assert_eq!(got, Err(ParamError::Unknown { name: "missing".to_string() }));
 }

@@ -1,20 +1,21 @@
-//! The swiftlint adapter: builds the `swiftlint lint` command, runs it for a rule and reads its JSON output into hits.
+//! The swiftlint adapter: the swiftlint entry (its `swiftlint lint` command, the check it refuses, swiftlint's
+//! unknown-rule warning) and the reader of its JSON output.
 
-mod hits_swiftlint;
 mod parse_swiftlint;
-mod swiftlint_cmd;
+mod swiftlint_entry;
+mod swiftlint_refusal;
 mod unknown_rule;
 
 #[cfg(test)]
-mod hits_swiftlint_tests;
-#[cfg(test)]
 mod parse_swiftlint_tests;
 #[cfg(test)]
-mod swiftlint_cmd_tests;
+mod swiftlint_entry_tests;
+#[cfg(test)]
+mod swiftlint_refusal_tests;
 #[cfg(test)]
 mod unknown_rule_tests;
 
-pub(crate) use hits_swiftlint::hits_swiftlint;
 pub use parse_swiftlint::parse_swiftlint;
-pub use swiftlint_cmd::swiftlint_cmd;
+pub use swiftlint_entry::SWIFTLINT;
+pub(crate) use swiftlint_refusal::swiftlint_refusal;
 pub(crate) use unknown_rule::unknown_rule;

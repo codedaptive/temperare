@@ -147,7 +147,8 @@ rule file's folder) makes the rule "failed", exit 5, with the reason in the repo
   name before ast-grep runs. A string goes in as written. A list of strings goes in as its items joined by `|`, each
   escaped so it matches literally, which drops into a `regex:` line as "any of these". A `{{name}}` with no param of
   that name makes the rule fail.
-- **swiftlint, ruff, tessera:** not read.
+- **swiftlint, ruff:** none taken; any param fails the rule.
+- **tessera:** not read.
 
 ### Which files a rule covers
 

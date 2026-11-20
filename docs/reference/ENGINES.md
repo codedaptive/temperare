@@ -118,7 +118,7 @@ of the engine's stderr, or Temperare's own reason when the engine printed none o
   path that cannot be placed under the folder at all makes the rule Failed, never clean.
 - **`config`:** passed as written, so a relative path is taken from the rule file's folder. Temperare does not read
   or copy the file.
-- **`params`:** not read.
+- **`params`:** none taken; any param fails the rule.
 - **A finding** has no column when SwiftLint gives none, as for a violation of a whole line or file.
 
 ## ruff
@@ -144,7 +144,7 @@ of the engine's stderr, or Temperare's own reason when the engine printed none o
   selects has been remapped to another, since its findings would carry the new code. Write the new code.
 - **`config`:** passed as written, so a relative path is taken from the rule file's folder. Temperare does not read
   or copy the file.
-- **`params`:** not read.
+- **`params`:** none taken; any param fails the rule.
 
 ## ast-grep
 
