@@ -77,7 +77,7 @@ sections() {
 sections > "$parts/sections.md" || not_written "could not assemble the sections from $list"
 
 # The number of cases whose result is `<$1>`: one result per case, its last whole Result line, so a part cut short
-# inside its own NOT RUN line is counted once (Kong #315).
+# inside its own NOT RUN line is counted once.
 count() {
     grep -c "^Result: $1" "$parts/results.txt"
 }
