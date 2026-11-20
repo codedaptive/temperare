@@ -1,7 +1,6 @@
-//! ZIT (rule 11): `RuleFile::read` on a real `temperare.toml` in a throwaway folder. Proves the pieces of the rules
-//! crate work together on a file read from disk: the folder it exposes resolves the rule's `check` file, the read
-//! rules scope paths by include, exclude and kit, the read exceptions match findings, and a broken file reports
-//! every problem with its line (SPEC-rules WO-rules-1..4, Tests).
+//! ZIT (rule 11): rule-file reading and parsing work with the rest of the rules crate. Disk-backed tests use a
+//! `temperare.toml` in a throwaway folder; expiry tests parse strings directly. The tests cover check-file resolution,
+//! rule scopes, exception matching and expiry, and problems with their locations (SPEC-rules WO-rules-1..4, Tests).
 
 use rules::{Engine, Finding, Kind, RelPath, RuleFile, Severity};
 use std::fs;
@@ -133,6 +132,42 @@ fn exception_for_matches_rule_path_and_what() {
     assert!(file.exception_for(&finding("crates/core/src/a.rs", "stored Bool isPaid on Order")).is_none());
     assert!(file.exception_for(&finding("crates/core/src/b.rs", "stored Bool isArchived on Order")).is_none());
     assert_eq!(file.exceptions_in_force().len(), 1);
+}
+
+const EXCEPTION_FILE: &str = "version = 1\n[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"f\"\n[[exception]]\nrule = \"r\"\npath = \"a.rs\"\nreason = \"legacy\"\napproved = \"reviewer\"\n";
+
+#[test]
+fn exception_with_valid_expiry_is_in_force() {
+    let text = format!("{EXCEPTION_FILE}expires = \"2026-12-31\"\n");
+    let parsed = RuleFile::parse(&text, Path::new("."));
+    assert!(parsed.is_ok(), "valid expiry should not produce problems: {parsed:?}");
+    let file = parsed.unwrap();
+    assert_eq!(file.exceptions_in_force().len(), 1);
+    assert_eq!(file.exceptions_in_force()[0].rule, "r");
+}
+
+#[test]
+fn impossible_expiry_is_one_problem_at_the_value() {
+    let text = format!("{EXCEPTION_FILE}expires = \"2026-02-30\"\n");
+    let parsed = RuleFile::parse(&text, Path::new("."));
+    assert!(parsed.is_err(), "an impossible expiry must not produce a rule file");
+    let problems = parsed.unwrap_err();
+    assert_eq!(problems.len(), 1, "{problems:?}");
+    assert_eq!((problems[0].line, problems[0].col), (12, 11), "{problems:?}");
+    assert_eq!(problems[0].what, "`expires` must be a real date written YYYY-MM-DD, not \"2026-02-30\"");
+    assert_eq!(problems[0].fix, "Write `expires` as a real calendar date, \"YYYY-MM-DD\".");
+}
+
+#[test]
+fn integer_expiry_is_one_problem_at_the_value() {
+    let text = format!("{EXCEPTION_FILE}expires = 20261231\n");
+    let parsed = RuleFile::parse(&text, Path::new("."));
+    assert!(parsed.is_err(), "an integer expiry must not produce a rule file");
+    let problems = parsed.unwrap_err();
+    assert_eq!(problems.len(), 1, "{problems:?}");
+    assert_eq!((problems[0].line, problems[0].col), (12, 11), "{problems:?}");
+    assert_eq!(problems[0].what, "`expires` must be a string, not integer");
+    assert_eq!(problems[0].fix, "Write `expires` as a string.");
 }
 
 #[test]

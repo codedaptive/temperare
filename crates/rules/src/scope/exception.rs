@@ -1,4 +1,4 @@
-//! `Exception`: one `[[exception]]` of the rule file.
+//! `Exception`: one exception, as an `[[exception]]` of the rule file or built by `Exception::new`.
 
 use crate::RelPath;
 

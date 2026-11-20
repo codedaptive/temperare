@@ -4,6 +4,8 @@ mod engine;
 mod engine_from_name;
 mod engine_needs_graph;
 mod finding;
+mod finding_line;
+mod finding_new;
 mod kind;
 mod kind_from_name;
 mod problem;
@@ -20,6 +22,10 @@ mod engine_from_name_tests;
 mod engine_needs_graph_tests;
 #[cfg(test)]
 mod engine_tests;
+#[cfg(test)]
+mod finding_line_tests;
+#[cfg(test)]
+mod finding_new_tests;
 #[cfg(test)]
 mod finding_tests;
 #[cfg(test)]

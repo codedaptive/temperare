@@ -1,4 +1,4 @@
-//! `RuleFile`: a read and checked rule file.
+//! `RuleFile`: a rule file, read and checked or built empty by `RuleFile::new`.
 
 use crate::{Exception, Kit, Rule};
 use std::path::PathBuf;
