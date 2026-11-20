@@ -41,9 +41,12 @@ sources.
 - Exit 0 and exit 4 mean every rule ran. Exit 1 does not: read counts.not_available and counts.failed.
 - Exit 3 and exit 5 are never clean: the code was not fully checked.
 - A rule fails (exit 5) when its engine gives no answer that can be read, or when its check cannot be matched back
-  to findings: a clippy lint group or a lint the toolchain does not list, SwiftLint's custom_rules, a ruff rule
-  name in place of a code, an ast-grep rule file outside the rule file's folder. The reason is in
+  to findings: a clippy lint group, SwiftLint's custom_rules, a ruff rule name in place of a code, an ast-grep rule
+  file outside the rule file's folder. It fails too on a param its engine does not take: swiftlint and ruff take
+  none, clippy takes only allow, and ast-grep only the names its YAML has as {{name}}. The reason is in
   failed[].stderr_tail.
+- A check the installed clippy, swiftlint or ruff does not know (a misspelt name, or one newer than the engine) is
+  not available (exit 3), with a why naming the engine, its version and the check.
 - check, by engine: clippy, one lint or warnings; swiftlint, one rule identifier; ruff, a rule code, a code prefix,
   ALL, or several joined by commas; ast-grep, the path of a rule file inside the rule file's folder.
 - A clippy rule needs cargo-clippy and clippy-driver on PATH.
