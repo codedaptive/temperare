@@ -6,26 +6,27 @@ use std::collections::BTreeMap;
 use std::ops::Range;
 use std::path::{Path, PathBuf};
 
-fn finding(path: &str, line: u32) -> Finding {
-    Finding {
-        rule: "no-unwrap".to_string(),
-        engine: Engine::Clippy,
-        kind: Kind::Quality,
-        severity: Severity::Error,
-        owner: None,
-        path: RelPath::new(path),
+fn finding(path: &str, line: impl Into<Option<u32>>) -> Finding {
+    Finding::new(
+        "no-unwrap",
+        (Engine::Clippy, Kind::Quality, Severity::Error),
+        RelPath::new(path),
         line,
-        col: None,
-        what: "used unwrap".to_string(),
-        fix: "Return a typed error.".to_string(),
-    }
+        None,
+        "used unwrap",
+        "Return a typed error.",
+    )
 }
 
 fn added(entries: &[(&str, Vec<Range<u32>>)]) -> BTreeMap<PathBuf, Vec<Range<u32>>> {
     entries.iter().map(|(path, ranges)| (PathBuf::from(path), ranges.clone())).collect()
 }
 
-fn kept(findings: Vec<Finding>, added: &BTreeMap<PathBuf, Vec<Range<u32>>>, folder: &str) -> Vec<(String, u32)> {
+fn kept(
+    findings: Vec<Finding>,
+    added: &BTreeMap<PathBuf, Vec<Range<u32>>>,
+    folder: &str,
+) -> Vec<(String, Option<u32>)> {
     kept_under(findings, added, &[], folder)
 }
 
@@ -34,16 +35,16 @@ fn kept_under(
     added: &BTreeMap<PathBuf, Vec<Range<u32>>>,
     under: &[&str],
     folder: &str,
-) -> Vec<(String, u32)> {
+) -> Vec<(String, Option<u32>)> {
     let under: Vec<PathBuf> = under.iter().map(PathBuf::from).collect();
     keep_added(findings, added, &under, Path::new(folder))
         .into_iter()
-        .map(|f| (f.path.as_str().to_string(), f.line))
+        .map(|f| (f.path.as_str().to_string(), f.line()))
         .collect()
 }
 
-fn at(path: &str, line: u32) -> (String, u32) {
-    (path.to_string(), line)
+fn at(path: &str, line: impl Into<Option<u32>>) -> (String, Option<u32>) {
+    (path.to_string(), line.into())
 }
 
 #[test]
@@ -151,4 +152,17 @@ fn prefix_and_range_matches_keep_input_order() {
     let map = added(&[("src/a.rs", vec![1..10])]);
     let findings = vec![finding("nested/c.rs", 40), finding("src/a.rs", 50), finding("src/a.rs", 2)];
     assert_eq!(kept_under(findings, &map, &["nested/"], ""), vec![at("nested/c.rs", 40), at("src/a.rs", 2)]);
+}
+
+#[test]
+fn a_finding_with_no_line_is_on_no_added_line() {
+    let map = added(&[("src/a.rs", vec![1..u32::MAX])]);
+    assert!(kept(vec![finding("src/a.rs", None)], &map, "").is_empty());
+}
+
+#[test]
+fn a_finding_with_no_line_under_a_prefix_entry_is_kept() {
+    let none = added(&[]);
+    let kept = kept_under(vec![finding("nested/c.rs", None)], &none, &["nested/"], "");
+    assert_eq!(kept, vec![("nested/c.rs".to_string(), None)]);
 }

@@ -17,6 +17,7 @@ mod report_error_source;
 mod silenced;
 mod split_by_exceptions;
 mod stderr_tail;
+mod utc_day;
 
 #[cfg(test)]
 mod assemble_report_tests;
@@ -54,11 +55,14 @@ mod split_by_exceptions_tests;
 mod stderr_tail_tests;
 #[cfg(test)]
 mod test_json;
+#[cfg(test)]
+mod utc_day_tests;
 
 use assemble_report::assemble_report;
 use fold_untracked::fold_untracked;
 use folder_from_top::folder_from_top;
 use stderr_tail::stderr_tail;
+use utc_day::utc_day;
 
 pub use build_report::build_report;
 pub use counts::Counts;

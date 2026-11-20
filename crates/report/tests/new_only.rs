@@ -58,32 +58,25 @@ fn write(dir: &Path, path: &str, contents: &[u8]) {
 }
 
 fn rule_file(folder: &Path, exceptions: Vec<Exception>) -> RuleFile {
-    RuleFile { folder: folder.to_path_buf(), kits: Vec::new(), owner: None, rules: Vec::new(), exceptions }
+    let mut rules = RuleFile::new(folder.to_path_buf());
+    rules.exceptions = exceptions;
+    rules
 }
 
-fn finding(rule: &str, path: &str, line: u32) -> Finding {
-    Finding {
-        rule: rule.to_string(),
-        engine: Engine::Clippy,
-        kind: Kind::Quality,
-        severity: Severity::Error,
-        owner: None,
-        path: RelPath::new(path),
+fn finding(rule: &str, path: &str, line: impl Into<Option<u32>>) -> Finding {
+    Finding::new(
+        rule,
+        (Engine::Clippy, Kind::Quality, Severity::Error),
+        RelPath::new(path),
         line,
-        col: Some(9),
-        what: "violation".to_string(),
-        fix: "Fix the violation.".to_string(),
-    }
+        Some(9),
+        "violation",
+        "Fix the violation.",
+    )
 }
 
 fn exception(rule: &str, path: &str, reason: &str) -> Exception {
-    Exception {
-        rule: rule.to_string(),
-        path: RelPath::new(path),
-        what: None,
-        reason: reason.to_string(),
-        approved: "approved".to_string(),
-    }
+    Exception::new(rule, path, reason, "approved")
 }
 
 fn outcomes(findings: Vec<Finding>) -> Vec<(String, RuleOutcome)> {
@@ -110,8 +103,8 @@ fn new_lines_untracked_files_and_nested_repositories_are_kept() {
         finding("test-rule", "a.rs", 2),
     ];
     let report = build_report(&rule_file(&repo.dir, vec![]), outcomes(findings), Some((&repo.dir, &base))).unwrap();
-    let locations: Vec<_> = report.findings.iter().map(|f| (f.path.as_str(), f.line)).collect();
-    assert_eq!(locations, vec![("a.rs", 2), ("b.rs", 1), ("nested/c.rs", 7)]);
+    let locations: Vec<_> = report.findings.iter().map(|f| (f.path.as_str(), f.line())).collect();
+    assert_eq!(locations, vec![("a.rs", Some(2)), ("b.rs", Some(1)), ("nested/c.rs", Some(7))]);
     assert_eq!(report.counts.findings, 3);
     assert!(report.silenced.is_empty());
     assert_eq!(report.base, Some(base));
@@ -143,7 +136,7 @@ fn base_filter_precedes_exception_matching() {
     assert_eq!(report.counts.silenced, 1);
     assert_eq!(report.silenced.len(), 1);
     assert_eq!(report.silenced[0].finding.path.as_str(), "a.rs");
-    assert_eq!(report.silenced[0].finding.line, 2);
+    assert_eq!(report.silenced[0].finding.line(), Some(2));
     assert_eq!(report.silenced[0].finding.rule, "new-rule");
     assert_eq!(report.silenced[0].exception.reason, "new");
 }
@@ -158,8 +151,8 @@ fn subfolder_findings_are_rerooted_for_filtering_but_keep_their_paths() {
         Some((&repo.dir, &base)),
     )
     .unwrap();
-    let locations: Vec<_> = report.findings.iter().map(|f| (f.path.as_str(), f.line)).collect();
-    assert_eq!(locations, vec![("x.rs", 2)]);
+    let locations: Vec<_> = report.findings.iter().map(|f| (f.path.as_str(), f.line())).collect();
+    assert_eq!(locations, vec![("x.rs", Some(2))]);
     assert_eq!(report.counts.findings, 1);
     assert!(report.silenced.is_empty());
 }

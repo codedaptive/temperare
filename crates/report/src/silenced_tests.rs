@@ -5,26 +5,19 @@ use crate::Silenced;
 use rules::{Engine, Exception, Finding, Kind, RelPath, Severity};
 
 fn silenced(what: Option<&str>) -> Silenced {
+    let mut exception = Exception::new("no-unwrap", "src/a.rs", "startup only", "maintainer, 2026-11-17");
+    exception.what = what.map(str::to_string);
     Silenced {
-        finding: Finding {
-            rule: "no-unwrap".to_string(),
-            engine: Engine::Clippy,
-            kind: Kind::Quality,
-            severity: Severity::Error,
-            owner: None,
-            path: RelPath::new("src/a.rs"),
-            line: 3,
-            col: Some(9),
-            what: "used unwrap".to_string(),
-            fix: "Return a typed error.".to_string(),
-        },
-        exception: Exception {
-            rule: "no-unwrap".to_string(),
-            path: RelPath::new("src/a.rs"),
-            what: what.map(str::to_string),
-            reason: "startup only".to_string(),
-            approved: "maintainer, 2026-11-17".to_string(),
-        },
+        finding: Finding::new(
+            "no-unwrap",
+            (Engine::Clippy, Kind::Quality, Severity::Error),
+            RelPath::new("src/a.rs"),
+            3,
+            Some(9),
+            "used unwrap",
+            "Return a typed error.",
+        ),
+        exception,
     }
 }
 
