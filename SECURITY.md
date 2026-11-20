@@ -19,11 +19,18 @@ These are properties of the code, not of how it is deployed.
   hard link is refused. On other systems only the path checks apply.
 - **One place starts programs.** Everything Temperare runs, git included, goes through one small crate, `procio`.
   The repository's own rule file holds that line: a rule reports any other code that starts a process.
-- **It does not edit what it checks.** `tm check` and `tm rules` write to stdout and stderr. The one temporary file
-  they create is a copy of an ast-grep rule with its `params` filled in, named `tm-ast-grep-<pid>-<n>.yml` in the
-  system's temporary folder. It is created new, never opened over an existing file, and removed when the run of that
-  rule ends. If `tm` is killed in between, the copy is left there. Besides it, `tm check` appends one line to its
-  savings log, `~/.local/state/temperare/savings.jsonl`, when an engine ran, making that folder when it is missing.
+- **It does not edit what it checks.** `tm check` and `tm rules` write to stdout and stderr. `tm check` creates
+  temporary files in the system's temporary folder for three kinds of rule, and only for them:
+  - an ast-grep rule (each one, with or without `params`): a copy of its rule file with its params filled in,
+    `tm-ast-grep-<pid>-<n>.yml`;
+  - a SwiftLint rule with `max_complexity` or `max_lines`: the threshold as a SwiftLint config,
+    `tm-swiftlint-<pid>-<n>.yml`;
+  - a clippy rule with `max_nesting`: a new folder `tm-clippy-<pid>-<n>` holding one `clippy.toml` with the
+    threshold.
+
+  Each is created new, never opened over an existing file or folder, and removed when the run of that rule ends. If
+  `tm` is killed in between, it is left there. No config file of the repository is written. Besides these, `tm check`
+  appends one line to its savings log, `~/.local/state/temperare/savings.jsonl`, when an engine ran, making that folder when it is missing.
   The line holds the time, the rule file's folder as an absolute path, the verb and two token counts; no code and no
   finding.
 - **No network code.** Temperare opens no connection. Its dependencies are parsers (TOML, JSON, globs,
@@ -59,7 +66,9 @@ procedural macros, and cargo may download its dependencies. That is code from th
 
 **The engines read their own configuration.** Each engine looks for its config in the code it checks, as it always
 does. Temperare passes no flag that turns that off, so a repository's own linter config shapes what its linter
-reports.
+reports. Two exceptions: for a clippy rule with `max_nesting`, `CLIPPY_CONF_DIR` points that run at Temperare's
+temporary `clippy.toml`, which clippy reads in place of the repository's own; and a SwiftLint run given `--config`
+(the rule's own `config`, or Temperare's threshold file) reads those files in place of its own config search.
 
 **There is no time limit.** Temperare waits for an engine for as long as it runs. An engine that hangs, hangs the
 check.

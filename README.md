@@ -244,7 +244,7 @@ approved = "who approved it"
 | Key of a `[[rule]]` | Meaning |
 |---|---|
 | `id` | The rule's name in every report: lower-case letters, digits and `-`, unique in the file |
-| `engine` | `clippy`, `swiftlint`, `ruff`, `ast-grep` or `tessera` |
+| `engine` | `clippy`, `swiftlint`, `ruff`, `ast-grep` or `tessera`; also `golangci-lint`, `pylint`, `clang-tidy`, `oclint` and `shellcheck`, accepted and "not available" until their adapters land |
 | `check` | What the engine is asked. clippy: one lint the toolchain lists (`clippy::bool_comparison`), or `warnings` for every warning clippy reports; not a lint group. SwiftLint: one rule identifier (`force_cast`). ruff: a rule code, a code prefix or `ALL` (`E711`, `E7`), or several joined by commas. ast-grep: the path of a rule file inside the rule file's folder |
 | `fix` | The text shown with each finding |
 | `severity` | `error` (the default) or `warning` |
@@ -301,10 +301,14 @@ done, 1 when a step failed, and 2 when used wrongly.
 | `ruff` | `ruff check` in the rule file's folder | Python |
 | `ast-grep` | `ast-grep scan` with your rule file, its `params` filled in | Any language ast-grep reads; rules about the shape of code |
 | `tessera` | Nothing | Not available today |
+| `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `shellcheck` | Nothing yet | Accepted in the rule file; not available until each adapter lands |
 
-Engines are run as programs, rule by rule: ten ruff rules are ten ruff runs. Temperare links no engine and reads
-only what the engine prints. The report shows the rule's own `severity` and `fix`; the engine's own severity for a
-finding is not read.
+Engines are run as programs. Rules on the same engine with the same `config` and `params` share one run where the
+engine can answer each of them in it, so ten ruff rules for ten codes can be one ruff run; each rule still keeps
+only its own findings. A rule whose params reach the engine through a temporary file or folder runs alone, even with
+identical params: a SwiftLint rule with `max_complexity` or `max_lines`, a clippy rule with `max_nesting`, an
+ast-grep rule with `params`. Temperare links no engine and reads only what the engine prints. The report shows the
+rule's own `severity` and `fix`; the engine's own severity for a finding is not read.
 
 **Tessera rules are not available today.** A rule with `engine = "tessera"` is accepted in the rule file and is
 always reported "not available", whether or not Tessera is installed: `tm` neither runs nor looks for it. The
@@ -385,7 +389,8 @@ Temperare runs other programs with your privileges, and the rule file decides wh
   Rust, an absent engine, an exception, a run with nothing but `PATH` and `HOME` set, a security rule, a rule that
   a command is named only inside one kit, and clippy's `warnings` with an `allow` list.
 - **Platforms:** built and accepted on macOS. The code is written for Unix systems; Linux and Windows are untested.
-- **Not available today:** rules with `engine = "tessera"`.
+- **Not available today:** rules with `engine = "tessera"`, and rules naming `golangci-lint`, `pylint`,
+  `clang-tidy`, `oclint` or `shellcheck`, which the rule file accepts before their adapters land.
 - **License:** MIT. See [`LICENSE`](LICENSE).
 
 ---

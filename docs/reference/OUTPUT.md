@@ -65,6 +65,8 @@ The run above, as `--json` prints it (on one line; wrapped here to read):
     "errors": 1, "failed": 1, "findings": 1, "not_available": 1,
     "quality": 1, "security": 0, "silenced": 1, "warnings": 0
   },
+  "date": "2026-11-20",
+  "engines": [],
   "exceptions_in_force": 1,
   "exit": 1,
   "failed": [
@@ -115,7 +117,8 @@ The run above, as `--json` prints it (on one line; wrapped here to read):
         "what": "Comparison to `None` should be `cond is None`"
       }
     }
-  ]
+  ],
+  "silenced_by_rule": [ { "count": 1, "rule": "no-none-compare" } ]
 }
 ```
 
@@ -123,10 +126,13 @@ The run above, as `--json` prints it (on one line; wrapped here to read):
 |---|---|
 | `findings` | The kept findings: covered by no exception and, with `--base`, on a new line |
 | `silenced` | Each finding an exception covered, with that exception |
+| `silenced_by_rule` | The silenced findings counted by rule: `rule` and `count`, in rule-file order, only rules with any. Always present, `[]` when nothing was silenced |
 | `exceptions_in_force` | How many exceptions the rule file holds, used in this run or not. Always present |
 | `not_available` | Each rule that could not be checked: `rule`, `engine`, `why` |
 | `failed` | Each rule that failed: `rule`, `engine`, `code` (the engine's exit code, or `null` when it had none or was not run), `stderr_tail` (the last 20 lines of what explains the failure: the engine's stderr, or Temperare's own reason when the engine printed none or was not run) |
 | `base` | The full id of the commit `--base` named. Present only with `--base` |
+| `date` | The day of the check in UTC, as `YYYY-MM-DD`. Always present |
+| `engines` | Always present, and always `[]` in this version: `tm check` does not fill it in yet |
 | `saved` | The tokens-saved estimate and what it counted. Always present on a report, whatever the user configuration says; shown in full under [Tokens saved](#tokens-saved) |
 | `counts` | The numbers below |
 | `exit` | The exit code of this run |
@@ -139,7 +145,7 @@ Read fields by name, not by position.
 | Field | Meaning |
 |---|---|
 | `rule` | The rule's `id` |
-| `engine` | `clippy`, `swiftlint`, `ruff`, `ast-grep` or `tessera` |
+| `engine` | The rule's engine, as the rule file names it (see [`RULE_FILE.md`](RULE_FILE.md#a-rule-rule)) |
 | `kind` | `quality` or `security`, from the rule |
 | `severity` | `error` or `warning`, from the rule |
 | `owner` | Who owns the file, from the rule file. Left out when it names none |
@@ -174,8 +180,10 @@ ran. The estimate is an upper bound: it is the saving against reading that outpu
 **The numbers.**
 
 - **Characters** are Unicode characters (scalar values), not bytes. **Tokens** are characters / 4, rounded half up.
-- **K** is the number of engine runs whose output became findings: one per rule whose engine ran, whether it found
-  something, found nothing, or failed after it ran. A rule whose engine ran and said it does not know the rule's check counts as a run; any other rule that was not available ran nothing.
+- **K** is the number of engine runs whose output became findings: one per run, whether it found something, found
+  nothing, or failed after it ran. Rules that share one run (see [`ENGINES.md`](ENGINES.md#what-holds-for-every-engine))
+  count it once. A rule whose engine ran and said it does not know the rule's check counts as a run; any other rule
+  that was not available ran nothing.
 - **B**, the baseline, is the tokens of everything those runs printed, stdout and stderr together. Set-up runs
   (clippy's lint list and workspace lookup) and version checks are not counted.
 - **X** is the tokens of tm's own answer: in text, everything after the tokens-saved line; in JSON, the object as
@@ -198,14 +206,20 @@ no line when no engine ran, under `--json`, when the run stops with exit 2, or o
 ```json
 "saved": {
   "baseline_chars": 844, "baseline_tokens": 211,
-  "counted": [ { "chars": 844, "engine": "ruff", "rule": "no-none-compare" } ],
-  "engine_runs": 1, "output_chars": 602, "output_tokens": 151, "percent": 28, "tokens_saved": 60
+  "counted": [
+    { "chars": 844, "engine": "ruff", "rule": "no-none-compare" },
+    { "chars": 0, "engine": "clippy", "rule": "clippy-warnings" },
+    { "chars": 0, "engine": "tessera", "rule": "file-erosion" }
+  ],
+  "engine_runs": 1, "output_chars": 1225, "output_tokens": 306, "percent": 0, "tokens_saved": 0
 }
 ```
 
+Here the JSON answer is longer than ruff's own output, so nothing is saved: N is never below 0.
+
 | Field | Meaning |
 |---|---|
-| `counted` | One entry per rule this check ran (after `--kind`), in rule-file order: `rule`, `engine`, and `chars`, the characters its engine run printed; 0 when its engine did not run |
+| `counted` | One entry per rule this check ran (after `--kind`), in rule-file order: `rule`, `engine`, and `chars`, the characters its engine run printed; 0 when its engine did not run. A shared run's characters are on the first rule it answered, and the other rules that shared it show 0 |
 | `engine_runs` | K |
 | `baseline_chars`, `baseline_tokens` | The sum of `counted`'s `chars`, and B |
 | `output_chars`, `output_tokens` | The JSON object's characters without `saved`, and X |
@@ -323,7 +337,7 @@ the rule file's folder, a `--base` that names no commit) prints the two lines on
 A rule file with problems prints, with `--json`:
 
 ```json
-{"exit":2,"next":"fix each problem listed for /path/to/temperare.toml","problems":[{"col":10,"fix":"Use one of: clippy, swiftlint, ruff, ast-grep, tessera.","line":5,"what":"unknown engine \"pylint\""}],"rule_file":"/path/to/temperare.toml"}
+{"exit":2,"next":"fix each problem listed for /path/to/temperare.toml","problems":[{"col":10,"fix":"Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck.","line":5,"what":"unknown engine \"pylnit\""}],"rule_file":"/path/to/temperare.toml"}
 ```
 
 Without `--json` it prints one line per problem, `file:line:col  what  fix`, then the `next:` line. See
