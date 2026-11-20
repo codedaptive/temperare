@@ -4,7 +4,7 @@ use crate::{EngineVersion, Failed, NotAvailable, Report};
 use rules::{Finding, Kind, Severity};
 
 /// The report as text: a three-line block and a blank line per kept finding, one line per not-available rule, one
-/// line per failed rule, one line naming the engines that ran and their versions (none when no engine ran), then
+/// line per failed rule, one line of the named engines and their versions (none when the list is empty), then
 /// the counts line. Silenced findings are counted, not listed; a failed rule's stderr tail is printed by the caller
 /// (cli's `failed_tails`), and `--json` carries it. Every line ends with '\n'.
 pub fn render_text(report: &Report) -> String {

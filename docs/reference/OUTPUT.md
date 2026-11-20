@@ -62,8 +62,8 @@ The run above, as `--json` prints it (on one line; wrapped here to read):
 ```json
 {
   "counts": {
-    "errors": 1, "failed": 1, "findings": 1, "not_available": 1,
-    "quality": 1, "security": 0, "silenced": 1, "warnings": 0
+    "errors": 1, "failed": 1, "findings": 1, "not_applicable": 0,
+    "not_available": 1, "quality": 1, "security": 0, "silenced": 1, "warnings": 0
   },
   "date": "2026-11-20",
   "engines": [],
@@ -92,6 +92,7 @@ The run above, as `--json` prints it (on one line; wrapped here to read):
     }
   ],
   "next": "fix the findings above, or add an approved [[exception]] to /path/to/temperare.toml",
+  "not_applicable": [],
   "not_available": [
     { "engine": "tessera", "rule": "file-erosion", "why": "Tessera's slop records are not defined yet" }
   ],
@@ -129,6 +130,7 @@ The run above, as `--json` prints it (on one line; wrapped here to read):
 | `silenced_by_rule` | The silenced findings counted by rule: `rule` and `count`, in rule-file order, only rules with any. Always present, `[]` when nothing was silenced |
 | `exceptions_in_force` | How many exceptions the rule file holds, used in this run or not. Always present |
 | `not_available` | Each rule that could not be checked: `rule`, `engine`, `why` |
+| `not_applicable` | Each rule the check does not apply: `rule`, `engine`, `why`. Always present, `[]` when empty. Listed: each not-applicable rule of the rule file (`why` is its reason, or "no reason given"), and, with no `--base`, each rule with `only_with_base` (`why`: "reports only what a change adds; run with --base"). Never a finding and never "not available" |
 | `failed` | Each rule that failed: `rule`, `engine`, `code` (the engine's exit code, or `null` when it had none or was not run), `stderr_tail` (the last 20 lines of what explains the failure: the engine's stderr, or Temperare's own reason when the engine printed none or was not run) |
 | `base` | The full id of the commit `--base` named. Present only with `--base` |
 | `date` | The day of the check in UTC, as `YYYY-MM-DD`. Always present |
@@ -170,6 +172,7 @@ Every engine's findings have this one shape.
 | `quality`, `security` | The kept findings of each kind |
 | `silenced` | The findings an exception covered |
 | `not_available` | The rules that were not available |
+| `not_applicable` | The rules the check does not apply |
 | `failed` | The rules that failed |
 
 ## Tokens saved
@@ -254,18 +257,18 @@ The exit codes of `tm check`:
 
 | Code | Meaning |
 |---|---|
-| 0 | Nothing to refuse: no finding of severity `error`, every rule ran. Warnings alone end here |
+| 0 | Nothing to refuse: no finding of severity `error`, every rule ran or is under `not_applicable`. Warnings alone end here |
 | 1 | At least one kept finding of kind `quality` and severity `error` |
 | 2 | Nothing was checked: the command was used wrongly, there is no rule file, the rule file has a problem, a path is outside the rule file's folder, or `--base` does not name a commit |
 | 3 | At least one rule was not available |
-| 4 | The only kept findings of severity `error` are of kind `security`, and every rule ran |
+| 4 | The only kept findings of severity `error` are of kind `security`, and every rule ran or is under `not_applicable` |
 | 5 | At least one rule failed: its engine gave no answer that can be read, or the rule was refused before its engine ran (see [`ENGINES.md`](ENGINES.md#not-available-and-failed)) |
 
 The first that applies wins, in this order: 2, 1, 5, 3, 4, 0.
 
 What that order means for a caller:
 
-- **0 and 4** mean every rule ran. Nothing was unavailable and no engine failed.
+- **0 and 4** mean every rule ran or is listed under `not_applicable`. Nothing was unavailable and no engine failed.
 - **1** says a quality error was found. It does not say every rule ran: a run with a quality error and a missing
   engine ends with 1. Read `counts.not_available` and `counts.failed`, or the counts line.
 - **3 and 5** mean the code was not fully checked. They are never "clean".

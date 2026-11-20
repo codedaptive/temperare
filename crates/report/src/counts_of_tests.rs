@@ -24,8 +24,9 @@ fn findings_are_counted_by_severity_and_by_kind() {
         silenced: 5,
         not_available: 6,
         failed: 7,
+        not_applicable: 8,
     };
-    assert_eq!(Counts::of(&findings, 5, 6, 7), expected);
+    assert_eq!(Counts::of(&findings, 5, 6, 7, 8), expected);
 }
 
 #[test]
@@ -39,6 +40,7 @@ fn no_findings_count_zero() {
         silenced: 1,
         not_available: 0,
         failed: 2,
+        not_applicable: 3,
     };
-    assert_eq!(Counts::of(&[], 1, 0, 2), expected);
+    assert_eq!(Counts::of(&[], 1, 0, 2, 3), expected);
 }
