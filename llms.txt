@@ -58,8 +58,12 @@ sources.
 - It does not parse code, fix code or format code.
 - It does not decide what a finding blocks.
 - It does not install the engines.
-- A check keeps nothing between runs, and Temperare has no network code of its own. The engines it runs are
+- A check reads nothing back between runs; it only appends a line to its savings log
+  (~/.local/state/temperare/savings.jsonl). Temperare has no network code of its own. The engines it runs are
   separate programs.
+- When an engine ran, tm check's text output opens with an estimate of the tokens saved against the engines' raw
+  output, ending in an ask to the agent to tell the user the turn's total; --json carries it as "saved", and
+  savings_line = false in ~/.config/temperare/config.toml turns the line off.
 - Rules with engine = "tessera" are accepted and are always reported "not available" today, whether or not Tessera
   is installed.
 

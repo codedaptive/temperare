@@ -19,15 +19,20 @@ These are properties of the code, not of how it is deployed.
   hard link is refused. On other systems only the path checks apply.
 - **One place starts programs.** Everything Temperare runs, git included, goes through one small crate, `procio`.
   The repository's own rule file holds that line: a rule reports any other code that starts a process.
-- **It does not edit what it checks.** `tm check` and `tm rules` write to stdout and stderr. The one file they
-  create is a temporary copy of an ast-grep rule with its `params` filled in, named `tm-ast-grep-<pid>-<n>.yml` in
-  the system's temporary folder. It is created new, never opened over an existing file, and removed when the run of
-  that rule ends. If `tm` is killed in between, the copy is left there.
+- **It does not edit what it checks.** `tm check` and `tm rules` write to stdout and stderr. The one temporary file
+  they create is a copy of an ast-grep rule with its `params` filled in, named `tm-ast-grep-<pid>-<n>.yml` in the
+  system's temporary folder. It is created new, never opened over an existing file, and removed when the run of that
+  rule ends. If `tm` is killed in between, the copy is left there. Besides it, `tm check` appends one line to its
+  savings log, `~/.local/state/temperare/savings.jsonl`, when an engine ran, making that folder when it is missing.
+  The line holds the time, the rule file's folder as an absolute path, the verb and two token counts; no code and no
+  finding.
 - **No network code.** Temperare opens no connection. Its dependencies are parsers (TOML, JSON, globs,
   regular-expression syntax) and their support crates, and on Unix `libc`, for the one call that opens an ast-grep
   rule file without following a symlink.
-- **A check keeps nothing between runs.** There is no cache, no history and no background process. The one file
-  Temperare keeps is the record `temperare install` writes (see [What install touches](#what-install-touches)).
+- **A check reads nothing back between runs.** There is no cache and no background process. The files Temperare
+  keeps are the record `temperare install` writes (see [What install touches](#what-install-touches)) and the savings
+  log above, which it only appends to and never reads. It reads one file of the user's,
+  `~/.config/temperare/config.toml`, for the switch that turns the savings line off, and never writes it.
 - **git is pointed at one repository.** git runs with the variables that could redirect it to another repository,
   index or object store removed, with credential prompts turned off, and without taking the index lock.
 - **A program it runs cannot read your terminal.** The caller's stdin is never passed on.
