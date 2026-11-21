@@ -4,8 +4,8 @@ What `tm` prints, as text and as JSON, and what each exit code means. Both forms
 
 ## Where output goes
 
-- **stdout:** the result of a check, the `tm rules` listing, the problems of a rule file, the usage text and the
-  version.
+- **stdout:** the result of a check, the `tm rules` listing, the results of `tm baseline test`, the problems of a
+  rule file, the usage text and the version.
 - **stderr:** a usage error, as two lines: `tm: <what is wrong>` and `next: <what to type instead>`. And, from
   `tm check` when at least one engine ran, one line when the user configuration cannot be used:
   `tm: ignoring ~/.config/temperare/config.toml: <why>` (see [Tokens saved](#tokens-saved)).
@@ -291,7 +291,7 @@ What that order means for a caller:
   next is the caller's decision.
 
 `tm rules` exits 0 when the rule file is good, whatever the engines' availability, and 2 when it is not. `tm help`
-and `tm --version` exit 0.
+and `tm --version` exit 0. `tm baseline test` has its own codes, under [`tm baseline test`](#tm-baseline-test).
 
 `tm install` and `tm uninstall` have their own three codes, and 1 does not mean a finding there:
 
@@ -392,3 +392,82 @@ when the exception has one, who approved it and the reason.
 | `exceptions` | Each exception: `rule`, `path`, `reason`, `approved`, and `what` when it has one (left out otherwise) |
 | `exceptions_in_force` | How many exceptions there are |
 | `exit`, `next` | As for `tm check` |
+
+## `tm baseline test`
+
+`tm baseline test [--set <name@version>] [--json]` tests the rules of the baseline sets built into `tm`, each on
+the cases its set carries for it. With no `--set` it tests `standard@1`; `--set` tests the one set it names instead.
+It reads no rule file and checks nothing in your repository.
+
+Each rule runs alone, by its engine, on two cases. Its failing case must give exactly the one finding the set expects
+(that rule, at that path and line) and nothing else; its passing case must give no finding. Each case is written into
+a new git repository under the system temp folder, which is removed when the case is done. A folder that cannot be
+removed is a line on stderr, `tm: cannot remove the case folder <folder>: <why>`, and the result stands. A rule with
+`only_with_base = true` runs each case as a change, as `tm check --base` would: the failing case's base commit holds
+the passing case's files, and the failing case's files are written over them; the passing case's base is empty, and
+its files are added. Only findings on added lines count.
+
+A case comes to one of four results:
+
+- **holds:** it gave what it must;
+- **broken:** it gave a finding it should not have, or not the one expected; its engine failed; the set carries no
+  cases for the rule; or the case could not be written or committed. The why says which;
+- **not available:** the rule's engine cannot be run here, as for `tm check` (see
+  [`ENGINES.md`](ENGINES.md#not-available-and-failed));
+- **not applicable:** the set leaves the rule aside, with its reason. The rule is not run and no case folder is made.
+
+A rule is broken when either case is broken; else not applicable when either case is; else not available when either
+is; else it holds.
+
+As text, as it looks once `standard@1` carries its rules; today that set has none, and the output is the two lines `0 rules: 0 hold, 0 broken, 0 not available, 0 not applicable` and `next: nothing to do`, exit 0:
+
+```
+standard@1 tm-rust-dead-code (clippy): holds
+standard@1 tm-python-unused-import (ruff): broken
+  failing: broken: gave no finding; expected tm-python-unused-import at settings.py:4
+standard@1 tm-swift-complexity (swiftlint): not available
+  failing: not available: swiftlint not found on PATH
+  passing: not available: swiftlint not found on PATH
+3 rules: 1 hold, 1 broken, 1 not available, 0 not applicable
+next: fix each broken rule or its cases above
+```
+
+One line per rule in its set's order, `<set> <rule id> (<engine>): <result>`, then one indented line for each of its
+cases that does not hold (the failing case first), `<failing|passing>: <result>: <why>`. Then the counts line, always
+with all four counts, and the `next:` line.
+
+`tm baseline test --json` prints the same as one object on one line (wrapped here to read). This too shows the output once `standard@1` carries its rules; today the set has none, and it prints `"rules": []` with every count 0 and `"exit": 0`:
+
+```json
+{
+  "counts": { "broken": 1, "holds": 1, "not_applicable": 0, "not_available": 1, "rules": 3 },
+  "exit": 1,
+  "next": "fix each broken rule or its cases above",
+  "rules": [
+    { "engine": "clippy", "failing": { "result": "holds", "why": null }, "passing": { "result": "holds", "why": null },
+      "result": "holds", "rule": "tm-rust-dead-code", "set": "standard@1" },
+    ...
+  ]
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `rules` | Each rule in its set's order: `set` (`name@version`), `rule`, `engine` (as a rule file names it), `result`, and `failing` and `passing`, each `{ "result", "why" }` with `why` `null` when the case holds. A result is `holds`, `broken`, `not_available` or `not_applicable` |
+| `counts` | `rules`, and how many rules came to each result: `holds`, `broken`, `not_available`, `not_applicable` |
+| `exit`, `next` | The exit code and the text of the `next:` line |
+
+The exit codes of `tm baseline test`:
+
+| Code | Meaning | `next:` |
+|---|---|---|
+| 0 | Every rule holds. A set with no rules ends here too | `nothing to do` |
+| 1 | At least one rule is broken | `fix each broken rule or its cases above` |
+| 2 | Used wrongly, or `--set` names a set or version `tm` does not carry. Nothing was tested | The fix for the error |
+| 3 | No rule is broken, and at least one is not available or not applicable | `install <engine>, <engine>, then run tm baseline test again` when a rule is not available, naming each engine once as a rule file names it; `each not-applicable rule above says why it was not run` when one is not applicable; both, joined by `; ` |
+
+The first that applies wins: 2, 1, 3, 0. Exit 3 is never "holds": a rule that was not run was not tested.
+
+A set `tm` does not carry is the two usage-error lines on stderr, for example `tm: unknown baseline set "standrd"` and
+`next: Use one of: house, standard.`, and with `--json` also the object on stdout, as for `tm check`
+([Errors that stop a run, as JSON](#errors-that-stop-a-run-as-json)).
