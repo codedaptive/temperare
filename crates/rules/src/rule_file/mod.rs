@@ -56,7 +56,6 @@ mod rule_file;
 mod rule_file_exception_for;
 mod rule_file_exception_on;
 mod rule_file_exceptions_expired;
-mod rule_file_exceptions_in_force;
 mod rule_file_new;
 mod rule_file_owner_for;
 mod rule_file_parse;
@@ -181,8 +180,6 @@ mod rule_file_exception_for_tests;
 mod rule_file_exception_on_tests;
 #[cfg(test)]
 mod rule_file_exceptions_expired_tests;
-#[cfg(test)]
-mod rule_file_exceptions_in_force_tests;
 #[cfg(test)]
 mod rule_file_new_tests;
 #[cfg(test)]
