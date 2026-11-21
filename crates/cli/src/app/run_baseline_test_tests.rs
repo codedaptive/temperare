@@ -121,7 +121,7 @@ fn run(
         *written.borrow_mut() = text.to_string();
         Ok(())
     };
-    let run_rules = |rf: &RuleFile, _: &Path, _: &[RelPath]| {
+    let run_rules = |rf: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| {
         *ran.borrow_mut() += 1;
         let rule = &rf.rules[0];
         let run = RuleRun::new(rule.id.clone(), rule.engine, outcome(&rule.id, &written.borrow()), None);

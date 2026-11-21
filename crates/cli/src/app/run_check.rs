@@ -18,20 +18,20 @@ use std::io::Write;
 use std::path::Path;
 
 /// Finds and reads the rule file, keeps the rules and not-applicable rules of `--kind`, turns the paths into paths
-/// under the rule file's folder and resolves `--base` before any engine runs; then runs the rules and prints the
-/// report, which carries only the engines found here and probed for a version, each with its version or none. As
-/// text it is report's text: the kept findings, one line per not-available rule, one per failed rule, then one per
-/// not-applicable rule, then the `engines:` line listing those engines (absent when there are none), then the counts
-/// line, which ends with the not-applicable count; then each failed rule's stderr tail and a `next:` line. As JSON it
-/// is one object (the `engines` field) carrying `exit` and `next` (the tails are its failed rules' `stderr_tail`).
-/// Either way it returns the report's exit code. The text opens with the tokens-saved line when at least one engine run
-/// was counted and the switch under HOME is on; the JSON object always carries `saved`. When at least one engine run
-/// was counted, text or JSON, the switch is read, so a config it cannot use warns once on `err` (under `--json` the
-/// switch's value changes nothing), and one line goes to the savings log under HOME, naming the rule file's folder as
-/// an absolute path. A rule file that cannot be found, a path outside its folder, a base that does not resolve or a
-/// report that cannot be built is a usage error on `err` (and, under `--json`, an `{"error", "exit", "next"}` object on
-/// `out`); a rule file with problems lists them on `out`. Both exit 2, with no savings line and no log line. Write
-/// errors are ignored: a closed pipe is not tm's failure.
+/// under the rule file's folder and resolves `--base` before any engine runs; then runs the rules, against the base
+/// commit when `--base` is given, and prints the report, which carries only the engines found here and probed for a
+/// version, each with its version or none. As text it is report's text: the kept findings, one line per not-available
+/// rule, one per failed rule, then one per not-applicable rule, then the `engines:` line listing those engines (absent
+/// when there are none), then the counts line, which ends with the not-applicable count; then each failed rule's stderr
+/// tail and a `next:` line. As JSON it is one object (the `engines` field) carrying `exit` and `next` (the tails are
+/// its failed rules' `stderr_tail`). Either way it returns the report's exit code. The text opens with the tokens-saved
+/// line when at least one engine run was counted and the switch under HOME is on; the JSON object always carries
+/// `saved`. When at least one engine run was counted, text or JSON, the switch is read, so a config it cannot use warns
+/// once on `err` (under `--json` the switch's value changes nothing), and one line goes to the savings log under HOME,
+/// naming the rule file's folder as an absolute path. A rule file that cannot be found, a path outside its folder, a
+/// base that does not resolve or a report that cannot be built is a usage error on `err` (and, under `--json`, an
+/// `{"error", "exit", "next"}` object on `out`); a rule file with problems lists them on `out`. Both exit 2, with no
+/// savings line and no log line. Write errors are ignored: a closed pipe is not tm's failure.
 pub fn run_check(args: &CheckArgs, cwd: &Path, world: &CheckWorld, out: &mut dyn Write, err: &mut dyn Write) -> u8 {
     let path = match discover_rule_file(args.rules.as_deref(), cwd, &|| (world.toplevel)(cwd), world.exists) {
         Ok(path) => path,
@@ -49,7 +49,7 @@ pub fn run_check(args: &CheckArgs, cwd: &Path, world: &CheckWorld, out: &mut dyn
         Ok(base) => base,
         Err(e) => return write_failure(&e, args.json, out, err),
     };
-    let checked = (world.run_rules)(&rf, cwd, &only);
+    let checked = (world.run_rules)(&rf, cwd, &only, base.as_ref().map(|(_, oid)| oid.as_str()));
     let counts = rule_counts(&checked.runs);
     let outcomes = checked.runs.into_iter().map(|run| (run.rule, run.outcome)).collect();
     let mut report = match (world.build_report)(&rf, outcomes, base.as_ref().map(|(top, oid)| (top.as_path(), oid))) {

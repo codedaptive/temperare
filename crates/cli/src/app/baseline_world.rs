@@ -9,8 +9,8 @@ use std::ops::Range;
 use std::path::{Path, PathBuf};
 
 /// `BaselineWorld::real()` wires the sets built into tm, case folders under the system temp folder, the real disk,
-/// git through procio and `engines::run_rules_versioned`; a unit test passes closures, so `tm baseline test` is tested
-/// without touching the disk or running git or an engine.
+/// git through procio and `engines::run_rules_versioned_at` (given the case's base commit, `None` without one); a unit
+/// test passes closures, so `tm baseline test` is tested without touching the disk or running git or an engine.
 pub struct BaselineWorld<'a> {
     /// The sets tested when `--set` is not given, as "name@version", in the order they are tested (tm's own: the ready
     /// sets only).
@@ -29,6 +29,6 @@ pub struct BaselineWorld<'a> {
     /// Removes a case folder and all in it.
     pub remove_folder: &'a dyn Fn(&Path) -> std::io::Result<()>,
     /// Every rule of the rule file run by its engine in the repository given, cut to the paths given (none cuts
-    /// nothing), each with its outcome.
-    pub run_rules: &'a dyn Fn(&RuleFile, &Path, &[RelPath]) -> CheckedRules,
+    /// nothing), against the base commit given (`None` without one), each with its outcome.
+    pub run_rules: &'a dyn Fn(&RuleFile, &Path, &[RelPath], Option<&str>) -> CheckedRules,
 }

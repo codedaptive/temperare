@@ -23,7 +23,7 @@ static NEXT: AtomicU64 = AtomicU64::new(0);
 impl BaselineWorld<'static> {
     /// The real world: the ready set `standard@1` by default, a set's rules read through `RuleFile::parse`, each
     /// case folder a new git repository under the system temp folder, `fs` for writing and removing, git through
-    /// procio for a change case's base and added lines, and `engines::run_rules_versioned`. Tests pass closures.
+    /// procio for a change case's base and added lines, and `engines::run_rules_versioned_at`. Tests pass closures.
     pub fn real() -> BaselineWorld<'static> {
         BaselineWorld {
             default_sets: DEFAULT_SETS,
@@ -33,7 +33,7 @@ impl BaselineWorld<'static> {
             commit_all: &commit_all,
             added_since: &added_since,
             remove_folder: &|folder| fs::remove_dir_all(folder),
-            run_rules: &engines::run_rules_versioned,
+            run_rules: &engines::run_rules_versioned_at,
         }
     }
 }

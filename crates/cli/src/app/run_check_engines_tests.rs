@@ -29,7 +29,7 @@ fn ruff_and_swiftlint() -> CheckedRules {
 
 #[test]
 fn json_prints_each_engine_with_its_version_or_null() {
-    let seam = |_: &RuleFile, _: &Path, _: &[RelPath]| ruff_and_swiftlint();
+    let seam = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| ruff_and_swiftlint();
     let (code, out, err) = check(&CheckArgs { json: true, ..CheckArgs::default() }, &CheckWorld { run_rules: &seam, ..world() });
     assert_eq!((code, err.as_str()), (0, ""));
     assert!(
@@ -40,7 +40,7 @@ fn json_prints_each_engine_with_its_version_or_null() {
 
 #[test]
 fn text_prints_the_engines_line_just_before_the_counts_line() {
-    let seam = |_: &RuleFile, _: &Path, _: &[RelPath]| ruff_and_swiftlint();
+    let seam = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| ruff_and_swiftlint();
     let (code, out, err) = check(&CheckArgs::default(), &CheckWorld { run_rules: &seam, ..world() });
     assert_eq!((code, err.as_str()), (0, ""));
     let (before, rest) = out.split_once("engines: ruff 0.17.4, swiftlint (version unknown)\n").unwrap_or_else(|| panic!("{out}"));
@@ -50,10 +50,10 @@ fn text_prints_the_engines_line_just_before_the_counts_line() {
 
 #[test]
 fn engines_leave_the_baseline_runs_and_counted_alone_and_output_counts_the_printed_body() {
-    let bare = |_: &RuleFile, _: &Path, _: &[RelPath]| ruff_run_naming(vec![]);
-    let named = |_: &RuleFile, _: &Path, _: &[RelPath]| ruff_and_swiftlint();
+    let bare = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| ruff_run_naming(vec![]);
+    let named = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| ruff_and_swiftlint();
     let args = CheckArgs { json: true, ..CheckArgs::default() };
-    for seam in [&bare as &dyn Fn(&RuleFile, &Path, &[RelPath]) -> CheckedRules, &named] {
+    for seam in [&bare as &dyn Fn(&RuleFile, &Path, &[RelPath], Option<&str>) -> CheckedRules, &named] {
         let (code, out, err) = check(&args, &CheckWorld { run_rules: seam, ..world() });
         assert_eq!((code, err.as_str()), (0, ""));
         let (body, saved) = printed_body(&out);
@@ -86,7 +86,7 @@ fn swiftlint_not_available(
 
 #[test]
 fn json_leaves_an_absent_engine_out_of_engines_while_not_available_carries_it() {
-    let seam = |_: &RuleFile, _: &Path, _: &[RelPath]| ruff_and_swiftlint();
+    let seam = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| ruff_and_swiftlint();
     let w = CheckWorld {
         run_rules: &seam,
         availability: &swiftlint_absent,
@@ -102,7 +102,7 @@ fn json_leaves_an_absent_engine_out_of_engines_while_not_available_carries_it() 
 
 #[test]
 fn text_leaves_an_absent_engine_out_of_the_engines_line() {
-    let seam = |_: &RuleFile, _: &Path, _: &[RelPath]| ruff_and_swiftlint();
+    let seam = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| ruff_and_swiftlint();
     let w = CheckWorld {
         run_rules: &seam,
         availability: &swiftlint_absent,
@@ -120,7 +120,7 @@ fn json_prints_the_engines_in_first_use_order() {
     // The first-use order SwiftLint, AstGrep, Ruff, Clippy disagrees with the serialized-name sort (ast-grep, clippy,
     // ruff, swiftlint), with its reverse (swiftlint, ruff, clippy, ast-grep), and with the order the runs' rule ids
     // sort to (a ruff, b clippy, c swiftlint, d ast-grep).
-    let seam = |_: &RuleFile, _: &Path, _: &[RelPath]| CheckedRules {
+    let seam = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| CheckedRules {
         runs: vec![
             run("c", Engine::SwiftLint, None),
             run("d", Engine::AstGrep, None),
@@ -149,7 +149,7 @@ fn json_prints_the_engines_in_first_use_order() {
 const UNKNOWN_CHECK: &str = "ruff 0.17.4 does not know the check `ZZZ999`: ruff rule selection error";
 
 /// Ruff found and probed at 0.17.4, its one rule not available because ruff does not know the rule's check.
-fn ruff_without_the_check(_: &RuleFile, _: &Path, _: &[RelPath]) -> CheckedRules {
+fn ruff_without_the_check(_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>) -> CheckedRules {
     let why = UNKNOWN_CHECK.to_string();
     let outcome = RuleOutcome::NotAvailable { rule: "q".to_string(), engine: Engine::Ruff, why };
     CheckedRules {

@@ -100,7 +100,7 @@ fn run_baseline_test_writes_cases_and_removes_folders() {
         Ok(vec![rule.clone()])
     };
     let seen = RefCell::new(Vec::new());
-    let run_rules = |_: &rules::RuleFile, folder: &std::path::Path, _: &[RelPath]| {
+    let run_rules = |_: &rules::RuleFile, folder: &std::path::Path, _: &[RelPath], _: Option<&str>| {
         let folder = TempFolder(folder.to_path_buf());
         let text = fs::read_to_string(folder.0.join("pkg/a.py")).unwrap();
         let findings = if text == "import os\n" {
@@ -148,7 +148,7 @@ fn run_baseline_test_rejects_escape_and_removes_folder() {
         assert_eq!(set, "test@1");
         Ok(vec![rule.clone()])
     };
-    let run_rules = |_: &rules::RuleFile, _: &std::path::Path, _: &[RelPath]| CheckedRules {
+    let run_rules = |_: &rules::RuleFile, _: &std::path::Path, _: &[RelPath], _: Option<&str>| CheckedRules {
         runs: vec![RuleRun::new("tm-zeta".into(), Engine::Ruff, RuleOutcome::Findings(Vec::new()), None)],
         engines: Vec::new(),
     };
@@ -184,7 +184,7 @@ fn run_baseline_test_filters_findings_to_lines_added_since_base() {
         folders.borrow_mut().push(TempFolder(folder.clone()));
         Ok(folder)
     };
-    let run_rules = |_: &rules::RuleFile, folder: &std::path::Path, _: &[RelPath]| {
+    let run_rules = |_: &rules::RuleFile, folder: &std::path::Path, _: &[RelPath], _: Option<&str>| {
         let text = fs::read_to_string(folder.join("a.py")).unwrap();
         let findings = if text.contains("sleep") {
             [1_u32, 2].into_iter().map(|line| Finding::new(

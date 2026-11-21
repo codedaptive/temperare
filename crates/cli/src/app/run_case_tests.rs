@@ -1,5 +1,6 @@
 //! ZUT for run_case.rs, with recording closures: no disk, no engine. Every step the case takes on its world is
-//! logged, so each row shows what was written, what ran and that the folder was removed.
+//! logged, so each row shows what was written, what ran (with the base it was given) and that the folder was
+//! removed.
 
 use super::run_case::run_case;
 use super::BaselineWorld;
@@ -54,9 +55,10 @@ fn run(setup: Setup, files: &[CaseFile]) -> (CaseVerdict, Vec<String>, String) {
         }
         Ok(())
     };
-    let run_rules = |rf: &RuleFile, repo: &Path, only: &[RelPath]| {
+    let run_rules = |rf: &RuleFile, repo: &Path, only: &[RelPath], base: Option<&str>| {
         let ids: Vec<&str> = rf.rules.iter().map(|rule| rule.id.as_str()).collect();
-        log.borrow_mut().push(format!("run {} {} {ids:?} {}", rf.folder.display(), repo.display(), only.len()));
+        let ran = format!("run {} {} {ids:?} {} {base:?}", rf.folder.display(), repo.display(), only.len());
+        log.borrow_mut().push(ran);
         let outcome = RuleOutcome::Findings(setup.findings.clone());
         CheckedRules { runs: vec![RuleRun::new("tm-zeta".to_string(), Engine::Ruff, outcome, None)], engines: vec![] }
     };
@@ -92,7 +94,7 @@ fn run_case_removes_the_folder_whatever_the_case_came_to() {
                 "make",
                 "write /case/a.py \"import os\\n\"",
                 "write /case/src/b.py \"import os\\n\"",
-                "run /case /case [\"tm-zeta\"] 0",
+                "run /case /case [\"tm-zeta\"] 0 None",
                 "remove /case",
             ]),
         ),
@@ -101,7 +103,7 @@ fn run_case_removes_the_folder_whatever_the_case_came_to() {
             Setup { findings: vec![finding(2)], ..OK },
             files(&["a.py"]),
             broken("gave tm-zeta at a.py:2; expected tm-zeta at a.py:1"),
-            ran(&["make", "write /case/a.py \"import os\\n\"", "run /case /case [\"tm-zeta\"] 0", "remove /case"]),
+            ran(&["make", "write /case/a.py \"import os\\n\"", "run /case /case [\"tm-zeta\"] 0 None", "remove /case"]),
         ),
         (
             "a name above the folder",
