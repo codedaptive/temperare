@@ -6,6 +6,6 @@ mod scope;
 mod types;
 
 pub use loosened::{Loosening, LooseningKind, loosened};
-pub use rule_file::{Kit, RuleFile, baseline_rules, baseline_sets};
+pub use rule_file::{Kit, RuleFile, baseline_rules, baseline_sets, missing_param_names};
 pub use scope::{Date, Exception, Rule, Scope};
 pub use types::{CaseFile, Engine, ExpectedFinding, Finding, Kind, ONLY_WITH_BASE_WHY, Problem, RelPath, RuleCases, RuleOutcome, Severity};

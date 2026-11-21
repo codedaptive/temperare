@@ -33,6 +33,7 @@ mod kit;
 mod kit_holds;
 mod kit_union;
 mod load_set;
+mod missing_param_names;
 mod missing_params;
 mod override_entry;
 mod param_type;
@@ -127,6 +128,8 @@ mod kit_union_tests;
 #[cfg(test)]
 mod load_set_tests;
 #[cfg(test)]
+mod missing_param_names_tests;
+#[cfg(test)]
 mod missing_params_tests;
 #[cfg(test)]
 mod override_entry_tests;
@@ -204,4 +207,5 @@ mod rule_file_tests;
 pub use baseline_rules::baseline_rules;
 pub use baseline_sets::baseline_sets;
 pub use kit::Kit;
+pub use missing_param_names::missing_param_names;
 pub use rule_file::RuleFile;
