@@ -95,10 +95,15 @@ fn an_unknown_set_is_a_problem_naming_only_the_ready_sets() {
     ];
     const NONE_READY: &[BaselineSet] =
         &[BaselineSet { name: "house", version: 1, ready: false, text: "version = 1\n", yaml: &[], cases: &[] }];
-    // SETS: house has a ready version 1 beside its unready 2, so it is listed, once.
-    let rows: [(&str, &[BaselineSet], &str); 3] = [
-        ("one ready version makes a set ready", SETS, "Use one of: house, standard."),
-        ("a set with no ready version is not listed", READY_AND_NOT, "Use one of: standard."),
+    const TWO_AND_TEN: &[BaselineSet] = &[
+        BaselineSet { name: "standard", version: 10, ready: true, text: "version = 1\n", yaml: &[], cases: &[] },
+        BaselineSet { name: "standard", version: 2, ready: true, text: "version = 1\n", yaml: &[], cases: &[] },
+    ];
+    // SETS: house@1 is ready and listed; house@2 is not ready and is not.
+    let rows: [(&str, &[BaselineSet], &str); 4] = [
+        ("every ready version is listed", SETS, "Use one of: house@1, standard@1, standard@2."),
+        ("a set with no ready version is not listed", READY_AND_NOT, "Use one of: standard@1."),
+        ("versions sort as numbers", TWO_AND_TEN, "Use one of: standard@2, standard@10."),
         ("no ready set", NONE_READY, "No baseline set is ready in this build; remove the entry."),
     ];
     let text = "baseline = [\"nosuch@1\"]\n";

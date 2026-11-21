@@ -405,7 +405,7 @@ fn baseline_exception_naming_a_baseline_rule_is_accepted() {
 
 #[test]
 fn baseline_problem_unknown_set() {
-    let fix = "Use one of: broken, dup, house, standard.";
+    let fix = "Use one of: broken@1, dup@1, house@1, standard@1, standard@2.";
     exactly("version = 1\nbaseline = [\"nosuch@1\"]\n", 2, 13, "unknown baseline set \"nosuch\"", fix);
 }
 

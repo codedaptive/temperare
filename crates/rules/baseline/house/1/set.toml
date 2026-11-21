@@ -3,9 +3,9 @@
 # Once released, this version is frozen; a change is version 2.
 # Rules for the code come first, grouped by practice; then nine rules for four warnings that keep tests lean.
 # A rule with required_params carries no value for them here: the repository gives them in an [[override]]. Its
-# failing and passing cases carry their own params, for tm baseline test to run them with; loaded through
-# baseline_rules, the rule itself still reads not applicable. own_package and entity_types are lists of strings
-# (type "strings"), each item matched as written, since engines escapes it.
+# failing and passing cases carry the params a run will need; tm baseline test does not apply them yet, so such a
+# rule reads not applicable there, as it does when loaded through baseline_rules. own_package and entity_types are
+# lists of strings (type "strings"), each item matched as written, since engines escapes it.
 # The nine test-economy rules (tm-house-test-ratio and tm-house-test-setup-heavier-*, for example) report only against
 # a base, so tm baseline test runs their cases as a change against a base commit it makes.
 # The set is not ready (house_1.rs) until every rule holds.
