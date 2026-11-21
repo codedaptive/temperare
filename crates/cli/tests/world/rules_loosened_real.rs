@@ -1,5 +1,6 @@
 //! RIT: `tm rules --loosened` compares working files with real git commits in disposable repositories.
-//! RuleNotApplicable and SetOlder cannot be made by today's real rule files; formatter ZUTs cover them.
+//! RuleNotApplicable is covered with a real rule file; SetOlder is covered only by ZUTs (the cli formatter ZUTs, and
+//! rules' own set_loosenings_tests.rs), because only version 1 of each set exists.
 
 use serde_json::{json, Value};
 use std::ffi::OsString;
@@ -180,7 +181,7 @@ approved = "team"
 "#;
 
 #[test]
-fn all_reachable_rule_and_exception_kinds_in_order() {
+fn rule_and_exception_kinds_in_order() {
     let repo = Repo::new(true);
     repo.commit(Some(BASE));
     repo.git(&["branch", "base"]);
@@ -224,6 +225,41 @@ fn all_reachable_rule_and_exception_kinds_in_order() {
         "  expiry_dropped  z-scope  before: 2031-02-03\n",
         "next: have each loosening above approved, or undo it in {}\n"
     ), repo.path(), repo.path()));
+    assert!(err.is_empty(), "{err}");
+}
+
+#[test]
+fn rules_loosened_rule_not_applicable() {
+    let repo = Repo::new(true);
+    repo.commit(Some(r#"version = 1
+baseline = ["house@1"]
+[[override]]
+rule = "tm-house-unit-test-fakes-own-kit-python"
+params = { own_package = ["my_package"] }
+"#));
+    repo.git(&["branch", "base"]);
+    repo.write("version = 1\nbaseline = [\"house@1\"]\n");
+
+    let (code, out, err) = repo.run(&["rules", "--loosened", "--base", "base"]);
+    assert_eq!(code, 1, "stdout: {out}\nstderr: {err}");
+    assert_eq!(out, format!(concat!(
+        "rule file: {}\nbase: base\nloosened (1):\n",
+        "  rule_not_applicable  tm-house-unit-test-fakes-own-kit-python  after: required params not given: own_package; give them in the params of an [[override]] for \"tm-house-unit-test-fakes-own-kit-python\"\n",
+        "next: have each loosening above approved, or undo it in {}\n"
+    ), repo.path(), repo.path()));
+    assert!(err.is_empty(), "{err}");
+
+    let (code, out, err) = repo.run(&["rules", "--loosened", "--base", "base", "--json"]);
+    assert_eq!(code, 1, "stdout: {out}\nstderr: {err}");
+    assert_eq!(serde_json::from_str::<Value>(&out).unwrap(), json!({
+        "rule_file": repo.path(), "base": "base", "count": 1, "exit": 1,
+        "next": format!("have each loosening in loosened approved, or undo it in {}", repo.path()),
+        "loosened": [{
+            "kind": "rule_not_applicable",
+            "about": "tm-house-unit-test-fakes-own-kit-python",
+            "after": "required params not given: own_package; give them in the params of an [[override]] for \"tm-house-unit-test-fakes-own-kit-python\""
+        }]
+    }));
     assert!(err.is_empty(), "{err}");
 }
 

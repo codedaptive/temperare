@@ -1,5 +1,7 @@
-//! ZUT for loosened_text.rs: the exact lines for literal loosenings of all fourteen kinds. RuleNotApplicable and
-//! SetOlder are covered only here and in loosened_json_tests.rs: no real rule file can make them today.
+//! ZUT for loosened_text.rs: the exact lines for literal loosenings of all fourteen kinds.
+//! RuleNotApplicable also comes from a real rule file and is covered by the RIT `rules_loosened_rule_not_applicable`.
+//! SetOlder is covered only by ZUTs (these, and rules' own set_loosenings_tests.rs), because only version 1 of each
+//! set exists.
 
 use super::loosened_text;
 use rules::{Loosening, LooseningKind as K};
