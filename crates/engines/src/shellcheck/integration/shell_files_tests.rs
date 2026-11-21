@@ -2,10 +2,12 @@
 
 use crate::shellcheck::shell_files;
 use crate::types::Stop;
-use procio::Cmd;
 use std::fs;
 use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
+
+#[path = "../../../tests/support/git.rs"]
+mod git_support;
 
 fn tree(name: &str) -> PathBuf {
     let root = std::env::temp_dir().join(format!("engines-zit-{}-shell-files-{name}", std::process::id()));
@@ -13,19 +15,8 @@ fn tree(name: &str) -> PathBuf {
     fs::canonicalize(root).unwrap()
 }
 
-fn git_input(repo: &Path, args: &[&str], stdin: &[u8]) -> Vec<u8> {
-    let output = procio::run(&Cmd {
-        args: args.iter().map(|arg| (*arg).into()).collect(),
-        cwd: Some(repo.to_path_buf()),
-        stdin: stdin.to_vec(),
-        ..Cmd::new("git")
-    }).unwrap();
-    assert_eq!(output.code, Some(0), "git {args:?}: {}", String::from_utf8_lossy(&output.stderr));
-    output.stdout
-}
-
 fn git(repo: &Path, args: &[&str]) {
-    git_input(repo, args, b"");
+    git_support::git(repo, args, b"");
 }
 
 fn repo(name: &str) -> PathBuf {
@@ -151,10 +142,10 @@ fn skip_worktree_script_is_not_listed_even_when_present() {
 fn unmerged_script_is_listed_once() {
     let root = repo("unmerged");
     fs::write(root.join("conflict.sh"), "echo conflict\n").unwrap();
-    let hash = git_input(&root, &["hash-object", "-w", "--stdin"], b"echo conflict\n");
+    let hash = git_support::git(&root, &["hash-object", "-w", "--stdin"], b"echo conflict\n");
     let hash = std::str::from_utf8(&hash).unwrap().trim();
     let entries = format!("100644 {hash} 1\tconflict.sh\n100644 {hash} 2\tconflict.sh\n100644 {hash} 3\tconflict.sh\n");
-    git_input(&root, &["update-index", "--index-info"], entries.as_bytes());
+    git_support::git(&root, &["update-index", "--index-info"], entries.as_bytes());
     assert_files(&root, &["conflict.sh"]);
     fs::remove_dir_all(root).unwrap();
 }

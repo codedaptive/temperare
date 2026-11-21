@@ -166,7 +166,7 @@ fn an_unknown_selector_in_the_config_is_failed_not_blamed_on_the_check() {
 #[test]
 fn ruff_not_found_is_not_available() {
     let (got, _) = run_rule(NO_CONFIG, || Err(ProcError::NotFound { program: "ruff".into() }));
-    assert_eq!(got, Err(Stop::NotAvailable { why: "ruff not found on PATH".to_string() }));
+    assert_eq!(got, Err(Stop::NotOnPath { program: "ruff".to_string() }));
 }
 
 #[test]

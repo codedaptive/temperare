@@ -82,7 +82,7 @@ fn output_that_is_not_an_answer_fails_with_its_exit_code_after_a_run_of_the_fill
 fn ast_grep_absent_in_count_mode_is_not_available_and_the_copy_is_gone() {
     let answer = || Err(ProcError::NotFound { program: "ast-grep".into() });
     let (got, seen) = run_count("absent", PLAIN, "{ count = \"setup-vs-tests\" }", Some("abc123"), answer);
-    assert_eq!(got, Err(Stop::NotAvailable { why: "ast-grep not found on PATH".to_string() }));
+    assert_eq!(got, Err(Stop::NotOnPath { program: "ast-grep".to_string() }));
     let seen = seen.expect("ast-grep ran");
     assert_eq!(seen.text.as_deref(), Some(PLAIN));
     assert!(!seen.rule.exists(), "{} is left behind", seen.rule.display());

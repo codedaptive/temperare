@@ -3,7 +3,7 @@
 
 use crate::host::Host;
 use crate::run_group::run_group;
-use crate::types::{EngineVersion, RuleRun, Stop};
+use crate::types::{EngineVersion, NotAvailableCause, RuleRun, Stop};
 use procio::{Cmd, Output, ProcError};
 use rules::{Engine, Finding, Kind, RelPath, Rule, RuleFile, RuleOutcome, Severity};
 use std::cell::{Cell, RefCell};
@@ -110,8 +110,8 @@ fn a_run_not_found_makes_every_rule_not_available_uncounted() {
     let got = grouped(&["none-compare", "unused"], &run, true);
     let absent = |rule: &str| RuleOutcome::NotAvailable { rule: rule.into(), engine: Engine::Ruff, why: "ruff not found on PATH".into() };
     assert_eq!(got, vec![
-        rule_run("none-compare", absent("none-compare"), None),
-        rule_run("unused", absent("unused"), None),
+        rule_run("none-compare", absent("none-compare"), None).with_cause(NotAvailableCause::EngineNotOnPath),
+        rule_run("unused", absent("unused"), None).with_cause(NotAvailableCause::EngineNotOnPath),
     ]);
     assert_eq!(runs.into_inner(), 1);
 }
@@ -148,7 +148,8 @@ fn an_unknown_check_falls_on_its_rule_and_the_rest_run_again_without_it() {
     let why = "ruff 0.17.4 does not know the check `ZZZ999`: Cause: Unknown rule selector `ZZZ999` in `select` from the CLI";
     assert_eq!(got, vec![
         rule_run("none-compare", RuleOutcome::Findings(vec![finding("none-compare", "a.py", (1, 4), "none", "f")]), Some(84)),
-        rule_run("newer", RuleOutcome::NotAvailable { rule: "newer".into(), engine: Engine::Ruff, why: why.into() }, Some(77)),
+        rule_run("newer", RuleOutcome::NotAvailable { rule: "newer".into(), engine: Engine::Ruff, why: why.into() }, Some(77))
+            .with_cause(NotAvailableCause::UnknownCheck),
     ]);
     assert_eq!(ran.into_inner(), vec!["--select=E711,ZZZ999", "--select=E711"]);
 }
@@ -187,7 +188,7 @@ fn an_engine_not_available_runs_nothing() {
     let got = grouped(&["none-compare", "unused"], &run, false);
     let absent = |rule: &str| RuleOutcome::NotAvailable { rule: rule.into(), engine: Engine::Ruff, why: "ruff not found on PATH".into() };
     assert_eq!(got, vec![
-        rule_run("none-compare", absent("none-compare"), None),
-        rule_run("unused", absent("unused"), None),
+        rule_run("none-compare", absent("none-compare"), None).with_cause(NotAvailableCause::EngineNotOnPath),
+        rule_run("unused", absent("unused"), None).with_cause(NotAvailableCause::EngineNotOnPath),
     ]);
 }

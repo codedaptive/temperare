@@ -168,7 +168,7 @@ fn a_warning_about_another_id_is_left_to_the_reader() {
 #[test]
 fn swiftlint_not_found_is_not_available() {
     let (got, _) = run_rule(NO_CONFIG, || Err(ProcError::NotFound { program: "swiftlint".into() }));
-    assert_eq!(got, Err(Stop::NotAvailable { why: "swiftlint not found on PATH".to_string() }));
+    assert_eq!(got, Err(Stop::NotOnPath { program: "swiftlint".to_string() }));
 }
 
 #[test]

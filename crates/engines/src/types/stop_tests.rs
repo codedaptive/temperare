@@ -1,4 +1,5 @@
-//! ZUT for stop.rs: plain data; equality covers the variant and every field, `UnknownCheck`, `NotListed` and `NoFiles` included.
+//! ZUT for stop.rs: plain data; equality covers the variant and every field, `NotOnPath`,
+//! `UnknownCheck`, `NotListed` and `NoFiles` included.
 
 use super::Stop;
 
@@ -8,9 +9,10 @@ fn failed(code: Option<i32>, stderr: &str) -> Stop {
 
 #[test]
 fn stops_compare_by_variant_and_every_field() {
-    let absent = Stop::NotAvailable { why: "ruff not found on PATH".to_string() };
-    assert_eq!(absent, Stop::NotAvailable { why: "ruff not found on PATH".to_string() });
-    assert_ne!(absent, Stop::NotAvailable { why: "swiftlint not found on PATH".to_string() });
+    let absent = Stop::NotOnPath { program: "ruff".to_string() };
+    assert_eq!(absent, Stop::NotOnPath { program: "ruff".to_string() });
+    assert_ne!(absent, Stop::NotOnPath { program: "swiftlint".to_string() });
+    assert_ne!(absent, Stop::NotAvailable { why: "ruff not found on PATH".to_string() });
     assert_eq!(failed(Some(2), "bad"), failed(Some(2), "bad"));
     assert_ne!(failed(Some(2), "bad"), failed(None, "bad"));
     assert_ne!(failed(Some(2), "bad"), failed(Some(2), "worse"));

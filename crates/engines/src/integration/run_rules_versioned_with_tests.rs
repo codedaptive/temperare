@@ -7,12 +7,15 @@
 
 use crate::host::Host;
 use crate::run_rules_versioned_with::run_rules_versioned_with;
-use crate::types::{CheckedRules, EngineVersion, RuleRun};
+use crate::types::{CheckedRules, EngineVersion, NotAvailableCause, RuleRun};
 use procio::{Cmd, Output, ProcError};
 use rules::{Engine, RuleFile, RuleOutcome};
 use std::cell::{Cell, RefCell};
 use std::fs;
 use std::path::Path;
+
+#[path = "../../tests/support/git.rs"]
+mod git_support;
 
 const RULES: &str = r#"version = 1
 [[rule]]
@@ -78,7 +81,8 @@ fn versions_are_probed_once_uncounted_and_name_the_too_old_check() {
                     why: "ruff 1.2.3 does not know the check `ZZZ999`: Cause: Unknown rule selector `ZZZ999` in `select` from the CLI".into(),
                 },
                 Some(64),
-            ),
+            )
+            .with_cause(NotAvailableCause::UnknownCheck),
             RuleRun::new(
                 "slop".into(),
                 Engine::Tessera,
@@ -88,7 +92,8 @@ fn versions_are_probed_once_uncounted_and_name_the_too_old_check() {
                     why: crate::entry_for(Engine::Tessera).unwrap().never.unwrap().into(),
                 },
                 None,
-            ),
+            )
+            .with_cause(NotAvailableCause::Other),
         ],
         engines: vec![
             EngineVersion { engine: Engine::Ruff, version: Some("1.2.3".into()) },
@@ -117,8 +122,7 @@ fn shellcheck_unlisted_code_uses_one_version_probe() {
     let root = std::env::temp_dir().join(format!("engines-zit-{}-shellcheck-unlisted", std::process::id()));
     fs::create_dir(&root).unwrap();
     let repo = fs::canonicalize(root).unwrap();
-    let init = procio::run(&Cmd { args: vec!["init".into(), "-q".into()], cwd: Some(repo.clone()), ..Cmd::new("git") });
-    assert_eq!(init.unwrap().code, Some(0));
+    git_support::git(&repo, &["init", "-q"], b"");
     fs::write(repo.join("quote.sh"), "#!/bin/sh\necho $1\n").unwrap();
     let file = RuleFile::parse(r#"version = 1
 [[rule]]
@@ -144,7 +148,7 @@ fix = "f"
             rule: "quote".into(),
             engine: Engine::ShellCheck,
             why: "shellcheck 0.11.0: SC2086 is not in temperare's list of shellcheck codes (taken from shellcheck pending)".into(),
-        }, None)],
+        }, None).with_cause(NotAvailableCause::Other)],
         engines: vec![EngineVersion { engine: Engine::ShellCheck, version: Some("0.11.0".into()) }],
     });
 }

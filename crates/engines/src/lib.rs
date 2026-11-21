@@ -25,6 +25,8 @@ mod folder_files;
 mod host;
 mod no_adapter_why;
 mod no_file_match;
+mod not_available_cause_of;
+mod not_on_path_why;
 mod only_with_base_why;
 mod parse_failed;
 mod pick_at;
@@ -47,6 +49,7 @@ mod shared_cmd;
 mod shared_groups;
 mod shares_with;
 mod types;
+mod unavailable;
 mod union_args;
 
 pub use availability::availability;
@@ -55,7 +58,7 @@ pub use entry_for::entry_for;
 pub(crate) use only_with_base_why::ONLY_WITH_BASE_WHY;
 pub use run_rules_versioned::run_rules_versioned;
 pub use run_rules_versioned_at::run_rules_versioned_at;
-pub use types::{Availability, CheckedRules, EngineVersion, Hit, ParamError, ParseError, RuleRun};
+pub use types::{Availability, CheckedRules, EngineVersion, Hit, NotAvailableCause, ParamError, ParseError, RuleRun};
 
 #[cfg(test)]
 mod availability_tests;
@@ -85,6 +88,10 @@ mod integration;
 mod no_adapter_why_tests;
 #[cfg(test)]
 mod no_file_match_tests;
+#[cfg(test)]
+mod not_available_cause_of_tests;
+#[cfg(test)]
+mod not_on_path_why_tests;
 #[cfg(test)]
 mod only_with_base_why_tests;
 #[cfg(test)]
@@ -121,5 +128,7 @@ mod shared_cmd_tests;
 mod shared_groups_tests;
 #[cfg(test)]
 mod shares_with_tests;
+#[cfg(test)]
+mod unavailable_tests;
 #[cfg(test)]
 mod union_args_tests;

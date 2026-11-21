@@ -7,6 +7,7 @@ use crate::engine_hits::engine_hits;
 use crate::entry::too_old_why;
 use crate::files_in_folder::files_in_folder;
 use crate::host::Host;
+use crate::not_on_path_why::not_on_path_why;
 use crate::rule_folder::rule_folder;
 use crate::run_rules_listed::run_rules_listed;
 use crate::types::{EngineVersion, RuleRun, Stop};
@@ -37,7 +38,9 @@ pub(crate) fn run_rules_counted_with(
     run_rules_listed(file, folder.as_deref(), only, host, versions, files.as_deref(), &engine_hits)
 }
 
-/// The outcome of `rule` when it stopped without findings. A check the engine said it does not know is
+/// The outcome of `rule` when it stopped without findings. `NotAvailable` is `NotAvailable` with its why as it is;
+/// `NotOnPath` is `NotAvailable` with `not_on_path_why` naming the program (`rule_run_of` sets the cause from the
+/// stop, `not_available_cause_of`). A check the engine said it does not know is
 /// `NotAvailable`, with `too_old_why` naming the engine by its rule-file name (`Engine::name`) and its version, the
 /// first of `versions` for the rule's engine (`(version unknown)` when there is none or it is `None`). A check not in
 /// temperare's list of its engine's codes (`NotListed`) is `NotAvailable` with `<engine> <version>: ` before what it
@@ -48,6 +51,7 @@ pub(crate) fn stopped(rule: &Rule, stop: Stop, versions: &[EngineVersion]) -> Ru
     let (id, engine) = (rule.id.clone(), rule.engine);
     match stop {
         Stop::NotAvailable { why } => RuleOutcome::NotAvailable { rule: id, engine, why },
+        Stop::NotOnPath { program } => RuleOutcome::NotAvailable { rule: id, engine, why: not_on_path_why(&program) },
         Stop::Failed { code, stderr } => RuleOutcome::Failed { rule: id, engine, code, stderr },
         Stop::NoFiles { .. } => RuleOutcome::Findings(Vec::new()),
         Stop::UnknownCheck { said } => {

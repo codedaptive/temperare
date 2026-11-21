@@ -14,10 +14,11 @@ use std::path::Path;
 
 /// The hits of `rule` under `folder` (canonical); `entry` is `AST_GREP`. The rule YAML is the set's embedded text
 /// (`Rule::embedded_yaml`) when the rule carries one, and nothing is read from `folder` for it. Otherwise the check must
-/// name a file inside `folder`, read by `read_rule_yaml` (`refused` settles an absolute check first): one that cannot
-/// be canonicalized or opened, one resolving outside `folder` (`..` or a symlink), and on Unix one whose walk from "/"
-/// (`open_in_folder`) met a symlink, found a folder replaced by something else or could not open a folder, one that is
-/// not a regular file, one unlinked while it was opened or with more than one hard link (`rule_yaml_text`) are
+/// name a file inside `folder`, read by `read_rule_yaml` (`refused` settles an absolute check and one whose `..`
+/// climbs above `folder` first): one that cannot be canonicalized or opened (a missing file among them), one resolving
+/// outside `folder` through a symlink, and on Unix one whose walk from "/" (`open_in_folder`) met a symlink, found a
+/// folder replaced by something else or could not open a folder, one that is not a regular file, one unlinked while it
+/// was opened or with more than one hard link (`rule_yaml_text`) are
 /// `Failed` with no exit code, and nothing is run. Then `split_count_params` takes the count-mode params (`count`,
 /// `shared_setup`) out of `rule.params`: `refused` has settled them before any flow, so here the split only gives the
 /// mode and the params left (a refusal, met only by a rule that did not come through `refused`, is `Failed` with no
@@ -26,7 +27,7 @@ use std::path::Path;
 /// YAML, so they are checked here, not in `refused`). In count mode the rest is `count_ast_grep`'s.
 /// Otherwise the filled copy is written to a temporary file that the entry's command (`entry_cmd`, the copy's path as
 /// the pick) runs in `folder` through `host`; the copy is removed before this returns, whatever the outcome. A copy
-/// that cannot be written is `Failed` with no exit code; ast-grep absent is `NotAvailable`; output the entry's reader
+/// that cannot be written is `Failed` with no exit code; ast-grep absent is `NotOnPath`; output the entry's reader
 /// cannot read as ast-grep's JSON lines is `Failed` with its exit code. The ast-grep run is counted (`check_run`).
 pub(crate) fn hits_ast_grep(entry: &Entry, rule: &Rule, folder: &Path, host: &Host) -> Result<Vec<Hit>, Stop> {
     let check = &rule.check;

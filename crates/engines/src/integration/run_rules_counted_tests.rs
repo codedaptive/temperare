@@ -2,7 +2,7 @@
 
 use crate::host::Host;
 use crate::run_rules_counted_with::run_rules_counted_with;
-use crate::RuleRun;
+use crate::{NotAvailableCause, RuleRun};
 use procio::{Cmd, Output, ProcError};
 use rules::{Engine, Finding, Kind, RelPath, RuleFile, RuleOutcome, Severity};
 use std::cell::Cell;
@@ -106,13 +106,15 @@ fn counted_runs_keep_order_outcomes_and_distinguish_empty_from_not_run() {
             Engine::Tessera,
             RuleOutcome::NotAvailable { rule: "slop".into(), engine: Engine::Tessera, why: "Tessera's slop records are not defined yet".into() },
             None,
-        ),
+        )
+        .with_cause(NotAvailableCause::Other),
         RuleRun::new(
             "absent".into(),
             Engine::SwiftLint,
             RuleOutcome::NotAvailable { rule: "absent".into(), engine: Engine::SwiftLint, why: "swiftlint not found on PATH".into() },
             None,
-        ),
+        )
+        .with_cause(NotAvailableCause::EngineNotOnPath),
     ]);
     assert_eq!(got.iter().filter_map(|run| run.raw_chars).sum::<usize>(), 89);
     assert_eq!(got.iter().filter(|run| run.raw_chars.is_some()).count(), 3);

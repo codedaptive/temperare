@@ -1,6 +1,7 @@
 //! `RuleRun`: one rule's outcome with its engine, the characters its check run printed, and whether it ran nothing
-//! because no file it checks exists.
+//! because no file it checks exists, and why it is not available when it is not.
 
+use super::NotAvailableCause;
 use rules::{Engine, RuleOutcome};
 
 /// One rule of a rule file as it was run.
@@ -24,4 +25,8 @@ pub struct RuleRun {
     /// `raw_chars` is `None`; the flag keeps it from reading as plain clean, and the report decides what it is called.
     /// `None`: the rule had files to check, or stopped for another reason its outcome gives.
     pub no_files: Option<String>,
+    /// `Some(cause)` exactly when `outcome` is `RuleOutcome::NotAvailable`: whether a program installing its engine
+    /// supplies is not on PATH, another program it runs is not, the installed engine does not know its check, or
+    /// another reason (`NotAvailableCause`). The why text stays in the outcome. `None` for every other outcome.
+    pub not_available_cause: Option<NotAvailableCause>,
 }
