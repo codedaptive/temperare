@@ -28,9 +28,11 @@ fn real_ruff_text_baseline_matches_json_or_reports_unavailable() {
         assert_eq!(text.code, Some(3), "{stdout}");
         assert!(!stdout.contains("[temperare] tokens saved"), "{stdout}");
         assert!(stdout.contains("not available: unused-import (ruff):"), "{stdout}");
+        // An engine tm did not find is left out of `engines`; with none left the text has no `engines:` line.
+        assert!(!stdout.lines().any(|line| line.starts_with("engines:")), "{stdout}");
         let json = run_clean(env!("CARGO_BIN_EXE_temperare"), &["check", "--json"], repo.path(), tm_env(None, home.path()));
         let printed = String::from_utf8(json.stdout).unwrap();
-        assert!(printed.contains(r#""engines":[{"engine":"ruff","version":null}]"#), "{printed}");
+        assert!(printed.contains(r#""engines":[]"#), "{printed}");
         return;
     }
     // The version is machine-specific, so it is read from the same ruff tm runs, for this expected value only; for

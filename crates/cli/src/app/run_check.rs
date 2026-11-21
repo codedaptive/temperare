@@ -17,18 +17,20 @@ use serde_json::Value;
 use std::io::Write;
 use std::path::Path;
 
-/// Finds and reads the rule file, keeps the rules of `--kind`, turns the paths into paths under the rule file's
-/// folder and resolves `--base` before any engine runs; then runs the rules and prints the report, which carries each
-/// engine the rules name with its version, as text (an `engines:` line before the counts line), followed by each failed
-/// rule's stderr tail and a `next:` line, or as one JSON object (the `engines` field) carrying `exit` and `next` (the
-/// tails are its failed rules' `stderr_tail`), and returns the report's exit code. The text opens with the tokens-saved
-/// line when at least one engine run was counted and the switch under HOME is on; the JSON object always carries
-/// `saved`. When at least one engine run was counted, text or JSON, the switch is read, so a config it cannot use warns
-/// once on `err` (under `--json` the switch's value changes nothing), and one line goes to the savings log under HOME,
-/// naming the rule file's folder as an absolute path. A rule file that cannot be found, a path outside its folder, a
-/// base that does not resolve or a report that cannot be built is a usage error on `err` (and, under `--json`, an
-/// `{"error", "exit", "next"}` object on `out`); a rule file with problems lists them on `out`. Both exit 2, with no
-/// savings line and no log line. Write errors are ignored: a closed pipe is not tm's failure.
+/// Finds and reads the rule file, keeps the rules and not-applicable rules of `--kind`, turns the paths into paths
+/// under the rule file's folder and resolves `--base` before any engine runs; then runs the rules and prints the
+/// report, which carries only the engines found here and probed for a version, each with its version or none, as
+/// report's text (its `engines:` line, just before the counts line, lists them and is absent when there are none),
+/// followed by each failed rule's stderr tail and a `next:` line, or as one JSON object (the `engines` field) carrying
+/// `exit` and `next` (the tails are its failed rules' `stderr_tail`), and returns the report's exit code. The text
+/// opens with the tokens-saved line when at least one engine run was counted and the switch under HOME is on; the
+/// JSON object always carries `saved`. When at least one engine run was counted,
+/// text or JSON, the switch is read, so a config it cannot use warns once on `err` (under `--json` the switch's value
+/// changes nothing), and one line goes to the savings log under HOME, naming the rule file's folder as an absolute
+/// path. A rule file that cannot be found, a path outside its folder, a base that does not resolve or a report that
+/// cannot be built is a usage error on `err` (and, under `--json`, an `{"error", "exit", "next"}` object on `out`); a
+/// rule file with problems lists them on `out`. Both exit 2, with no savings line and no log line. Write errors are
+/// ignored: a closed pipe is not tm's failure.
 pub fn run_check(args: &CheckArgs, cwd: &Path, world: &CheckWorld, out: &mut dyn Write, err: &mut dyn Write) -> u8 {
     let path = match discover_rule_file(args.rules.as_deref(), cwd, &|| (world.toplevel)(cwd), world.exists) {
         Ok(path) => path,
@@ -59,7 +61,7 @@ pub fn run_check(args: &CheckArgs, cwd: &Path, world: &CheckWorld, out: &mut dyn
             return write_failure(&e, args.json, out, err);
         }
     };
-    report.engines = report_engines(checked.engines);
+    report.engines = report_engines(checked.engines, world.availability);
     let exit = exit_code(&report);
     let next = next_step(exit, None, &path, &report.not_available);
     let home = (world.home)();

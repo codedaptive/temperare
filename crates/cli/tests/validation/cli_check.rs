@@ -233,7 +233,7 @@ fn savings_json_counts_unicode_raw_ruff_output_in_characters() {
 }
 
 #[test]
-fn savings_text_line_is_hand_counted_and_json_savings_follow_the_printed_body() {
+fn savings_text_line_and_json_savings_each_follow_their_printed_body() {
     let (repo, home) = savings_repo();
     let json = text(&savings_check(&repo, &home, &["--json"]), 0);
     let (body, saved) = printed_body(&json);
@@ -246,7 +246,12 @@ fn savings_text_line_is_hand_counted_and_json_savings_follow_the_printed_body() 
     assert_eq!(saved["output_tokens"], tokens);
     assert_eq!(saved["tokens_saved"], tokens_saved);
     assert_eq!(saved["percent"], percent(tokens_saved, 93));
-    assert!(stdout.starts_with("[temperare] tokens saved ≈ 53 (56%) — this output ≈ 40 tok"), "{stdout}");
+    let (line, text_body) = stdout.split_once('\n').unwrap();
+    assert!(text_body.starts_with("engines: ruff (version unknown)\n"), "{stdout}");
+    let text_tokens = output_tokens(text_body.chars().count());
+    let text_saved = 93usize.saturating_sub(text_tokens);
+    assert_eq!(percent(53, 93), 56);
+    assert!(line.starts_with(&format!("[temperare] tokens saved ≈ {text_saved} ({}%) — this output ≈ {text_tokens} tok", percent(text_saved, 93))), "{stdout}");
 }
 
 #[test]
@@ -401,6 +406,7 @@ fix = "Choose a supported check."
     if !crate::on_tm_path::on_tm_path("ruff") {
         assert_eq!(output.code, Some(3), "{stdout}");
         assert!(stdout.contains("not available: unknown-check (ruff): ruff not found on PATH"), "{stdout}");
+        assert!(!stdout.lines().any(|line| line.starts_with("engines:")), "an absent engine is not listed: {stdout}");
         return;
     }
     assert_eq!(output.code, Some(3), "{stdout}\n{}", String::from_utf8_lossy(&output.stderr));
@@ -411,6 +417,8 @@ fix = "Choose a supported check."
     assert_eq!(version_output.code, Some(0));
     let version_stdout = String::from_utf8(version_output.stdout).unwrap();
     let version = version_stdout.split_whitespace().nth(1).expect("ruff version");
+    // An installed engine stays listed even when it does not know the rule's check.
+    assert!(stdout.lines().any(|line| line == format!("engines: ruff {version}")), "{stdout}");
     let said = why.strip_prefix(&format!("ruff {version} does not know the check `ZZZ999`: ")).unwrap_or_else(|| panic!("{why}"));
     assert!(!said.trim().is_empty() && said.contains("ZZZ999"), "{why}");
     assert!(!stdout.contains("failed:"), "{stdout}");
@@ -444,9 +452,17 @@ fix = "Remove the unsupported parameter."
     assert!(stdout.contains("stderr of param-rule (ruff):\n  ruff param foo: a ruff rule reads only the `max_complexity` param"), "{stdout}");
     assert_eq!(stdout.lines().last(), Some("next: see the engine output above"));
     assert!(!stdout.contains("[temperare] tokens saved"), "{stdout}");
+    // The version is machine-specific, so it is read from the same ruff tm runs for this expected value only.
+    let version_output = crate::run_clean::run_clean("ruff", &["--version"], repo.path(), crate::env::tm_env(None, home.path()));
+    assert_eq!(version_output.code, Some(0));
+    let version_stdout = String::from_utf8(version_output.stdout).unwrap();
+    let version = version_stdout.split_whitespace().nth(1).expect("ruff version");
+    // A refused param fails the rule, but ruff was found, so it stays listed.
+    assert!(stdout.lines().any(|line| line == format!("engines: ruff {version}")), "{stdout}");
     let json = crate::run_clean::run_clean(env!("CARGO_BIN_EXE_temperare"), &["check", "--json"], repo.path(), crate::env::tm_env(None, home.path()));
     assert_eq!(json.code, Some(5), "{}", String::from_utf8_lossy(&json.stderr));
     let value: serde_json::Value = serde_json::from_slice(&json.stdout).unwrap();
+    assert_eq!(value["engines"], serde_json::json!([{ "engine": "ruff", "version": version }]), "{}", String::from_utf8_lossy(&json.stdout));
     assert_eq!(value["saved"]["engine_runs"], 0);
     assert_eq!(value["saved"]["counted"], serde_json::json!([{ "rule": "param-rule", "engine": "ruff", "chars": 0 }]));
     let failed = value["failed"].as_array().unwrap_or_else(|| panic!("{}", String::from_utf8_lossy(&json.stdout)));
