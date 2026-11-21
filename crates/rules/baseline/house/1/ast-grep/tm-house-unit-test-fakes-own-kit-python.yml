@@ -1,6 +1,6 @@
-# {{own_package}} is the kit's top-level package, one identifier, and is filled in as written. Names and module
-# names are compared with it by pattern, which matches that exact identifier and nothing else, so only the target
-# string's prefix is a regex holding it.
+# own_package is a list of the kit's top-level package names. Engines escapes each item and joins them into one
+# alternation, so every name is matched as written: a dot in a name is a dot, never any character. Each regex groups
+# the alternation, so its anchors and the trailing dot bind to every name, not only the first and the last.
 id: tm-house-unit-test-fakes-own-kit-python
 language: python
 message: this unit test fakes code of its own kit
@@ -11,13 +11,14 @@ utils:
   # The own package, or an attribute chain whose leftmost name is the own package (ledger.store.Store).
   own-ref:
     any:
-      - pattern: '{{own_package}}'
+      - kind: identifier
+        regex: '^({{own_package}})$'
       - kind: attribute
         has: { field: object, matches: own-ref }
   # A dotted module name whose first part is the own package (from ledger.store import ..., import ledger.store).
   own-dotted:
     kind: dotted_name
-    has: { nthChild: 1, pattern: '{{own_package}}' }
+    has: { nthChild: 1, kind: identifier, regex: '^({{own_package}})$' }
   # A module or class of the own package: named through the package, or imported from it by name.
   own-module:
     any:
@@ -55,7 +56,7 @@ rule:
             has:
               nthChild: 1
               kind: string
-              has: { nthChild: 2, kind: string_content, regex: '^{{own_package}}\.' }
+              has: { nthChild: 2, kind: string_content, regex: '^({{own_package}})\.' }
     # patch.object(<own module>, "…")
     - all:
         - has: { field: function, kind: attribute, all: [{ has: { field: object, matches: patch-call } }, { has: { field: attribute, regex: ^object$ } }] }

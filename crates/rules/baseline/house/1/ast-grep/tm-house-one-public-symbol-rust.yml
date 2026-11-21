@@ -1,9 +1,8 @@
-# One public symbol per file (small-files rule 1, its first line), adapted from Mortar's
-# rules/rust/one-public-symbol-per-file.yml with its logic kept: a public function, struct, enum, union, trait or
+# One public symbol per file: a public function, struct, enum, union, trait or
 # type alias, at the top level or at any depth of inline modules, counts as a symbol (methods in impl and trait
 # blocks do not; nor do mod, use, const and static). Public is any visibility but pub(self). One name declared twice
-# as the same kind (cfg twins) counts once. A file is reported exactly when Mortar's rule reports it. Mortar's rule
-# reports every symbol of such a file; this one reports each symbol that comes after a different symbol in the
+# as the same kind (cfg twins) counts once. A file is reported when it holds more than one symbol. The rule
+# reports each symbol that comes after a different symbol in the
 # file (an earlier sibling, an earlier sibling's contents, or the same for an enclosing inline module), so the
 # first symbol is the one the file keeps and each later one is a finding.
 id: tm-house-one-public-symbol-rust

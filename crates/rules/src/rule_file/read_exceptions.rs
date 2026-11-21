@@ -55,8 +55,8 @@ fn read_exception(
         out.push(problem_at(
             text,
             *id_at,
-            format!("exception for unknown rule \"{id}\": no [[rule]] has that id"),
-            "Name the id of a [[rule]] in this file, or remove the exception.",
+            format!("exception for unknown rule \"{id}\": no rule of this file or of its baseline sets has that id"),
+            "Name the id of a rule in this file or in a set it takes in baseline, or remove the exception.",
         ));
     }
     let path = required_string(text, table, "path", PLACE, at, out);
@@ -71,8 +71,7 @@ fn read_exception(
     }
     let reason = required_string(text, table, "reason", PLACE, at, out);
     let approved = required_string(text, table, "approved", PLACE, at, out);
-    // `expires` is optional and only checked: Exception has no field for the date, so it is not kept.
-    date_value(text, table, "expires", out);
+    let expires = date_value(text, table, "expires", out);
     let (Some((rule, _)), Some((path, _)), Some((reason, _)), Some((approved, _))) = (rule, path, reason, approved)
     else {
         return None;
@@ -80,5 +79,5 @@ fn read_exception(
     if out.len() > before {
         return None;
     }
-    Some(Exception { rule, path: RelPath::new(&path), what: what.map(|(what, _)| what), reason, approved })
+    Some(Exception { rule, path: RelPath::new(&path), what: what.map(|(what, _)| what), expires, reason, approved })
 }

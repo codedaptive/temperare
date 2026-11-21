@@ -3,6 +3,7 @@
 use super::RuleFile;
 use super::baseline_set::BaselineSet;
 use super::check_keys::check_keys;
+use super::check_override_params::check_override_params;
 use super::check_security_owner::check_security_owner;
 use super::check_version::check_version;
 use super::embedded_sets::EMBEDDED_SETS;
@@ -23,11 +24,11 @@ const TOP_KEYS: [&str; 7] = ["version", "owner", "kits", "baseline", "override",
 impl RuleFile {
     /// Parses `text` as the rule file in `folder`, taking its `baseline` sets from the sets built into `tm`. A TOML
     /// syntax error is one Problem at its position; otherwise every check runs and Err holds all problems sorted by
-    /// (line, col). `rules` holds the taken sets' rules that apply, with the `[[override]]`s applied, then the file's
-    /// own; a set rule turned off is left out, and one missing a required param is in `not_applicable_rules`
-    /// instead. Each rule's `position` is its place in that order, from 0, with the not-applicable rules counted in
-    /// their place among the set rules (see `RuleFile::rules_in_order`). An exception may name any rule of the taken
-    /// sets or of the file.
+    /// (line, col). `rules` holds the taken sets' rules that apply, with the `[[override]]`s applied (their params
+    /// type-checked against the types the sets declare), then the file's own; a set rule turned off is left out, and
+    /// one missing a required param is in `not_applicable_rules` instead. Each rule's `position` is its place in that
+    /// order, from 0, with the not-applicable rules counted in their place among the set rules (see
+    /// `RuleFile::rules_in_order`). An exception may name any rule of the taken sets or of the file.
     pub fn parse(text: &str, folder: &Path) -> Result<RuleFile, Vec<Problem>> {
         parse_with_sets(text, folder, EMBEDDED_SETS)
     }
@@ -47,6 +48,7 @@ pub(crate) fn parse_with_sets(text: &str, folder: &Path, sets: &[BaselineSet]) -
     let kits = read_kits(text, root, &mut out);
     let taken = read_baseline(text, root, sets, &mut out);
     let overrides = read_overrides(text, root, &mut out);
+    check_override_params(text, root, &taken, &mut out);
     let (own_rules, mut rule_ids) = read_rules(text, root, &kits, false, &mut out);
     let resolved = resolve_baseline(text, &taken, &overrides, &mut out);
     check_security_owner(text, root, owner.as_deref(), resolved.security_at, &mut out);

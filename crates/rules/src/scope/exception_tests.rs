@@ -7,6 +7,7 @@ fn exception(path: &str, what: Option<&str>) -> Exception {
         rule: "no-unwrap".to_string(),
         path: RelPath::new(path),
         what: what.map(str::to_string),
+        expires: None,
         reason: "startup only".to_string(),
         approved: "Bob, 2026-11-17".to_string(),
     }

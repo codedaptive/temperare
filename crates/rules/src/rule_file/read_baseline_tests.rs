@@ -88,26 +88,70 @@ fn malformed_entries_are_problems_and_left_out() {
 }
 
 #[test]
-fn an_unknown_set_is_a_problem_naming_the_sets() {
-    let (taken, out) = read("baseline = [\"nosuch@1\"]\n");
-    assert_eq!(taken, vec![]);
-    assert_eq!(out, vec![problem(1, 13, "unknown baseline set \"nosuch\"", "Use one of: house, standard.")]);
+fn an_unknown_set_is_a_problem_naming_only_the_ready_sets() {
+    const READY_AND_NOT: &[BaselineSet] = &[
+        BaselineSet { name: "standard", version: 1, ready: true, text: "version = 1\n", yaml: &[], cases: &[] },
+        BaselineSet { name: "house", version: 1, ready: false, text: "version = 1\n", yaml: &[], cases: &[] },
+    ];
+    const NONE_READY: &[BaselineSet] =
+        &[BaselineSet { name: "house", version: 1, ready: false, text: "version = 1\n", yaml: &[], cases: &[] }];
+    // SETS: house has a ready version 1 beside its unready 2, so it is listed, once.
+    let rows: [(&str, &[BaselineSet], &str); 3] = [
+        ("one ready version makes a set ready", SETS, "Use one of: house, standard."),
+        ("a set with no ready version is not listed", READY_AND_NOT, "Use one of: standard."),
+        ("no ready set", NONE_READY, "No baseline set is ready in this build; remove the entry."),
+    ];
+    let text = "baseline = [\"nosuch@1\"]\n";
+    let doc = DeTable::parse(text).unwrap();
+    for (case, sets, fix) in rows {
+        let mut out = Vec::new();
+        let taken = read_baseline(text, doc.get_ref(), sets, &mut out);
+        assert_eq!(taken, vec![], "{case}");
+        assert_eq!(out, vec![problem(1, 13, "unknown baseline set \"nosuch\"", fix)], "{case}");
+    }
 }
 
 #[test]
-fn an_unknown_version_is_a_problem_naming_the_versions_and_takes_nothing() {
-    // The bad entry takes nothing, so the later "standard@1" is not taken twice.
-    let (taken, out) = read("baseline = [\"standard@9\", \"standard@1\"]\n");
-    assert_eq!(taken, vec![(STANDARD_1, 26)]);
-    assert_eq!(
-        out,
-        vec![problem(
-            1,
-            13,
+fn an_unknown_version_is_a_problem_naming_the_ready_versions_and_takes_nothing() {
+    const NONE_READY: &[BaselineSet] = &[
+        BaselineSet { name: "draft", version: 2, ready: false, text: "version = 1\n", yaml: &[], cases: &[] },
+        BaselineSet { name: "draft", version: 1, ready: false, text: "version = 1\n", yaml: &[], cases: &[] },
+    ];
+    // Each bad entry takes nothing, so the later good entry is not taken twice; `baseline = [` is 12 bytes, so the
+    // bad entry's string starts at column 13 and the good one 2 bytes past the bad one's end.
+    let rows: [(&str, &[BaselineSet], &str, Vec<(&BaselineSet, usize)>, &str, &str); 3] = [
+        (
+            "every version ready",
+            SETS,
+            "baseline = [\"standard@9\", \"standard@1\"]\n",
+            vec![(STANDARD_1, 26)],
             "unknown version 9 of baseline set \"standard\"",
-            "Use one of: standard@1, standard@2."
-        )]
-    );
+            "Use one of: standard@1, standard@2.",
+        ),
+        (
+            "an unready version is not listed",
+            SETS,
+            "baseline = [\"house@9\", \"house@1\"]\n",
+            vec![(HOUSE_1, 23)],
+            "unknown version 9 of baseline set \"house\"",
+            "Use one of: house@1.",
+        ),
+        (
+            "no version ready",
+            NONE_READY,
+            "baseline = [\"draft@9\"]\n",
+            vec![],
+            "unknown version 9 of baseline set \"draft\"",
+            "No version of baseline set \"draft\" is ready in this build; remove the entry.",
+        ),
+    ];
+    for (case, sets, text, expected_taken, what, fix) in rows {
+        let doc = DeTable::parse(text).unwrap();
+        let mut out = Vec::new();
+        let taken = read_baseline(text, doc.get_ref(), sets, &mut out);
+        assert_eq!(taken, expected_taken, "{case}");
+        assert_eq!(out, vec![problem(1, 13, what, fix)], "{case}");
+    }
 }
 
 #[test]

@@ -36,7 +36,8 @@ fn needs(names: &[&str]) -> Vec<String> {
     names.iter().map(|name| name.to_string()).collect()
 }
 
-/// The test-ratio rule's params: SPEC-baseline's limit of 1.5 past 40 lines, and its per-language test paths.
+/// The test-ratio rule's params: a limit of 1.5 lines of test per line of code past 40 lines, and its per-language
+/// test paths.
 fn test_ratio() -> toml::Table {
     let paths = ["**/tests/**", "**/*_tests.rs", "**/test_*.py", "**/*_test.py", "**/*Tests/**", "**/*Tests.swift"];
     table([("max_ratio", toml::Value::Float(1.5)), ("floor", int(40)), ("test_paths", texts(&paths))])
@@ -51,8 +52,8 @@ fn rules() -> Vec<Rule> {
     load_set(&HOUSE_1).unwrap_or_else(|p| panic!("house@1 has problems: {p:?}")).0
 }
 
-/// The 36 rules: 27 rules implementing note 17's 13 house rows, in its order, then the nine rules of the four
-/// test-economy warnings of S-58, as the set file writes them.
+/// The 36 rules: 27 rules for the code, grouped by practice, then the nine rules of the four warnings that keep
+/// tests lean, as the set file writes them.
 pub(super) fn expected_rows() -> Vec<Row<'static>> {
     vec![
         ("tm-house-no-unwrap-rust", "clippy", "clippy::unwrap_used", Q, W, none(), needs(&[]), false, "src/lib.rs", 5),

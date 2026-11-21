@@ -7,8 +7,9 @@ use super::house_1_tests::expected_rows;
 use super::load_set::load_set;
 use crate::{CaseFile, ExpectedFinding, Problem, Rule, RuleCases};
 
-/// A set not ready: an applicable ast-grep rule carrying its YAML, a ruff rule missing its required param, then
-/// another applicable ruff rule; each rule's case files have their own path and text, so a swap shows.
+/// A set not ready: an applicable ast-grep rule carrying its YAML, a ruff rule missing its required param whose
+/// failing and passing cases give it different values, then another applicable ruff rule; each rule's case files
+/// have their own path and text, so a swap shows.
 const DRAFT: BaselineSet = BaselineSet {
     name: "draft",
     version: 1,
@@ -17,7 +18,8 @@ const DRAFT: BaselineSet = BaselineSet {
            [[rule]]\nid = \"tm-d1\"\nengine = \"ast-grep\"\ncheck = \"ast-grep/tm-d1.yml\"\nfix = \"f\"\n\
            failing = { files = [\"a.rs\"], path = \"a.rs\", line = 2 }\npassing = { files = [\"a.rs\"] }\n\
            [[rule]]\nid = \"tm-d2\"\nengine = \"ruff\"\ncheck = \"d2\"\nfix = \"f\"\nrequired_params = [\"own_package\"]\n\
-           failing = { files = [\"b.py\"], path = \"b.py\", line = 1 }\npassing = { files = [\"b.py\"] }\n\
+           failing = { files = [\"b.py\"], path = \"b.py\", line = 1, params = { own_package = [\"alpha\"] } }\n\
+           passing = { files = [\"b.py\"], params = { own_package = [\"beta\"] } }\n\
            [[rule]]\nid = \"tm-d3\"\nengine = \"ruff\"\ncheck = \"d3\"\nfix = \"f\"\n\
            failing = { files = [\"c.py\"], path = \"c.py\", line = 3 }\npassing = { files = [\"c.py\"] }\n",
     yaml: &[("ast-grep/tm-d1.yml", "id: tm-d1\nlanguage: rust\n")],
@@ -66,6 +68,21 @@ fn a_set_not_ready_loads_its_rules_in_order() {
             ("tm-d3", 2, None, None, Some(d3)),
         ]
     );
+    let own_package = |value: &str| -> toml::Table {
+        [("own_package".to_string(), toml::Value::Array(vec![toml::Value::String(value.to_string())]))]
+            .into_iter()
+            .collect()
+    };
+    let params: Vec<_> =
+        rules.iter().map(|rule| (rule.id.as_str(), rule.failing_params.clone(), rule.passing_params.clone())).collect();
+    assert_eq!(
+        params,
+        vec![
+            ("tm-d1", toml::Table::new(), toml::Table::new()),
+            ("tm-d2", own_package("alpha"), own_package("beta")),
+            ("tm-d3", toml::Table::new(), toml::Table::new()),
+        ]
+    );
 }
 
 #[test]
@@ -85,6 +102,28 @@ fn house_1_loads_every_rule_in_set_order() {
         })
         .collect();
     assert_eq!(found, expected);
+    // The five required-param rules' cases give their params, the same for failing and passing; every other rule's
+    // cases give none.
+    let params: Vec<_> =
+        rules.iter().map(|rule| (rule.id.as_str(), rule.failing_params.clone(), rule.passing_params.clone())).collect();
+    let given = |name: &str, value: &str| -> toml::Table {
+        [(name.to_string(), toml::Value::Array(vec![toml::Value::String(value.to_string())]))].into_iter().collect()
+    };
+    let expected_params: Vec<_> = expected_rows()
+        .into_iter()
+        .map(|row| {
+            let case = match row.0 {
+                "tm-house-no-stored-bool-swift"
+                | "tm-house-no-stored-bool-rust"
+                | "tm-house-bitmap-int64-swift"
+                | "tm-house-bitmap-int64-rust" => given("entity_types", "Drawer"),
+                "tm-house-unit-test-fakes-own-kit-python" => given("own_package", "ledger"),
+                _ => toml::Table::new(),
+            };
+            (row.0, case.clone(), case)
+        })
+        .collect();
+    assert_eq!(params, expected_params);
     let not_applicable: Vec<&str> =
         rules.iter().filter(|rule| rule.not_applicable.is_some()).map(|rule| rule.id.as_str()).collect();
     assert_eq!(

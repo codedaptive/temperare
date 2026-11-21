@@ -1,7 +1,7 @@
 //! ZUT for read_exceptions.rs.
 
 use super::read_exceptions::read_exceptions;
-use crate::{Exception, RelPath};
+use crate::{Date, Exception, Problem, RelPath};
 use std::collections::BTreeSet;
 use toml::de::DeTable;
 
@@ -21,6 +21,7 @@ fn an_exception_is_read_with_its_path_made_relative() {
         rule: "no-bool".to_string(),
         path: RelPath::new("src/a.rs"),
         what: Some("isOn".to_string()),
+        expires: None,
         reason: "legacy".to_string(),
         approved: "bob 2026-11-17".to_string(),
     };
@@ -33,9 +34,13 @@ fn an_exception_for_an_unknown_rule_is_a_problem_at_the_value_and_left_out() {
     let doc = DeTable::parse(text).unwrap();
     let mut out = Vec::new();
     assert_eq!(read_exceptions(text, doc.get_ref(), &ids(), &mut out), vec![]);
-    assert_eq!(out.len(), 1);
-    assert_eq!((out[0].line, out[0].col), (2, 8));
-    assert!(out[0].what.contains("\"ghost\""), "{}", out[0].what);
+    let expected = Problem {
+        line: 2,
+        col: 8,
+        what: "exception for unknown rule \"ghost\": no rule of this file or of its baseline sets has that id".to_string(),
+        fix: "Name the id of a rule in this file or in a set it takes in baseline, or remove the exception.".to_string(),
+    };
+    assert_eq!(out, vec![expected]);
 }
 
 #[test]
@@ -82,6 +87,7 @@ fn an_absent_what_is_read_as_none_without_a_problem() {
         rule: "no-bool".to_string(),
         path: RelPath::new("a.rs"),
         what: None,
+        expires: None,
         reason: "r".to_string(),
         approved: "a".to_string(),
     };
@@ -111,7 +117,7 @@ fn an_exception_with_a_real_expires_date_is_read() {
     let mut out = Vec::new();
     let read = read_exceptions(&text, doc.get_ref(), &ids(), &mut out);
     assert_eq!(out, vec![]);
-    assert_eq!(read, vec![Exception::new("no-bool", "a.rs", "r", "a")]);
+    assert_eq!(read, vec![Exception { expires: Date::new(2026, 12, 31), ..Exception::new("no-bool", "a.rs", "r", "a") }]);
 }
 
 #[test]

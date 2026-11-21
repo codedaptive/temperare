@@ -8,6 +8,7 @@ fn exception(rule: &str, path: &str, what: Option<&str>, reason: &str) -> Except
         rule: rule.to_string(),
         path: RelPath::new(path),
         what: what.map(str::to_string),
+        expires: None,
         reason: reason.to_string(),
         approved: "Bob, 2026-11-17".to_string(),
     }

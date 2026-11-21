@@ -8,6 +8,7 @@ use super::engine_value::engine_value;
 use super::kind_value::kind_value;
 use super::kit_union::kit_union;
 use super::problem_at::problem_at;
+use super::read_required_params::read_required_params;
 use super::required_string::required_string;
 use super::scope_or_problem::scope_or_problem;
 use super::severity_value::severity_value;
@@ -23,8 +24,8 @@ const OWN_KEYS: [&str; 15] = [
     "id", "engine", "kind", "check", "config", "paths", "exclude", "kits", "outside_kits", "severity", "fix", "params",
     "enforces", "leaves", "only_with_base",
 ];
-/// The keys of a baseline set's `[[rule]]`: the own keys, `required_params`, and the rule's `failing` and `passing`
-/// cases.
+/// The keys of a baseline set's `[[rule]]`: the own keys, `required_params` (each a param name, or a
+/// `{ name, type }` table typing it), and the rule's `failing` and `passing` cases.
 const SET_KEYS: [&str; 18] = [
     "id", "engine", "kind", "check", "config", "paths", "exclude", "kits", "outside_kits", "severity", "fix", "params",
     "enforces", "leaves", "only_with_base", "required_params", "failing", "passing",
@@ -55,7 +56,7 @@ pub(crate) fn read_rule(
     let leaves = string_value(text, table, "leaves", out).map(|(s, _)| s);
     let only_with_base = bool_value(text, table, "only_with_base", out).is_some_and(|(b, _)| b);
     // In a repository's own file `required_params` is an unknown key, reported by check_keys alone.
-    let required_params = if from_set { string_list(text, table, "required_params", out) } else { Vec::new() };
+    let required_params = if from_set { read_required_params(text, table, out) } else { Vec::new() };
     let engine = engine_value(text, table, at, out);
     let kind = kind_value(text, table, out);
     let check = required_string(text, table, "check", PLACE, at, out);
@@ -107,6 +108,8 @@ pub(crate) fn read_rule(
         not_applicable: None,
         embedded_text: None,
         embedded_cases: None,
+        failing_params: toml::Table::new(),
+        passing_params: toml::Table::new(),
         position: 0,
     })
 }

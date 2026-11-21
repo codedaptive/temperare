@@ -1,5 +1,5 @@
-# A bitmap stored on a listed entity type as anything but Int64 (entity-style: "ALWAYS `Int64`, never `Int` or
-# `Int32`"; bitmap-patterns-core: "ALWAYS use `Int64` — never `Int`, never `Int32`."). {{entity_types}} comes from the rule's entity_types param. A bitmap is a stored
+# A bitmap stored on a listed entity type as anything but Int64: a bitmap is stored as a 64-bit integer, never a
+# platform-sized or narrower one, such as Int or Int32. {{entity_types}} comes from the rule's entity_types param. A bitmap is a stored
 # property whose name ends in Bitmap or Flags after at least one more character (operationalBitmap, entityFlags).
 # Int64? is reported too: a bitmap's column is NOT NULL with a default, so the field is never optional. static and
 # class members and computed properties are not stored. Each match is anchored to the type's own body, as in

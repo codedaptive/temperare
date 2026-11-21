@@ -1,4 +1,4 @@
-# A test written against XCTest (the swift skill: "Swift Testing, not XCTest"): an import of XCTest or one of its
+# A test written against XCTest, where Swift Testing is wanted: an import of XCTest or one of its
 # submodules, with or without attributes such as @testable. A module whose name only starts with XCTest
 # (XCTestDynamicOverlay) is another module and passes.
 id: tm-house-swift-testing-swift

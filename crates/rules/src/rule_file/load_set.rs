@@ -20,7 +20,8 @@ const SET_TOP_KEYS: [&str; 3] = ["version", "rule", "retired"];
 /// or every Problem, positioned in the set's own text and sorted by (line, col). Each ast-grep rule's `check` must
 /// name a YAML file the set carries, and the rule comes back with that file's text as its embedded YAML; a rule of
 /// any other engine has none. Every rule must declare its failing and passing cases, whose files the set carries,
-/// and comes back with them as its embedded cases. Every case file and YAML file the set carries must be named by a
+/// and comes back with them as its embedded cases, and with the params each case gives as its `failing_params` and
+/// `passing_params` (empty when the case gives none). Every case file and YAML file the set carries must be named by a
 /// rule; one that is not is a Problem at 1:1, since carried data has no place in the set's text.
 pub(crate) fn load_set(set: &BaselineSet) -> Result<(Vec<Rule>, Vec<String>), Vec<Problem>> {
     let text = set.text;
@@ -32,7 +33,10 @@ pub(crate) fn load_set(set: &BaselineSet) -> Result<(Vec<Rule>, Vec<String>), Ve
     let (mut rules, ids) = read_rules(text, root, &[], true, &mut out);
     check_set_yaml(text, root, set, &mut out);
     check_set_carried(text, root, set, &mut out);
-    let mut cases: BTreeMap<_, _> = read_set_cases(text, root, set, &mut out).into_iter().collect();
+    let mut cases: BTreeMap<_, _> = read_set_cases(text, root, set, &mut out)
+        .into_iter()
+        .map(|(id, cases, failing, passing)| (id, (cases, failing, passing)))
+        .collect();
     let retired = string_list(text, root, "retired", &mut out);
     for (id, at) in &retired {
         check_retired(text, id, *at, &ids, &mut out);
@@ -42,7 +46,9 @@ pub(crate) fn load_set(set: &BaselineSet) -> Result<(Vec<Rule>, Vec<String>), Ve
             if rule.engine == Engine::AstGrep {
                 rule.embedded_text = set.yaml_for(&rule.check);
             }
-            rule.embedded_cases = cases.remove(&rule.id);
+            if let Some((cases, failing, passing)) = cases.remove(&rule.id) {
+                (rule.embedded_cases, rule.failing_params, rule.passing_params) = (Some(cases), failing, passing);
+            }
         }
         return Ok((rules, retired.into_iter().map(|(id, _)| id).collect()));
     }
