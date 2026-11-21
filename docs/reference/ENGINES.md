@@ -139,16 +139,26 @@ These are not among those files, so a rule that covers only such files covers no
 tracked file deleted from the work tree, a skip-worktree file whether or not it is there, and the files of an
 untracked nested repository.
 
-The report does not show such a rule. It has no line in the text output, it is in no list of the JSON output, it
-adds to no count, and it does not change the exit code. A refused rule is not such a rule: it is settled first and is failed, whatever it covers. (One exception: a rule with `only_with_base = true`, run
-without `--base`, is listed as not applicable whatever it covers, as any such rule is.) A check whose only rule
-covers no file prints
-`0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable`
-and `next: nothing to do`, and exits 0. (The example line shows no exceptions in force; a rule file with exceptions shows their count.) That is so whether its engine is installed or not. The one difference is
-the engines line: an engine found on `PATH` is still asked its version and listed, and a missing one is not. In
-`--json`, `saved.counted` holds the rule with `chars` 0.
+The report shows such a rule by where it comes from:
 
-So exit 0 does not say every rule had a file to check. `tm rules` shows each rule's scope.
+- **One of the repository's own rules covers nothing.** It is on a `covers nothing: <rule> (<engine>)` line in the
+  text, under `covers_nothing` in JSON (`rule`, `engine`), and in the `covers nothing` count, and it makes the exit
+  6 when nothing ranks above it ([`OUTPUT.md`](OUTPUT.md#exit-codes)).
+- **A baseline set's rule is not applicable,** with the why `its paths match no file in the rule file's folder`, or
+  `no file its engine checks` for a ShellCheck rule that covers files but no script. It does not change the exit
+  code.
+
+A refused rule is not such a rule: it is settled first and is failed, whatever it covers. A rule with
+`only_with_base = true`, run without `--base`, is listed as not applicable for want of `--base` whatever it covers,
+as any such rule is. A check whose only rule is one of its own and covers no file prints
+`covers nothing: <rule> (<engine>)`, then
+`0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable, 1 covers nothing`
+and `next: fix the paths of each rule that covers nothing above, or remove it from <rule file>`, and exits 6. (The
+example line shows no exceptions in force; a rule file with exceptions shows their count.) That is so whether its
+engine is installed or not. The one difference is the engines line: an engine found on `PATH` is still asked its
+version and listed, and a missing one is not. In `--json`, `saved.counted` holds the rule with `chars` 0.
+
+`tm rules` shows each rule's scope.
 
 When git cannot list the files (the rule file's folder is in no git repository, or git is missing or fails), no
 rule is settled this way, and each goes on to steps 3 to 5.
@@ -509,7 +519,7 @@ installed: `tm` neither runs it nor looks for it on `PATH`.
 Two cases are settled first, as for any engine ([the order](#the-order-a-rule-settles-in)). A Tessera rule takes
 no params: one with any param is failed (exit 5), with the reason
 `tessera param <name>: a tessera rule takes no params`. And a Tessera rule that covers no file git lists runs
-nothing, and the report does not say so ([above](#a-rule-that-covers-no-file)).
+nothing and covers nothing ([above](#a-rule-that-covers-no-file)).
 
 A run with a not-available Tessera rule ends with exit 3, unless a quality error (1) or a failed engine (5) comes
 first. The `next:` line says `Tessera's checks are not available yet` and does not ask you to install it. To get an
@@ -526,7 +536,7 @@ these names, so a rule written for one of them needs no change when its adapter 
 them: a rule that covers a file is reported "not available" with the reason `no adapter for <engine> in this build`,
 whether or not the engine is installed, and nothing is run. Its `check` and `params` are not read, so it is never
 refused. `tm rules` shows the same reason. A rule with `only_with_base = true`, run without `--base`, is not
-applicable instead, and a rule that covers no file git lists runs nothing, and the report does not say so
+applicable instead, and a rule that covers no file git lists runs nothing and covers nothing
 ([above](#a-rule-that-covers-no-file)).
 
 A run with a not-available rule of these engines ends with exit 3, unless a quality error (1) or a failed engine
