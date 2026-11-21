@@ -102,13 +102,18 @@ Each rule is settled by the first of these that applies:
    (ast-grep's placeholder params apart: see below). The rule is failed (exit 5).
 2. **No file.** The rule covers none of the files git lists in the rule file's folder, or it is a ShellCheck rule
    and covers none of the scripts there. The rule runs nothing ([below](#a-rule-that-covers-no-file)).
-3. **Not available.** The engine's program is not on `PATH`, the engine has no adapter in this build, or it is
+3. **Needs a base.** A rule with `only_with_base = true`, run without `--base`, settles here, whatever its engine.
+   Its engine is not looked up on `PATH` and runs no check for it, and when it shares a run with other rules its
+   check is left out of that run. The report lists it as not applicable
+   ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)). An engine found on `PATH` is still asked its version for
+   the engines line.
+4. **Not available.** The engine's program is not on `PATH`, the engine has no adapter in this build, or it is
    Tessera.
-4. **The run.** What the engine's run comes to: findings, none, not available or failed.
+5. **The run.** What the engine's run comes to: findings, none, not available or failed.
 
 So a refused rule is failed (exit 5) whether or not its engine is installed, and installing the engine would not help it. Its engine is still asked its version, as above. The one exception is an `only_with_base` rule run without `--base`, which is listed under `not_applicable` instead, as any such rule is.
 
-Three refusals need more than the rule file, so they are made in the run, at step 4, after steps 2 and 3; the ast-grep YAML's own disk checks are listed in its section:
+Three refusals need more than the rule file, so they are made in the run, at step 5, after steps 2 to 4; the ast-grep YAML's own disk checks are listed in its section:
 
 - a clippy lint group, which is told from a lint by `clippy-driver -W help`;
 - an ast-grep rule file that is missing or cannot be read, or that leads outside the rule file's folder through a
@@ -146,7 +151,7 @@ the engines line: an engine found on `PATH` is still asked its version and liste
 So exit 0 does not say every rule had a file to check. `tm rules` shows each rule's scope.
 
 When git cannot list the files (the rule file's folder is in no git repository, or git is missing or fails), no
-rule is settled this way, and each goes on to steps 3 and 4.
+rule is settled this way, and each goes on to steps 3 to 5.
 
 ## clippy
 
