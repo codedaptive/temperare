@@ -2,7 +2,7 @@
 //! checked by one ruff run. It pins exit 1, one engine run on the printed line, one `engines` entry carrying ruff's
 //! own version word, the saved output counted once (on the first rule, 0 on the second), and each rule's own finding
 //! at its place. When ruff is not on the PATH `temperare` gets (`on_tm_path`), the case pins `temperare`'s answer
-//! (exit 3, both rules not available, no findings, ruff's version null) and is NOT RUN with `temperare`'s reason,
+//! (exit 3, both rules not available, no findings, an empty `engines` list) and is NOT RUN with `temperare`'s reason,
 //! never PASS.
 
 use serde_json::{json, Value};
@@ -84,8 +84,8 @@ fn two_ruff_rules_share_one_engine_run() {
     assert_eq!(place(findings, "unused-import"), ("a.py", 1), "{stdout}");
 }
 
-/// With ruff absent: asserts `temperare`'s answer (exit 3, both rules not available, no findings, ruff's version null)
-/// and returns NOT RUN's reason, `temperare`'s own `why` for no-none-compare.
+/// With ruff absent: asserts `temperare`'s answer (exit 3, both rules not available, no findings, an empty `engines`
+/// list, since an engine tm did not find is left out) and returns NOT RUN's reason, `temperare`'s own `why` for no-none-compare.
 fn absent_ruff_reason(code: i32, stdout: &str, value: &Value) -> String {
     assert_eq!(code, 3, "{stdout}");
     let list = value["not_available"].as_array().unwrap_or_else(|| panic!("no not_available list: {stdout}"));
@@ -94,7 +94,8 @@ fn absent_ruff_reason(code: i32, stdout: &str, value: &Value) -> String {
     missing.sort();
     assert_eq!(missing, vec![("no-none-compare", "ruff"), ("unused-import", "ruff")], "{stdout}");
     assert!(empty_or_absent(value, "findings"), "{stdout}");
-    assert!(stdout.contains(r#""engines":[{"engine":"ruff","version":null}]"#), "{stdout}");
+    assert!(stdout.contains(r#""engines":[]"#), "{stdout}");
+    assert_eq!(value["engines"], json!([]), "{stdout}");
     let why = list
         .iter()
         .find(|n| n["rule"] == "no-none-compare")

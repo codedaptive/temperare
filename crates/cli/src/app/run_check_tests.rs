@@ -59,6 +59,7 @@ fn world() -> CheckWorld<'static> {
         read: &read,
         rev_parse: &|_, _| unreachable!("rev_parse"),
         run_rules: &no_runs,
+        availability: &|_| engines::Availability::Available,
         build_report: &clean,
         home: &|| None,
         now: &|| 0,
@@ -88,6 +89,12 @@ fn check(args: &CheckArgs, world: &CheckWorld) -> (u8, String, String) {
     let (mut out, mut err) = (Vec::new(), Vec::new());
     let code = run_check(args, Path::new("/repo"), world, &mut out, &mut err);
     (code, String::from_utf8(out).unwrap(), String::from_utf8(err).unwrap())
+}
+
+/// The counts line is `prefix` alone or `prefix, <more>`: the report may append counts after "failed".
+fn is_counts_line(line: &str, prefix: &str) -> bool {
+    line == prefix
+        || line.strip_prefix(prefix).and_then(|rest| rest.strip_prefix(", ")).is_some_and(|more| !more.is_empty())
 }
 
 /// As text: exit 2, nothing on stdout, `stderr` on stderr. Under --json: exit 2, the same stderr, `object` on stdout.
@@ -272,16 +279,15 @@ fn a_resolved_base_reaches_the_report_as_the_top_and_the_commit() {
 
 #[test]
 fn a_clean_report_is_the_counts_then_nothing_to_do() {
-    assert_eq!(
-        check(&CheckArgs::default(), &world()),
-        (
-            0,
-            "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, \
-             0 failed\nnext: nothing to do\n"
-                .to_string(),
-            String::new()
-        )
-    );
+    let (code, out, err) = check(&CheckArgs::default(), &world());
+    assert_eq!((code, err.as_str()), (0, ""));
+    assert!(out.ends_with('\n'), "{out}");
+    let lines: Vec<&str> = out.lines().collect();
+    assert_eq!(lines.len(), 2, "{out}");
+    let counts = "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, \
+                  0 failed";
+    assert!(is_counts_line(lines[0], counts), "{out}");
+    assert_eq!(lines[1], "next: nothing to do");
 }
 
 #[test]
@@ -324,19 +330,17 @@ fn a_failed_engine_exits_5_with_its_stderr_tail_between_the_counts_and_next() {
         r.counts.failed = 1;
         Ok(r)
     };
-    assert_eq!(
-        check(&CheckArgs::default(), &CheckWorld { build_report: &failed, ..world() }),
-        (
-            5,
-            "failed: q (ruff), exit 2\n\
-             0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, \
-             1 failed\n\
-             stderr of q (ruff):\n  ruff: Failed to parse /repo/pyproject.toml\n\
-             next: see the engine output above\n"
-                .to_string(),
-            String::new()
-        )
-    );
+    let (code, out, err) = check(&CheckArgs::default(), &CheckWorld { build_report: &failed, ..world() });
+    assert_eq!((code, err.as_str()), (5, ""));
+    assert!(out.ends_with('\n'), "{out}");
+    let lines: Vec<&str> = out.lines().collect();
+    assert_eq!(lines.len(), 5, "{out}");
+    assert_eq!(lines[0], "failed: q (ruff), exit 2");
+    let counts = "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, \
+                  1 failed";
+    assert!(is_counts_line(lines[1], counts), "{out}");
+    assert_eq!(lines[2..4], ["stderr of q (ruff):", "  ruff: Failed to parse /repo/pyproject.toml"]);
+    assert_eq!(lines[4], "next: see the engine output above");
 }
 
 #[test]

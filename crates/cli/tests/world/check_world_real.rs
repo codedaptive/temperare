@@ -1,7 +1,8 @@
-//! Tests of crates/cli/src/app/check_world_real.rs: six of the eight seams of `CheckWorld::real()` (toplevel, exists,
-//! read, rev_parse, run_rules, build_report) are wired to their real functions. `home` and `now` have no case here:
-//! `home` would read the real HOME and `now` the real clock. The file mixes kinds, each case marked: RITs
-//! (cli→procio/rules/engines/report, kept beside their caller) and a ZIT. `exists` and `read` are told from stubs on
+//! Tests of crates/cli/src/app/check_world_real.rs: six of the nine seams of `CheckWorld::real()` (toplevel, exists,
+//! read, rev_parse, run_rules, build_report) are wired to their real functions. `availability`, `home` and `now` have
+//! no case here: `availability` would look at the real PATH, `home` would read the real HOME and `now` the real
+//! clock. The file mixes kinds, each case marked: RITs (cli→procio/rules/engines/report, kept beside their caller)
+//! and a std disk seam. `exists` and `read` are told from stubs on
 //! a file the tests write in a throwaway folder under the system temp folder, removed on drop; `run_rules` (wired to
 //! `engines::run_rules_versioned`) and `build_report` on a rule file with no rules in such a folder; `toplevel` and
 //! `rev_parse` are told by a folder that does not exist, where git fails. Nothing here needs a real repository or an
@@ -58,7 +59,8 @@ fn empty_rules(folder: PathBuf, exceptions: Vec<Exception>) -> RuleFile {
     rf
 }
 
-/// ZIT: the seam is `Path::is_file`, std only (crates/cli/src/app/check_world_real.rs:13).
+/// Std disk seam, not a zone test: the seam is the standard library's `Path::is_file`, reached through the disk
+/// (crates/cli/src/app/check_world_real.rs:13).
 #[test]
 fn exists_is_true_for_a_file_only() {
     let world = CheckWorld::real();

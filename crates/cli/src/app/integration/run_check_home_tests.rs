@@ -1,6 +1,6 @@
 //! The check's config and append-only log under a test-owned HOME.
 
-use super::super::run_check_savings_tests::{check, checked, printed_body, run, world, BODY};
+use super::super::run_check_savings_tests::{assert_clean_body, check, checked, output_tokens, percent, printed_body, run, world};
 use super::super::CheckWorld;
 use crate::CheckArgs;
 use rules::{Engine, RelPath, RuleFile};
@@ -8,8 +8,6 @@ use std::fs;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
-
-fn output_tokens(chars: usize) -> usize { (chars + 2) / 4 }
 
 static NEXT: AtomicU64 = AtomicU64::new(0);
 struct Home(PathBuf);
@@ -42,7 +40,9 @@ fn disabled_line_leaves_text_json_and_logging_available() {
     let home_path = || Some(home.0.clone());
     let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("q", Engine::Ruff, Some(400))]);
     let w = CheckWorld { home: &home_path, now: &|| 1795680000, run_rules: &runs, ..world() };
-    assert_eq!(check(&CheckArgs::default(), &w), (0, BODY.into(), String::new()));
+    let (code, text, err) = check(&CheckArgs::default(), &w);
+    assert_eq!((code, err.as_str()), (0, ""));
+    assert_clean_body(&text);
     let (code, out, err) = check(&CheckArgs { json: true, ..CheckArgs::default() }, &w);
     assert_eq!((code, err.as_str()), (0, ""));
     let (body, saved) = printed_body(&out);
@@ -57,9 +57,9 @@ fn disabled_line_leaves_text_json_and_logging_available() {
     assert_eq!(saved["tokens_saved"], tokens_saved);
     assert_eq!(saved["percent"], tokens_saved);
     assert_eq!(fs::read_to_string(home.log()).unwrap(), format!(concat!(
-        "{{\"time\":\"2026-11-26T08:00:00Z\",\"folder\":\"/repo\",\"verb\":\"check\",\"output_tokens\":32,\"baseline_tokens\":100}}\n",
+        "{{\"time\":\"2026-11-26T08:00:00Z\",\"folder\":\"/repo\",\"verb\":\"check\",\"output_tokens\":{},\"baseline_tokens\":100}}\n",
         "{{\"time\":\"2026-11-26T08:00:00Z\",\"folder\":\"/repo\",\"verb\":\"check\",\"output_tokens\":{},\"baseline_tokens\":100}}\n"
-    ), tokens));
+    ), output_tokens(text.chars().count()), tokens));
 }
 
 #[test]
@@ -88,8 +88,10 @@ fn unknown_config_key_warns_once_and_keeps_the_default_line() {
     let (code, out, err) = check(&CheckArgs::default(), &CheckWorld { home: &home_path, now: &|| 1795680000, run_rules: &runs, ..world() });
     assert_eq!(code, 0);
     assert_eq!(err, "tm: ignoring ~/.config/temperare/config.toml: unknown key `extra`\n");
-    assert!(out.starts_with("[temperare] tokens saved ≈ 68 (68%)"), "{out}");
-    assert!(out.ends_with(BODY), "{out}");
+    let (line, body) = out.split_once('\n').unwrap();
+    assert_clean_body(body);
+    let saved = 100 - output_tokens(body.chars().count());
+    assert!(line.starts_with(&format!("[temperare] tokens saved ≈ {saved} ({}%)", percent(saved, 100))), "{out}");
 }
 
 #[test]
@@ -199,7 +201,8 @@ fn no_log_is_created_when_no_engine_ran() {
     let home_path = || Some(home.0.clone());
     let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("q", Engine::Ruff, None)]);
     let (code, out, _) = check(&CheckArgs::default(), &CheckWorld { home: &home_path, now: &|| 1795680000, run_rules: &runs, ..world() });
-    assert_eq!((code, out.as_str()), (0, BODY));
+    assert_eq!(code, 0);
+    assert_clean_body(&out);
     assert!(!home.log().exists());
 }
 

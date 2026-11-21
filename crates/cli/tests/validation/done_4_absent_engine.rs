@@ -64,10 +64,8 @@ fn an_absent_linter_and_absent_tessera_each_report_not_available() {
     let home = TempHome::new();
     let out = run_clean(env!("CARGO_BIN_EXE_temperare"), &args, repo.path(), tm_env(Some(PATH_WITHOUT_ENGINES), home.path()));
     let printed = String::from_utf8(out.stdout).unwrap();
-    assert!(
-        // The rule file names tessera's rule first, against the alphabetical order of both engine names and rule ids,
-        // so a list sorted by either fails.
-        printed.contains(r#""engines":[{"engine":"tessera","version":null},{"engine":"swiftlint","version":null}]"#),
-        "each engine the rule file names, in rule-file order, with no version: {printed}"
-    );
+    // `engines` lists only an engine tm found, so neither absent swiftlint nor Tessera is in it.
+    assert!(printed.contains(r#""engines":[]"#), "no engine was found, so none is listed: {printed}");
+    let value: serde_json::Value = serde_json::from_str(&printed).unwrap_or_else(|e| panic!("stdout is not JSON ({e}): {printed}"));
+    assert_eq!(value["engines"], serde_json::json!([]), "{printed}");
 }

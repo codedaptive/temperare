@@ -1,15 +1,16 @@
-//! `CheckWorld`: what `tm check` needs from git, the disk, the engines, the report, HOME and the clock, as eight seams.
+//! `CheckWorld`: what `tm check` needs from git, the disk, the engines, the report, HOME and the clock, as nine
+//! seams.
 
-use engines::CheckedRules;
+use engines::{Availability, CheckedRules};
 use procio::{GitError, Oid};
 use report::{Report, ReportError};
-use rules::{Problem, RelPath, RuleFile, RuleOutcome};
+use rules::{Engine, Problem, RelPath, RuleFile, RuleOutcome};
 use std::path::{Path, PathBuf};
 
 /// `CheckWorld::real()` wires `procio::toplevel`, `Path::is_file`, `RuleFile::read`, `procio::rev_parse`,
-/// `engines::run_rules_versioned`, `report::build_report`, HOME from the environment and the system clock; a unit test
-/// passes closures, so `tm check` is tested without running git or an engine, reading the disk or the environment,
-/// or looking at PATH.
+/// `engines::run_rules_versioned`, `engines::availability`, `report::build_report`, HOME from the environment and the
+/// system clock; a unit test passes closures, so `tm check` is tested without running git or an engine, reading the
+/// disk or the environment, or looking at PATH.
 pub struct CheckWorld<'a> {
     /// The top of the repository holding a folder.
     pub toplevel: &'a dyn Fn(&Path) -> Result<PathBuf, GitError>,
@@ -23,6 +24,8 @@ pub struct CheckWorld<'a> {
     /// in rule-file order, each with its engine and the characters its counted run printed; and each distinct engine
     /// the rules name, once, with its version (None when it could not be read).
     pub run_rules: &'a dyn Fn(&RuleFile, &Path, &[RelPath]) -> CheckedRules,
+    /// Whether tm finds an engine here, from a PATH lookup; nothing is run.
+    pub availability: &'a dyn Fn(Engine) -> Availability,
     /// The report of the outcomes, new findings only when given `(repository, base commit)`.
     pub build_report:
         &'a dyn Fn(&RuleFile, Vec<(String, RuleOutcome)>, Option<(&Path, &Oid)>) -> Result<Report, ReportError>,
