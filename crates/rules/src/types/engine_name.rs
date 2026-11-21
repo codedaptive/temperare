@@ -16,6 +16,7 @@ impl Engine {
             Engine::ClangTidy => "clang-tidy",
             Engine::Oclint => "oclint",
             Engine::ShellCheck => "shellcheck",
+            Engine::Git => "git",
         }
     }
 }

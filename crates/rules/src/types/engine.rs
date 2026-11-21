@@ -26,4 +26,6 @@ pub enum Engine {
     Oclint,
     #[serde(rename = "shellcheck")]
     ShellCheck,
+    #[serde(rename = "git")]
+    Git,
 }
