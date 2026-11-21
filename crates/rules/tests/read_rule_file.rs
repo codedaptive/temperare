@@ -202,7 +202,7 @@ fn baseline_sets_unknown_set_reports_entry_location_and_fix() {
     let problems = RuleFile::read(&path).expect_err("unknown baseline set must be rejected");
     assert_eq!(
         problems.iter().map(|p| (p.line, p.col, p.what.as_str(), p.fix.as_str())).collect::<Vec<_>>(),
-        vec![(2, 13, "unknown baseline set \"nosuch\"", "Use one of: house, standard.")],
+        vec![(2, 13, "unknown baseline set \"nosuch\"", "Use one of: standard.")],
     );
 }
 

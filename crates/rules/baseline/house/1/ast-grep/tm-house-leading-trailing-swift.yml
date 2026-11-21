@@ -1,4 +1,5 @@
-# Layout written with .left or .right (localization rule 4: .leading and .trailing, never .left and .right): the
+# Layout written with .left or .right, where .leading and .trailing are wanted since they flip for right-to-left
+# languages: the
 # implicit member expression `.left` or `.right` anywhere it is a value, as in `.padding(.left, 16)` or
 # `alignment: .right`. A member read through a value or a type (`node.left`, `NSTextAlignment.left`) is a
 # navigation expression, not an implicit member, and a `case .left:` in a switch is a pattern: neither is matched.

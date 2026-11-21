@@ -18,6 +18,8 @@ mod check_failing_path;
 mod check_globs;
 mod check_keys;
 mod check_not_option;
+mod check_override_params;
+mod check_param_types;
 mod check_security_owner;
 mod check_set_carried;
 mod check_set_yaml;
@@ -33,12 +35,15 @@ mod kit_union;
 mod load_set;
 mod missing_params;
 mod override_entry;
+mod param_type;
 mod problem_at;
 mod read_baseline;
 mod read_case;
+mod read_case_params;
 mod read_exceptions;
 mod read_kits;
 mod read_overrides;
+mod read_required_params;
 mod read_rule;
 mod read_rules;
 mod read_set_cases;
@@ -49,6 +54,7 @@ mod resolved_baseline;
 mod rule_file;
 mod rule_file_exception_for;
 mod rule_file_exception_on;
+mod rule_file_exceptions_expired;
 mod rule_file_exceptions_in_force;
 mod rule_file_new;
 mod rule_file_owner_for;
@@ -93,6 +99,10 @@ mod check_keys_tests;
 #[cfg(test)]
 mod check_not_option_tests;
 #[cfg(test)]
+mod check_override_params_tests;
+#[cfg(test)]
+mod check_param_types_tests;
+#[cfg(test)]
 mod check_security_owner_tests;
 #[cfg(test)]
 mod check_set_carried_tests;
@@ -127,6 +137,8 @@ mod problem_at_tests;
 #[cfg(test)]
 mod read_baseline_tests;
 #[cfg(test)]
+mod read_case_params_tests;
+#[cfg(test)]
 mod read_case_tests;
 #[cfg(test)]
 mod read_exceptions_tests;
@@ -134,6 +146,8 @@ mod read_exceptions_tests;
 mod read_kits_tests;
 #[cfg(test)]
 mod read_overrides_tests;
+#[cfg(test)]
+mod read_required_params_tests;
 #[cfg(test)]
 mod read_rule_tests;
 #[cfg(test)]
@@ -164,6 +178,8 @@ mod wrong_type_tests;
 mod rule_file_exception_for_tests;
 #[cfg(test)]
 mod rule_file_exception_on_tests;
+#[cfg(test)]
+mod rule_file_exceptions_expired_tests;
 #[cfg(test)]
 mod rule_file_exceptions_in_force_tests;
 #[cfg(test)]

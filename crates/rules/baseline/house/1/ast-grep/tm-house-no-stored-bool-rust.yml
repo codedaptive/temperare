@@ -1,7 +1,6 @@
-# A bool stored directly on a listed entity type, from moot's rule file v1 (tools/temperare/rules/no-stored-bool.yml,
-# its Rust document). {{entity_types}} comes from the rule's entity_types param. Each match is anchored to the
-# type's own body (no stopBy), so a bool on a type nested inside an entity, or a local inside a method, is not the
-# entity's field. $TYPE and $FIELD name the field in the message.
+# A bool stored directly on a listed entity type. {{entity_types}} comes from the rule's entity_types param. Each
+# match is anchored to the type's own body (no stopBy), so a bool on a type nested inside an entity, or a local
+# inside a method, is not the entity's field. $TYPE and $FIELD name the field in the message.
 id: tm-house-no-stored-bool-rust
 language: rust
 message: stored bool $TYPE.$FIELD on a persisted entity

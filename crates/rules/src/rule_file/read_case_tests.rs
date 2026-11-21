@@ -27,7 +27,7 @@ fn read(text: &str, kind: &str) -> (Case, Vec<Problem>) {
     let doc = DeTable::parse(text).expect("valid TOML");
     let value = doc.get_ref().get(kind).expect("the case");
     let mut out = Vec::new();
-    let case = read_case(text, value, "tm-a", kind, &SET, &mut out);
+    let case = read_case(text, value, "tm-a", kind, &[], &SET, &mut out);
     (case, out)
 }
 
@@ -61,14 +61,14 @@ fn a_case_that_is_not_a_table_is_the_wrong_type() {
 #[test]
 fn an_unknown_key_in_a_failing_case_is_a_problem_at_it() {
     let text = "failing = { files = [\"src/lib.rs\"], path = \"src/lib.rs\", line = 3, rule = \"x\" }";
-    let expected = problem(68, "unknown key `rule` in failing", "Remove it, or use one of: files, path, line.");
+    let expected = problem(68, "unknown key `rule` in failing", "Remove it, or use one of: files, path, line, params.");
     assert_eq!(read(text, "failing"), (None, vec![expected]));
 }
 
 #[test]
 fn a_path_in_a_passing_case_is_an_unknown_key() {
     let text = "passing = { files = [\"src/lib.rs\"], path = \"src/lib.rs\" }";
-    let expected = problem(37, "unknown key `path` in passing", "Remove it, or use one of: files.");
+    let expected = problem(37, "unknown key `path` in passing", "Remove it, or use one of: files, params.");
     assert_eq!(read(text, "passing"), (None, vec![expected]));
 }
 
@@ -161,7 +161,7 @@ fn a_line_that_is_not_a_line_number_is_a_problem_at_it() {
 fn every_problem_of_a_case_is_reported() {
     let text = "failing = { files = [\"gone.rs\"], line = 0, rule = 1 }";
     let expected = vec![
-        problem(44, "unknown key `rule` in failing", "Remove it, or use one of: files, path, line."),
+        problem(44, "unknown key `rule` in failing", "Remove it, or use one of: files, path, line, params."),
         problem(
             22,
             "case file \"gone.rs\" of baseline rule \"tm-a\" is not carried by baseline set house@2",

@@ -1,5 +1,5 @@
-# A bitmap stored on a listed entity type as anything but i64 (entity-style: "ALWAYS `Int64`, never `Int` or
-# `Int32`"; bitmap-patterns-core: "ALWAYS use `Int64` — never `Int`, never `Int32`."). {{entity_types}} comes from the rule's entity_types param. A bitmap is a named
+# A bitmap stored on a listed entity type as anything but i64: a bitmap is stored as a 64-bit integer, never a
+# narrower one. {{entity_types}} comes from the rule's entity_types param. A bitmap is a named
 # field whose name ends in _bitmap or _flags (operational_bitmap, entity_flags). Option<i64> is reported too: a
 # bitmap's column is NOT NULL with a default, so the field is never optional. Each match is anchored to the type's
 # own body, as in tm-house-no-stored-bool-rust. $FOUND is the field's type.

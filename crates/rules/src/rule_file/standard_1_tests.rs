@@ -24,8 +24,8 @@ fn rules() -> Vec<Rule> {
     load_set(&STANDARD_1).unwrap_or_else(|p| panic!("standard@1 has problems: {p:?}")).0
 }
 
-/// The 53 rules in S-55's order (dead code, deprecated, suppressions, then the rest of SPEC-baseline's standard list,
-/// then what a change adds), as the set file writes them.
+/// The 53 rules in the set's order (dead code, deprecated, suppressions, then the other standard checks, then what
+/// a change adds), as the set file writes them.
 fn expected_rows() -> Vec<Row<'static>> {
     vec![
         ("tm-rust-dead-code", "clippy", "dead_code", Q, W, none(), false, "src/lib.rs", 8),

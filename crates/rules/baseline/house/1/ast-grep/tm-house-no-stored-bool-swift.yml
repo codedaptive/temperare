@@ -1,7 +1,7 @@
-# A Bool stored directly on a listed entity type, from moot's rule file v1 (tools/temperare/rules/no-stored-bool.yml,
-# its Swift document). {{entity_types}} comes from the rule's entity_types param. Swift parses struct, class and
-# actor as class_declaration. The type annotation's text includes its colon, and is matched whole so [Bool] and
-# [String: Bool] pass. static and class members are not stored on the row; a computed property is not stored.
+# A Bool stored directly on a listed entity type. {{entity_types}} comes from the rule's entity_types param. Swift
+# parses struct, class and actor as class_declaration. The type annotation's text includes its colon, and is
+# matched whole so [Bool] and [String: Bool] pass. static and class members are not stored on the row; a computed
+# property is not stored.
 # Each match is anchored to the type's own body, so a Bool on a type nested inside an entity, or a local inside a
 # method, is not the entity's field. $TYPE and $FIELD name the field in the message.
 id: tm-house-no-stored-bool-swift

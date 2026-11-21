@@ -1,7 +1,7 @@
 # The baseline set "standard", version 1: the rules any team would take, per language and for any language.
 # A rule file takes it with `baseline = ["standard@1"]`. Once released, this version is frozen; a change is version 2.
-# Rules in S-55's order: dead code, deprecated, suppressions; then the rest of SPEC-baseline's standard list;
-# then what a change adds.
+# The rules come in this order: dead code, deprecated calls and suppressions first, since an agent copies what it
+# sees in the code most; then the other checks any team would take; then what a change adds.
 
 version = 1
 
@@ -13,12 +13,12 @@ check = "dead_code"
 paths = ["**/*.rs"]
 severity = "warning"
 enforces = """\
-Dead code is removed, since git keeps it (SPEC-baseline, rules aim first at what an agent copies; S-55; \
-Bob 2026-11-17): rustc's stock dead_code lint, run through clippy."""
+Dead code is removed, since git keeps it and an agent copies what it sees: rustc's stock dead_code lint, run \
+through clippy."""
 leaves = """\
 Swift: SwiftLint's unused_declaration is an analyzer rule that needs a build log, which the adapter does not run. \
-A Python function nothing calls: ruff has no such check. An export no other file uses (Tessera's unused-export, \
-S-20), including a pub item of a library crate that nothing calls. Code under a cfg that is off in this build, and \
+A Python function nothing calls: ruff has no such check. An export no other file uses (Tessera's unused-export), \
+including a pub item of a library crate that nothing calls. Code under a cfg that is off in this build, and \
 a branch inside a used function that can never run."""
 fix = "Delete the unused item; git keeps it. If it is meant to be used, call it from the code that needs it."
 failing = { files = ["Cargo.toml", "src/lib.rs"], path = "src/lib.rs", line = 8 }
@@ -32,11 +32,11 @@ check = "unused_imports"
 paths = ["**/*.rs"]
 severity = "warning"
 enforces = """\
-No unused import is left in (SPEC-baseline, rules aim first at what an agent copies, dead code; S-55): rustc's \
-stock unused_imports lint, run through clippy."""
+No unused import is left in, since it is dead code and an agent copies what it sees: rustc's stock \
+unused_imports lint, run through clippy."""
 leaves = """\
 Swift: SwiftLint's unused_import is an analyzer rule that needs a build log, which the adapter does not run. A pub \
-use re-export no other file uses (Tessera's unused-export, S-20). An import in code under a cfg that is off in this \
+use re-export no other file uses (Tessera's unused-export). An import in code under a cfg that is off in this \
 build."""
 fix = "Remove the import."
 failing = { files = ["Cargo.toml", "src/lib.rs"], path = "src/lib.rs", line = 4 }
@@ -50,8 +50,8 @@ check = "unused_variables"
 paths = ["**/*.rs"]
 severity = "warning"
 enforces = """\
-No unused variable is left in (SPEC-baseline, rules aim first at what an agent copies, dead code; S-55): rustc's \
-stock unused_variables lint, run through clippy."""
+No unused variable is left in, since it is dead code and an agent copies what it sees: rustc's stock \
+unused_variables lint, run through clippy."""
 leaves = """\
 Swift: SwiftLint's unused_declaration is an analyzer rule that needs a build log, which the adapter does not run. \
 A name starting with `_`, which rustc takes as unused on purpose. A value assigned and then overwritten before it \
@@ -68,11 +68,11 @@ check = "F401"
 paths = ["**/*.py"]
 severity = "warning"
 enforces = """\
-No unused import is left in (SPEC-baseline, rules aim first at what an agent copies, dead code; S-55): ruff's \
-stock F401, pyflakes' unused import."""
+No unused import is left in, since it is dead code and an agent copies what it sees: ruff's stock F401, \
+pyflakes' unused import."""
 leaves = """\
-A Python function nothing calls: ruff has no such check. An export no other file uses (Tessera's unused-export, \
-S-20). An import named in `__all__` or written `import x as x`, which ruff reads as a re-export even when nothing \
+A Python function nothing calls: ruff has no such check. An export no other file uses (Tessera's unused-export). \
+An import named in `__all__` or written `import x as x`, which ruff reads as a re-export even when nothing \
 imports it from there."""
 fix = "Remove the import."
 failing = { files = ["settings.py"], path = "settings.py", line = 4 }
@@ -86,11 +86,11 @@ check = "F841"
 paths = ["**/*.py"]
 severity = "warning"
 enforces = """\
-No unused local variable is left in (SPEC-baseline, rules aim first at what an agent copies, dead code; S-55): \
-ruff's stock F841, pyflakes' unused variable."""
+No unused local variable is left in, since it is dead code and an agent copies what it sees: ruff's stock \
+F841, pyflakes' unused variable."""
 leaves = """\
-A Python function nothing calls: ruff has no such check. An export no other file uses (Tessera's unused-export, \
-S-20). A name bound by tuple unpacking, a name starting with `_`, and a name at module or class level: F841 checks \
+A Python function nothing calls: ruff has no such check. An export no other file uses (Tessera's unused-export). \
+A name bound by tuple unpacking, a name starting with `_`, and a name at module or class level: F841 checks \
 only plain local assignments."""
 fix = "Remove the assignment, keeping the call on its right if its effect is needed."
 failing = { files = ["orders.py"], path = "orders.py", line = 7 }
@@ -104,8 +104,8 @@ check = "deprecated"
 paths = ["**/*.rs"]
 severity = "warning"
 enforces = """\
-A deprecated path is not still called, since an agent copies the nearest call (SPEC-baseline, rules aim first at \
-what an agent copies; S-55): rustc's stock deprecated lint, run through clippy."""
+A deprecated path is not still called, since an agent copies the nearest call: rustc's stock deprecated lint, \
+run through clippy."""
 leaves = """\
 Swift and Python deprecations, which only a compiler or the runtime reports. An API deprecated only in its docs, \
 without #[deprecated]; an item deprecated from a later version (rustc's deprecated_in_future); a call in code under \
@@ -122,9 +122,8 @@ check = "ast-grep/tm-rust-suppression.yml"
 paths = ["**/*.rs"]
 severity = "warning"
 enforces = """\
-A suppression written in the code is reported, since the rule file is the only home for an exception \
-(SPEC-baseline, a suppression written in the code is reported; note 16, 1.8; S-55): an #[allow(...)] or \
-#![allow(...)] attribute, found by ast-grep."""
+A suppression written in the code is reported, since the rule file is the only home for an exception: an \
+#[allow(...)] or #![allow(...)] attribute, found by ast-grep."""
 leaves = """\
 An #[expect(...)] attribute, an allow built by #[cfg_attr(..., allow(...))] or written inside a macro_rules body \
 (clippy's allow_attributes_without_reason sees those when they carry no reason). A lint level set outside the \
@@ -144,9 +143,8 @@ check = "ast-grep/tm-swift-suppression.yml"
 paths = ["**/*.swift"]
 severity = "warning"
 enforces = """\
-A suppression written in the code is reported, since the rule file is the only home for an exception \
-(SPEC-baseline, a suppression written in the code is reported; note 16, 1.8; S-55): a swiftlint:disable comment \
-in any of its forms (plain, :next, :this, :previous), found by ast-grep."""
+A suppression written in the code is reported, since the rule file is the only home for an exception: a \
+swiftlint:disable comment in any of its forms (plain, :next, :this, :previous), found by ast-grep."""
 leaves = """\
 A rule turned off in .swiftlint.yml (disabled_rules, excluded paths), which is configuration, not code. Other \
 tools' comments in Swift, such as // periphery:ignore. A swiftlint:enable is not reported: its disable is."""
@@ -164,13 +162,12 @@ check = "ast-grep/tm-python-suppression.yml"
 paths = ["**/*.py", "**/*.pyi"]
 severity = "warning"
 enforces = """\
-A suppression written in the code is reported, since the rule file is the only home for an exception \
-(SPEC-baseline, a suppression written in the code is reported; note 16, 1.8; S-55): a noqa (any case, line or \
-file level, ruff: and flake8: forms included), type: ignore or pylint: disable directive, at the start of a \
-comment or after a later #, found by ast-grep."""
+A suppression written in the code is reported, since the rule file is the only home for an exception: a noqa \
+(any case, line or file level, ruff: and flake8: forms included), type: ignore or pylint: disable directive, at the \
+start of a comment or after a later #, found by ast-grep."""
 leaves = """\
 Suppressions in configuration: ruff's ignore and per-file-ignores, mypy's and pylint's settings. Comment forms \
-the SPEC does not list: # pyright: ignore, # nosec, # pragma: no cover, # fmt: off. A directive named in prose \
+this rule does not look for: # pyright: ignore, # nosec, # pragma: no cover, # fmt: off. A directive named in prose \
 (# Explain why a noqa would hide this). Files ast-grep reads as \
 Python under other names (.py3, .bzl): the paths keep to .py and .pyi. An unused noqa: ruff's RUF100 needs the \
 codes it suppresses selected, which tm's one-rule runs do not do."""
@@ -188,12 +185,12 @@ check = "ast-grep/tm-javascript-suppression.yml"
 paths = ["**/*.js", "**/*.mjs", "**/*.cjs", "**/*.jsx"]
 severity = "warning"
 enforces = """\
-A suppression written in the code is reported, since the rule file is the only home for an exception \
-(SPEC-baseline, a suppression written in the code is reported; note 16, 1.8; S-55): an eslint-disable comment in \
-any of its forms (block, -line, -next-line), @ts-ignore or @ts-expect-error, found by ast-grep."""
+A suppression written in the code is reported, since the rule file is the only home for an exception: an \
+eslint-disable comment in any of its forms (block, -line, -next-line), @ts-ignore or @ts-expect-error, found by \
+ast-grep."""
 leaves = """\
-Rules turned off in ESLint's configuration (eslint.config.js, .eslintrc, ignores). Comment forms the SPEC does \
-not list: // @ts-nocheck, // prettier-ignore, /* istanbul ignore */. TypeScript files, which \
+Rules turned off in ESLint's configuration (eslint.config.js, .eslintrc, ignores). Comment forms this rule \
+does not look for: // @ts-nocheck, // prettier-ignore, /* istanbul ignore */. TypeScript files, which \
 tm-typescript-suppression reads; a .tsx file, which ast-grep parses as its own language, is read by neither."""
 fix = """\
 Remove the suppression and fix what it hid; if the finding must stay, record it as an [[exception]] in the rule \
@@ -209,12 +206,12 @@ check = "ast-grep/tm-typescript-suppression.yml"
 paths = ["**/*.ts", "**/*.mts", "**/*.cts"]
 severity = "warning"
 enforces = """\
-A suppression written in the code is reported, since the rule file is the only home for an exception \
-(SPEC-baseline, a suppression written in the code is reported; note 16, 1.8; S-55): an eslint-disable comment in \
-any of its forms (block, -line, -next-line), @ts-ignore or @ts-expect-error, found by ast-grep."""
+A suppression written in the code is reported, since the rule file is the only home for an exception: an \
+eslint-disable comment in any of its forms (block, -line, -next-line), @ts-ignore or @ts-expect-error, found by \
+ast-grep."""
 leaves = """\
 A .tsx file: ast-grep parses it as its own language (tsx), so this rule does not read it. Checks turned off in \
-tsconfig.json or ESLint's configuration. Comment forms the SPEC does not list: // @ts-nocheck, \
+tsconfig.json or ESLint's configuration. Comment forms this rule does not look for: // @ts-nocheck, \
 // prettier-ignore."""
 fix = """\
 Remove the suppression and fix what it hid; if the finding must stay, record it as an [[exception]] in the rule \
@@ -230,12 +227,11 @@ check = "ast-grep/tm-go-suppression.yml"
 paths = ["**/*.go"]
 severity = "warning"
 enforces = """\
-A suppression written in the code is reported, since the rule file is the only home for an exception \
-(SPEC-baseline, a suppression written in the code is reported; note 16, 1.8; S-55): a nolint comment, with or \
-without linter names, found by ast-grep."""
+A suppression written in the code is reported, since the rule file is the only home for an exception: a \
+nolint comment, with or without linter names, found by ast-grep."""
 leaves = """\
-Exclusions in golangci-lint's configuration (.golangci.yml issues and exclusions). Comment forms the SPEC does not \
-list: //lint:ignore (staticcheck), // #nosec (gosec)."""
+Exclusions in golangci-lint's configuration (.golangci.yml issues and exclusions). Comment forms this rule \
+does not look for: //lint:ignore (staticcheck), // #nosec (gosec)."""
 fix = """\
 Remove the suppression and fix what it hid; if the finding must stay, record it as an [[exception]] in the rule \
 file, with its reason and expiry date: that is where an exception lives."""
@@ -250,9 +246,8 @@ check = "ast-grep/tm-c-suppression.yml"
 paths = ["**/*.c", "**/*.h"]
 severity = "warning"
 enforces = """\
-A suppression written in the code is reported, since the rule file is the only home for an exception \
-(SPEC-baseline, a suppression written in the code is reported; note 16, 1.8; S-55): a NOLINT, NOLINTNEXTLINE or \
-NOLINTBEGIN comment, found by ast-grep."""
+A suppression written in the code is reported, since the rule file is the only home for an exception: a \
+NOLINT, NOLINTNEXTLINE or NOLINTBEGIN comment, found by ast-grep."""
 leaves = """\
 Objective-C (.m): ast-grep does not parse it, so a NOLINT there is not seen. A C++ header named .h is read here \
 as C, since ast-grep maps .h to C. A NOLINTEND, whose NOLINTBEGIN is the finding. Checks turned off in \
@@ -271,9 +266,8 @@ check = "ast-grep/tm-cpp-suppression.yml"
 paths = ["**/*.cc", "**/*.cpp", "**/*.cxx", "**/*.hh", "**/*.hpp"]
 severity = "warning"
 enforces = """\
-A suppression written in the code is reported, since the rule file is the only home for an exception \
-(SPEC-baseline, a suppression written in the code is reported; note 16, 1.8; S-55): a NOLINT, NOLINTNEXTLINE or \
-NOLINTBEGIN comment, found by ast-grep."""
+A suppression written in the code is reported, since the rule file is the only home for an exception: a \
+NOLINT, NOLINTNEXTLINE or NOLINTBEGIN comment, found by ast-grep."""
 leaves = """\
 Objective-C and Objective-C++ (.m, .mm): ast-grep does not parse them, so a NOLINT there is not seen. A header \
 named .h, which ast-grep reads as C (tm-c-suppression's), and .hxx, which it does not map to C++. A NOLINTEND, \
@@ -293,9 +287,8 @@ check = "clippy::allow_attributes_without_reason"
 paths = ["**/*.rs"]
 severity = "warning"
 enforces = """\
-A suppression names its reason (SPEC-baseline, a suppression written in the code is reported, the stock no-reason \
-checks of note 17's table; S-55): clippy's stock allow_attributes_without_reason, which also reports #[expect] and \
-an allow built by cfg_attr or a macro."""
+A suppression names its reason: clippy's stock allow_attributes_without_reason, which also reports #[expect] \
+and an allow built by cfg_attr or a macro."""
 leaves = """\
 An allow or expect that names a reason, whatever the reason says. A lint level set outside the code: [lints] in \
 Cargo.toml, -A flags, clippy.toml. Code under a cfg that is off in this build."""
@@ -313,8 +306,7 @@ check = "blanket_disable_command"
 paths = ["**/*.swift"]
 severity = "warning"
 enforces = """\
-A suppression is scoped, not left on for the rest of the file (SPEC-baseline, a suppression written in the code is \
-reported, the stock no-reason checks of note 17's table; S-55): SwiftLint's stock blanket_disable_command."""
+A suppression is scoped, not left on for the rest of the file: SwiftLint's stock blanket_disable_command."""
 leaves = """\
 A scoped disable (:next, :this, :previous), and a disable that a later swiftlint:enable closes, however much code \
 lies between them. A rule turned off in .swiftlint.yml."""
@@ -332,8 +324,7 @@ check = "PGH004"
 paths = ["**/*.py"]
 severity = "warning"
 enforces = """\
-A suppression names what it silences (SPEC-baseline, a suppression written in the code is reported, the stock \
-no-reason checks of note 17's table; S-55): ruff's stock PGH004, a noqa with no rule code."""
+A suppression names what it silences: ruff's stock PGH004, a noqa with no rule code."""
 leaves = """\
 A noqa that names a code, right or wrong for its line. A blanket # type: ignore (ruff's PGH003) and a blanket \
 # pylint: disable. Ignores in ruff's configuration."""
@@ -352,8 +343,8 @@ paths = ["**/*.swift"]
 severity = "warning"
 params = { max_complexity = 10 }
 enforces = """\
-No function with cyclomatic complexity over 10 (SPEC-baseline, the sets, standard@1; note 17): SwiftLint's stock \
-cyclomatic_complexity, its threshold the max_complexity param."""
+No function with cyclomatic complexity over 10: SwiftLint's stock cyclomatic_complexity, its threshold the \
+max_complexity param."""
 leaves = """\
 Nesting depth and function length, which are other rules. SwiftLint counts every case of a switch, so a flat \
 switch over many values is reported as complex while deep nesting with few branches is not."""
@@ -372,8 +363,8 @@ paths = ["**/*.py"]
 severity = "warning"
 params = { max_complexity = 10 }
 enforces = """\
-No function with cyclomatic complexity over 10 (SPEC-baseline, the sets, standard@1; note 17): ruff's stock C901 \
-(mccabe), its threshold the max_complexity param."""
+No function with cyclomatic complexity over 10: ruff's stock C901 (mccabe), its threshold the max_complexity \
+param."""
 leaves = """\
 Nesting depth and function length, which are other rules. Conditions joined with `and` or `or` in one test count \
 as one branch, so a long compound condition is not reported."""
@@ -392,8 +383,8 @@ paths = ["**/*.rs"]
 severity = "warning"
 params = { max_nesting = 6 }
 enforces = """\
-No heavy nesting (SPEC-baseline, the sets, standard@1; note 17): clippy's stock excessive_nesting at max_nesting = 6 \
-(S-56), which leaves a method in an impl four levels of branches and closures."""
+No heavy nesting: clippy's stock excessive_nesting at max_nesting = 6, which leaves a method in an impl four \
+levels of branches and closures."""
 leaves = """\
 Clippy counts every block and item body, so the same code is reported sooner inside an impl or an inline mod than \
 as a free function. Complexity and length, which are other rules."""
@@ -410,7 +401,7 @@ kind = "quality"
 check = "clippy::dbg_macro"
 paths = ["**/*.rs"]
 severity = "warning"
-enforces = "No debug output left in (SPEC-baseline, the sets, standard@1; note 17): clippy's stock dbg_macro."
+enforces = "No debug output left in: clippy's stock dbg_macro."
 leaves = """\
 Other debug output: println!, eprintln! and log calls left in (house@1's print_stdout covers library paths). A dbg! \
 in code under a cfg that is off in this build."""
@@ -425,7 +416,7 @@ kind = "quality"
 check = "T201"
 paths = ["**/*.py"]
 severity = "warning"
-enforces = "No debug output left in (SPEC-baseline, the sets, standard@1; note 17): ruff's stock T201."
+enforces = "No debug output left in: ruff's stock T201."
 leaves = "Other debug output: pprint (ruff's T203), writes to sys.stdout or sys.stderr, and logging calls left in."
 fix = "Remove the print; to tell a user or a log something, use the module's logger."
 failing = { files = ["orders.py"], path = "orders.py", line = 7 }
@@ -438,7 +429,7 @@ kind = "quality"
 check = "E722"
 paths = ["**/*.py"]
 severity = "warning"
-enforces = "No bare except (SPEC-baseline, the sets, standard@1; note 17): ruff's stock E722."
+enforces = "No bare except: ruff's stock E722."
 leaves = """\
 A catch of Exception or BaseException, which tm-python-blind-except reports. A handler of a narrow type that \
 swallows the error with `pass`."""
@@ -453,7 +444,7 @@ kind = "quality"
 check = "BLE001"
 paths = ["**/*.py"]
 severity = "warning"
-enforces = "No blanket except (SPEC-baseline, the sets, standard@1; note 17): ruff's stock BLE001."
+enforces = "No blanket except: ruff's stock BLE001."
 leaves = """\
 A bare except, which tm-python-bare-except reports. A blanket handler that re-raises, or logs with \
 logging.exception or exc_info, which BLE001 accepts."""
@@ -468,7 +459,7 @@ kind = "quality"
 check = "ERA001"
 paths = ["**/*.py"]
 severity = "warning"
-enforces = "No commented-out code (SPEC-baseline, the sets, standard@1; note 17, from pstack): ruff's stock ERA001."
+enforces = "No commented-out code: ruff's stock ERA001."
 leaves = """\
 Commented-out code that ruff's heuristic reads as prose, such as a single word or a call inside a sentence; code \
 kept in a string or a docstring; a block disabled with `if False:`."""
@@ -485,8 +476,8 @@ paths = ["**/*.rs"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added sleep, a wait on the clock in place of the event it stands for: \
+What a change adds is reported, stated as a fact: \
+an added sleep, a wait on the clock in place of the event it stands for: \
 a call of thread::sleep or tokio::time::sleep (with or without std:: or tokio::), found by ast-grep."""
 leaves = """\
 A wait made some other way: a bare sleep(...) after use std::thread::sleep, async_std::task::sleep, sleep_until, \
@@ -505,8 +496,8 @@ paths = ["**/*.swift"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added sleep, a wait on the clock in place of the event it stands for: \
+What a change adds is reported, stated as a fact: \
+an added sleep, a wait on the clock in place of the event it stands for: \
 a call of Thread.sleep or Task.sleep, found by ast-grep."""
 leaves = """\
 A wait made some other way: Darwin's sleep or usleep, DispatchQueue.asyncAfter, RunLoop.run(until:), a \
@@ -526,8 +517,8 @@ paths = ["**/*.py"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added sleep, a wait on the clock in place of the event it stands for: \
+What a change adds is reported, stated as a fact: \
+an added sleep, a wait on the clock in place of the event it stands for: \
 a call of time.sleep or asyncio.sleep, found by ast-grep."""
 leaves = """\
 A wait made some other way: a bare sleep(...) after from time import sleep, time imported under another name, \
@@ -547,8 +538,8 @@ paths = ["**/*.go"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added sleep, a wait on the clock in place of the event it stands for: \
+What a change adds is reported, stated as a fact: \
+an added sleep, a wait on the clock in place of the event it stands for: \
 a call of time.Sleep, found by ast-grep."""
 leaves = """\
 A wait made some other way: <-time.After(d), a time.NewTimer or time.Tick wait, the time package imported under \
@@ -567,8 +558,8 @@ paths = ["**/*.js", "**/*.mjs", "**/*.cjs", "**/*.jsx"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added sleep, a wait on the clock in place of the event it stands for: \
+What a change adds is reported, stated as a fact: \
+an added sleep, a wait on the clock in place of the event it stands for: \
 a call of setTimeout (bare, or on window, globalThis or global), found by ast-grep."""
 leaves = """\
 A wait made some other way: setInterval, a setTimeout imported under another name or called on another object \
@@ -588,8 +579,8 @@ paths = ["**/*.ts", "**/*.mts", "**/*.cts"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added sleep, a wait on the clock in place of the event it stands for: \
+What a change adds is reported, stated as a fact: \
+an added sleep, a wait on the clock in place of the event it stands for: \
 a call of setTimeout (bare, or on window, globalThis or global), found by ast-grep."""
 leaves = """\
 A wait made some other way: setInterval, a setTimeout imported under another name or called on another object \
@@ -610,8 +601,8 @@ paths = ["**/*.rs"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added retry: a call of backoff::retry, backoff::future::retry, \
+What a change adds is reported, stated as a fact: \
+an added retry: a call of backoff::retry, backoff::future::retry, \
 retry::retry, retry or retry_notify; a #[retry] attribute; a loop whose label, for-variable or while condition \
 names a retry or attempt, or a loop or while whose body adds 1 to such a counter; found by ast-grep."""
 leaves = """\
@@ -633,8 +624,8 @@ paths = ["**/*.swift"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added retry: a loop whose label, for-in item or while condition \
+What a change adds is reported, stated as a fact: \
+an added retry: a loop whose label, for-in item or while condition \
 names a retry or attempt, or a while or repeat-while whose body adds 1 to such a counter; found by ast-grep."""
 leaves = """\
 A retry with no telling name: a loop whose counter and label do not say retry or attempt (for _ in 0..<3 around \
@@ -655,8 +646,8 @@ paths = ["**/*.py"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added retry: a @retry decorator (bare, tenacity or retrying), \
+What a change adds is reported, stated as a fact: \
+an added retry: a @retry decorator (bare, tenacity or retrying), \
 @backoff.on_exception or on_predicate, @pytest.mark.flaky; a for loop whose variable names a retry or attempt \
 (tenacity's for attempt in Retrying(...) among them); a while loop whose condition names one, or whose body adds \
 1 to such a counter; found by ast-grep."""
@@ -679,8 +670,8 @@ paths = ["**/*.go"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added retry: a call of retry.Do (and its variants), \
+What a change adds is reported, stated as a fact: \
+an added retry: a call of retry.Do (and its variants), \
 retry.RetryOnConflict, retry.OnError or backoff.Retry (and its variants); a for loop whose label, clause or \
 condition names a retry or attempt, or a range loop whose variables do; a for loop that is not a range loop whose \
 body adds 1 to such a counter; found by ast-grep."""
@@ -702,8 +693,8 @@ paths = ["**/*.js", "**/*.mjs", "**/*.cjs", "**/*.jsx"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added retry: a call of pRetry, promiseRetry, asyncRetry, retry, \
+What a change adds is reported, stated as a fact: \
+an added retry: a call of pRetry, promiseRetry, asyncRetry, retry, \
 jest.retryTimes or this.retries; a loop whose label, for header, for-of or for-in variable or while condition \
 names a retry or attempt, or a for, while or do loop whose body adds 1 to such a counter; found by ast-grep."""
 leaves = """\
@@ -725,8 +716,8 @@ paths = ["**/*.ts", "**/*.mts", "**/*.cts"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added retry: a call of pRetry, promiseRetry, asyncRetry, retry, \
+What a change adds is reported, stated as a fact: \
+an added retry: a call of pRetry, promiseRetry, asyncRetry, retry, \
 jest.retryTimes or this.retries; a loop whose label, for header, for-of or for-in variable or while condition \
 names a retry or attempt, or a for, while or do loop whose body adds 1 to such a counter; found by ast-grep."""
 leaves = """\
@@ -748,8 +739,8 @@ paths = ["**/*.rs"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added skipped test: an #[ignore] attribute, with or without a reason, \
+What a change adds is reported, stated as a fact: \
+an added skipped test: an #[ignore] attribute, with or without a reason, \
 found by ast-grep."""
 leaves = """\
 A test skipped some other way: #[cfg_attr(..., ignore)], a #[cfg(...)] that compiles it out, an early return in \
@@ -768,8 +759,8 @@ paths = ["**/*.swift"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added skipped test: the .disabled trait (with or without a reason or \
+What a change adds is reported, stated as a fact: \
+an added skipped test: the .disabled trait (with or without a reason or \
 a condition) in a @Test or @Suite attribute, or a call of XCTSkip, XCTSkipIf or XCTSkipUnless; found by \
 ast-grep."""
 leaves = """\
@@ -790,8 +781,8 @@ paths = ["**/*.py"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added skipped test: pytest.mark.skip, skipif or xfail (as a \
+What a change adds is reported, stated as a fact: \
+an added skipped test: pytest.mark.skip, skipif or xfail (as a \
 decorator or a pytestmark), pytest.skip, unittest.skip, skipIf or skipUnless, or self.skipTest; found by \
 ast-grep."""
 leaves = """\
@@ -812,8 +803,8 @@ paths = ["**/*.go"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added skipped test: a call of Skip, Skipf or SkipNow inside a function \
+What a change adds is reported, stated as a fact: \
+an added skipped test: a call of Skip, Skipf or SkipNow inside a function \
 that takes a *testing.T, *testing.B, *testing.F or testing.TB, found by ast-grep."""
 leaves = """\
 A test skipped some other way: a build tag that leaves its file out, testing.Short() with an early return, a \
@@ -833,8 +824,8 @@ paths = ["**/*.js", "**/*.mjs", "**/*.cjs", "**/*.jsx"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added skipped test: a call of it.skip, test.skip, describe.skip, xit, \
+What a change adds is reported, stated as a fact: \
+an added skipped test: a call of it.skip, test.skip, describe.skip, xit, \
 xtest or xdescribe, found by ast-grep."""
 leaves = """\
 A test skipped some other way: this.skip() inside a test, it.skip.each, a .only that leaves the rest out, a test \
@@ -854,8 +845,8 @@ paths = ["**/*.ts", "**/*.mts", "**/*.cts"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added skipped test: a call of it.skip, test.skip, describe.skip, xit, \
+What a change adds is reported, stated as a fact: \
+an added skipped test: a call of it.skip, test.skip, describe.skip, xit, \
 xtest or xdescribe, found by ast-grep."""
 leaves = """\
 A test skipped some other way: this.skip() inside a test, it.skip.each, a .only that leaves the rest out, a test \
@@ -875,8 +866,8 @@ paths = ["**/*.rs"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added assertion of a known weak form: assert!(true) or \
+What a change adds is reported, stated as a fact: \
+an added assertion of a known weak form: assert!(true) or \
 assert!(x.is_ok()) alone as the condition, with or without a message, found by ast-grep."""
 leaves = """\
 An assertion deleted, or replaced by one not on the list: assert!(x.is_some()), assert!(x.is_err()), \
@@ -898,8 +889,8 @@ paths = ["**/*.swift"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added assertion of a known weak form: #expect(x != nil), with or \
+What a change adds is reported, stated as a fact: \
+an added assertion of a known weak form: #expect(x != nil), with or \
 without a comment, or XCTAssertNotNil; found by ast-grep."""
 leaves = """\
 An assertion deleted, or replaced by one not on the list: #expect(true), #require(x != nil), XCTAssertTrue(true), \
@@ -919,8 +910,8 @@ paths = ["**/*.py"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added assertion of a known weak form: assert True, with or without a \
+What a change adds is reported, stated as a fact: \
+an added assertion of a known weak form: assert True, with or without a \
 message, found by ast-grep."""
 leaves = """\
 An assertion deleted, or replaced by one not on the list: assert x is not None, self.assertTrue(True), \
@@ -940,8 +931,8 @@ paths = ["**/*.js", "**/*.mjs", "**/*.cjs", "**/*.jsx"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added assertion of a known weak form: expect(x).toBeTruthy() or \
+What a change adds is reported, stated as a fact: \
+an added assertion of a known weak form: expect(x).toBeTruthy() or \
 expect(x).toBeDefined(), found by ast-grep."""
 leaves = """\
 An assertion deleted, or replaced by one not on the list: expect(x).not.toBeNull(), \
@@ -962,8 +953,8 @@ paths = ["**/*.ts", "**/*.mts", "**/*.cts"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added assertion of a known weak form: expect(x).toBeTruthy() or \
+What a change adds is reported, stated as a fact: \
+an added assertion of a known weak form: expect(x).toBeTruthy() or \
 expect(x).toBeDefined(), found by ast-grep."""
 leaves = """\
 An assertion deleted, or replaced by one not on the list: expect(x).not.toBeNull(), \
@@ -985,8 +976,8 @@ paths = ["**/*.rs"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added wider catch: a call of catch_unwind, as a function (any path) or \
+What a change adds is reported, stated as a fact: \
+an added wider catch: a call of catch_unwind, as a function (any path) or \
 as a method on a future, found by ast-grep."""
 leaves = """\
 A catch widened some other way: an error matched by _ or Err(_) where it was matched by kind, a ? swapped for \
@@ -1006,8 +997,8 @@ paths = ["**/*.swift"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added wider catch: a try? or a catch with no pattern, found by \
+What a change adds is reported, stated as a fact: \
+an added wider catch: a try? or a catch with no pattern, found by \
 ast-grep."""
 leaves = """\
 A catch widened some other way: a pattern that names a wide type (catch let error as Error, catch is any Error), \
@@ -1027,8 +1018,8 @@ paths = ["**/*.py"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added wider catch: an except or except* clause naming Exception or \
+What a change adds is reported, stated as a fact: \
+an added wider catch: an except or except* clause naming Exception or \
 BaseException, alone or in a tuple, with or without as, found by ast-grep."""
 leaves = """\
 A catch widened some other way: a bare except: (tm-python-bare-except reports it), builtins.Exception or an alias \
@@ -1048,8 +1039,8 @@ paths = ["**/*.js", "**/*.mjs", "**/*.cjs", "**/*.jsx"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added wider catch: a catch block with no code in it (empty, or \
+What a change adds is reported, stated as a fact: \
+an added wider catch: a catch block with no code in it (empty, or \
 holding only comments), with or without a parameter, found by ast-grep."""
 leaves = """\
 A catch widened some other way: a catch that does something and drops the error (returns a default, logs and \
@@ -1069,8 +1060,8 @@ paths = ["**/*.ts", "**/*.mts", "**/*.cts"]
 severity = "warning"
 only_with_base = true
 enforces = """\
-What a change adds is reported, stated as a fact (SPEC-baseline, the sets version 1, what a change adds; note 17 \
-section 3, last row; note 18 D2 and A2): an added wider catch: a catch block with no code in it (empty, or \
+What a change adds is reported, stated as a fact: \
+an added wider catch: a catch block with no code in it (empty, or \
 holding only comments), with or without a parameter, found by ast-grep."""
 leaves = """\
 A catch widened some other way: a catch that does something and drops the error (returns a default, logs and \
