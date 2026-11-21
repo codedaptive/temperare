@@ -436,9 +436,8 @@ Temperare runs other programs with your privileges, and the rule file decides wh
   cover a stock lint in Rust, Swift and Python, new findings only against a base commit, a house rule in Swift and
   Rust, an absent engine, an exception, a run with nothing but `PATH` and `HOME` set, a security rule, a rule that
   a command is named only inside one kit, and clippy's `warnings` with an `allow` list. They also run
-  `tm baseline test` on the ready sets, which are now `house@1` and `standard@1`. Every one of the 53 rules of
-  `standard@1` held on its own failing and passing cases in the acceptance record, and every one of the 36 rules of
-  `house@1` held on its cases in a recorded run with real engines.
+  `tm baseline test` on the ready sets, `house@1` and `standard@1`, and in the acceptance record all 89 of their
+  rules (36 and 53) hold on their own failing and passing cases.
 - **Platforms:** built and accepted on macOS. The code is written for Unix systems; Linux and Windows are untested.
 - **Not available today:** rules with `engine = "tessera"`; rules naming `golangci-lint`, `pylint`, `clang-tidy` or
   `oclint`, which the rule file accepts before their adapters land; and, in this build, ShellCheck rules (see
