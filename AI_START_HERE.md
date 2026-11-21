@@ -131,7 +131,7 @@ Tell the user what changed: the binary's place, whether `tm` was linked, and eac
 
 | Exit | What you do |
 |---|---|
-| 0 | Nothing. Every rule ran and nothing refuses |
+| 0 | Nothing. Every rule that applies ran and nothing refuses. `not_applicable` lists the rules set aside by the rule file and, without `--base`, the `only_with_base` rules, each with why. A rule that covers no file is in neither list |
 | 1 | Fix the findings. Then check `counts.not_available` and `counts.failed` too: exit 1 does not mean every rule ran |
 | 2 | Fix the command or the rule file. `next` says how. Nothing was checked |
 | 3 | Tell the user which rule and which engine. The code was not fully checked. Do not report it as clean |
