@@ -1,5 +1,6 @@
 //! ZUT for run_change_case.rs, with recording closures: no disk, no git, no engine. Every step the case takes on its
-//! world is logged, so each row shows the order of the writes, the base commit, the run and the folder's removal.
+//! world is logged, so each row shows the order of the writes, the base commit, the run (with the base it was given)
+//! and the folder's removal.
 
 use super::run_change_case::run_change_case;
 use super::BaselineWorld;
@@ -63,9 +64,9 @@ fn run(setup: Setup, failing: bool) -> (CaseVerdict, Vec<String>, String) {
         }
         Ok(BTreeMap::from([(PathBuf::from("a.py"), vec![2..3])]))
     };
-    let run_rules = |rf: &RuleFile, repo: &Path, only: &[RelPath]| {
+    let run_rules = |rf: &RuleFile, repo: &Path, only: &[RelPath], base: Option<&str>| {
         let ids: Vec<&str> = rf.rules.iter().map(|rule| rule.id.as_str()).collect();
-        step(format!("run {} {} {ids:?} {}", rf.folder.display(), repo.display(), only.len()));
+        step(format!("run {} {} {ids:?} {} {base:?}", rf.folder.display(), repo.display(), only.len()));
         CheckedRules {
             runs: vec![RuleRun::new("tm-sleep".to_string(), Engine::AstGrep, setup.outcome.clone(), None)],
             engines: vec![],
@@ -103,7 +104,7 @@ fn run_change_case_rows() {
     let broken = |why: &str| CaseVerdict::Broken { why: why.to_string() };
     let base = "write /case/a.py \"x = 1\\n\"";
     let change = "write /case/a.py \"x = 1\\nsleep(1)\\n\"";
-    let ruled = "run /case /case [\"tm-sleep\"] 0";
+    let ruled = "run /case /case [\"tm-sleep\"] 0 Some(\"b45e\")";
     let rows = [
         (
             "failing: the base holds the passing files, the unchanged line's finding is dropped",

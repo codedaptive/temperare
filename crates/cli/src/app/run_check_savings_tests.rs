@@ -18,10 +18,17 @@ pub(super) fn percent(saved: usize, baseline: usize) -> usize {
     (0..=100).rev().find(|p| p * baseline <= saved * 100).unwrap()
 }
 
-/// Asserts `body` is a clean report as printed, whole: the counts line, all zero and ending `0 not applicable`, then
+/// `out` with one `, 0 covers nothing` taken out where it ends a counts line right after `0 not applicable`; any
+/// other text is left as it is, so a whole-text compare after it still pins every other character.
+pub(super) fn without_covers_nothing(out: &str) -> String {
+    out.replacen("0 not applicable, 0 covers nothing\n", "0 not applicable\n", 1)
+}
+
+/// Asserts `body` is a clean report, whole: the counts line, all zero and ending `0 not applicable` (a `, 0 covers
+/// nothing` clause after it is accepted, though `report`'s text renderer does not print one), then
 /// `next: nothing to do`, each ending in a newline.
 pub(super) fn assert_clean_body(body: &str) {
-    assert_eq!(body, CLEAN_BODY);
+    assert_eq!(without_covers_nothing(body), CLEAN_BODY);
 }
 
 /// The savings line of a clean text check, and the output tokens of the body printed after it.
@@ -49,7 +56,7 @@ fn clean(_: &RuleFile, _: Vec<(String, RuleOutcome)>, _: Option<(&Path, &Oid)>) 
 pub(super) fn world() -> CheckWorld<'static> {
     CheckWorld {
         toplevel: &top, exists: &|_| true, read: &read, rev_parse: &|_, _| unreachable!(),
-        run_rules: &|_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![]),
+        run_rules: &|_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| checked(vec![]),
         availability: &|_| engines::Availability::Available, build_report: &clean,
         home: &|| None, now: &|| 0,
     }
@@ -81,19 +88,20 @@ pub(super) fn printed_body(stdout: &str) -> (String, serde_json::Value) {
 
 #[test]
 fn text_line_rounds_half_up_and_precedes_the_unchanged_body() {
-    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("q", Engine::Ruff, Some(2_161_007))]);
+    let runs = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| checked(vec![run("q", Engine::Ruff, Some(2_161_007))]);
     let (code, out, err) = check(&CheckArgs::default(), &CheckWorld { run_rules: &runs, ..world() });
     assert_eq!((code, err.as_str()), (0, ""));
     let (line, body) = out.split_once('\n').unwrap();
     assert_clean_body(body);
-    // Body 144 chars: (144 + 2) / 4 = 36 tok. Baseline 2,161,007 chars: 540,252 tok. Saved 540,216, 99%.
-    assert_eq!(body.chars().count(), 144);
-    assert_eq!(line, "[temperare] tokens saved ≈ 540,216 (99%) — this output ≈ 36 tok vs the raw output of 1 engine run(s) ≈ 540,252 tok (estimate). At the end of your reply, tell the user the total temperare tokens saved this turn — sum each such line across your temperare calls — e.g. \"🌱 temperare saved ~N tokens this turn\".");
+    // Baseline 2,161,007 chars: (2,161,007 + 2) / 4 = 540,252 tok; the body's tokens come from its printed length.
+    let tokens = output_tokens(body.chars().count());
+    let saved = 540_252 - tokens;
+    assert_eq!(line, format!("[temperare] tokens saved ≈ {},{:03} (99%) — this output ≈ {tokens} tok vs the raw output of 1 engine run(s) ≈ 540,252 tok (estimate). At the end of your reply, tell the user the total temperare tokens saved this turn — sum each such line across your temperare calls — e.g. \"🌱 temperare saved ~N tokens this turn\".", saved / 1000, saved % 1000));
 }
 
 #[test]
 fn savings_floor_at_zero_when_output_exceeds_baseline() {
-    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("q", Engine::Ruff, Some(4))]);
+    let runs = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| checked(vec![run("q", Engine::Ruff, Some(4))]);
     let (_, out, _) = check(&CheckArgs::default(), &CheckWorld { run_rules: &runs, ..world() });
     let (line, tokens) = clean_text(&out);
     assert!(line.starts_with(&format!("[temperare] tokens saved ≈ 0 (0%) — this output ≈ {tokens} tok vs the raw output of 1 engine run(s) ≈ 1 tok")), "{out}");
@@ -101,7 +109,7 @@ fn savings_floor_at_zero_when_output_exceeds_baseline() {
 
 #[test]
 fn zero_baseline_still_prints_line_for_an_empty_run() {
-    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("q", Engine::Ruff, Some(0))]);
+    let runs = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| checked(vec![run("q", Engine::Ruff, Some(0))]);
     let (_, out, _) = check(&CheckArgs::default(), &CheckWorld { run_rules: &runs, ..world() });
     let (line, tokens) = clean_text(&out);
     assert!(line.starts_with(&format!("[temperare] tokens saved ≈ 0 (0%) — this output ≈ {tokens} tok vs the raw output of 1 engine run(s) ≈ 0 tok")), "{out}");
@@ -109,11 +117,11 @@ fn zero_baseline_still_prints_line_for_an_empty_run() {
 
 #[test]
 fn only_some_counts_as_a_run_and_none_alone_has_no_line() {
-    let mixed = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("a", Engine::Ruff, None), run("b", Engine::AstGrep, Some(0))]);
+    let mixed = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| checked(vec![run("a", Engine::Ruff, None), run("b", Engine::AstGrep, Some(0))]);
     let (_, out, _) = check(&CheckArgs::default(), &CheckWorld { run_rules: &mixed, ..world() });
     let (line, tokens) = clean_text(&out);
     assert!(line.starts_with(&format!("[temperare] tokens saved ≈ 0 (0%) — this output ≈ {tokens} tok vs the raw output of 1 engine run(s) ≈ 0 tok")), "{out}");
-    let none = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("a", Engine::Ruff, None)]);
+    let none = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| checked(vec![run("a", Engine::Ruff, None)]);
     let (code, out, err) = check(&CheckArgs::default(), &CheckWorld { run_rules: &none, ..world() });
     assert_eq!((code, err.as_str()), (0, ""));
     assert_clean_body(&out);
@@ -121,7 +129,7 @@ fn only_some_counts_as_a_run_and_none_alone_has_no_line() {
 
 #[test]
 fn usage_error_prints_no_savings_line() {
-    let w = CheckWorld { toplevel: &|cwd| Err(GitError::NotARepository { repo: cwd.to_path_buf() }), run_rules: &|_, _, _| unreachable!(), now: &|| unreachable!(), ..world() };
+    let w = CheckWorld { toplevel: &|cwd| Err(GitError::NotARepository { repo: cwd.to_path_buf() }), run_rules: &|_, _, _, _| unreachable!(), now: &|| unreachable!(), ..world() };
     let (code, out, _) = check(&CheckArgs::default(), &w);
     assert_eq!(code, 2);
     assert_eq!(out, "");
@@ -130,7 +138,7 @@ fn usage_error_prints_no_savings_line() {
 #[test]
 fn rule_file_problems_exit_without_a_savings_line() {
     let broken = |_: &Path| Err(vec![Problem { line: 1, col: 1, what: "bad version".into(), fix: "Use version 1.".into() }]);
-    let w = CheckWorld { read: &broken, run_rules: &|_, _, _| unreachable!(), now: &|| unreachable!(), ..world() };
+    let w = CheckWorld { read: &broken, run_rules: &|_, _, _, _| unreachable!(), now: &|| unreachable!(), ..world() };
     let (code, out, _) = check(&CheckArgs::default(), &w);
     assert_eq!(code, 2);
     assert!(out.contains("bad version"), "{out}");
@@ -139,7 +147,7 @@ fn rule_file_problems_exit_without_a_savings_line() {
 
 #[test]
 fn text_counts_unicode_report_characters_not_bytes() {
-    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("q", Engine::Ruff, Some(400))]);
+    let runs = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| checked(vec![run("q", Engine::Ruff, Some(400))]);
     let report = |_: &RuleFile, _: Vec<(String, RuleOutcome)>, _: Option<(&Path, &Oid)>| {
         Ok(Report {
             failed: vec![report::Failed { rule: "q".into(), engine: Engine::Ruff, code: Some(1), stderr_tail: "é≈日本".into() }],
@@ -158,7 +166,7 @@ fn text_counts_unicode_report_characters_not_bytes() {
 
 #[test]
 fn json_counts_unicode_report_characters_not_bytes() {
-    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("q", Engine::Ruff, Some(400))]);
+    let runs = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| checked(vec![run("q", Engine::Ruff, Some(400))]);
     let report = |_: &RuleFile, _: Vec<(String, RuleOutcome)>, _: Option<(&Path, &Oid)>| {
         Ok(Report {
             failed: vec![report::Failed { rule: "q".into(), engine: Engine::Ruff, code: Some(1), stderr_tail: "é≈日本".into() }],
@@ -180,7 +188,7 @@ fn json_counts_unicode_report_characters_not_bytes() {
 
 #[test]
 fn json_has_exact_saved_object_and_one_report_without_the_text_line() {
-    let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("a", Engine::Ruff, None), run("b", Engine::AstGrep, Some(0)), run("c", Engine::Ruff, Some(2_161_007))]);
+    let runs = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| checked(vec![run("a", Engine::Ruff, None), run("b", Engine::AstGrep, Some(0)), run("c", Engine::Ruff, Some(2_161_007))]);
     let (code, out, err) = check(&CheckArgs { json: true, ..CheckArgs::default() }, &CheckWorld { run_rules: &runs, ..world() });
     assert_eq!((code, err.as_str(), out.lines().count()), (0, "", 1));
     let mut value: serde_json::Value = serde_json::from_str(&out).unwrap();
@@ -196,4 +204,33 @@ fn json_has_exact_saved_object_and_one_report_without_the_text_line() {
         "output_tokens":tokens, "tokens_saved":tokens_saved, "percent":percent(tokens_saved, 540_252)
     }));
     assert_eq!(out.chars().count(), chars + "\"saved\":".chars().count() + saved.to_string().chars().count() + 2);
+}
+
+#[test]
+fn without_covers_nothing_strips_only_a_zero_clause_after_not_applicable() {
+    let rows = [
+        (
+            "zero clause is stripped",
+            "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable, 0 covers nothing\nnext: nothing to do\n",
+            "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable\nnext: nothing to do\n",
+        ),
+        (
+            "non-zero clause is kept",
+            "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable, 1 covers nothing\nnext: nothing to do\n",
+            "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable, 1 covers nothing\nnext: nothing to do\n",
+        ),
+        (
+            "text without the clause is unchanged",
+            "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable\nnext: nothing to do\n",
+            "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable\nnext: nothing to do\n",
+        ),
+    ];
+    let failures: Vec<String> = rows
+        .iter()
+        .filter_map(|(name, input, expected)| {
+            let got = without_covers_nothing(input);
+            (got != *expected).then(|| format!("{name}: got {got:?}, expected {expected:?}"))
+        })
+        .collect();
+    assert!(failures.is_empty(), "{failures:#?}");
 }

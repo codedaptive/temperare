@@ -48,7 +48,7 @@ fn write_case_files_rows() {
             commit_all: &|_| unreachable!("commit_all"),
             added_since: &|_, _| unreachable!("added_since"),
             remove_folder: &|_| unreachable!("remove_folder"),
-            run_rules: &|_, _, _| unreachable!("run_rules"),
+            run_rules: &|_, _, _, _| unreachable!("run_rules"),
         };
         let files: Vec<CaseFile> = names.iter().map(|n| CaseFile { path: n.to_string(), text: "x = 1\n" }).collect();
         let got = write_case_files(Path::new("/case"), &files, &world);

@@ -51,7 +51,7 @@ fn tessera_is_left_out_even_when_found_as_it_has_no_version_probe() {
 
 #[test]
 fn an_engine_with_no_adapter_is_left_out_even_when_found() {
-    let mapped = report_engines(vec![named(Engine::ShellCheck, Some("0.10.0")), named(Engine::Ruff, None)], &found);
+    let mapped = report_engines(vec![named(Engine::Pylint, Some("3.3.1")), named(Engine::Ruff, None)], &found);
     assert_eq!(mapped, vec![entry(Engine::Ruff, None)]);
 }
 

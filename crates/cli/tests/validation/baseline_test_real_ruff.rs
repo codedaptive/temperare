@@ -1,5 +1,5 @@
 //! `run_baseline_test` with the real world and real ruff on a const set `test@1`, in a child of this test binary:
-//! `engines::run_rules_versioned` inherits the process environment, so the child is started through `run_clean`
+//! `engines::run_rules_versioned_at` inherits the process environment, so the child is started through `run_clean`
 //! with only `tm_env`'s variables (HOME a folder the test made) and a marker; the parent reads the exit, the printed
 //! text and the case folders the child made from the child's stdout, between markers.
 

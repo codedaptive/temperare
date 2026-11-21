@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 impl CheckWorld<'static> {
     /// The real world: `procio::toplevel`, `Path::is_file`, `RuleFile::read`, `procio::rev_parse`,
-    /// `engines::run_rules_versioned`, `engines::availability`, `report::build_report`, HOME (`home`) and the clock
+    /// `engines::run_rules_versioned_at`, `engines::availability`, `report::build_report`, HOME (`home`) and the clock
     /// (`now`). Tests pass closures.
     pub fn real() -> CheckWorld<'static> {
         CheckWorld {
@@ -14,7 +14,7 @@ impl CheckWorld<'static> {
             exists: &Path::is_file,
             read: &RuleFile::read,
             rev_parse: &procio::rev_parse,
-            run_rules: &engines::run_rules_versioned,
+            run_rules: &engines::run_rules_versioned_at,
             availability: &engines::availability,
             build_report: &report::build_report,
             home: &home,

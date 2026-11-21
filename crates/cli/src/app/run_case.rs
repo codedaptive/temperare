@@ -30,7 +30,7 @@ pub(crate) fn run_case(
         Err(why) => CaseVerdict::Broken { why },
         Ok(()) => {
             let rf = RuleFile { rules: vec![rule.clone()], ..RuleFile::new(folder.clone()) };
-            let checked = (world.run_rules)(&rf, &folder, &[]);
+            let checked = (world.run_rules)(&rf, &folder, &[], None);
             match checked.runs.iter().find(|run| run.rule == rule.id) {
                 Some(run) => judge_case(failing, &run.outcome, expected),
                 None => CaseVerdict::Broken { why: "the rule was not run".to_string() },

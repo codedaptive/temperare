@@ -8,9 +8,9 @@ use rules::{Engine, Problem, RelPath, RuleFile, RuleOutcome};
 use std::path::{Path, PathBuf};
 
 /// `CheckWorld::real()` wires `procio::toplevel`, `Path::is_file`, `RuleFile::read`, `procio::rev_parse`,
-/// `engines::run_rules_versioned`, `engines::availability`, `report::build_report`, HOME from the environment and the
-/// system clock; a unit test passes closures, so `tm check` is tested without running git or an engine, reading the
-/// disk or the environment, or looking at PATH.
+/// `engines::run_rules_versioned_at` (given the base commit, `None` without one), `engines::availability`,
+/// `report::build_report`, HOME from the environment and the system clock; a unit test passes closures, so `tm check`
+/// is tested without running git or an engine, reading the disk or the environment, or looking at PATH.
 pub struct CheckWorld<'a> {
     /// The top of the repository holding a folder.
     pub toplevel: &'a dyn Fn(&Path) -> Result<PathBuf, GitError>,
@@ -21,9 +21,10 @@ pub struct CheckWorld<'a> {
     /// The commit a revision names in a repository; None when it names none.
     pub rev_parse: &'a dyn Fn(&Path, &str) -> Result<Option<Oid>, GitError>,
     /// Every rule run by its engine over the rule file's folder (relative to the repository), cut to the paths given,
-    /// in rule-file order, each with its engine and the characters its counted run printed; and each distinct engine
-    /// the rules name, once, with its version (None when it could not be read).
-    pub run_rules: &'a dyn Fn(&RuleFile, &Path, &[RelPath]) -> CheckedRules,
+    /// against the base commit given (`None` without one), in rule-file order, each with its engine and the
+    /// characters its counted run printed; and each distinct engine the rules name, once, with its version (None when
+    /// it could not be read).
+    pub run_rules: &'a dyn Fn(&RuleFile, &Path, &[RelPath], Option<&str>) -> CheckedRules,
     /// Whether tm finds an engine here, from a PATH lookup; nothing is run.
     pub availability: &'a dyn Fn(Engine) -> Availability,
     /// The report of the outcomes, new findings only when given `(repository, base commit)`.
