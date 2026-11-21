@@ -1,7 +1,7 @@
 //! `Rule`: one rule, as a `[[rule]]` of the rule file or built by `Rule::new`.
 
 use super::Scope;
-use crate::{Engine, Kind, Severity};
+use crate::{Engine, Kind, RuleCases, Severity};
 
 /// A rule, as read from the rule file or built by `Rule::new`, with its compiled scope. Empty `paths` covers every
 /// file; empty `kits` sets no kit limit; empty `outside_kits` excludes no kit; `kind` is Quality and `severity` Error
@@ -37,4 +37,9 @@ pub struct Rule {
     pub not_applicable: Option<String>,
     /// The rule's ast-grep YAML when the baseline set it came from carries it in tm; None for a repository's own rule.
     pub embedded_text: Option<&'static str>,
+    /// The failing and passing cases a baseline set carries for the rule; None for a repository's own rule.
+    pub embedded_cases: Option<RuleCases>,
+    /// The rule's place, from 0, in the rule file's resolved order (the taken sets' rules in `baseline` order, then
+    /// the file's own), not-applicable rules counted in their place and off rules left out; 0 for `Rule::new`.
+    pub position: usize,
 }

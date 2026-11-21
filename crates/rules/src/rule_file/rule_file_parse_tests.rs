@@ -273,23 +273,35 @@ const SETS: &[BaselineSet] = &[
         name: "standard",
         version: 1,
         text: "version = 1\nretired = [\"tm-s-old\"]\n[[rule]]\nid = \"tm-s1\"\nengine = \"clippy\"\ncheck = \"s1\"\n\
-               fix = \"f\"\npaths = [\"**/*.rs\"]\nparams = { limit = 10, keep = \"k\" }\n",
+               fix = \"f\"\npaths = [\"**/*.rs\"]\nparams = { limit = 10, keep = \"k\" }\n\
+               failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
         yaml: &[],
+        cases: &[("cases/tm-s1/failing/a.rs", "x\n"), ("cases/tm-s1/passing/a.rs", "x\n")],
     },
-    BaselineSet { name: "standard", version: 2, text: "version = 1\n", yaml: &[] },
+    BaselineSet { name: "standard", version: 2, text: "version = 1\n", yaml: &[], cases: &[] },
     BaselineSet {
         name: "house",
         version: 1,
         text: "version = 1\nretired = [\"tm-h-old\"]\n[[rule]]\nid = \"tm-h1\"\nengine = \"ruff\"\ncheck = \"h1\"\nfix = \"f\"\n\
-               [[rule]]\nid = \"tm-h2\"\nengine = \"ast-grep\"\ncheck = \"h2\"\nfix = \"f\"\nrequired_params = [\"entity_types\"]\n",
+               failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n\
+               [[rule]]\nid = \"tm-h2\"\nengine = \"ast-grep\"\ncheck = \"h2\"\nfix = \"f\"\nrequired_params = [\"entity_types\"]\n\
+               failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
         yaml: &[("h2", "rule: h2\n")],
+        cases: &[
+            ("cases/tm-h1/failing/a.rs", "x\n"),
+            ("cases/tm-h1/passing/a.rs", "x\n"),
+            ("cases/tm-h2/failing/a.rs", "x\n"),
+            ("cases/tm-h2/passing/a.rs", "x\n"),
+        ],
     },
-    BaselineSet { name: "broken", version: 1, text: "version = 1\ncolour = 1\n", yaml: &[] },
+    BaselineSet { name: "broken", version: 1, text: "version = 1\ncolour = 1\n", yaml: &[], cases: &[] },
     BaselineSet {
         name: "dup",
         version: 1,
-        text: "version = 1\n[[rule]]\nid = \"tm-s1\"\nengine = \"ruff\"\ncheck = \"other\"\nfix = \"f\"\n",
+        text: "version = 1\n[[rule]]\nid = \"tm-s1\"\nengine = \"ruff\"\ncheck = \"other\"\nfix = \"f\"\n\
+               failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
         yaml: &[],
+        cases: &[("cases/tm-s1/failing/a.rs", "x\n"), ("cases/tm-s1/passing/a.rs", "x\n")],
     },
 ];
 
@@ -474,21 +486,27 @@ const SECURITY_SETS: &[BaselineSet] = &[
     BaselineSet {
         name: "plain",
         version: 1,
-        text: "version = 1\n[[rule]]\nid = \"tm-p1\"\nengine = \"ruff\"\ncheck = \"p1\"\nfix = \"f\"\n",
+        text: "version = 1\n[[rule]]\nid = \"tm-p1\"\nengine = \"ruff\"\ncheck = \"p1\"\nfix = \"f\"\n\
+               failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
         yaml: &[],
+        cases: &[("cases/tm-p1/failing/a.rs", "x\n"), ("cases/tm-p1/passing/a.rs", "x\n")],
     },
     BaselineSet {
         name: "guard",
         version: 1,
-        text: "version = 1\n[[rule]]\nid = \"tm-g1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"g1\"\nfix = \"f\"\n",
+        text: "version = 1\n[[rule]]\nid = \"tm-g1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"g1\"\nfix = \"f\"\n\
+               failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
         yaml: &[],
+        cases: &[("cases/tm-g1/failing/a.rs", "x\n"), ("cases/tm-g1/passing/a.rs", "x\n")],
     },
     BaselineSet {
         name: "guardneeds",
         version: 1,
         text: "version = 1\n[[rule]]\nid = \"tm-n1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"n1\"\nfix = \"f\"\n\
-               required_params = [\"types\"]\n",
+               required_params = [\"types\"]\n\
+               failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
         yaml: &[],
+        cases: &[("cases/tm-n1/failing/a.rs", "x\n"), ("cases/tm-n1/passing/a.rs", "x\n")],
     },
 ];
 
@@ -555,8 +573,10 @@ fn baseline_set_default_for_a_required_param_leaves_the_rule_not_applicable() {
         name: "defaulted",
         version: 1,
         text: "version = 1\n[[rule]]\nid = \"tm-t1\"\nengine = \"ast-grep\"\ncheck = \"t1\"\nfix = \"f\"\n\
-               params = { types = [\"X\"] }\nrequired_params = [\"types\"]\n",
+               params = { types = [\"X\"] }\nrequired_params = [\"types\"]\n\
+               failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
         yaml: &[("t1", "rule: t1\n")],
+        cases: &[("cases/tm-t1/failing/a.rs", "x\n"), ("cases/tm-t1/passing/a.rs", "x\n")],
     }];
     let file = parse_with_sets("version = 1\nbaseline = [\"defaulted@1\"]\n", Path::new("."), &sets)
         .unwrap_or_else(|p| panic!("valid: {p:?}"));
@@ -572,15 +592,19 @@ fn baseline_security_copy_dropped_as_a_duplicate_needs_no_owner() {
         BaselineSet {
             name: "qz",
             version: 1,
-            text: "version = 1\n[[rule]]\nid = \"tm-z1\"\nengine = \"ruff\"\ncheck = \"z1\"\nfix = \"f\"\n",
+            text: "version = 1\n[[rule]]\nid = \"tm-z1\"\nengine = \"ruff\"\ncheck = \"z1\"\nfix = \"f\"\n\
+                   failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
             yaml: &[],
+            cases: &[("cases/tm-z1/failing/a.rs", "x\n"), ("cases/tm-z1/passing/a.rs", "x\n")],
         },
         BaselineSet {
             name: "sz",
             version: 1,
             text: "version = 1\n[[rule]]\nid = \"tm-z1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"z1\"\n\
-                   fix = \"f\"\n",
+                   fix = \"f\"\n\
+                   failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
             yaml: &[],
+            cases: &[("cases/tm-z1/failing/a.rs", "x\n"), ("cases/tm-z1/passing/a.rs", "x\n")],
         },
     ];
     let found = parse_with_sets("version = 1\nbaseline = [\"qz@1\", \"sz@1\"]\n", Path::new("."), &sets)

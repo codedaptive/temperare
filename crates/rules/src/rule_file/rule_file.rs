@@ -11,7 +11,8 @@ pub struct RuleFile {
     pub kits: Vec<Kit>,
     /// The top-level `owner` as written; None when absent, blank or not a string.
     pub owner: Option<String>,
-    /// The rules that apply: the taken baseline sets' rules, with the overrides applied, then the file's own.
+    /// The rules that apply: the taken baseline sets' rules, with the overrides applied, then the file's own. Each
+    /// carries its place in the resolved order in `position`; `rules_in_order` merges these with `not_applicable_rules`.
     pub rules: Vec<Rule>,
     pub exceptions: Vec<Exception>,
     /// The baseline sets the file takes, as "name@version" in file order; empty without a `baseline` key.
@@ -19,6 +20,6 @@ pub struct RuleFile {
     /// The ids the taken sets list as retired, in taken order.
     pub retired: Vec<String>,
     /// The baseline rules that are not applicable, each with its reason in `rule.not_applicable`. The parse keeps
-    /// them out of `rules`.
+    /// them out of `rules`; each carries its place in the resolved order, among `rules`, in `position`.
     pub not_applicable_rules: Vec<Rule>,
 }

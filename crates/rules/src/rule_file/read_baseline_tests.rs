@@ -7,9 +7,9 @@ use toml::de::DeTable;
 
 /// Out of name and version order on purpose, so the sorted lists in the fixes are the code's doing.
 const SETS: &[BaselineSet] = &[
-    BaselineSet { name: "standard", version: 2, text: "version = 1\n# s2\n", yaml: &[] },
-    BaselineSet { name: "standard", version: 1, text: "version = 1\n# s1\n", yaml: &[] },
-    BaselineSet { name: "house", version: 1, text: "version = 1\n# h1\n", yaml: &[] },
+    BaselineSet { name: "standard", version: 2, text: "version = 1\n# s2\n", yaml: &[], cases: &[] },
+    BaselineSet { name: "standard", version: 1, text: "version = 1\n# s1\n", yaml: &[], cases: &[] },
+    BaselineSet { name: "house", version: 1, text: "version = 1\n# h1\n", yaml: &[], cases: &[] },
 ];
 const STANDARD_2: &BaselineSet = &SETS[0];
 const STANDARD_1: &BaselineSet = &SETS[1];

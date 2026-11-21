@@ -11,24 +11,43 @@ const ALPHA: BaselineSet = BaselineSet {
     name: "alpha",
     version: 1,
     text: "version = 1\nretired = [\"tm-old-a\"]\n[[rule]]\nid = \"tm-a1\"\nengine = \"ruff\"\ncheck = \"a1\"\nfix = \"f\"\n\
-           [[rule]]\nid = \"tm-a2\"\nengine = \"ruff\"\ncheck = \"a2\"\nfix = \"f\"\nrequired_params = [\"types\"]\n",
+           failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n\
+           [[rule]]\nid = \"tm-a2\"\nengine = \"ruff\"\ncheck = \"a2\"\nfix = \"f\"\nrequired_params = [\"types\"]\n\
+           failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
     yaml: &[],
+    cases: &[
+        ("cases/tm-a1/failing/a.rs", "x\n"),
+        ("cases/tm-a1/passing/a.rs", "x\n"),
+        ("cases/tm-a2/failing/a.rs", "x\n"),
+        ("cases/tm-a2/passing/a.rs", "x\n"),
+    ],
 };
 const BETA: BaselineSet = BaselineSet {
     name: "beta",
     version: 1,
-    text: "version = 1\nretired = [\"tm-old-b\"]\n[[rule]]\nid = \"tm-b1\"\nengine = \"clippy\"\ncheck = \"b1\"\nfix = \"f\"\n",
+    text: "version = 1\nretired = [\"tm-old-b\"]\n[[rule]]\nid = \"tm-b1\"\nengine = \"clippy\"\ncheck = \"b1\"\nfix = \"f\"\n\
+           failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
     yaml: &[],
+    cases: &[("cases/tm-b1/failing/a.rs", "x\n"), ("cases/tm-b1/passing/a.rs", "x\n")],
 };
 /// Holds `tm-a1` as ALPHA does, with another check.
 const DUP: BaselineSet = BaselineSet {
     name: "dup",
     version: 1,
     text: "version = 1\n[[rule]]\nid = \"tm-d1\"\nengine = \"ruff\"\ncheck = \"d1\"\nfix = \"f\"\n\
-           [[rule]]\nid = \"tm-a1\"\nengine = \"ruff\"\ncheck = \"from-dup\"\nfix = \"f\"\n",
+           failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n\
+           [[rule]]\nid = \"tm-a1\"\nengine = \"ruff\"\ncheck = \"from-dup\"\nfix = \"f\"\n\
+           failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
     yaml: &[],
+    cases: &[
+        ("cases/tm-d1/failing/a.rs", "x\n"),
+        ("cases/tm-d1/passing/a.rs", "x\n"),
+        ("cases/tm-a1/failing/a.rs", "x\n"),
+        ("cases/tm-a1/passing/a.rs", "x\n"),
+    ],
 };
-const BROKEN: BaselineSet = BaselineSet { name: "broken", version: 2, text: "version = 1\ncolour = 1\n", yaml: &[] };
+const BROKEN: BaselineSet =
+    BaselineSet { name: "broken", version: 2, text: "version = 1\ncolour = 1\n", yaml: &[], cases: &[] };
 
 /// Two entries: the first string starts at byte 12 (column 13), the second at byte 23 (column 24); the override's
 /// rule string at byte 55 (line 3, column 8).
@@ -132,23 +151,29 @@ fn a_set_with_its_own_problem_is_a_problem_at_its_entry_and_gives_nothing() {
 const SEC: BaselineSet = BaselineSet {
     name: "sec",
     version: 1,
-    text: "version = 1\n[[rule]]\nid = \"tm-x1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"x1\"\nfix = \"f\"\n",
+    text: "version = 1\n[[rule]]\nid = \"tm-x1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"x1\"\nfix = \"f\"\n\
+           failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
     yaml: &[],
+    cases: &[("cases/tm-x1/failing/a.rs", "x\n"), ("cases/tm-x1/passing/a.rs", "x\n")],
 };
 /// Another security rule, `tm-y1`.
 const SEC2: BaselineSet = BaselineSet {
     name: "sec2",
     version: 1,
-    text: "version = 1\n[[rule]]\nid = \"tm-y1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"y1\"\nfix = \"f\"\n",
+    text: "version = 1\n[[rule]]\nid = \"tm-y1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"y1\"\nfix = \"f\"\n\
+           failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
     yaml: &[],
+    cases: &[("cases/tm-y1/failing/a.rs", "x\n"), ("cases/tm-y1/passing/a.rs", "x\n")],
 };
 /// A security rule, `tm-n1`, that needs the param `types`.
 const SEC_NEEDS: BaselineSet = BaselineSet {
     name: "secneeds",
     version: 1,
     text: "version = 1\n[[rule]]\nid = \"tm-n1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"n1\"\nfix = \"f\"\n\
-           required_params = [\"types\"]\n",
+           required_params = [\"types\"]\n\
+           failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
     yaml: &[],
+    cases: &[("cases/tm-n1/failing/a.rs", "x\n"), ("cases/tm-n1/passing/a.rs", "x\n")],
 };
 
 #[test]
@@ -200,11 +225,14 @@ const DEFAULTED: BaselineSet = BaselineSet {
     name: "defaulted",
     version: 1,
     text: "version = 1\n[[rule]]\nid = \"tm-t1\"\nengine = \"ast-grep\"\ncheck = \"t1\"\nfix = \"f\"\n\
-           params = { types = [\"X\"] }\nrequired_params = [\"types\"]\n",
+           params = { types = [\"X\"] }\nrequired_params = [\"types\"]\n\
+           failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
     yaml: &[("t1", "rule: t1\n")],
+    cases: &[("cases/tm-t1/failing/a.rs", "x\n"), ("cases/tm-t1/passing/a.rs", "x\n")],
 };
 /// Retires `tm-b1`, which BETA gives.
-const RETIRES_B1: BaselineSet = BaselineSet { name: "ret", version: 1, text: "version = 1\nretired = [\"tm-b1\"]\n", yaml: &[] };
+const RETIRES_B1: BaselineSet =
+    BaselineSet { name: "ret", version: 1, text: "version = 1\nretired = [\"tm-b1\"]\n", yaml: &[], cases: &[] };
 
 #[test]
 fn a_set_default_does_not_give_a_required_param() {
@@ -244,15 +272,19 @@ fn an_id_given_by_the_first_set_and_retired_by_the_second_is_a_problem_at_the_se
 const QZ: BaselineSet = BaselineSet {
     name: "qz",
     version: 1,
-    text: "version = 1\n[[rule]]\nid = \"tm-z1\"\nengine = \"ruff\"\ncheck = \"z1\"\nfix = \"f\"\n",
+    text: "version = 1\n[[rule]]\nid = \"tm-z1\"\nengine = \"ruff\"\ncheck = \"z1\"\nfix = \"f\"\n\
+           failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
     yaml: &[],
+    cases: &[("cases/tm-z1/failing/a.rs", "x\n"), ("cases/tm-z1/passing/a.rs", "x\n")],
 };
 /// `tm-z1` as a security rule.
 const SZ: BaselineSet = BaselineSet {
     name: "sz",
     version: 1,
-    text: "version = 1\n[[rule]]\nid = \"tm-z1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"z1\"\nfix = \"f\"\n",
+    text: "version = 1\n[[rule]]\nid = \"tm-z1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"z1\"\nfix = \"f\"\n\
+           failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
     yaml: &[],
+    cases: &[("cases/tm-z1/failing/a.rs", "x\n"), ("cases/tm-z1/passing/a.rs", "x\n")],
 };
 
 #[test]
@@ -267,4 +299,24 @@ fn a_security_copy_dropped_as_a_duplicate_is_not_in_force() {
     assert_eq!(out, vec![expected]);
     assert_eq!(ids(&resolved.rules), vec!["tm-z1"]);
     assert_eq!(resolved.security_at, None);
+}
+
+fn placed(rules: &[crate::Rule]) -> Vec<(&str, usize)> {
+    rules.iter().map(|rule| (rule.id.as_str(), rule.position)).collect()
+}
+
+#[test]
+fn set_rules_are_numbered_in_taken_order_with_not_applicable_rules_in_their_place() {
+    let (resolved, out) = resolve(&[&BETA, &ALPHA], &[]);
+    assert_eq!(out, vec![]);
+    assert_eq!(placed(&resolved.rules), vec![("tm-b1", 0), ("tm-a1", 1)]);
+    assert_eq!(placed(&resolved.not_applicable), vec![("tm-a2", 2)]);
+}
+
+#[test]
+fn a_rule_turned_off_takes_no_number() {
+    let (resolved, out) = resolve(&[&ALPHA, &BETA], &[OverrideEntry { off: true, ..of("tm-a1") }]);
+    assert_eq!(out, vec![]);
+    assert_eq!(placed(&resolved.rules), vec![("tm-b1", 1)]);
+    assert_eq!(placed(&resolved.not_applicable), vec![("tm-a2", 0)]);
 }
