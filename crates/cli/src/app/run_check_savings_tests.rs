@@ -9,7 +9,7 @@ use rules::{Engine, Problem, RelPath, RuleFile, RuleOutcome};
 use serde_json::json;
 use std::path::{Path, PathBuf};
 
-const COUNTS: &str = "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed";
+const CLEAN_BODY: &str = "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable\nnext: nothing to do\n";
 const TEXT: &str = "version = 1\n[[rule]]\nid = \"q\"\nengine = \"ruff\"\ncheck = \"F401\"\nfix = \"Remove import.\"\n";
 
 pub(super) fn output_tokens(chars: usize) -> usize { (chars + 2) / 4 }
@@ -18,18 +18,10 @@ pub(super) fn percent(saved: usize, baseline: usize) -> usize {
     (0..=100).rev().find(|p| p * baseline <= saved * 100).unwrap()
 }
 
-/// `n` with a comma between each group of three digits.
-fn grouped(n: usize) -> String {
-    if n < 1000 { n.to_string() } else { format!("{},{:03}", grouped(n / 1000), n % 1000) }
-}
-
-/// Asserts `body` is a clean report as printed: two lines, each ending in a newline; the first is the counts line
-/// (`COUNTS`, alone or followed by `, ` and further counts), the second `next: nothing to do`.
+/// Asserts `body` is a clean report as printed, whole: the counts line, all zero and ending `0 not applicable`, then
+/// `next: nothing to do`, each ending in a newline.
 pub(super) fn assert_clean_body(body: &str) {
-    let (counts, next) = body.split_once('\n').unwrap_or_else(|| panic!("{body:?}"));
-    assert_eq!(next, "next: nothing to do\n", "{body:?}");
-    let tail = counts.strip_prefix(COUNTS).unwrap_or_else(|| panic!("{body:?}"));
-    assert!(tail.is_empty() || tail.starts_with(", "), "{body:?}");
+    assert_eq!(body, CLEAN_BODY);
 }
 
 /// The savings line of a clean text check, and the output tokens of the body printed after it.
@@ -92,10 +84,11 @@ fn text_line_rounds_half_up_and_precedes_the_unchanged_body() {
     let runs = |_: &RuleFile, _: &Path, _: &[RelPath]| checked(vec![run("q", Engine::Ruff, Some(2_161_007))]);
     let (code, out, err) = check(&CheckArgs::default(), &CheckWorld { run_rules: &runs, ..world() });
     assert_eq!((code, err.as_str()), (0, ""));
-    let (line, tokens) = clean_text(&out);
-    let saved = 540_252 - tokens;
-    assert_eq!(line, format!("[temperare] tokens saved ≈ {} ({}%) — this output ≈ {tokens} tok vs the raw output of 1 engine run(s) ≈ 540,252 tok (estimate). At the end of your reply, tell the user the total temperare tokens saved this turn — sum each such line across your temperare calls — e.g. \"🌱 temperare saved ~N tokens this turn\".", grouped(saved), percent(saved, 540_252)));
-    assert_eq!((output_tokens(126), grouped(540_220), percent(540_220, 540_252)), (32, "540,220".to_string(), 99));
+    let (line, body) = out.split_once('\n').unwrap();
+    assert_clean_body(body);
+    // Body 144 chars: (144 + 2) / 4 = 36 tok. Baseline 2,161,007 chars: 540,252 tok. Saved 540,216, 99%.
+    assert_eq!(body.chars().count(), 144);
+    assert_eq!(line, "[temperare] tokens saved ≈ 540,216 (99%) — this output ≈ 36 tok vs the raw output of 1 engine run(s) ≈ 540,252 tok (estimate). At the end of your reply, tell the user the total temperare tokens saved this turn — sum each such line across your temperare calls — e.g. \"🌱 temperare saved ~N tokens this turn\".");
 }
 
 #[test]

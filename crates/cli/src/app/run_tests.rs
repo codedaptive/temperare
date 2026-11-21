@@ -1,9 +1,9 @@
-//! ZUT for run.rs: help, version and usage errors (install's and uninstall's included). The Rules and Check arms
-//! reach real git, disk and PATH (the Check arm also HOME and the clock), so run_rules_tests.rs and
-//! run_check_tests.rs (seams) cover them, and the validation target, tests/validation/ (cli_tm.rs, cli_check.rs,
-//! S-28), covers the runs of the built `temperare`. The
-//! Install and Uninstall arms read the real HOME, so no test here reaches them: the zone integration target
-//! tests/install covers run_install and run_uninstall on a temporary HOME.
+//! ZUT for run.rs: help, version and usage errors (install's and uninstall's included). The Rules, Check and Baseline
+//! arms reach real git, disk and PATH (the Check arm also HOME and the clock), so run_rules_tests.rs,
+//! run_check_tests.rs and run_baseline_test_tests.rs (seams) cover them, and the validation target,
+//! tests/validation/ (cli_tm.rs, cli_check.rs, baseline_test_cmd.rs, S-28), covers the runs of the built
+//! `temperare`. The Install and Uninstall arms read the real HOME, so no test here reaches them: the zone integration
+//! target tests/install covers run_install and run_uninstall on a temporary HOME.
 
 use super::run;
 use crate::USAGE;

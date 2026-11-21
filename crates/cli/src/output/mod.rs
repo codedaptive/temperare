@@ -1,7 +1,15 @@
 //! tm's output: the problem line, the next-step text, the `tm rules` listing as text and as JSON, and tm check's
-//! exit code, `--json` object, failed rules' stderr tails and savings estimate (its line and its `saved` JSON), and
-//! the `--version` line.
+//! exit code, `--json` object, failed rules' stderr tails and savings estimate (its line and its `saved` JSON), the
+//! `--version` line, and tm baseline test's results (each case's verdict and each rule's result), exit code,
+//! next-step text, text and `--json` object.
 
+mod baseline_exit;
+mod baseline_json;
+mod baseline_next;
+mod baseline_rule_result;
+mod baseline_rule_result_verdict;
+mod baseline_text;
+mod case_verdict;
 mod check_json;
 mod exit_code;
 mod failed_tails;
@@ -18,6 +26,16 @@ mod serde_name;
 mod tokens_saved_line;
 mod version_text;
 
+#[cfg(test)]
+mod baseline_exit_tests;
+#[cfg(test)]
+mod baseline_json_tests;
+#[cfg(test)]
+mod baseline_next_tests;
+#[cfg(test)]
+mod baseline_rule_result_verdict_tests;
+#[cfg(test)]
+mod baseline_text_tests;
 #[cfg(test)]
 mod check_json_tests;
 #[cfg(test)]
@@ -60,4 +78,10 @@ pub use savings_from::savings_from;
 pub use tokens_saved_line::tokens_saved_line;
 pub use version_text::version_text;
 
+pub(crate) use baseline_exit::baseline_exit;
+pub(crate) use baseline_json::baseline_json;
+pub(crate) use baseline_next::baseline_next;
+pub(crate) use baseline_rule_result::BaselineRuleResult;
+pub(crate) use baseline_text::baseline_text;
+pub(crate) use case_verdict::CaseVerdict;
 pub(crate) use serde_name::serde_name;

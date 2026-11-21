@@ -9,6 +9,7 @@ pub const USAGE: &str = "\
 usage:
 tm check [--rules <path>] [--base <rev>] [--kind quality|security] [--json] [<path>...]
 tm rules [--rules <path>] [--json]
+tm baseline test [--set <name@version>] [--json]
 tm install [--no-place] [--short-name] [--target claude,codex,cursor] [--mode skill] [--location local] [-y]
 tm uninstall
 tm help

@@ -1,9 +1,9 @@
-//! ZUT for parse_args.rs: help and version forms, dispatch to each command (install and uninstall included), flags
-//! given twice, unknown commands.
+//! ZUT for parse_args.rs: help and version forms, dispatch to each command (install, uninstall and baseline
+//! included), flags given twice, unknown commands.
 
 use std::path::PathBuf;
 
-use super::{parse_args, CheckArgs, Command, InstallArgs, RulesArgs, UsageError};
+use super::{parse_args, BaselineArgs, CheckArgs, Command, InstallArgs, RulesArgs, UsageError};
 use crate::Harness;
 
 fn parse(args: &[&str]) -> Result<Command, UsageError> {
@@ -68,6 +68,19 @@ fn check_command() {
             paths: vec![PathBuf::from("src")],
             ..CheckArgs::default()
         }))
+    );
+}
+
+#[test]
+fn baseline_command() {
+    assert_eq!(
+        parse(&["baseline", "test", "--set", "house@1", "--json"]),
+        Ok(Command::Baseline(BaselineArgs { set: Some("house@1".to_string()), json: true }))
+    );
+    assert_eq!(parse(&["baseline"]), Err(error("tm baseline needs a subcommand", "Run tm baseline test.")));
+    assert_eq!(
+        parse(&["baseline", "test", "--json", "--json"]),
+        Err(error("--json given twice", "Give --json once."))
     );
 }
 

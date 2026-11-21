@@ -1,10 +1,13 @@
-//! tm's command line: the parsed command, its arguments (tm install's among them), the usage text and the usage error.
+//! tm's command line: the parsed command, its arguments (tm install's and tm baseline test's among them), the usage
+//! text and the usage error.
 
+mod baseline_args;
 mod check_args;
 mod command;
 mod flag_value;
 mod install_args;
 mod parse_args;
+mod parse_baseline_args;
 mod parse_check_args;
 mod parse_install_args;
 mod parse_rules_args;
@@ -23,6 +26,8 @@ mod install_args_tests;
 #[cfg(test)]
 mod parse_args_tests;
 #[cfg(test)]
+mod parse_baseline_args_tests;
+#[cfg(test)]
 mod parse_check_args_tests;
 #[cfg(test)]
 mod parse_install_args_tests;
@@ -35,6 +40,7 @@ mod usage_error_tests;
 #[cfg(test)]
 mod usage_tests;
 
+pub use baseline_args::BaselineArgs;
 pub use check_args::CheckArgs;
 pub use command::Command;
 pub use install_args::InstallArgs;
