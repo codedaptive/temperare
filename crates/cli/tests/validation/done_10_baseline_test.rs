@@ -1,9 +1,9 @@
 //! Done 10's acceptance check, the baseline: the built `temperare` runs `baseline test --json` over the ready sets tm
-//! tests without `--set` (standard@1 today; house@1 is not ready), in a clean environment with HOME and cwd folders
-//! the test made. It never pins the sets' contents: the answer's `exit` is the process's, `counts.rules` is the length
-//! of `rules`, and no rule is broken. Exit 0 is PASS with every rule holding; exit 3 (an engine absent here, or a case
-//! not applicable, such as one that gives no value for a required param) is NOT RUN, naming each not-available or
-//! not-applicable rule and its why; any other exit fails.
+//! tests without `--set` (whichever sets `rules::baseline_sets` marks ready), in a clean environment with HOME
+//! and cwd folders the test made. It never pins the sets' contents: the answer's `exit` is the process's,
+//! `counts.rules` is the length of `rules`, and no rule is broken. Exit 0 is PASS with every rule holding; exit 3
+//! (an engine absent here, or a case not applicable, such as one that gives no value for a required param) is NOT
+//! RUN, naming each not-available or not-applicable rule and its why; any other exit fails.
 
 use serde_json::Value;
 

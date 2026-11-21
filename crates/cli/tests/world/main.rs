@@ -4,11 +4,12 @@
 //! because there is no separate group for tests between crates: RITs (cli→procio/rules/engines/report) and ZITs. Each
 //! file and case says which. `baseline_git_env` checks isolation from inherited git settings; `check_base_real` runs
 //! the binary against a git rule with and without a base; `baseline_change_real` runs a change-only baseline rule
-//! against real bases.
+//! against real bases. `rules_loosened_real` compares rule files against real git bases.
 
 mod baseline_change_real;
 mod baseline_git_env;
 mod baseline_world_real;
 mod check_base_real;
 mod check_world_real;
+mod rules_loosened_real;
 mod rules_world_real;

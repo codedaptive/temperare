@@ -1,7 +1,8 @@
-//! tm's run: the command line to an exit code, `tm rules` from finding the rule file to the listing, `tm check` from
-//! finding the rule file to the report, `tm baseline test` from the sets' rules to each case's verdict, and
-//! `temperare install` and `uninstall` on the disk.
+//! tm's run: the command line to an exit code, `tm rules` from finding the rule file to the listing or to what it
+//! loosened since a base, `tm check` from finding the rule file to the report, `tm baseline test` from the sets' rules
+//! to each case's verdict, and `temperare install` and `uninstall` on the disk.
 
+mod base_error;
 mod baseline_world;
 mod baseline_world_real;
 mod case_path;
@@ -12,7 +13,9 @@ mod check_world_real;
 mod discover_rule_file;
 mod judge_case;
 mod leftover_folders_next;
+mod now_secs;
 mod only_paths;
+mod read_base_rule_file;
 mod report_engines;
 mod resolve_base;
 mod rule_counts;
@@ -24,6 +27,7 @@ mod run_case;
 mod run_change_case;
 mod run_check;
 mod run_install;
+mod run_loosened;
 mod run_rules;
 mod run_uninstall;
 mod select_rules;
@@ -33,6 +37,8 @@ mod write_failure;
 mod write_problems;
 mod write_usage_error;
 
+#[cfg(test)]
+mod base_error_tests;
 #[cfg(test)]
 mod case_path_tests;
 #[cfg(test)]
@@ -48,7 +54,11 @@ mod judge_case_tests;
 #[cfg(test)]
 mod leftover_folders_next_tests;
 #[cfg(test)]
+mod now_secs_tests;
+#[cfg(test)]
 mod only_paths_tests;
+#[cfg(test)]
+mod read_base_rule_file_tests;
 #[cfg(test)]
 mod report_engines_tests;
 #[cfg(test)]
@@ -73,6 +83,8 @@ mod run_check_not_available_tests;
 mod run_check_tests;
 #[cfg(test)]
 mod run_install_tests;
+#[cfg(test)]
+mod run_loosened_tests;
 #[cfg(test)]
 mod run_rules_tests;
 #[cfg(test)]

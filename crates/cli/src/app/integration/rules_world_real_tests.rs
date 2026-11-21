@@ -1,7 +1,7 @@
 //! RIT for rules_world_real.rs: the Tessera seam of RulesWorld::real() is the real `engines::availability`, which
 //! answers "not available" without a PATH lookup (`engines::availability` gives `availability_from` a `procio::which`
 //! lookup; `availability_from` answers Tessera from its entry's `never` before any lookup). The other seams are tested
-//! in tests/world/rules_world_real.rs (RIT, and ZIT for `exists`).
+//! in tests/world/rules_world_real.rs (RIT, and ZIT for `exists`) and tests/world/rules_loosened_real.rs.
 
 use super::super::RulesWorld;
 use engines::Availability;

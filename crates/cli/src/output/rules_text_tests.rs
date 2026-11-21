@@ -3,11 +3,16 @@
 
 use super::rules_text;
 use engines::Availability;
-use rules::Engine;
+use rules::{Date, Engine};
 use std::path::Path;
 
 fn all_available(_: Engine) -> Availability {
     Availability::Available
+}
+
+/// The day every listing here is taken on, 2026-11-21; the FULL exceptions expire long after it.
+fn day() -> Date {
+    Date::new(2026, 11, 21).unwrap()
 }
 
 fn parse(text: &str) -> rules::RuleFile {
@@ -61,15 +66,16 @@ fn rules_and_exceptions_in_file_order_with_scope_and_optional_what() {
                     no-unwrap  clippy  security  warning  paths: src/**, lib/**  exclude: **/tests/**, **/gen/**  kits: core  available\n\
                     exceptions in force (2):\n  \
                     no-unwrap  src/a.rs  what: unwrap  approved: bob 2026-11-17  reason: Legacy.\n  \
-                    lint-all  src/b.rs  approved: bob 2026-11-16  reason: Generated.\n";
-    assert_eq!(rules_text(Path::new("repo/temperare.toml"), &parse(FULL), &all_available), expected);
+                    lint-all  src/b.rs  approved: bob 2026-11-16  reason: Generated.\n\
+                    exceptions expired (0):\n";
+    assert_eq!(rules_text(Path::new("repo/temperare.toml"), &parse(FULL), &all_available, day()), expected);
 }
 
 #[test]
-fn an_empty_file_prints_both_headers_with_zero() {
+fn an_empty_file_prints_every_header_with_zero() {
     assert_eq!(
-        rules_text(Path::new("t.toml"), &parse("version = 1\n"), &all_available),
-        "rule file: t.toml\nrules (0):\nexceptions in force (0):\n"
+        rules_text(Path::new("t.toml"), &parse("version = 1\n"), &all_available, day()),
+        "rule file: t.toml\nrules (0):\nexceptions in force (0):\nexceptions expired (0):\n"
     );
 }
 
@@ -85,8 +91,9 @@ paths = ["**/*.py"]
 fix = "Shorten the line."
 "#;
     assert_eq!(
-        rules_text(Path::new("t.toml"), &parse(text), &all_available),
-        "rule file: t.toml\nrules (1):\n  lint  ruff  quality  error  paths: **/*.py  available\nexceptions in force (0):\n"
+        rules_text(Path::new("t.toml"), &parse(text), &all_available, day()),
+        "rule file: t.toml\nrules (1):\n  lint  ruff  quality  error  paths: **/*.py  available\nexceptions in force (0):\n\
+         exceptions expired (0):\n"
     );
 }
 
@@ -118,12 +125,13 @@ fix = "Cast safely."
         other => panic!("availability asked for {other:?}"),
     };
     assert_eq!(
-        rules_text(Path::new("t.toml"), &parse(text), &availability),
+        rules_text(Path::new("t.toml"), &parse(text), &availability, day()),
         "rule file: t.toml\n\
          rules (2):\n  \
          py-lint  ruff  quality  error  paths: **/*.py  exclude: gen/**  available\n  \
          no-force-cast  swiftlint  quality  error  paths: all files  kits: app  not available: swiftlint not found on PATH\n\
-         exceptions in force (0):\n"
+         exceptions in force (0):\n\
+         exceptions expired (0):\n"
     );
 }
 
@@ -157,12 +165,13 @@ fix = "Do what clippy says."
 #[test]
 fn outside_kits_follow_the_kits_and_show_alone_when_there_are_no_kits() {
     assert_eq!(
-        rules_text(Path::new("t.toml"), &parse(OUTSIDE), &all_available),
+        rules_text(Path::new("t.toml"), &parse(OUTSIDE), &all_available, day()),
         "rule file: t.toml\n\
          rules (2):\n  \
          no-unwrap  clippy  quality  error  paths: all files  kits: core  outside kits: a, b  available\n  \
          lint-all  clippy  quality  error  paths: all files  outside kits: a  available\n\
-         exceptions in force (0):\n"
+         exceptions in force (0):\n\
+         exceptions expired (0):\n"
     );
 }
 
@@ -181,8 +190,47 @@ kits = ["core"]
 fix = "Do what clippy says."
 "#;
     assert_eq!(
-        rules_text(Path::new("t.toml"), &parse(text), &all_available),
+        rules_text(Path::new("t.toml"), &parse(text), &all_available, day()),
         "rule file: t.toml\nrules (1):\n  lint  clippy  quality  error  paths: all files  kits: core  available\n\
-         exceptions in force (0):\n"
+         exceptions in force (0):\n\
+         exceptions expired (0):\n"
+    );
+}
+
+const EXPIRING: &str = r#"version = 1
+
+[[rule]]
+id = "lint-all"
+engine = "clippy"
+check = "clippy::all"
+fix = "Do what clippy says."
+
+[[exception]]
+rule = "lint-all"
+path = "src/old.rs"
+what = "dead_code"
+reason = "Old."
+approved = "bob 2026-01-02"
+expires = "2026-01-31"
+
+[[exception]]
+rule = "lint-all"
+path = "src/new.rs"
+reason = "New."
+approved = "bob 2026-11-17"
+expires = "2099-12-31"
+"#;
+
+#[test]
+fn an_expired_exception_is_listed_after_the_ones_in_force_with_its_expires_date() {
+    assert_eq!(
+        rules_text(Path::new("t.toml"), &parse(EXPIRING), &all_available, day()),
+        "rule file: t.toml\n\
+         rules (1):\n  \
+         lint-all  clippy  quality  error  paths: all files  available\n\
+         exceptions in force (1):\n  \
+         lint-all  src/new.rs  approved: bob 2026-11-17  reason: New.\n\
+         exceptions expired (1):\n  \
+         lint-all  src/old.rs  what: dead_code  expires: 2026-01-31  approved: bob 2026-01-02  reason: Old.\n"
     );
 }

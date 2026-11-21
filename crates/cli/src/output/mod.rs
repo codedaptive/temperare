@@ -1,4 +1,5 @@
-//! tm's output: the problem line, the next-step text, the `tm rules` listing as text and as JSON, and tm check's
+//! tm's output: the problem line, the next-step text, the `tm rules` listing as text and as JSON (its
+//! exceptions split into in force and expired), what `tm rules --loosened` found as text and as JSON, and tm check's
 //! exit code, `--json` object, failed rules' stderr tails and savings estimate (its line and its `saved` JSON), the
 //! `--version` line, and tm baseline test's results (each case's verdict and each rule's result), exit code,
 //! next-step text, text and `--json` object.
@@ -13,6 +14,8 @@ mod case_verdict;
 mod check_json;
 mod exit_code;
 mod failed_tails;
+mod loosened_json;
+mod loosened_text;
 mod next_step;
 mod problem_line;
 mod problems_json;
@@ -23,6 +26,7 @@ mod saved_json;
 mod savings;
 mod savings_from;
 mod serde_name;
+mod split_exceptions;
 mod tokens_saved_line;
 mod version_text;
 
@@ -43,6 +47,10 @@ mod exit_code_tests;
 #[cfg(test)]
 mod failed_tails_tests;
 #[cfg(test)]
+mod loosened_json_tests;
+#[cfg(test)]
+mod loosened_text_tests;
+#[cfg(test)]
 mod next_step_tests;
 #[cfg(test)]
 mod problem_line_tests;
@@ -59,6 +67,8 @@ mod savings_from_tests;
 #[cfg(test)]
 mod serde_name_tests;
 #[cfg(test)]
+mod split_exceptions_tests;
+#[cfg(test)]
 mod tokens_saved_line_tests;
 #[cfg(test)]
 mod version_text_tests;
@@ -66,6 +76,8 @@ mod version_text_tests;
 pub use check_json::check_json;
 pub use exit_code::exit_code;
 pub use failed_tails::failed_tails;
+pub use loosened_json::loosened_json;
+pub use loosened_text::loosened_text;
 pub use next_step::next_step;
 pub use problem_line::problem_line;
 pub use problems_json::problems_json;

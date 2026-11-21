@@ -67,7 +67,7 @@ fn check(entries: Vec<(NotAvailable, NotAvailableCause)>, json: bool) -> (u8, St
 
 #[test]
 fn clippy_without_a_cargo_project_explains_where_to_put_the_rule_file() {
-    let (code, out, err) = check(vec![unavailable("c", Engine::Clippy, CARGO_WHY, NotAvailableCause::Other)], false);
+    let (code, out, err) = check(vec![unavailable("c", Engine::Clippy, CARGO_WHY, NotAvailableCause::NoCargoProject)], false);
     assert_eq!((code, err.as_str()), (3, ""));
     assert_eq!(
         out.split_inclusive('\n').last().unwrap(),
@@ -80,7 +80,7 @@ fn mixed_unavailable_entries_each_get_their_own_next_step() {
     let (code, out, err) = check(
         vec![
             unavailable("s", Engine::SwiftLint, "swiftlint not found on PATH", NotAvailableCause::EngineNotOnPath),
-            unavailable("c", Engine::Clippy, CARGO_WHY, NotAvailableCause::Other),
+            unavailable("c", Engine::Clippy, CARGO_WHY, NotAvailableCause::NoCargoProject),
             unavailable("t", Engine::Tessera, "Tessera's slop records are not defined yet", NotAvailableCause::Other),
         ],
         false,
@@ -94,7 +94,7 @@ fn mixed_unavailable_entries_each_get_their_own_next_step() {
 
 #[test]
 fn json_next_explains_clippy_without_a_cargo_project() {
-    let (code, out, err) = check(vec![unavailable("c", Engine::Clippy, CARGO_WHY, NotAvailableCause::Other)], true);
+    let (code, out, err) = check(vec![unavailable("c", Engine::Clippy, CARGO_WHY, NotAvailableCause::NoCargoProject)], true);
     assert_eq!((code, err.as_str()), (3, ""));
     let value: serde_json::Value = serde_json::from_str(&out).unwrap();
     assert_eq!(
