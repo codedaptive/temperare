@@ -1,5 +1,5 @@
 # The baseline set "house", version 1: stricter practices a team opts into, beyond what any team would take.
-# A rule file takes it with `baseline = ["house@1"]` once the set is marked ready (refused until then).
+# A rule file takes it with `baseline = ["house@1"]`.
 # Once released, this version is frozen; a change is version 2.
 # Rules for the code come first, grouped by practice; then nine rules for four warnings that keep tests lean.
 # A rule with required_params carries no value for them here: the repository gives them in an [[override]], and a
@@ -8,7 +8,7 @@
 # lists of strings (type "strings"), each item matched as written, since engines escapes it.
 # The nine test-economy rules (tm-house-test-ratio and tm-house-test-setup-heavier-*, for example) report only against
 # a base, so tm baseline test runs their cases as a change against a base commit it makes.
-# The set is not ready (house_1.rs) until every rule holds.
+# The set is ready: every rule holds on its failing and passing cases.
 
 version = 1
 

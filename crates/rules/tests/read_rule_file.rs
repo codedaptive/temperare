@@ -131,19 +131,19 @@ fn exception_for_matches_rule_path_and_what() {
     assert_eq!(exception.approved, "bob 2026-11-17");
     assert!(file.exception_for(&finding("crates/core/src/a.rs", "stored Bool isPaid on Order")).is_none());
     assert!(file.exception_for(&finding("crates/core/src/b.rs", "stored Bool isArchived on Order")).is_none());
-    assert_eq!(file.exceptions_in_force().len(), 1);
+    assert_eq!(file.exceptions.len(), 1);
 }
 
 const EXCEPTION_FILE: &str = "version = 1\n[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"f\"\n[[exception]]\nrule = \"r\"\npath = \"a.rs\"\nreason = \"legacy\"\napproved = \"reviewer\"\n";
 
 #[test]
-fn exception_with_valid_expiry_is_in_force() {
+fn exception_with_valid_expiry_is_read() {
     let text = format!("{EXCEPTION_FILE}expires = \"2026-12-31\"\n");
     let parsed = RuleFile::parse(&text, Path::new("."));
     assert!(parsed.is_ok(), "valid expiry should not produce problems: {parsed:?}");
     let file = parsed.unwrap();
-    assert_eq!(file.exceptions_in_force().len(), 1);
-    assert_eq!(file.exceptions_in_force()[0].rule, "r");
+    assert_eq!(file.exceptions.len(), 1);
+    assert_eq!(file.exceptions[0].rule, "r");
 }
 
 #[test]
@@ -202,7 +202,7 @@ fn baseline_sets_unknown_set_reports_entry_location_and_fix() {
     let problems = RuleFile::read(&path).expect_err("unknown baseline set must be rejected");
     assert_eq!(
         problems.iter().map(|p| (p.line, p.col, p.what.as_str(), p.fix.as_str())).collect::<Vec<_>>(),
-        vec![(2, 13, "unknown baseline set \"nosuch\"", "Use one of: standard@1.")],
+        vec![(2, 13, "unknown baseline set \"nosuch\"", "Use one of: house@1, standard@1.")],
     );
 }
 

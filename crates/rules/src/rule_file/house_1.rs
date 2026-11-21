@@ -15,8 +15,8 @@ macro_rules! carried {
 pub(crate) const HOUSE_1: BaselineSet = BaselineSet {
     name: "house",
     version: 1,
-    // Not ready until its rules are proven; making it ready is this one line.
-    ready: false,
+    // Ready: every rule holds on its cases, so a rule file may take it.
+    ready: true,
     text: include_str!("../../baseline/house/1/set.toml"),
     yaml: carried![
         "ast-grep/tm-house-no-todo-rust.yml",
