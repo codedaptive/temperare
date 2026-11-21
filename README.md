@@ -202,7 +202,7 @@ The arithmetic, the JSON fields and the log line: [`docs/reference/OUTPUT.md`](d
 |---|---|
 | `tm check [--rules <path>] [--base <rev>] [--kind quality\|security] [--json] [<path>...]` | Runs every rule's engine and prints the report |
 | `tm rules [--rules <path>] [--json]` | Reads and checks the rule file; lists each rule, whether its engine is available, and the exceptions in force. Runs no engine |
-| `tm baseline test [--set <name@version>] [--json]` | Tests the rules of a baseline set built into `tm` (`standard@1` unless `--set` names another) on the cases the set carries, each in a throwaway git repository. Reads no rule file and checks nothing of yours |
+| `tm baseline test [--set <name@version>] [--json]` | Tests the rules of a baseline set built into `tm` (`standard@1` unless `--set` names another) on the cases the set carries, each in a throwaway git repository. Reads no rule file and checks nothing of yours. `--set house@1` is refused, exit 2: that set is not ready |
 | `tm install [--no-place] [--short-name] [--target claude,codex,cursor] [--mode skill] [--location local] [-y]` | Places the binary, links `tm`, offers the harness skill (see [Install](#install)) |
 | `tm uninstall` | Removes what install placed |
 | `tm help` | The usage text. Also `--help`, `-h`, or no arguments |
@@ -270,6 +270,12 @@ An exception names one rule and one file. `reason` and `approved` are required, 
 the findings whose message contains that text. A finding it covers is counted as silenced and left out of the
 findings; the JSON report lists it under `silenced` with the exception that covered it.
 
+A rule file can also take a baseline set, a list of rules built into `tm`: `baseline = ["standard@1"]` at the top
+level adds that set's 53 rules, all at severity `warning`, ahead of the file's own, and an `[[override]]` changes
+one of them (its severity, paths, exclude or params) or turns it off. Their ids start with `tm-`, which a rule of
+your own may not. A second set, `house@1`, is built in and not ready: a rule file that takes it is refused. See
+[Baseline sets](docs/reference/RULE_FILE.md#baseline-sets).
+
 A rule file with a problem is never half-used: `tm` lists every problem as `file:line:col  what  fix`, runs
 nothing, and exits 2.
 
@@ -297,8 +303,8 @@ no file, or is listed under `not_applicable`. Exit 1 does not: read the `not ava
 
 `tm rules` exits 0 when the rule file is good and 2 when it is not. `tm install` and `tm uninstall` exit 0 when
 done, 1 when a step failed, and 2 when used wrongly. `tm baseline test` exits 0 when every rule holds, 1 when a rule
-is broken, 2 when used wrongly or the set is unknown, and 3 when nothing broke but a rule was not available or not
-applicable.
+is broken, 2 when used wrongly or the set is unknown or not ready, and 3 when nothing broke but a rule was not
+available or not applicable.
 
 ## Engines
 
@@ -415,7 +421,9 @@ Temperare runs other programs with your privileges, and the rule file decides wh
 - **Proven:** the acceptance checks run the built binary against real clippy, SwiftLint, ruff and ast-grep. They
   cover a stock lint in Rust, Swift and Python, new findings only against a base commit, a house rule in Swift and
   Rust, an absent engine, an exception, a run with nothing but `PATH` and `HOME` set, a security rule, a rule that
-  a command is named only inside one kit, and clippy's `warnings` with an `allow` list.
+  a command is named only inside one kit, and clippy's `warnings` with an `allow` list. They also run
+  `tm baseline test` on the ready set, and every one of the 53 rules of `standard@1` holds on its own failing and
+  passing cases. `house@1` is not ready and is not run.
 - **Platforms:** built and accepted on macOS. The code is written for Unix systems; Linux and Windows are untested.
 - **Not available today:** rules with `engine = "tessera"`; rules naming `golangci-lint`, `pylint`, `clang-tidy` or
   `oclint`, which the rule file accepts before their adapters land; and, in this build, ShellCheck rules, git rules

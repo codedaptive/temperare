@@ -80,7 +80,8 @@ or the rule's own files could not be used:
 - a clippy `check` that is a lint group or a `rustdoc::` lint;
 - a SwiftLint `check` of `custom_rules`;
 - a ruff `check` with a part that is not a rule code, a code prefix or `ALL`;
-- an ast-grep `check` that is not a readable file inside the rule file's folder;
+- an ast-grep `check` that is not a readable file inside the rule file's folder (a baseline set's ast-grep rule
+  apart: its YAML is inside `tm` and no file is read for it, see [ast-grep](#ast-grep));
 - a ShellCheck `check` that is not one code;
 - a git `check` other than `test_ratio`;
 - `params` that cannot be used.
@@ -285,6 +286,12 @@ ast-grep is for rules about the shape of code that no stock linter states: a hou
   folder, fails the rule without waiting on it. And a file with more than one hard link fails the rule, wherever
   the other link is, because Temperare cannot tell where a file's other names are. On other systems only the path
   checks above apply.
+- **A baseline set's rule carries its YAML inside `tm`.** For an ast-grep rule of a set the rule file takes
+  ([`RULE_FILE.md`](RULE_FILE.md#baseline-sets)), `check` names the YAML inside the set, such as
+  `ast-grep/tm-rust-suppression.yml`, and is not a path in your repository. Nothing is read from the rule file's
+  folder for it: none of the file checks above is made, and a file of that name in your repository is not read.
+  The rest is as for your own rule: the YAML's `{{name}}`s are filled from the rule's `params`, the filled copy is
+  written to a temporary file, and `ast-grep scan` runs with it in the rule file's folder.
 - **`params`:** the values for the placeholders in the YAML. Temperare reads your rule file, replaces each
   `{{name}}` with the param of that name, writes the result to a temporary file, runs ast-grep with it and removes
   it:
