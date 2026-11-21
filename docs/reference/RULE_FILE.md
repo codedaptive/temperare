@@ -341,11 +341,14 @@ A covered finding is silenced: it is not among the findings, it does not change 
 exceptions in force: the exceptions that have not expired on the report's day, whether or not one was used in this
 run. An exception still counts on its `expires` day. From the day after it is listed apart instead, as
 `expired: <rule> <path> (expired <YYYY-MM-DD>)` in text and under `expired` in `--json`, and counted as expired
-([`OUTPUT.md`](OUTPUT.md#tm-check-as-text)). `tm rules` still counts every exception in the file, expired ones
-included.
+([`OUTPUT.md`](OUTPUT.md#tm-check-as-text)). `tm rules` judges them on the same day the same way: it lists the
+exceptions in force, then the expired ones with their `expires` date ([`OUTPUT.md`](OUTPUT.md#tm-rules)).
 
 `approved` is text. Temperare records it and does not check who wrote it, so review a change to `temperare.toml` as
-you review code.
+you review code. `tm rules --loosened --base <rev>` lists what a change loosened since that commit: a rule gone or
+not applicable, a severity lowered, paths or kits narrowed, excludes or outside kits widened, an exception added or
+its date moved later or dropped, a baseline set dropped or taken at an older version
+([`OUTPUT.md`](OUTPUT.md#tm-rules---loosened)). It exits 1 when there is one.
 
 ## Who owns a finding
 

@@ -29,6 +29,12 @@ sources.
 - Commands: tm check, tm rules, tm baseline test, tm install, tm uninstall, tm help, tm --version.
 - tm check [--rules <path>] [--base <rev>] [--kind quality|security] [--json] [<path>...]
 - tm rules [--rules <path>] [--json]
+- tm rules --loosened --base <rev> [--rules <path>] [--json]: compares the rule file as committed at <rev> with the
+  working file, baseline sets included, and lists each loosening as {kind, about, before, after}: rule_gone,
+  rule_not_applicable, severity_lowered, path_removed, paths_limited, exclude_added, kit_removed, kits_limited,
+  outside_kit_added, exception_added, expiry_later, expiry_dropped, set_dropped, set_older. Runs no engine. Exits 0
+  nothing loosened; 1 something did; 2 a usage error, a --base that names no commit or has no such rule file, or a
+  problem in either file. --loosened and --base come together.
 - tm baseline test [--set <name@version>] [--json]: tests each rule of the baseline sets built into tm (with no
   --set the ready ones, standard@1; --set names one set, ready or not, such as house@1) on its failing case
   (exactly the expected finding) and its passing case (no finding), each in a throwaway git repository. A rule
@@ -108,7 +114,8 @@ sources.
   person's approval. An agent does not add one on its own. An optional expires = "YYYY-MM-DD" is its last day (UTC):
   from the day after, it silences nothing and tm check lists it as expired: an "expired: <rule> <path> (expired
   <YYYY-MM-DD>)" line, expired in JSON ({rule, path, what|null, expires, reason, approved}) and counts.expired.
-  tm check's exceptions in force counts only the exceptions not expired; tm rules still counts every one.
+  Exceptions in force counts only the exceptions not expired, in tm check and tm rules alike; tm rules lists the
+  expired ones apart (expired and exceptions_expired in JSON, each with expires).
 
 ## What it does not do
 

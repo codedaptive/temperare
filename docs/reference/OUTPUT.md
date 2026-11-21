@@ -4,8 +4,8 @@ What `tm` prints, as text and as JSON, and what each exit code means. Both forms
 
 ## Where output goes
 
-- **stdout:** the result of a check, the `tm rules` listing, the results of `tm baseline test`, the problems of a
-  rule file, the usage text and the version.
+- **stdout:** the result of a check, the `tm rules` listing, what `tm rules --loosened` found, the results of
+  `tm baseline test`, the problems of a rule file, the usage text and the version.
 - **stderr:** a usage error, as two lines: `tm: <what is wrong>` and `next: <what to type instead>`. And, from
   `tm check` when at least one engine ran, one line when the user configuration cannot be used:
   `tm: ignoring ~/.config/temperare/config.toml: <why>` (see [Tokens saved](#tokens-saved)).
@@ -322,7 +322,8 @@ What that order means for a caller:
 - **4** never refuses. A security finding is reported with its severity, its place and its owner, and what happens
   next is the caller's decision.
 
-`tm rules` exits 0 when the rule file is good, whatever the engines' availability, and 2 when it is not. `tm help`
+`tm rules` exits 0 when the rule file is good, whatever the engines' availability and the exceptions' dates, and 2
+when it is not. `tm rules --loosened` has its own codes, under [`tm rules --loosened`](#tm-rules---loosened). `tm help`
 and `tm --version` exit 0. `tm baseline test` has its own codes, under [`tm baseline test`](#tm-baseline-test).
 
 `tm install` and `tm uninstall` have their own three codes, and 1 does not mean a finding there:
@@ -420,6 +421,8 @@ rules (3):
   file-erosion  tessera  quality  error  paths: all files  not available: Tessera's slop records are not defined yet
 exceptions in force (1):
   no-none-compare  legacy.py  what: Comparison to  approved: who approved it  reason: the legacy module is rewritten in 2.0
+exceptions expired (1):
+  no-none-compare  old_api.py  expires: 2026-06-30  approved: who approved it  reason: old_api.py goes in 1.4
 next: nothing to do
 ```
 
@@ -427,6 +430,12 @@ Each rule line is the id, the engine, the kind, the severity, the scope and the 
 rule's `paths` (`all files` when it has none), then `exclude:`, `kits:` and `outside kits:`, each only when the
 rule has it. Availability is a look on `PATH`; no engine is run. Each exception line is the rule, the path, `what:`
 when the exception has one, who approved it and the reason.
+
+The exceptions are judged on today's date in UTC, as `tm check` judges them: in force are those that have not
+expired, an exception still counting on its `expires` day; expired are those whose `expires` day has passed, each
+line with `expires:` before who approved it. Each exception is in one list, never both, and each list keeps the
+file's order. Both headers are always printed with their count, `(0)` included. An expired exception does not
+change the exit code: `tm rules` lists, it does not check.
 
 When the rule file takes a baseline set ([`RULE_FILE.md`](RULE_FILE.md#baseline-sets)), the set's rules are listed
 first, in `baseline` order and then each set's own order, with the file's overrides applied; the file's own rules
@@ -441,9 +450,94 @@ names its set, and its id starts with `tm-`. Two kinds of set rule are not liste
 |---|---|
 | `rule_file` | The rule file that was read |
 | `rules` | Each rule: `id`, `engine`, `kind`, `severity`, `check`, `paths`, `exclude`, `kits`, `outside_kits` (each of the four an array, empty when the rule has none), `available` (true or false) and `why` (the reason when not available, else `null`). For an ast-grep rule of a baseline set, `check` is the YAML's path inside the set, such as `ast-grep/tm-rust-suppression.yml`, not a file in your repository |
-| `exceptions` | Each exception: `rule`, `path`, `reason`, `approved`, and `what` when it has one (left out otherwise) |
-| `exceptions_in_force` | How many exceptions there are, expired ones included (unlike `tm check`'s count) |
+| `exceptions` | Each exception in force: `rule`, `path`, `reason`, `approved`, and `what` when it has one (left out otherwise) |
+| `exceptions_in_force` | How many exceptions are in force, as `tm check` counts them: those not expired today (UTC) |
+| `expired` | Each expired exception: the same fields, and `expires` as `"YYYY-MM-DD"` |
+| `exceptions_expired` | How many exceptions have expired |
 | `exit`, `next` | As for `tm check` |
+
+## `tm rules --loosened`
+
+`tm rules --loosened --base <rev> [--rules <path>] [--json]` says how the rule file was loosened since a commit. It
+finds the rule file as `tm rules` does, reads it as committed at `<rev>` (the file of the same name in the same
+folder) and as it is now in your working tree, each with the baseline sets it takes, and lists every way the second
+is looser than the first. It runs no engine and checks no code. Who must approve a loosening is the caller's
+decision.
+
+```
+rule file: /path/to/temperare.toml
+base: main
+loosened (4):
+  rule_gone  tm-rust-dead-code
+  severity_lowered  no-none-compare  before: error  after: warning
+  path_removed  no-none-compare  before: src/**
+  exception_added  no-none-compare  after: legacy.py (Comparison to)
+next: have each loosening above approved, or undo it in /path/to/temperare.toml
+```
+
+The base as given, the count, then one line per loosening: its kind, what it is about, then `before:` and `after:`,
+each only when the kind has it. With nothing loosened the list is `loosened (0):` and the `next:` line is
+`next: nothing to do`.
+
+| Kind | Found when | About | `before` | `after` |
+|---|---|---|---|---|
+| `rule_gone` | A rule in force at the base is not in the rule file now: removed, turned off by an `[[override]]`, in a set no longer taken, or dropped by the set's newer version | the rule | | |
+| `rule_not_applicable` | A set's rule in force at the base is not applicable now, because a param it requires is not given | the rule | | the why |
+| `severity_lowered` | A rule's severity went from `error` to `warning` | the rule | `error` | `warning` |
+| `path_removed` | A pattern of the base's `paths` is not in now's `paths`, which name some | the rule | the pattern | |
+| `paths_limited` | The base's rule had no `paths` (every file) and now's has some | the rule | | now's patterns, joined by `, ` |
+| `exclude_added` | Now's `exclude` has a pattern the base's did not | the rule | | the pattern |
+| `kit_removed` | A kit of the base's `kits` is not in now's `kits`, which name some | the rule | the kit | |
+| `kits_limited` | The base's rule had no `kits` and now's has some | the rule | | now's kits, joined by `, ` |
+| `outside_kit_added` | Now's `outside_kits` has a kit the base's did not | the rule | | the kit |
+| `exception_added` | An exception now that no exception at the base covers | the exception's rule | | its path, with its `what` in parentheses when it has one |
+| `expiry_later` | An exception's `expires` is later than at the base | the exception's rule | the base's date | now's date |
+| `expiry_dropped` | An exception has no `expires` now where it had one at the base | the exception's rule | the base's date | |
+| `set_dropped` | A baseline set taken at the base is not taken now | the set's name | its version | |
+| `set_older` | A baseline set is taken at a lower version now | the set's name | the base's version | now's version |
+
+Rules are compared by id, for each rule in force at the base, in the base's rule order; then the exceptions, in
+now's file order; then the baseline sets, in the base's order. A rule not applicable at the base, and a rule only now
+has, give nothing. Patterns and kits are compared as written, so a rewritten pattern is a `path_removed` (or an
+`exclude_added`). An exception at the base covers one now when it has the same rule and path and its `what` is the
+same or absent, so dropping a `what` is an `exception_added` and adding one is not. When several cover it, the base's
+date is the latest of theirs; when one of them has no `expires`, its date gives nothing. A dropped set's
+rules are each a `rule_gone` as well. A change that tightens the file gives nothing, and changes to `params`,
+`check`, `kind`, `engine`, `only_with_base`, or an exception's `reason` and `approved` are not compared.
+
+`tm rules --loosened --json` prints one object on one line:
+
+```json
+{"base":"main","count":1,"exit":1,"loosened":[{"about":"no-none-compare","after":"warning","before":"error","kind":"severity_lowered"}],"next":"have each loosening in loosened approved, or undo it in /path/to/temperare.toml","rule_file":"/path/to/temperare.toml"}
+```
+
+| Field | Meaning |
+|---|---|
+| `rule_file` | The rule file that was read |
+| `base` | The `--base` as given |
+| `loosened` | Each loosening: `kind`, `about`, and `before` and `after` when the kind has them (left out otherwise) |
+| `count` | How many loosenings there are |
+| `exit`, `next` | The exit code and the text of the `next:` line |
+
+| Code | Meaning | `next:` |
+|---|---|---|
+| 0 | Nothing loosened | `nothing to do` |
+| 1 | Something loosened | `have each loosening above approved, or undo it in <rule file>`; under `--json`, `next` is `have each loosening in loosened approved, or undo it in <rule file>` |
+| 2 | Nothing was compared: a usage error, no rule file, a `--base` that names no commit, a base with no rule file of that name or one that cannot be read, or a problem in either file | The fix for the error |
+
+`--loosened` and `--base` come together: either one alone is a usage error, `tm rules --loosened needs --base <rev>`
+or `--base is only for tm rules --loosened`. The errors of the base:
+
+- `base '<rev>' does not name a commit`, fix `Pass a commit, branch or tag that exists, e.g. --base main.`;
+- `git could not resolve base '<rev>': <why>` (or `git could not read <file> at base '<rev>': <why>`), fix
+  `Run tm rules inside a git repository to use --base.`;
+- `no rule file <file> at base '<rev>'`, fix `Pass a --base that has <file>, or leave --loosened out.`;
+- `<file> at base '<rev>' is not UTF-8 text`, fix `Pass a --base whose <file> is UTF-8 text, or leave --loosened out.`
+
+Each is two lines on stderr, and with `--json` also the object on stdout
+([Errors that stop a run, as JSON](#errors-that-stop-a-run-as-json)). A problem in the rule file at the base is
+listed as for any rule file, its file shown as `<path> (at <rev>)`; the base's problems come first, and now's are
+listed only when the base has none.
 
 ## `tm baseline test`
 
@@ -524,7 +618,7 @@ The exit codes of `tm baseline test`:
 | 0 | Every rule holds | `nothing to do` |
 | 1 | At least one rule is broken | `fix each broken rule or its cases above` |
 | 2 | Used wrongly, or `--set` names a set or version `tm` does not carry. Nothing was tested | The fix for the error |
-| 3 | No rule is broken, and at least one is not available or not applicable | Parts, in this order, joined by `; `: First `install <engine>, <engine>, then run tm baseline test again`, naming once, as a rule file names it, each engine of a not-available rule with a case where one of the engine's own programs is not on `PATH`. Then the why of every other not-available case of those rules, as it is and once each: a missing helper program (`cargo not found on PATH` for clippy, `git not found on PATH` for ShellCheck) and a check the engine does not know are whys, not installs. Last `each not-applicable rule above says why it was not run`, when a rule is not applicable |
+| 3 | No rule is broken, and at least one is not available or not applicable | Parts, in this order, joined by `; `: First `install <engine>, <engine>, then run tm baseline test again`, naming once, as a rule file names it, each engine of a not-available rule with a case where one of the engine's own programs is not on `PATH`. Then the why of every other not-available case of those rules, as it is and once each: a missing helper program (`cargo not found on PATH` for clippy, `git not found on PATH` for ShellCheck) and a check the engine does not know are whys, not installs. A clippy case with no Cargo package gives its why bare, `no Cargo.toml at or above the rule file's folder`, without `tm check`'s advice to move the rule file: the case repositories are `tm`'s own, not yours. Last `each not-applicable rule above says why it was not run`, when a rule is not applicable |
 
 The first that applies wins: 2, 1, 3, 0. Exit 3 is never "holds": a rule that was not run was not tested.
 

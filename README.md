@@ -152,6 +152,7 @@ rule file: /path/to/tm-first-run/temperare.toml
 rules (1):
   no-none-compare  ruff  quality  error  paths: all files  available
 exceptions in force (0):
+exceptions expired (0):
 next: nothing to do
 ```
 
@@ -201,7 +202,8 @@ The arithmetic, the JSON fields and the log line: [`docs/reference/OUTPUT.md`](d
 | Command | What it does |
 |---|---|
 | `tm check [--rules <path>] [--base <rev>] [--kind quality\|security] [--json] [<path>...]` | Runs every rule's engine and prints the report |
-| `tm rules [--rules <path>] [--json]` | Reads and checks the rule file; lists each rule, whether its engine is available, and the exceptions in force. Runs no engine |
+| `tm rules [--rules <path>] [--json]` | Reads and checks the rule file; lists each rule, whether its engine is available, the exceptions in force and those expired. Runs no engine |
+| `tm rules --loosened --base <rev> [--rules <path>] [--json]` | Lists how the rule file was loosened since that commit: a rule gone, a severity lowered, paths narrowed, an exception added or its date moved later, a baseline set dropped, and the rest in [`OUTPUT.md`](docs/reference/OUTPUT.md#tm-rules---loosened). Runs no engine |
 | `tm baseline test [--set <name@version>] [--json]` | Tests the rules of the baseline sets built into `tm` on the cases each set carries, each case in a throwaway git repository. With no `--set` it tests the ready sets (`standard@1`); `--set` tests the one set it names, ready or not, such as `house@1`. Reads no rule file and checks nothing of yours |
 | `tm install [--no-place] [--short-name] [--target claude,codex,cursor] [--mode skill] [--location local] [-y]` | Places the binary, links `tm`, offers the harness skill (see [Install](#install)) |
 | `tm uninstall` | Removes what install placed |
@@ -211,7 +213,7 @@ The arithmetic, the JSON fields and the log line: [`docs/reference/OUTPUT.md`](d
 | Flag | Meaning |
 |---|---|
 | `--rules <path>` | The rule file to read. Without it: `temperare.toml` at the top of the git repository that holds the current folder |
-| `--base <rev>` | A commit, branch or tag. Only findings on lines added since it are reported: lines that differ between that commit and your working tree, committed or not, and every line of an untracked file git does not ignore. Without it, a rule with `only_with_base = true` reports nothing and is listed as not applicable (`not applicable:` in text, `not_applicable` in JSON) |
+| `--base <rev>` | A commit, branch or tag. Only findings on lines added since it are reported: lines that differ between that commit and your working tree, committed or not, and every line of an untracked file git does not ignore. Without it, a rule with `only_with_base = true` reports nothing and is listed as not applicable (`not applicable:` in text, `not_applicable` in JSON). With `tm rules --loosened`, the commit whose rule file the working one is compared with |
 | `--kind quality\|security` | Run only the rules of that kind. `--kind security` is the security rules alone over the tree |
 | `--json` | Print the report as one JSON object on one line |
 | `<path>...` | Files or folders. Findings are cut to these paths. The engines still run over the rule file's whole folder |
@@ -308,7 +310,8 @@ When more than one applies, the first of 2, 1, 5, 3, 4, 6 wins. So exit 0 means 
 `exit` (for exit 6 it names `covers_nothing` where the text says "above"). For a failed rule the text also prints why, under the counts line. The text and JSON shapes in full:
 [`docs/reference/OUTPUT.md`](docs/reference/OUTPUT.md).
 
-`tm rules` exits 0 when the rule file is good and 2 when it is not. `tm install` and `tm uninstall` exit 0 when
+`tm rules` exits 0 when the rule file is good and 2 when it is not. `tm rules --loosened` exits 0 when nothing
+loosened, 1 when something did, and 2 for a bad `--base` or a rule file it cannot read. `tm install` and `tm uninstall` exit 0 when
 done, 1 when a step failed, and 2 when used wrongly. `tm baseline test` exits 0 when every rule holds, 1 when a rule
 is broken, 2 when used wrongly or the set or version is unknown, and 3 when nothing broke but a rule was not
 available or not applicable.
