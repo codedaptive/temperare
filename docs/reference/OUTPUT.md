@@ -29,7 +29,7 @@ src/new.py:2:17  error quality no-none-compare  owner payments
 not available: file-erosion (tessera): Tessera's slop records are not defined yet
 failed: clippy-warnings (clippy), no exit code
 engines: ruff 0.17.4, clippy 0.1.95
-1 findings (1 error, 0 warning; 0 security), 1 silenced, 1 exceptions in force, 1 not available, 1 failed
+1 findings (1 error, 0 warning; 0 security), 1 silenced, 1 exceptions in force, 1 not available, 1 failed, 0 not applicable
 stderr of clippy-warnings (clippy):
   clippy param alow: a clippy rule reads only the `allow`, `max_nesting` param
 next: fix the findings above, or add an approved [[exception]] to /path/to/temperare.toml
@@ -47,19 +47,23 @@ In order:
 2. **One line per rule that was not available:** `not available: <rule id> (<engine>): <why>`.
 3. **One line per rule that failed:** `failed: <rule id> (<engine>), exit <code>`, or `no exit code` when the
    engine did not run to an exit.
-4. **The engines line:** `engines: <engine> <version>, ...`, one entry per engine that ran, in the order the rule
+4. **One line per rule that is not applicable:** `not applicable: <rule id> (<engine>): <why>`, such as a rule with
+   `only_with_base = true` run without `--base`. A not-applicable rule checked nothing, so it is shown here as well
+   as in `--json`.
+5. **The engines line:** `engines: <engine> <version>, ...`, one entry per engine that ran, in the order the rule
    file first names each. An engine that ran is one `tm` found and asked its version, whatever its rules came to: a
    rule refused before its engine ran, or a check the installed engine does not know, still counts. An engine that
-   is absent (not on `PATH`, or with no adapter in this build) is left out and appears only on its rules'
-   `not available:` lines. Tessera is never listed today, since `tm` does not look for it.
+   is absent (not on `PATH`, or with no adapter in this build) is left out, and its rules appear only on their
+   `not available:` or `not applicable:` lines, or not at all when `only_with_base` runs with no `--base`. Tessera is never listed today, since `tm` does not look for it.
    `<engine> (version unknown)` when a found engine gave no version. No line when no engine ran.
-5. **The counts line.**
-6. **Why each failed rule failed:** `stderr of <rule id> (<engine>):`, then the lines of its `stderr_tail`, each
+6. **The counts line,** ending with the number of not-applicable rules, `0` included.
+7. **Why each failed rule failed:** `stderr of <rule id> (<engine>):`, then the lines of its `stderr_tail`, each
    indented two spaces. When there is nothing to show, the one line `stderr of <rule id> (<engine>): (empty)`.
    A run with no failed rule prints none of this.
-7. **The `next:` line.**
+8. **The `next:` line.**
 
-Findings are sorted by path, line, column and rule id; the other lists by rule id. The same results from the
+Findings are sorted by path, line, column and rule id; not-available and failed rules by rule id; not-applicable
+rules in rule-file order. The same results from the
 engines give the same output. A silenced finding is counted on the counts line and not listed.
 
 ## `tm check --json`
@@ -140,7 +144,7 @@ The run above, as `--json` prints it (on one line; wrapped here to read):
 | `silenced_by_rule` | The silenced findings counted by rule: `rule` and `count`, in rule-file order, only rules with any. Always present, `[]` when nothing was silenced |
 | `exceptions_in_force` | How many exceptions the rule file holds, used in this run or not. Always present |
 | `not_available` | Each rule that could not be checked: `rule`, `engine`, `why` |
-| `not_applicable` | Each rule the check does not apply: `rule`, `engine`, `why`. Always present, `[]` when empty. Listed: each not-applicable rule of the rule file (`why` is its reason, or "no reason given"), and, with no `--base`, each rule with `only_with_base` (`why`: "reports only what a change adds; run with --base"). Never a finding and never "not available" |
+| `not_applicable` | Each rule the check does not apply: `rule`, `engine`, `why`. Always present, `[]` when empty, in rule-file order. Listed: each not-applicable rule of the rule file (`why` is its reason, or "no reason given"), and, with no `--base`, each rule with `only_with_base` (`why`: "reports only what a change adds; run with --base"). Never a finding and never "not available" |
 | `failed` | Each rule that failed: `rule`, `engine`, `code` (the engine's exit code, or `null` when it had none or was not run), `stderr_tail` (the last 20 lines of what explains the failure: the engine's stderr, or Temperare's own reason when the engine printed none or was not run) |
 | `base` | The full id of the commit `--base` named. Present only with `--base` |
 | `date` | The day of the check in UTC, as `YYYY-MM-DD`. Always present |
@@ -339,7 +343,8 @@ A finding on an older line is dropped before exceptions are applied, so it is ne
 counted. A `--base` that names no commit is exit 2, never an empty result.
 
 A rule with `only_with_base = true` reports only what a change adds. Without `--base` it reports nothing and is
-listed under `not_applicable`, with the why `reports only what a change adds; run with --base`.
+listed as not applicable (a `not applicable:` line in text, `not_applicable` in JSON), with the why
+`reports only what a change adds; run with --base`.
 
 ## Errors that stop a run, as JSON
 
