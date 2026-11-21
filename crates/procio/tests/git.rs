@@ -266,6 +266,17 @@ fn blob_at_a_missing_rev_is_exit_128() {
     }
 }
 
+#[test]
+fn blob_at_of_a_dot_slash_path_is_relative_to_repo() {
+    let s = repo("blob_at_dot_slash");
+    // A top-relative read would return these different bytes.
+    write(&s.dir, "name", b"top\n");
+    write(&s.dir, "sub/name", b"in sub\n");
+    commit_all(&s.dir, "base");
+    let rev = head(&s.dir);
+    assert_eq!(blob_at(&s.dir.join("sub"), &rev, Path::new("./name")).unwrap(), Some(b"in sub\n".to_vec()));
+}
+
 /// Committed a.sh, sub/b.sh, c.txt and gone.sh; gone.sh is deleted, d.sh untracked and e.sh ignored.
 fn tracked_repo(test: &str) -> Scratch {
     let s = repo(test);
