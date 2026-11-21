@@ -83,9 +83,10 @@ sources.
   test_paths (a list of globs), all three required; shellcheck and tessera take none. A threshold wins
   over the rule's config, and no config file of the repository is changed. The reason is in failed[].stderr_tail.
 - A rule tm can refuse from the rule file alone fails whether or not its engine is installed: every check and param
-  above, except the clippy lint group, an ast-grep rule file that is missing or outside the folder, and ast-grep's
-  {{name}} params, which are refused only in the run. The order a rule settles in: refused, then covers no file,
-  then not available, then the run (docs/reference/ENGINES.md).
+  above, except the clippy lint group, an ast-grep rule file that is missing, cannot be read, or leads out of the
+  folder through a symlink, and ast-grep's {{name}} params, which are refused only in the run. An ast-grep check that
+  is absolute or whose .. climbs above the rule file's folder is refused from the text alone. The order a rule
+  settles in: refused, then covers no file, then not available, then the run (docs/reference/ENGINES.md).
 - A check the installed clippy, swiftlint or ruff does not know (a misspelt name, or one newer than the engine) is
   not available (exit 3), with a why naming the engine, its version and the check.
 - check, by engine: clippy, one lint or warnings; swiftlint, one rule identifier; ruff, a rule code, a code prefix,
