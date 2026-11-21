@@ -3,6 +3,7 @@
 use super::baseline_next;
 use super::baseline_rule_result::BaselineRuleResult;
 use super::case_verdict::CaseVerdict;
+use engines::NotAvailableCause::{self, EngineNotOnPath, HelperNotOnPath, Other, UnknownCheck};
 use rules::Engine;
 
 fn result(rule: &str, engine: Engine, failing: CaseVerdict) -> BaselineRuleResult {
@@ -16,28 +17,29 @@ fn result(rule: &str, engine: Engine, failing: CaseVerdict) -> BaselineRuleResul
 }
 
 /// A rule whose engine is absent: the why engines give when its program is not on PATH (`<program> not found on
-/// PATH`); the program is `Engine::name` except for Clippy (`cargo-clippy`).
+/// PATH`) with the cause `EngineNotOnPath`; the program is `Engine::name` except for Clippy (`cargo-clippy`).
 fn not_available(rule: &str, engine: Engine) -> BaselineRuleResult {
     let program = match engine {
         Engine::Clippy => "cargo-clippy",
         other => other.name(),
     };
-    not_available_why(rule, engine, &format!("{program} not found on PATH"))
+    not_available_why(rule, engine, &format!("{program} not found on PATH"), Some(EngineNotOnPath))
 }
 
-/// A rule whose failing case is not available with `why`.
-fn not_available_why(rule: &str, engine: Engine, why: &str) -> BaselineRuleResult {
-    result(rule, engine, CaseVerdict::NotAvailable { why: why.to_string() })
+/// A rule whose failing case is not available with `why` and `cause`.
+fn not_available_why(rule: &str, engine: Engine, why: &str, cause: Option<NotAvailableCause>) -> BaselineRuleResult {
+    result(rule, engine, CaseVerdict::NotAvailable { why: why.to_string(), cause })
 }
 
 const UNKNOWN_CHECK: &str =
     "ruff 0.4.1 does not know the check `XYZ123`: error: invalid value 'XYZ123' for '--select'";
 
-/// A ruff rule whose installed ruff does not know its check: both cases carry an unknown-check why of the shape `too_old_why` gives.
+/// A ruff rule whose installed ruff does not know its check: both cases carry an unknown-check why of the shape
+/// `too_old_why` gives, with the cause `UnknownCheck`.
 fn unknown_check(rule: &str) -> BaselineRuleResult {
     BaselineRuleResult {
-        passing: CaseVerdict::NotAvailable { why: UNKNOWN_CHECK.to_string() },
-        ..result(rule, Engine::Ruff, CaseVerdict::NotAvailable { why: UNKNOWN_CHECK.to_string() })
+        passing: CaseVerdict::NotAvailable { why: UNKNOWN_CHECK.to_string(), cause: Some(UnknownCheck) },
+        ..not_available_why(rule, Engine::Ruff, UNKNOWN_CHECK, Some(UnknownCheck))
     }
 }
 
@@ -94,22 +96,63 @@ fn baseline_next_text() {
              each not-applicable rule above says why it was not run",
         ),
         (
-            "clippy's helper cargo missing: the why itself, no install",
+            "EngineNotOnPath, clippy's own clippy-driver missing: install clippy",
             3,
-            vec![not_available_why("tm-alpha", Engine::Clippy, "cargo not found on PATH")],
+            vec![not_available_why("tm-alpha", Engine::Clippy, "clippy-driver not found on PATH", Some(EngineNotOnPath))],
+            "install clippy, then run tm baseline test again",
+        ),
+        (
+            "EngineNotOnPath with a why that is not the PATH sentence: install ruff",
+            3,
+            vec![not_available_why("tm-alpha", Engine::Ruff, "the engine's own program is missing", Some(EngineNotOnPath))],
+            "install ruff, then run tm baseline test again",
+        ),
+        (
+            "failing case holds, passing case EngineNotOnPath: the passing case alone asks for the install",
+            3,
+            vec![BaselineRuleResult {
+                passing: CaseVerdict::NotAvailable {
+                    why: "ruff not found on PATH".to_string(),
+                    cause: Some(EngineNotOnPath),
+                },
+                ..result("tm-alpha", Engine::Ruff, CaseVerdict::Holds)
+            }],
+            "install ruff, then run tm baseline test again",
+        ),
+        (
+            "HelperNotOnPath, clippy's helper cargo missing: the why itself, no install",
+            3,
+            vec![not_available_why("tm-alpha", Engine::Clippy, "cargo not found on PATH", Some(HelperNotOnPath))],
             "cargo not found on PATH",
         ),
         (
-            "an engine with no entry missing git: the why itself, no install",
+            "HelperNotOnPath, shellcheck's helper git missing: the why itself, no install",
             3,
-            vec![not_available_why("tm-alpha", Engine::ShellCheck, "git not found on PATH")],
+            vec![not_available_why("tm-alpha", Engine::ShellCheck, "git not found on PATH", Some(HelperNotOnPath))],
             "git not found on PATH",
         ),
         (
-            "clippy's own clippy-driver missing: install clippy",
+            "HelperNotOnPath whose why names the engine's program: the why itself, no install",
             3,
-            vec![not_available_why("tm-alpha", Engine::Clippy, "clippy-driver not found on PATH")],
-            "install clippy, then run tm baseline test again",
+            vec![not_available_why("tm-alpha", Engine::Ruff, "ruff not found on PATH", Some(HelperNotOnPath))],
+            "ruff not found on PATH",
+        ),
+        (
+            "no cause: the why itself, no install",
+            3,
+            vec![not_available_why("tm-alpha", Engine::Ruff, "ruff not found on PATH", None)],
+            "ruff not found on PATH",
+        ),
+        (
+            "Other, no Cargo project: the why itself, no install",
+            3,
+            vec![not_available_why(
+                "tm-alpha",
+                Engine::Clippy,
+                "no Cargo.toml at or above the rule file's folder",
+                Some(Other),
+            )],
+            "no Cargo.toml at or above the rule file's folder",
         ),
     ];
     let wrong: Vec<String> = rows

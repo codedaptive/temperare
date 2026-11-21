@@ -4,7 +4,7 @@
 use super::run_check_savings_tests::without_covers_nothing;
 use super::{run_check, CheckWorld};
 use crate::CheckArgs;
-use engines::{CheckedRules, RuleRun};
+use engines::{CheckedRules, NotAvailableCause, RuleRun};
 use procio::{GitError, Oid};
 use report::{Failed, NotAvailable, Report, ReportError};
 use rules::{Engine, Finding, Kind, Problem, RelPath, RuleFile, RuleOutcome, Severity};
@@ -310,15 +310,20 @@ fn a_quality_error_exits_1_and_names_the_rule_file() {
 
 #[test]
 fn an_absent_engine_exits_3_and_names_it() {
-    let absent = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>| {
-        let rule = |id: &str| NotAvailable {
-            rule: id.to_string(),
-            engine: Engine::SwiftLint,
-            why: "swiftlint not found on PATH".to_string(),
+    let why = || "swiftlint not found on PATH".to_string();
+    let runs = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| {
+        let run = |id: &str| {
+            let outcome = RuleOutcome::NotAvailable { rule: id.to_string(), engine: Engine::SwiftLint, why: why() };
+            RuleRun::new(id.to_string(), Engine::SwiftLint, outcome, None).with_cause(NotAvailableCause::EngineNotOnPath)
         };
+        CheckedRules { runs: vec![run("s1"), run("s2")], engines: vec![] }
+    };
+    let absent = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>| {
+        let rule = |id: &str| NotAvailable { rule: id.to_string(), engine: Engine::SwiftLint, why: why() };
         Ok(report(vec![], vec![rule("s1"), rule("s2")]))
     };
-    let (code, out, err) = check(&CheckArgs::default(), &CheckWorld { build_report: &absent, ..world() });
+    let w = CheckWorld { run_rules: &runs, build_report: &absent, ..world() };
+    let (code, out, err) = check(&CheckArgs::default(), &w);
     assert_eq!((code, err.as_str()), (3, ""));
     assert!(out.ends_with("next: install swiftlint (or run without those rules)\n"), "{out}");
 }

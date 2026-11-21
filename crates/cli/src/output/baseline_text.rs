@@ -42,7 +42,7 @@ fn not_holding(case: &CaseVerdict) -> Option<(&'static str, &str)> {
     match case {
         CaseVerdict::Holds => None,
         CaseVerdict::Broken { why } => Some(("broken", why)),
-        CaseVerdict::NotAvailable { why } => Some(("not available", why)),
+        CaseVerdict::NotAvailable { why, .. } => Some(("not available", why)),
         CaseVerdict::NotApplicable { why } => Some(("not applicable", why)),
     }
 }

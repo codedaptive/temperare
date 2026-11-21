@@ -5,22 +5,25 @@
 use super::run_case::run_case;
 use super::BaselineWorld;
 use crate::output::CaseVerdict;
-use engines::{CheckedRules, RuleRun};
+use engines::{CheckedRules, NotAvailableCause, RuleRun};
 use rules::{CaseFile, Engine, ExpectedFinding, Finding, Kind, RelPath, Rule, RuleFile, RuleOutcome, Severity};
 use std::cell::RefCell;
 use std::io;
 use std::path::{Path, PathBuf};
 
 /// How the world answers: whether make_folder and remove_folder fail, the file name whose write fails, and the
-/// findings the rule's run gives.
+/// findings the rule's run gives; with `not_available` set, the run is not available (`ruff not found on PATH`) with
+/// that cause instead.
 struct Setup {
     make_fails: bool,
     write_fails: Option<&'static str>,
     remove_fails: bool,
     findings: Vec<Finding>,
+    not_available: Option<NotAvailableCause>,
 }
 
-const OK: Setup = Setup { make_fails: false, write_fails: None, remove_fails: false, findings: Vec::new() };
+const OK: Setup =
+    Setup { make_fails: false, write_fails: None, remove_fails: false, findings: Vec::new(), not_available: None };
 
 fn finding(line: u32) -> Finding {
     Finding::new("tm-zeta", (Engine::Ruff, Kind::Quality, Severity::Error), RelPath::new("a.py"), line, None, "w", "f")
@@ -59,8 +62,17 @@ fn run(setup: Setup, files: &[CaseFile]) -> (CaseVerdict, Vec<String>, String) {
         let ids: Vec<&str> = rf.rules.iter().map(|rule| rule.id.as_str()).collect();
         let ran = format!("run {} {} {ids:?} {} {base:?}", rf.folder.display(), repo.display(), only.len());
         log.borrow_mut().push(ran);
-        let outcome = RuleOutcome::Findings(setup.findings.clone());
-        CheckedRules { runs: vec![RuleRun::new("tm-zeta".to_string(), Engine::Ruff, outcome, None)], engines: vec![] }
+        let run = |outcome| RuleRun::new("tm-zeta".to_string(), Engine::Ruff, outcome, None);
+        let run = match setup.not_available {
+            Some(cause) => run(RuleOutcome::NotAvailable {
+                rule: "tm-zeta".to_string(),
+                engine: Engine::Ruff,
+                why: "ruff not found on PATH".to_string(),
+            })
+            .with_cause(cause),
+            None => run(RuleOutcome::Findings(setup.findings.clone())),
+        };
+        CheckedRules { runs: vec![run], engines: vec![] }
     };
     let world = BaselineWorld {
         default_sets: &[],
@@ -103,6 +115,16 @@ fn run_case_removes_the_folder_whatever_the_case_came_to() {
             Setup { findings: vec![finding(2)], ..OK },
             files(&["a.py"]),
             broken("gave tm-zeta at a.py:2; expected tm-zeta at a.py:1"),
+            ran(&["make", "write /case/a.py \"import os\\n\"", "run /case /case [\"tm-zeta\"] 0 None", "remove /case"]),
+        ),
+        (
+            "not available, with the run's cause",
+            Setup { not_available: Some(NotAvailableCause::HelperNotOnPath), ..OK },
+            files(&["a.py"]),
+            CaseVerdict::NotAvailable {
+                why: "ruff not found on PATH".to_string(),
+                cause: Some(NotAvailableCause::HelperNotOnPath),
+            },
             ran(&["make", "write /case/a.py \"import os\\n\"", "run /case /case [\"tm-zeta\"] 0 None", "remove /case"]),
         ),
         (

@@ -24,7 +24,8 @@ fn broken(rule: &str) -> BaselineRuleResult {
 }
 
 fn not_available(rule: &str) -> BaselineRuleResult {
-    result(rule, CaseVerdict::NotAvailable { why: "ruff not found on PATH".to_string() })
+    let cause = Some(engines::NotAvailableCause::EngineNotOnPath);
+    result(rule, CaseVerdict::NotAvailable { why: "ruff not found on PATH".to_string(), cause })
 }
 
 fn not_applicable(rule: &str) -> BaselineRuleResult {

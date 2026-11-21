@@ -1,11 +1,12 @@
-//! ZUT for run_check.rs: the engines the check seam names that the availability seam finds here, each with its version
-//! probe, reach the printed report whatever their rules' outcomes, as text and as JSON, in the order given, and leave
-//! the savings baseline alone.
+//! RIT for run_check.rs with engines' real entries: the engines the check seam names that the availability seam finds
+//! here, each with its version probe, reach the printed report whatever their rules' outcomes, as text and as JSON, in
+//! the order given, and leave the savings baseline alone. run_check maps the engines through report_engines, which
+//! reads each version probe from `engines::entry_for`, so these cases test engines' adapter list as well as cli.
 //! The report seam returns a report with no engines, so every engine printed came from the check seam through
 //! run_check.
 
-use super::run_check_savings_tests::{assert_clean_body, check, printed_body, run, world};
-use super::CheckWorld;
+use super::super::run_check_savings_tests::{assert_clean_body, check, printed_body, run, world};
+use super::super::CheckWorld;
 use crate::CheckArgs;
 use engines::{Availability, CheckedRules, EngineVersion, RuleRun};
 use procio::Oid;

@@ -1,15 +1,16 @@
 //! ZUT for run_baseline_test.rs, with closure worlds: no disk, no engine. The test sets list their rules out of sort
 //! order (tm-zeta before tm-alpha) and the table's default sets name standard@1 before house@1, so a sort would show
-//! in the output. Each row measures the whole printed `out` and `err` as literal strings, and counts the case folders
-//! made and the rule runs. Two tests take the real world with a `rules_of` that returns no rules, so no other seam of
-//! it is called, and read which sets tm tests with and without `--set`.
+//! in the output. Each row measures the whole printed `out` and `err` as literal strings, the sets read, and counts
+//! the case folders made and the rule runs. Which sets tm itself carries and marks ready is rules' data: the RITs in
+//! tests/world/baseline_world_real.rs read it.
 
 use super::run_baseline_test::run_baseline_test;
 use super::BaselineWorld;
-use crate::{BaselineArgs, UsageError};
-use engines::{CheckedRules, RuleRun};
+use crate::BaselineArgs;
+use engines::{CheckedRules, NotAvailableCause, RuleRun};
 use rules::{
-    CaseFile, Engine, ExpectedFinding, Finding, Kind, RelPath, Rule, RuleCases, RuleFile, RuleOutcome, Severity,
+    CaseFile, Engine, ExpectedFinding, Finding, Kind, Problem, RelPath, Rule, RuleCases, RuleFile, RuleOutcome,
+    Severity,
 };
 use std::cell::RefCell;
 use std::collections::BTreeMap;
@@ -35,8 +36,9 @@ fn with_cases(id: &str, engine: Engine) -> Rule {
 
 /// The test sets: standard@1 (tm-zeta, tm-alpha), house@1 (tm-mid), bare@1 (tm-bare, which carries no cases),
 /// change@1 (tm-change, only_with_base, expected at a.py:2), aside@1 (tm-zeta, then tm-x, which carries cases but rules
-/// set aside with ASIDE_WHY); any other set is unknown.
-fn test_set(set: &str) -> Result<Vec<Rule>, UsageError> {
+/// set aside with ASIDE_WHY); empty@1 cannot be read and carries no problem; any other set is unknown, its
+/// first problem at line 2, column 12 of rules' own text, which tm must not print, then a second one.
+fn test_set(set: &str) -> Result<Vec<Rule>, Vec<Problem>> {
     match set {
         "standard@1" => Ok(vec![with_cases("tm-zeta", Engine::Ruff), with_cases("tm-alpha", Engine::AstGrep)]),
         "house@1" => Ok(vec![with_cases("tm-mid", Engine::SwiftLint)]),
@@ -54,10 +56,16 @@ fn test_set(set: &str) -> Result<Vec<Rule>, UsageError> {
             rule.not_applicable = Some(ASIDE_WHY.to_string());
             Ok(vec![with_cases("tm-zeta", Engine::Ruff), rule])
         }
-        _ => Err(UsageError {
-            what: "unknown baseline set \"nosuch\"".to_string(),
-            fix: "Use one of: house.".to_string(),
-        }),
+        "empty@1" => Err(Vec::new()),
+        _ => Err(vec![
+            Problem {
+                line: 2,
+                col: 12,
+                what: "unknown baseline set \"nosuch\"".to_string(),
+                fix: "the test world's fix for nosuch".to_string(),
+            },
+            Problem { line: 3, col: 1, what: "second".to_string(), fix: "not printed".to_string() },
+        ]),
     }
 }
 
@@ -99,14 +107,15 @@ fn alpha_broken_mid_not_available(rule: &str, text: &str) -> RuleOutcome {
     mid_not_available(rule, text)
 }
 
-/// Runs `tm baseline test` with `args` on the test sets, `default_sets` the world's, each case run giving what
-/// `outcome` says for its rule and its file's text; (exit, out, err, the sets read, (the case folders made, the rules
-/// run)).
+/// Runs `tm baseline test` with `args` on the test sets, `default_sets` the world's (name@version, ready), each case
+/// run giving what `outcome` says for its rule and its file's text; (exit, out, err, the sets read, (the case folders
+/// made, the rules run)).
 fn run(
     args: BaselineArgs,
-    default_sets: &[&str],
+    default_sets: &[(&str, bool)],
     outcome: Outcome,
 ) -> (u8, String, String, Vec<String>, (usize, usize)) {
+    let default_sets: Vec<(String, bool)> = default_sets.iter().map(|(set, ready)| (set.to_string(), *ready)).collect();
     let (read, made, written) = (RefCell::new(Vec::new()), RefCell::new(0), RefCell::new(String::new()));
     let ran = RefCell::new(0);
     let rules_of = |set: &str| {
@@ -124,11 +133,15 @@ fn run(
     let run_rules = |rf: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| {
         *ran.borrow_mut() += 1;
         let rule = &rf.rules[0];
-        let run = RuleRun::new(rule.id.clone(), rule.engine, outcome(&rule.id, &written.borrow()), None);
+        let outcome = outcome(&rule.id, &written.borrow());
+        let absent = matches!(outcome, RuleOutcome::NotAvailable { .. });
+        let run = RuleRun::new(rule.id.clone(), rule.engine, outcome, None);
+        // The only not-available outcome these rows give is an absent swiftlint: engines gives it EngineNotOnPath.
+        let run = if absent { run.with_cause(NotAvailableCause::EngineNotOnPath) } else { run };
         CheckedRules { runs: vec![run], engines: vec![] }
     };
     let world = BaselineWorld {
-        default_sets,
+        default_sets: &default_sets,
         rules_of: &rules_of,
         make_folder: &make_folder,
         write_file: &write_file,
@@ -147,7 +160,10 @@ fn run(
 type Outcome = fn(&str, &str) -> RuleOutcome;
 
 /// (name, args, default sets, outcome, exit, out, err, sets read, (case folders made, rules run))
-type Row = (&'static str, BaselineArgs, Sets, Outcome, u8, &'static str, &'static str, Sets, (usize, usize));
+type Row = (&'static str, BaselineArgs, Defaults, Outcome, u8, &'static str, &'static str, Sets, (usize, usize));
+
+/// A world's default sets, as ("name@version", ready).
+type Defaults = &'static [(&'static str, bool)];
 
 /// A list of sets, as "name@version".
 type Sets = &'static [&'static str];
@@ -157,10 +173,12 @@ fn run_baseline_test_rows() {
     let text = BaselineArgs::default();
     let json = BaselineArgs { json: true, ..BaselineArgs::default() };
     let set = |set: &str| BaselineArgs { set: Some(set.to_string()), json: false };
-    // A test world's default_sets, not tm's: tm's own (the ready sets, standard@1 today) is pinned by
-    // no_set_tests_the_ready_sets_only.
-    let defaults: Sets = &["standard@1", "house@1"];
-    let rows: [Row; 12] = [
+    // A test world's default_sets, not tm's: tm's own are rules' data, read by the RITs in
+    // tests/world/baseline_world_real.rs.
+    let defaults: Defaults = &[("standard@1", true), ("house@1", true)];
+    let house_not_ready: Defaults = &[("standard@1", true), ("house@1", false)];
+    let unknown = "tm: unknown baseline set \"nosuch\"\nnext: the test world's fix for nosuch\n";
+    let rows: [Row; 16] = [
         (
             "all hold",
             text.clone(),
@@ -237,11 +255,11 @@ fn run_baseline_test_rows() {
         (
             "a set that cannot be read: every set read first, nothing run",
             text.clone(),
-            &["standard@1", "nosuch@1"],
+            &[("standard@1", true), ("nosuch@1", true)],
             all_hold,
             2,
             "",
-            "tm: unknown baseline set \"nosuch\"\nnext: Use one of: house.\n",
+            unknown,
             &["standard@1", "nosuch@1"],
             (0, 0),
         ),
@@ -251,10 +269,50 @@ fn run_baseline_test_rows() {
             defaults,
             all_hold,
             2,
-            "{\"error\":\"unknown baseline set \\\"nosuch\\\"\",\"exit\":2,\"next\":\"Use one of: house.\"}\n",
-            "tm: unknown baseline set \"nosuch\"\nnext: Use one of: house.\n",
+            "{\"error\":\"unknown baseline set \\\"nosuch\\\"\",\"exit\":2,\"next\":\"the test world's fix for nosuch\"}\n",
+            unknown,
             &["nosuch@1"],
             (0, 0),
+        ),
+        ("--set of an unknown set", set("nosuch@1"), defaults, all_hold, 2, "", unknown, &["nosuch@1"], (0, 0)),
+        (
+            "a set that cannot be read with no problem",
+            set("empty@1"),
+            defaults,
+            all_hold,
+            2,
+            "",
+            "tm: cannot read baseline set \"empty@1\"\nnext: Run tm help to see the commands.\n",
+            &["empty@1"],
+            (0, 0),
+        ),
+        (
+            "the default runs the ready sets only, in order",
+            text.clone(),
+            &[("house@1", true), ("bare@1", false), ("standard@1", true)],
+            all_hold,
+            0,
+            "house@1 tm-mid (swiftlint): holds\n\
+             standard@1 tm-zeta (ruff): holds\n\
+             standard@1 tm-alpha (ast-grep): holds\n\
+             3 rules: 3 hold, 0 broken, 0 not available, 0 not applicable\n\
+             next: nothing to do\n",
+            "",
+            &["house@1", "standard@1"],
+            (6, 6),
+        ),
+        (
+            "--set of a not-ready set runs it",
+            set("house@1"),
+            house_not_ready,
+            all_hold,
+            0,
+            "house@1 tm-mid (swiftlint): holds\n\
+             1 rules: 1 hold, 0 broken, 0 not available, 0 not applicable\n\
+             next: nothing to do\n",
+            "",
+            &["house@1"],
+            (2, 2),
         ),
         (
             "an only_with_base rule keeps only the findings on added lines",
@@ -327,7 +385,7 @@ fn run_baseline_test_rows() {
         (
             "broken beside a set-aside rule: broken wins",
             text.clone(),
-            &["standard@1", "aside@1"],
+            &[("standard@1", true), ("aside@1", true)],
             alpha_broken_mid_not_available,
             1,
             "standard@1 tm-zeta (ruff): holds\n\
@@ -348,7 +406,7 @@ fn run_baseline_test_rows() {
         (
             "not available beside a set-aside rule: exit 3 with both next parts",
             text.clone(),
-            &["house@1", "aside@1"],
+            &[("house@1", true), ("aside@1", true)],
             mid_not_available,
             3,
             "house@1 tm-mid (swiftlint): not available\n  \
@@ -373,30 +431,6 @@ fn run_baseline_test_rows() {
         let read: Vec<String> = read.iter().map(|set| set.to_string()).collect();
         assert_eq!(got, (exit, out.to_string(), err.to_string(), read, made), "{name}");
     }
-}
-
-/// Runs `tm baseline test` with `set` on the real world whose `rules_of` returns no rules; (exit, the sets read).
-fn sets_read_by_real(set: Option<&str>) -> (u8, Vec<String>) {
-    let read = RefCell::new(Vec::new());
-    let rules_of = |set: &str| {
-        read.borrow_mut().push(set.to_string());
-        Ok(Vec::new())
-    };
-    let world = BaselineWorld { rules_of: &rules_of, ..BaselineWorld::real() };
-    let args = BaselineArgs { set: set.map(str::to_string), json: false };
-    let (mut out, mut err) = (Vec::new(), Vec::new());
-    let exit = run_baseline_test(&args, &world, &mut out, &mut err);
-    (exit, read.into_inner())
-}
-
-#[test]
-fn no_set_tests_the_ready_sets_only() {
-    assert_eq!(sets_read_by_real(None), (0, vec!["standard@1".to_string()]));
-}
-
-#[test]
-fn set_house_still_runs_house() {
-    assert_eq!(sets_read_by_real(Some("house@1")), (0, vec!["house@1".to_string()]));
 }
 
 #[test]

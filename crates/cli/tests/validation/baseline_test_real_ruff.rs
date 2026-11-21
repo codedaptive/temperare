@@ -7,8 +7,8 @@ use crate::env::tm_env;
 use crate::on_tm_path::on_tm_path;
 use crate::run_clean::run_clean;
 use crate::temp_home::TempHome;
-use cli::{run_baseline_test, BaselineArgs, BaselineWorld, UsageError};
-use rules::{CaseFile, Engine, ExpectedFinding, Rule, RuleCases};
+use cli::{run_baseline_test, BaselineArgs, BaselineWorld};
+use rules::{CaseFile, Engine, ExpectedFinding, Problem, Rule, RuleCases};
 use std::cell::RefCell;
 use std::path::Path;
 
@@ -33,7 +33,7 @@ fn f401(id: &str, line: usize) -> Rule {
 fn child() {
     let rules_of = |set: &str| match set {
         "test@1" => Ok(vec![f401("tm-zeta", 1), f401("tm-alpha", 2)]),
-        _ => Err(UsageError { what: format!("no test set {set}"), fix: String::new() }),
+        _ => Err(vec![Problem { line: 0, col: 0, what: format!("no test set {set}"), fix: String::new() }]),
     };
     let made = RefCell::new(Vec::new());
     let real = BaselineWorld::real();

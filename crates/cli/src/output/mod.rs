@@ -11,7 +11,6 @@ mod baseline_rule_result_verdict;
 mod baseline_text;
 mod case_verdict;
 mod check_json;
-mod engine_program_missing;
 mod exit_code;
 mod failed_tails;
 mod next_step;
@@ -39,8 +38,6 @@ mod baseline_rule_result_verdict_tests;
 mod baseline_text_tests;
 #[cfg(test)]
 mod check_json_tests;
-#[cfg(test)]
-mod engine_program_missing_tests;
 #[cfg(test)]
 mod exit_code_tests;
 #[cfg(test)]

@@ -13,7 +13,9 @@ use crate::{
     append_savings_log, check_json, exit_code, failed_tails, next_step, saved_json, savings_from, savings_line_on,
     savings_log_line, tokens_saved_line, CheckArgs, RuleCount, Savings, UsageError,
 };
+use engines::NotAvailableCause;
 use serde_json::Value;
+use std::collections::HashMap;
 use std::io::Write;
 use std::path::Path;
 
@@ -51,6 +53,8 @@ pub fn run_check(args: &CheckArgs, cwd: &Path, world: &CheckWorld, out: &mut dyn
     };
     let checked = (world.run_rules)(&rf, cwd, &only, base.as_ref().map(|(_, oid)| oid.as_str()));
     let counts = rule_counts(&checked.runs);
+    let causes: HashMap<String, NotAvailableCause> =
+        checked.runs.iter().filter_map(|r| Some((r.rule.clone(), r.not_available_cause?))).collect();
     let outcomes = checked.runs.into_iter().map(|run| (run.rule, run.outcome)).collect();
     let mut report = match (world.build_report)(&rf, outcomes, base.as_ref().map(|(top, oid)| (top.as_path(), oid))) {
         Ok(report) => report,
@@ -64,7 +68,8 @@ pub fn run_check(args: &CheckArgs, cwd: &Path, world: &CheckWorld, out: &mut dyn
     };
     report.engines = report_engines(checked.engines, world.availability);
     let exit = exit_code(&report);
-    let next = next_step(exit, None, &path, &report.not_available);
+    let pairs: Vec<_> = report.not_available.iter().map(|na| (na, causes.get(&na.rule).copied())).collect();
+    let next = next_step(exit, None, &path, &pairs);
     let home = (world.home)();
     let savings = if args.json {
         write_json(check_json(&report, exit, &next), &counts, home.as_deref(), out, err)

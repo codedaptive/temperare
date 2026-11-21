@@ -2,32 +2,30 @@
 //! real disk, git through procio and the real engines.
 
 use super::BaselineWorld;
-use crate::UsageError;
-use rules::{Rule, RuleFile};
 use std::collections::BTreeMap;
 use std::fs;
 use std::io::{self, ErrorKind};
 use std::ops::Range;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::LazyLock;
 
-/// The ready sets, tested without `--set`: standard@1. house@1 is not ready and runs only when named with `--set`.
-/// rules has no public list of the sets and their ready marks yet; cli reads that list and drops this one once rules
-/// ships it (Orc #1607, #1601).
-const DEFAULT_SETS: &[&str] = &["standard@1"];
+/// Every set built into tm with its ready mark, from `rules::baseline_sets`: read once, as `default_sets` borrows it for
+/// the whole process.
+static SETS: LazyLock<Vec<(String, bool)>> = LazyLock::new(rules::baseline_sets);
 
 /// The next case folder number: shared by the whole process, so no two cases of one run get the same folder name,
 /// even after the first folder is removed.
 static NEXT: AtomicU64 = AtomicU64::new(0);
 
 impl BaselineWorld<'static> {
-    /// The real world: the ready set `standard@1` by default, a set's rules read through `RuleFile::parse`, each
-    /// case folder a new git repository under the system temp folder, `fs` for writing and removing, git through
+    /// The real world: the sets and ready marks of `rules::baseline_sets`, a set's rules from `rules::baseline_rules`,
+    /// each case folder a new git repository under the system temp folder, `fs` for writing and removing, git through
     /// procio for a change case's base and added lines, and `engines::run_rules_versioned_at`. Tests pass closures.
     pub fn real() -> BaselineWorld<'static> {
         BaselineWorld {
-            default_sets: DEFAULT_SETS,
-            rules_of: &rules_of,
+            default_sets: &SETS,
+            rules_of: &rules::baseline_rules,
             make_folder: &make_folder,
             write_file: &write_file,
             commit_all: &commit_all,
@@ -35,23 +33,6 @@ impl BaselineWorld<'static> {
             remove_folder: &|folder| fs::remove_dir_all(folder),
             run_rules: &engines::run_rules_versioned_at,
         }
-    }
-}
-
-/// The rules of `set` ("name@version") in the set's order, not-applicable rules in their place: a rule file that
-/// takes only that set, parsed by rules, which judges the entry (malformed, unknown set, unknown version). The toml
-/// crate quotes `set`, so any text is one entry. A rule file with problems is the first problem as a usage error.
-fn rules_of(set: &str) -> Result<Vec<Rule>, UsageError> {
-    let text = format!("version = 1\nbaseline = [{}]\n", toml::Value::String(set.to_string()));
-    match RuleFile::parse(&text, Path::new(".")) {
-        Ok(rf) => Ok(rf.rules_in_order().into_iter().cloned().collect()),
-        Err(problems) => Err(problems.into_iter().next().map_or_else(
-            || UsageError {
-                what: format!("cannot read baseline set \"{set}\""),
-                fix: "Run tm help to see the commands.".to_string(),
-            },
-            |first| UsageError { what: first.what, fix: first.fix },
-        )),
     }
 }
 

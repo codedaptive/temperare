@@ -9,7 +9,10 @@ fn broken() -> CaseVerdict {
 }
 
 fn not_available() -> CaseVerdict {
-    CaseVerdict::NotAvailable { why: "ruff not found on PATH".to_string() }
+    CaseVerdict::NotAvailable {
+        why: "ruff not found on PATH".to_string(),
+        cause: Some(engines::NotAvailableCause::EngineNotOnPath),
+    }
 }
 
 fn not_applicable() -> CaseVerdict {
