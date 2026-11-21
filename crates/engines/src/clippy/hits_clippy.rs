@@ -27,9 +27,9 @@ use std::path::Path;
 /// 4. The lint groups from that help: none listed is `Failed`, so the rule never reads clean. A check naming a group
 ///    (`lint_group`) is `Failed` and nothing more runs: a group cannot be matched by code, so the rule must name each
 ///    lint, or `warnings`.
-/// 5. The lints from that help: none listed is `Failed`. A check that is not a listed lint (`known_lint`) stops before
-///    clippy runs: a `rustdoc::` lint, which clippy never runs, is `Failed`; any other name (unknown to this
-///    toolchain, or renamed) is `UnknownCheck`, so the rule is not available, as for a toolchain too old for it.
+/// 5. The lints from that help: none listed is `Failed`. A check that is not a listed lint (`known_lint`), unknown to
+///    this toolchain or renamed, is `UnknownCheck` before clippy runs, so the rule is not available, as for a
+///    toolchain too old for it. A `rustdoc::` lint never reaches here: `CLIPPY.refuse` refuses it before any flow.
 ///    Stopping here means a rule's own `allow` of `unknown_lints` or `renamed_and_removed_lints` cannot hide the
 ///    check; `parse_clippy` refusing a check clippy did not take is a second guard.
 /// 6. `cargo locate-project --workspace`, then the entry's command (`entry_cmd`), both in the Cargo root: only that
@@ -56,7 +56,9 @@ pub(crate) fn hits_clippy(entry: &Entry, rule: &Rule, folder: &Path, host: &Host
     }
     let lints = parse_lints(&help).map_err(|err| parse_failed(&help, err))?;
     if !known_lint(&rule.check, &lints) {
-        return Err(not_a_lint(&rule.check));
+        return Err(Stop::UnknownCheck {
+            said: "it is not a lint this toolchain lists (clippy-driver -W help)".to_string(),
+        });
     }
     let located = ran(&locate_workspace_cmd(&root), host)?;
     let workspace = parse_locate_workspace(&located).map_err(|err| parse_failed(&located, err))?;
@@ -67,15 +69,4 @@ pub(crate) fn hits_clippy(entry: &Entry, rule: &Rule, folder: &Path, host: &Host
     drop(threshold);
     let out = linted?;
     (entry.read)(&out, &rule.check, &workspace, folder).map_err(|err| parse_failed(&out, err))
-}
-
-/// The stop for a check the toolchain does not list as a lint: a `rustdoc::` lint is `Failed` and named as such,
-/// since it is a real lint that clippy never runs; any other name is one this toolchain does not know.
-fn not_a_lint(check: &str) -> Stop {
-    if check.starts_with("rustdoc::") {
-        let stderr =
-            format!("clippy check `{check}` is a rustdoc lint: clippy never runs rustdoc lints, so tm cannot report it");
-        return Stop::Failed { code: None, stderr };
-    }
-    Stop::UnknownCheck { said: "it is not a lint this toolchain lists (clippy-driver -W help)".to_string() }
 }

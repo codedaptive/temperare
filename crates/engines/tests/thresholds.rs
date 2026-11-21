@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use engines::{availability, run_rules_counted, Availability};
+use engines::{availability, run_rules_versioned, Availability};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
 static NEXT_FOLDER: AtomicUsize = AtomicUsize::new(0);
@@ -37,7 +37,7 @@ fn run(repo: &Path, engine: &str, check: &str, params: Option<&str>) -> RuleOutc
     let path = repo.join("temperare.toml");
     fs::write(&path, text).unwrap();
     let file = RuleFile::read(&path).unwrap();
-    let mut runs = run_rules_counted(&file, repo, &[]);
+    let mut runs = run_rules_versioned(&file, repo, &[]).runs;
     assert_eq!(runs.len(), 1, "{runs:?}");
     let result = runs.remove(0);
     assert_eq!(result.rule, "threshold");

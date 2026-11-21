@@ -1,14 +1,12 @@
 //! ZUT for run_plain.rs with a fake entry and a fake host: each step's stop, the arguments reaching the command,
-//! the check run counted (and a refused one not), an unknown check, words about another check left to the reader,
-//! output the reader cannot read, a threshold passed as an argument after the rule's config, a threshold out of range.
-//! No engine runs and no file is written; the config file's run and a threshold's file are the ZIT's
-//! (integration/temp_config_tests.rs, integration/run_plain_threshold_tests.rs).
+//! the check run counted, an unknown check, words about another check left to the reader, output the reader cannot
+//! read, a threshold passed as an argument after the rule's config, a threshold out of range.
+//! No engine runs and no file is written; a threshold's file is the ZIT's (integration/run_plain_threshold_tests.rs).
 
 use super::entry_cmd_tests::fake_entry;
-use super::{run_plain, ConfigParams, Entry, ParamArg, Params, Pick, Reach, Threshold};
+use super::{run_plain, Entry, ParamArg, Params, Pick, Reach, Threshold};
 use crate::host::Host;
 use crate::types::{Hit, ParseError, Stop};
-use crate::ParamError;
 use procio::{Cmd, Output, ProcError};
 use rules::{RelPath, Rule, RuleFile};
 use std::cell::{Cell, RefCell};
@@ -18,11 +16,10 @@ use std::path::{Path, PathBuf};
 const FOLDER: &str = "/no/such/engines-zut-folder";
 static ALLOW: [ParamArg; 1] = [ParamArg { name: "allow", flag: "--allow=" }];
 
-/// The fake entry with an `allow` param and a config option; it refuses the check `BAD`, says the check is unknown
-/// when stderr holds "unknown check <check>", and reads stdout `hit` as one hit whose message names the check and the cwd.
+/// The fake entry with an `allow` param and a config option; it says the check is unknown when stderr holds
+/// "unknown check <check>", and reads stdout `hit` as one hit whose message names the check and the cwd.
 fn lint() -> Entry {
     Entry {
-        refuse: |check| (check == "BAD").then(|| "tm refuses BAD".to_string()),
         unknown: |out, check| {
             let stderr = String::from_utf8_lossy(&out.stderr);
             stderr.contains(&format!("unknown check {check}")).then(|| stderr.trim().to_string())
@@ -54,7 +51,7 @@ fn run(entry: &Entry, rule: &Rule, answer: Output) -> (Result<Vec<Hit>, Stop>, V
         Ok(answer.clone())
     };
     let raw_chars = Cell::new(None);
-    let got = run_plain(entry, rule, Path::new(FOLDER), &Host { run: &host_run, on_path: &|_| true, raw_chars: &raw_chars });
+    let got = run_plain(entry, rule, Path::new(FOLDER), &Host { run: &host_run, on_path: &|_| true, raw_chars: &raw_chars, base: None });
     (got, ran.into_inner(), raw_chars.get())
 }
 
@@ -67,33 +64,12 @@ fn failed(stderr: &str) -> Result<Vec<Hit>, Stop> {
 }
 
 #[test]
-fn a_refused_check_fails_and_nothing_runs_or_is_counted() {
-    let (got, ran, raw_chars) = run(&lint(), &rule("BAD", ""), answer(0, "hit", ""));
-    assert_eq!(got, failed("tm refuses BAD"));
-    assert!(ran.is_empty(), "{ran:?}");
-    assert_eq!(raw_chars, None);
-}
-
-#[test]
 fn params_the_entry_cannot_use_fail_with_the_param_why_and_nothing_runs() {
     let (got, ran, _) = run(&lint(), &rule("E711", "params = { allow = \"E1\" }\n"), answer(0, "hit", ""));
     assert_eq!(got, failed("lint param allow: must be a list of strings"));
     assert!(ran.is_empty(), "{ran:?}");
     let (got, ran, _) = run(&lint(), &rule("E711", "params = { deny = [\"E1\"] }\n"), answer(0, "hit", ""));
     assert_eq!(got, failed("lint param deny: a lint rule reads only the `allow` param"));
-    assert!(ran.is_empty(), "{ran:?}");
-}
-
-#[test]
-fn a_config_the_params_cannot_make_fails_and_nothing_runs() {
-    let config = ConfigParams {
-        option: "--config=",
-        ext: "toml",
-        text: |_| Err(ParamError::Unknown { name: "width".to_string() }),
-    };
-    let entry = Entry { params: Params::Config(config), ..lint() };
-    let (got, ran, _) = run(&entry, &rule("E711", ""), answer(0, "hit", ""));
-    assert_eq!(got, failed("lint param width: unknown"));
     assert!(ran.is_empty(), "{ran:?}");
 }
 

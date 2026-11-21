@@ -1,6 +1,6 @@
 //! `threshold_of`: the threshold a rule sets, and its number.
 
-use super::{Entry, Params, Threshold};
+use super::{whole_in, Entry, Params, Threshold};
 use crate::ParamError;
 use serde::Serialize;
 use serde_json::{Map, Value};
@@ -35,12 +35,7 @@ fn number(params: &Map<String, Value>, threshold: &Threshold, check: &str) -> Re
     if threshold.check != check {
         return Err(bad(threshold.name, &format!("read only with check `{}`", threshold.check)));
     }
-    params
-        .get(threshold.name)
-        .and_then(Value::as_u64)
-        .and_then(|n| u32::try_from(n).ok())
-        .filter(|n| (1..=threshold.max).contains(n))
-        .ok_or_else(|| bad(threshold.name, &format!("must be a whole number from 1 to {}", threshold.max)))
+    whole_in(params, threshold.name, 1, threshold.max)
 }
 
 fn bad(name: &str, why: &str) -> ParamError {

@@ -17,7 +17,7 @@ fn counted(
     let run = |_: &Cmd| answer();
     let on_path = |_: &str| -> bool { panic!("check_run looks nothing up on PATH") };
     let raw_chars = Cell::new(start);
-    let got = check_run(&Cmd::new("ruff"), &Host { run: &run, on_path: &on_path, raw_chars: &raw_chars });
+    let got = check_run(&Cmd::new("ruff"), &Host { run: &run, on_path: &on_path, raw_chars: &raw_chars, base: None });
     (got, raw_chars.get())
 }
 

@@ -1,57 +1,43 @@
-//! ZUT for run_shellcheck.rs on the compiled-in list, which is pending: it reads with no codes, so every well-formed
-//! code is not available, nothing but the version probe runs and no scripts are listed; a malformed check is still
-//! refused. No engine or git runs.
+//! ZUT for the compiled-in list of shellcheck codes (`shellcheck_codes.txt`), which is pending: it reads with no codes,
+//! so a rule with a script to check is not listed and the check run never happens. Those cases give the list to
+//! `run_shellcheck_with` through `listed()` with a fake lister, as run_shellcheck.rs gives it with `shell_files`. No
+//! engine or git runs.
 
 use super::read_code_list;
-use super::run_shellcheck::run_shellcheck;
-use super::run_shellcheck_with_tests::{answers, entry, listed, rule, run};
-use crate::entry::Params;
+use super::run_shellcheck_with_tests::{answers, listed, rule};
 use crate::types::Stop;
-use std::ffi::OsString;
 use std::path::PathBuf;
+
+const CODES: &str = include_str!("shellcheck_codes.txt");
 
 #[test]
 fn the_compiled_in_list_reads_as_pending_with_no_codes() {
-    let list = read_code_list(include_str!("shellcheck_codes.txt")).unwrap();
+    let list = read_code_list(CODES).unwrap();
     assert_eq!(list.version, "pending");
     assert!(list.codes.is_empty(), "{:?}", list.codes);
 }
 
 #[test]
-fn every_well_formed_code_is_not_available_while_the_list_is_pending() {
+fn every_well_formed_code_is_not_listed_while_the_list_is_pending() {
     let cases = [
-        ("SC2086", "shellcheck 0.11.0: SC2086 is not in temperare's list of shellcheck codes (taken from shellcheck pending)"),
-        ("SC2250", "shellcheck 0.11.0: SC2250 is not in temperare's list of shellcheck codes (taken from shellcheck pending)"),
-        ("SC02086", "shellcheck 0.11.0: SC02086 is not in temperare's list of shellcheck codes (taken from shellcheck pending)"),
+        ("SC2086", "SC2086 is not in temperare's list of shellcheck codes (taken from shellcheck pending)"),
+        ("SC2250", "SC2250 is not in temperare's list of shellcheck codes (taken from shellcheck pending)"),
+        ("SC02086", "SC02086 is not in temperare's list of shellcheck codes (taken from shellcheck pending)"),
     ];
-    for (check, why) in cases {
-        let (got, ran, raw_chars) = run(run_shellcheck, &entry(Params::Args(&[])), &rule(check, ""), &answers());
-        assert_eq!(got, Err(Stop::NotAvailable { why: why.to_string() }));
-        assert_eq!(ran.len(), 1, "{ran:?}");
-        assert_eq!(ran[0].args, vec![OsString::from("--version")]);
+    for (check, said) in cases {
+        let (got, ran, raw_chars, _) = listed(CODES, Ok(vec![PathBuf::from("a.sh")]), &rule(check, ""), &answers());
+        assert_eq!(got, Err(Stop::NotListed { said: said.to_string() }));
+        assert!(ran.is_empty(), "{ran:?}");
         assert_eq!(raw_chars, None);
     }
 }
 
 #[test]
-fn the_scripts_are_never_listed_while_the_list_is_pending() {
-    let codes = include_str!("shellcheck_codes.txt");
-    let (got, _, _, asked) = listed(codes, Ok(vec![PathBuf::from("a.sh")]), &rule("SC2086", ""), &answers());
-    let why = "shellcheck 0.11.0: SC2086 is not in temperare's list of shellcheck codes (taken from shellcheck pending)";
-    assert_eq!(got, Err(Stop::NotAvailable { why: why.to_string() }));
-    assert!(asked.is_empty(), "{asked:?}");
-}
-
-#[test]
-fn a_malformed_check_is_still_refused() {
-    let (got, ran, _) = run(run_shellcheck, &entry(Params::Args(&[])), &rule("SC", ""), &answers());
-    assert_eq!(
-        got,
-        Err(Stop::Failed {
-            code: None,
-            stderr: "shellcheck check `SC` is not one ShellCheck code such as `SC2086`, so tm cannot tell which findings it selects"
-                .to_string()
-        })
-    );
+fn a_script_under_the_rules_paths_is_never_checked_while_the_list_is_pending() {
+    let scripts = Ok(vec![PathBuf::from("scripts/run.sh")]);
+    let (got, ran, raw_chars, _) = listed(CODES, scripts, &rule("SC2086", "paths = [\"scripts/**\"]\n"), &answers());
+    let said = "SC2086 is not in temperare's list of shellcheck codes (taken from shellcheck pending)";
+    assert_eq!(got, Err(Stop::NotListed { said: said.to_string() }));
     assert!(ran.is_empty(), "{ran:?}");
+    assert_eq!(raw_chars, None);
 }

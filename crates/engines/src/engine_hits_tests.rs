@@ -1,6 +1,7 @@
 //! ZUT for engine_hits.rs: an absent engine stops before anything runs, with availability's why; Tessera is never
 //! available (S-20); ruff and SwiftLint go to their entries' flows; an unresolved folder fails only an available
-//! engine. The host is a fake; nothing runs.
+//! engine. The host is a fake; nothing runs. ShellCheck, whose scripts are listed before availability, is
+//! engine_hits_with_tests.rs's.
 
 use crate::engine_hits::engine_hits;
 use crate::host::Host;
@@ -25,7 +26,7 @@ pub(crate) fn hits_of(engine: &str, check: &str, on_path: bool) -> (Result<Vec<H
     };
     let lookup = |_: &str| on_path;
     let got =
-        engine_hits(&file.rules[0], Ok(Path::new(FOLDER)), &Host { run: &run, on_path: &lookup, raw_chars: &Cell::new(None) });
+        engine_hits(&file.rules[0], Ok(Path::new(FOLDER)), &Host { run: &run, on_path: &lookup, raw_chars: &Cell::new(None), base: None });
     (got, ran.into_inner())
 }
 
@@ -37,7 +38,7 @@ fn hits_without_folder(engine: &str, check: &str, on_path: bool) -> Result<Vec<H
     let run = |_: &Cmd| -> Result<Output, ProcError> { panic!("nothing runs without a folder") };
     let lookup = |_: &str| on_path;
     let unresolved = Stop::Failed { code: None, stderr: "no folder".to_string() };
-    engine_hits(&file.rules[0], Err(&unresolved), &Host { run: &run, on_path: &lookup, raw_chars: &Cell::new(None) })
+    engine_hits(&file.rules[0], Err(&unresolved), &Host { run: &run, on_path: &lookup, raw_chars: &Cell::new(None), base: None })
 }
 
 #[test]

@@ -61,7 +61,7 @@ fn counted_clippy(
             _ => panic!("unexpected command: {cmd:?}"),
         }
     };
-    let host = Host { run: &run, on_path: &|_| panic!("unexpected PATH lookup"), raw_chars: &raw_chars };
+    let host = Host { run: &run, on_path: &|_| panic!("unexpected PATH lookup"), raw_chars: &raw_chars, base: None };
     let got = hits_clippy(&CLIPPY, &file.rules[0], root, &host);
     (got, raw_chars.get(), seen.into_inner())
 }

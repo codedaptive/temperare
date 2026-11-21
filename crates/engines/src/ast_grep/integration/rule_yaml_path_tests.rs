@@ -1,8 +1,9 @@
-//! ZIT for rule_yaml_path: canonical containment across real files and symlinks.
+//! ZIT for rule_yaml_path: canonical containment across real files and symlinks, and a check under a folder that does
+//! not exist cannot be read.
 
 use super::super::rule_yaml_path::rule_yaml_path;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 struct Tree {
     root: PathBuf,
@@ -66,4 +67,11 @@ fn missing_file_reports_read_failure() {
     let tree = Tree::new("missing");
     let err = rule_yaml_path(&tree.folder, "missing.yml").unwrap_err();
     assert!(err.starts_with("cannot read ast-grep rule missing.yml: "), "{err}");
+}
+
+#[test]
+fn a_check_under_a_missing_folder_cannot_be_read() {
+    let got = rule_yaml_path(Path::new("/nonexistent-engines-rule-folder"), "names.yml");
+    let stderr = got.expect_err("a missing folder has no rule YAML");
+    assert!(stderr.starts_with("cannot read ast-grep rule names.yml: "), "{stderr}");
 }

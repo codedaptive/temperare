@@ -1,6 +1,6 @@
 use std::{ffi::OsStr, fs, path::Path};
 
-use engines::{availability, entry_cmd, run_rules_counted, swiftlint::{parse_swiftlint, SWIFTLINT}, Availability};
+use engines::{availability, entry_cmd, run_rules_versioned, swiftlint::{parse_swiftlint, SWIFTLINT}, Availability};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
 #[test]
@@ -52,7 +52,7 @@ fn swiftlint_unknown_rule_is_not_available_naming_the_identifier() {
     let version_output = procio::run(&procio::Cmd {
         args: vec!["version".into()], cwd: Some(folder.clone()), ..procio::Cmd::new("swiftlint")
     }).unwrap();
-    let outcomes = run_rules_counted(&file, &folder, &[]).into_iter().map(|run| (run.rule, run.outcome)).collect::<Vec<_>>();
+    let outcomes = run_rules_versioned(&file, &folder, &[]).runs.into_iter().map(|run| (run.rule, run.outcome)).collect::<Vec<_>>();
     fs::remove_dir_all(&folder).unwrap();
     assert_eq!(outcomes.len(), 1, "{outcomes:?}");
     assert_eq!(outcomes[0].0, "unknown-swift-rule");

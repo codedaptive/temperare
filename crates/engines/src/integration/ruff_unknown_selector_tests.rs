@@ -30,7 +30,7 @@ fix = "f"
         procio::run(&Cmd { args: vec!["--version".into()], cwd: Some(repo.clone()), ..Cmd::new("ruff") })
             .unwrap()
     });
-    let got = crate::run_rules_counted(&file, &repo, &[]).into_iter().map(|run| (run.rule, run.outcome)).collect::<Vec<_>>();
+    let got = crate::run_rules_versioned(&file, &repo, &[]).runs.into_iter().map(|run| (run.rule, run.outcome)).collect::<Vec<_>>();
     fs::remove_dir_all(&repo).unwrap();
 
     assert_eq!(got.len(), 1, "{got:?}");
