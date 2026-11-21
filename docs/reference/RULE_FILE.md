@@ -107,7 +107,7 @@ the owner of the findings in its files.
 | Key | Required | Meaning |
 |---|---|---|
 | `id` | yes | The rule's name in every report. One or more of `a-z`, `0-9` and `-`. No two rules share an id |
-| `engine` | yes | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `tessera`, `golangci-lint`, `pylint`, `clang-tidy`, `oclint` or `shellcheck`, exactly as written here. The last five are accepted, and their rules are "not available" until Temperare has an adapter for each ([`ENGINES.md`](ENGINES.md#engines-with-no-adapter-yet)) |
+| `engine` | yes | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `tessera`, `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `shellcheck` or `git`, exactly as written here. The last six are accepted, and their rules are "not available" until Temperare has an adapter for each ([`ENGINES.md`](ENGINES.md#engines-with-no-adapter-yet)) |
 | `check` | yes | What the engine is asked. See below |
 | `fix` | yes | The text shown with each finding of this rule |
 | `severity` | no | `error` (the default) or `warning` |
@@ -131,7 +131,7 @@ Any other key is a problem.
 | `ruff` | A rule code (`E711`), a code prefix (`E7`, `F`), `ALL`, or several of these joined by commas with no spaces (`E711,F401`). Not a rule name |
 | `ast-grep` | The path of an ast-grep rule file (YAML) inside the rule file's folder. Every match of that file is a finding |
 | `tessera` | Required like any other, and not used today: nothing is run |
-| `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `shellcheck` | Required like any other, and not used yet: nothing is run |
+| `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `shellcheck`, `git` | Required like any other, and not used yet: nothing is run |
 
 A finding is kept only when it can be matched back to `check`: for clippy and SwiftLint the engine reports exactly
 that lint or identifier, and for ruff the diagnostic's code starts with one of the parts of `check`.
@@ -158,7 +158,7 @@ engine. [`ENGINES.md`](ENGINES.md) has each case.
   any other param fails the rule.
 - **ruff:** `max_complexity`, a whole number from 1 to 1000, read only with check `C901`; any other param fails the
   rule.
-- **tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck:** not read.
+- **tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck, git:** not read.
 
 ### Which files a rule covers
 
@@ -217,7 +217,7 @@ A rule file with a `security` rule must have a top-level `owner`, so a security 
 ```
 /path/to/temperare.toml:3:1  [[rule]] is missing `fix`  Add `fix = "..."` to this [[rule]].
 /path/to/temperare.toml:4:6  malformed id "No_None": an id is one or more of a-z, 0-9 and '-'  Write the id in lower-case letters, digits and dashes, e.g. "no-stored-bool".
-/path/to/temperare.toml:5:10  unknown engine "pylnit"  Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck.
+/path/to/temperare.toml:5:10  unknown engine "pylnit"  Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck, git.
 next: fix each problem listed for /path/to/temperare.toml
 ```
 
