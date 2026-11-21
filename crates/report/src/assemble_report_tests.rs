@@ -1,7 +1,7 @@
 //! Unit tests for assemble_report.rs: order, the new-only filter before exceptions, counts, per-rule silenced counts,
 //! the carried date and lists, the engines list left empty, the not-applicable rules with the no-base drop, and the
 //! flagged rules: own ones cover nothing, baseline ones are not applicable, which wins, and their outcomes dropped,
-//! a set-aside rule's apart.
+//! a set-aside rule's apart; the expired exceptions, judged on the day, against those in force.
 
 use crate::{assemble_report, RuleCount};
 use procio::Oid;
@@ -592,5 +592,77 @@ fn the_covers_nothing_and_not_applicable_counts_are_the_lists_lengths() {
         let report = assemble_report(&rules, Vec::new(), None, day(), date(), &flags(&pairs), |f| f);
         let counts = (report.counts.covers_nothing, report.counts.not_applicable);
         assert_eq!(counts, (covering_count, not_applicable_count), "{pairs:?}");
+    }
+}
+
+fn expiring(rule: &str, path: &str, (year, month, last): (u16, u8, u8)) -> Exception {
+    let mut granted = exception(rule, path);
+    granted.expires = Some(Date::new(year, month, last).unwrap());
+    granted
+}
+
+fn expired_rules(report: &crate::Report) -> Vec<&str> {
+    report.expired.iter().map(|e| e.rule.as_str()).collect()
+}
+
+#[test]
+fn an_exception_holds_through_its_expires_day_and_is_expired_the_day_after() {
+    let mut granted = expiring("r", "a.rs", (2026, 11, 30));
+    granted.what = Some("viol".to_string());
+    let rules = file(vec![granted]);
+    let gone = crate::Expired {
+        rule: "r".to_string(),
+        path: RelPath::new("a.rs"),
+        what: Some("viol".to_string()),
+        expires: "2026-11-30".to_string(),
+        reason: "approved use".to_string(),
+        approved: "maintainer, 2026-11-17".to_string(),
+    };
+    let rows = [
+        ("the day before", (2026, 11, 29), vec![], 1, (0, 1)),
+        ("the expires day", (2026, 11, 30), vec![], 1, (0, 1)),
+        ("the day after", (2026, 12, 1), vec![gone], 0, (1, 0)),
+    ];
+    for (case, (year, month, last), expired, in_force, (kept, silenced)) in rows {
+        let on = Date::new(year, month, last).unwrap();
+        let report = assemble_report(&rules, of(vec![finding("r", "a.rs", 1, None)]), None, on, date(), &[], |f| f);
+        assert_eq!(report.expired, expired, "{case}");
+        assert_eq!(report.exceptions_in_force, in_force, "{case}");
+        assert_eq!((report.findings.len(), report.silenced.len()), (kept, silenced), "{case}");
+        assert_eq!((report.counts.findings, report.counts.silenced), (kept, silenced), "{case}");
+    }
+}
+
+#[test]
+fn an_exception_with_no_expires_is_never_expired_and_always_in_force() {
+    let late = Date::new(9999, 12, 31).unwrap();
+    let rules = file(vec![exception("r", "a.rs")]);
+    let report = assemble_report(&rules, of(vec![finding("r", "a.rs", 1, None)]), None, late, date(), &[], |f| f);
+    assert!(report.expired.is_empty());
+    assert_eq!(report.exceptions_in_force, 1);
+    assert_eq!((report.findings.len(), report.silenced.len()), (0, 1));
+}
+
+#[test]
+fn expired_exceptions_keep_rule_file_order() {
+    let exceptions = vec![expiring("z", "a.rs", (2026, 11, 1)), exception("m", "a.rs"), expiring("a", "a.rs", (2026, 10, 1))];
+    let report = assemble_report(&file(exceptions), Vec::new(), None, day(), date(), &[], |f| f);
+    assert_eq!(expired_rules(&report), vec!["z", "a"]);
+}
+
+#[test]
+fn the_expired_count_and_exceptions_in_force_split_the_exceptions() {
+    let rows = [
+        (
+            "two of three expired",
+            vec![expiring("a", "a.rs", (2026, 11, 19)), exception("b", "b.rs"), expiring("c", "c.rs", (2025, 1, 1))],
+            (2, 1),
+        ),
+        ("none expired", vec![exception("a", "a.rs"), expiring("b", "b.rs", (2026, 11, 20))], (0, 2)),
+    ];
+    for (case, exceptions, (expired, in_force)) in rows {
+        let report = assemble_report(&file(exceptions), Vec::new(), None, day(), date(), &[], |f| f);
+        assert_eq!((report.counts.expired, report.exceptions_in_force), (expired, in_force), "{case}");
+        assert_eq!((report.expired.len(), report.counts.covers_nothing), (expired, 0), "{case}");
     }
 }

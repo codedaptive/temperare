@@ -1,11 +1,11 @@
 //! `assemble_report`: the report from the rules' outcomes, given the new-only filter.
 
 use crate::{
-    silenced_by_rule, split_by_exceptions, stderr_tail, Counts, CoversNothing, Failed, NotApplicable, NotAvailable,
-    Report, Silenced,
+    silenced_by_rule, split_by_exceptions, stderr_tail, Counts, CoversNothing, Expired, Failed, NotApplicable,
+    NotAvailable, Report, Silenced,
 };
 use procio::Oid;
-use rules::{Date, Finding, RuleFile, RuleOutcome, ONLY_WITH_BASE_WHY};
+use rules::{Date, Exception, Finding, RuleFile, RuleOutcome, ONLY_WITH_BASE_WHY};
 
 /// The why of a not-applicable rule whose reason is None; the rule is still listed, since it does not run.
 const NO_REASON: &str = "no reason given";
@@ -17,6 +17,8 @@ const BASELINE_PREFIX: &str = "tm-";
 /// silenced nor counted; the rest are split by the rule file's exceptions (`RuleFile::exception_on`, given `day`).
 /// `date` is carried as the report's date: the caller passes the "YYYY-MM-DD" text of `day`. The silenced findings are
 /// counted by rule into `silenced_by_rule` (see `silenced_by_rule`). The `engines` list is left empty for the caller.
+/// `expired` lists `rules.exceptions_expired(day)` in rule-file order, `exceptions_in_force` counts the rest, both
+/// judged on the same `day` the exceptions silence by; `counts.expired` is the list's length.
 /// Findings, and silenced ones by their finding, are sorted by path, line, col (none first) and rule; not-available and
 /// failed rules by rule. The sorts are stable, so the same input gives the same report. Each outcome carries its own
 /// rule, so the tuple's name is not read. Pure: it runs nothing and reads no file.
@@ -58,6 +60,7 @@ pub(crate) fn assemble_report(
         }
     }
     let (mut kept, silenced) = split_by_exceptions(rules, keep_new(findings), day);
+    let expired: Vec<Expired> = rules.exceptions_expired(day).into_iter().filter_map(expired_entry).collect();
     let mut silenced: Vec<Silenced> =
         silenced.into_iter().map(|(finding, exception)| Silenced { finding, exception }).collect();
     kept.sort_by(|a, b| place(a).cmp(&place(b)));
@@ -72,19 +75,35 @@ pub(crate) fn assemble_report(
             failed.len(),
             not_applicable.len(),
             covers_nothing.len(),
+            expired.len(),
         ),
         silenced_by_rule: silenced_by_rule(rules, &silenced),
         date,
         engines: Vec::new(),
         findings: kept,
         silenced,
-        exceptions_in_force: rules.exceptions_in_force().len(),
+        exceptions_in_force: rules.exceptions.len() - expired.len(),
         not_available,
         failed,
         base,
         covers_nothing,
         not_applicable,
+        expired,
     }
+}
+
+/// The report's entry for an expired exception; None only without `expires`, which `exceptions_expired` never lists,
+/// so nothing is dropped.
+fn expired_entry(exception: &Exception) -> Option<Expired> {
+    let date = exception.expires?;
+    Some(Expired {
+        rule: exception.rule.clone(),
+        path: exception.path.clone(),
+        what: exception.what.clone(),
+        expires: date.to_string(),
+        reason: exception.reason.clone(),
+        approved: exception.approved.clone(),
+    })
 }
 
 /// The rules that cover nothing, the rules not applied, and the ids of the rules of `rules.rules` among them, whose
