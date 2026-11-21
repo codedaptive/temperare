@@ -23,7 +23,7 @@ const NO_FILE_MATCH_WHY: &str = "its paths match no file in the rule file's fold
 ///    set to `NO_FILE_MATCH_WHY`; with no listing no rule is settled so. Inside `hits`, `engine_hits` then settles
 ///    a ShellCheck rule with no script in its paths as `Stop::NoFiles`, listing the scripts before availability;
 /// 2b. inside `hits`, a rule with `only_with_base` and no `host.base`: `engine_hits` gives it `Stop::NotAvailable`
-///    with `ONLY_WITH_BASE_WHY`, so its run is `NotAvailable` with cause `Other` and no count;
+///    with `rules::ONLY_WITH_BASE_WHY`, so its run is `NotAvailable` with cause `Other` and no count;
 /// 3. an engine that is not available, inside `hits`;
 /// 4. the run, inside `hits`.
 ///

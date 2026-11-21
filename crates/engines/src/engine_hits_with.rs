@@ -4,11 +4,10 @@
 use crate::entry_for::entry_for;
 use crate::host::Host;
 use crate::no_adapter_why::no_adapter_why;
-use crate::only_with_base_why::ONLY_WITH_BASE_WHY;
 use crate::shellcheck::no_script;
 use crate::types::{Hit, Stop};
 use crate::unavailable::unavailable;
-use rules::{Engine, Rule};
+use rules::{Engine, Rule, ONLY_WITH_BASE_WHY};
 use std::path::{Path, PathBuf};
 
 /// The hits of `rule` under `folder`: the rule file's canonical folder, or the `Stop` its resolving gave. In the
@@ -16,7 +15,7 @@ use std::path::{Path, PathBuf};
 /// 1. a ShellCheck rule with a resolved folder lists its scripts with `scripts`; when `no_script` finds none the rule
 ///    applies to, it is `NoFiles`, nothing is looked up on PATH and the flow never runs. A listing error falls
 ///    through to the steps below (an available ShellCheck's flow lists again and stops with it);
-/// 1b. a rule with `only_with_base` and no `host.base` is `NotAvailable` with `ONLY_WITH_BASE_WHY`, whatever its
+/// 1b. a rule with `only_with_base` and no `host.base` is `NotAvailable` with `rules::ONLY_WITH_BASE_WHY`, whatever its
 ///    engine and whatever `folder` is: nothing is looked up on PATH and the flow never runs;
 /// 2. an engine with no entry in this build (`entry_for`) is `NotAvailable` with `no_adapter_why`; an engine that
 ///    `unavailable` says cannot be run here gets that stop: `NotOnPath` for a program it needs not on PATH,

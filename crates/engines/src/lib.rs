@@ -27,7 +27,6 @@ mod no_adapter_why;
 mod no_file_match;
 mod not_available_cause_of;
 mod not_on_path_why;
-mod only_with_base_why;
 mod parse_failed;
 mod pick_at;
 mod printed_start;
@@ -54,7 +53,6 @@ mod union_args;
 pub use availability::availability;
 pub use entry::{entry_cmd, Entry, ParamArg, Params, Pick, ReadFn, TempFile, VersionProbe};
 pub use entry_for::entry_for;
-pub(crate) use only_with_base_why::ONLY_WITH_BASE_WHY;
 pub use run_rules_versioned_at::run_rules_versioned_at;
 pub use types::{Availability, CheckedRules, EngineVersion, Hit, NotAvailableCause, ParamError, ParseError, RuleRun};
 
@@ -90,8 +88,6 @@ mod no_file_match_tests;
 mod not_available_cause_of_tests;
 #[cfg(test)]
 mod not_on_path_why_tests;
-#[cfg(test)]
-mod only_with_base_why_tests;
 #[cfg(test)]
 mod parse_failed_tests;
 #[cfg(test)]

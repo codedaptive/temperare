@@ -21,8 +21,8 @@ use std::path::Path;
 /// where rules can (`shared_groups`, `run_group`). A check the engine said it does not know, or one not in temperare's list of its engine's codes,
 /// names the engine's version from `versions` (`stopped`).
 /// When the folder cannot be resolved, nothing is listed, a rule tm refuses is still `Failed` with its refusal, a rule
-/// with `only_with_base` and no base is still `NotAvailable` with `ONLY_WITH_BASE_WHY`, a rule whose engine is not
-/// available is still `NotAvailable`, and every other rule is `Failed` with no exit code and nothing runs.
+/// with `only_with_base` and no base is still `NotAvailable` with `rules::ONLY_WITH_BASE_WHY`, a rule whose engine
+/// is not available is still `NotAvailable`, and every other rule is `Failed` with no exit code and nothing runs.
 pub(crate) fn run_rules_counted_with(
     file: &RuleFile,
     repo: &Path,
