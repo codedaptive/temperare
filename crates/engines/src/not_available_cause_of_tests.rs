@@ -18,6 +18,12 @@ fn each_stop_maps_to_its_cause() {
         ("git absent for git", Engine::Git, not_on_path("git"), engine),
         ("a program run for an engine with no entry", Engine::Pylint, not_on_path("x"), helper),
         ("unknown check", Engine::Ruff, Stop::UnknownCheck { said: "unknown".into() }, Some(NotAvailableCause::UnknownCheck)),
+        (
+            "no Cargo.toml for clippy",
+            Engine::Clippy,
+            Stop::NoCargoProject { why: "no Cargo.toml at or above the rule file's folder".into() },
+            Some(NotAvailableCause::NoCargoProject),
+        ),
         ("not available", Engine::Ruff, Stop::NotAvailable { why: "unavailable".into() }, Some(NotAvailableCause::Other)),
         ("not listed", Engine::ShellCheck, Stop::NotListed { said: "unlisted".into() }, Some(NotAvailableCause::Other)),
         ("failed", Engine::Ruff, Stop::Failed { code: Some(2), stderr: "failed".into() }, None),

@@ -1,15 +1,15 @@
-//! ZUT for run_rules_counted_with.rs's `stopped`: a check the engine said it does not know becomes `NotAvailable`
+//! ZUT for stopped.rs: a check the engine said it does not know becomes `NotAvailable`
 //! with a why naming the engine, its version from the versions given (`(version unknown)` without one) and the check;
 //! a check not in temperare's list of its engine's codes becomes `NotAvailable` with the engine and its version before
-//! what it said; `NotOnPath` and `NotAvailable` become `NotAvailable` with their why; `NoFiles` is no findings and
-//! `Failed` keeps its kind. No engine runs in these. The unknown-check path is that of clippy, swiftlint and ruff, the
-//! engines that can say a check is unknown: one test reaches it through `engine_hits` with swiftlint's output on a
-//! fake host, the others hand `stopped` a made-up stop for ruff and ast-grep. ast-grep has no such path itself: its
-//! check is the repository's YAML, and a YAML ast-grep rejects stays `Failed`.
+//! what it said; `NotOnPath`, `NotAvailable` and `NoCargoProject` become `NotAvailable` with their why; `NoFiles` is no
+//! findings and `Failed` keeps its kind. No engine runs in these. The unknown-check path is that of clippy, swiftlint
+//! and ruff, the engines that can say a check is unknown: one test reaches it through `engine_hits` with swiftlint's
+//! output on a fake host, the others hand `stopped` a made-up stop for ruff and ast-grep. ast-grep has no such path
+//! itself: its check is the repository's YAML, and a YAML ast-grep rejects stays `Failed`.
 
 use crate::engine_hits::engine_hits;
 use crate::host::Host;
-use crate::run_rules_counted_with::stopped;
+use crate::stopped::stopped;
 use crate::types::{EngineVersion, Stop};
 use procio::{Cmd, Output, ProcError};
 use rules::{Engine, Rule, RuleFile, RuleOutcome};
@@ -66,6 +66,17 @@ fn not_available_and_failed_keep_their_kind() {
     assert_eq!(not_available, want);
     let failed = stopped(&rule, Stop::Failed { code: Some(2), stderr: "boom".to_string() }, &[]);
     assert_eq!(failed, RuleOutcome::Failed { rule: "r".into(), engine: Engine::Ruff, code: Some(2), stderr: "boom".into() });
+}
+
+#[test]
+fn no_cargo_project_is_not_available_with_its_why_as_given() {
+    let why = "no Cargo.toml at or above the rule file's folder";
+    let got = stopped(&rule("clippy", "clippy::bool_comparison"), Stop::NoCargoProject { why: why.to_string() }, &[]);
+    assert_eq!(got, RuleOutcome::NotAvailable {
+        rule: "r".to_string(),
+        engine: Engine::Clippy,
+        why: "no Cargo.toml at or above the rule file's folder".to_string(),
+    });
 }
 
 #[test]

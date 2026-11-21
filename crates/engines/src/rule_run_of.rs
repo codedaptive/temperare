@@ -2,7 +2,7 @@
 
 use crate::findings_from::findings_from;
 use crate::not_available_cause_of::not_available_cause_of;
-use crate::run_rules_counted_with::stopped;
+use crate::stopped::stopped;
 use crate::types::{EngineVersion, Hit, RuleRun, Stop};
 use rules::{RelPath, Rule, RuleFile, RuleOutcome};
 

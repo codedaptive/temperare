@@ -20,7 +20,7 @@ use std::path::Path;
 ///    is not a list of strings, or a `max_nesting` that is not a whole number from 1 to 1000 for check
 ///    `clippy::excessive_nesting`, is `Failed` with `param_why`'s text and nothing is run; a threshold folder that
 ///    cannot be written is `Failed` with `threshold_run`'s text.
-/// 2. The Cargo root, the nearest folder at or above `folder` holding a `Cargo.toml`: none is `NotAvailable`.
+/// 2. The Cargo root, the nearest folder at or above `folder` holding a `Cargo.toml`: none is `NoCargoProject`.
 /// 3. `clippy-driver -W help` (`lint_groups_cmd`) run in the Cargo root: it is a rustup proxy, as `cargo` is, so it
 ///    uses the toolchain the `cargo clippy` below uses, and lints and groups added by a newer toolchain are in that
 ///    toolchain's own help. `clippy-driver` absent is `NotOnPath`; help that cannot be run is `Failed`.
@@ -44,7 +44,7 @@ pub(crate) fn hits_clippy(entry: &Entry, rule: &Rule, folder: &Path, host: &Host
         .map_err(|err| Stop::Failed { code: None, stderr: param_why(entry.name, err) })?;
     let threshold = threshold_run(entry, rule, folder).map_err(|stderr| Stop::Failed { code: None, stderr })?;
     let root = cargo_root(folder)
-        .ok_or_else(|| Stop::NotAvailable { why: "no Cargo.toml at or above the rule file's folder".to_string() })?;
+        .ok_or_else(|| Stop::NoCargoProject { why: "no Cargo.toml at or above the rule file's folder".to_string() })?;
     let help = ran(&lint_groups_cmd(&root), host)?;
     let groups = parse_lint_groups(&help).map_err(|err| parse_failed(&help, err))?;
     if lint_group(&rule.check, &groups) {

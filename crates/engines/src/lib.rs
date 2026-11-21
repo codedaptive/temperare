@@ -46,6 +46,7 @@ mod run_rules_versioned_with;
 mod shared_cmd;
 mod shared_groups;
 mod shares_with;
+mod stopped;
 mod types;
 mod unavailable;
 mod union_args;
@@ -111,8 +112,6 @@ mod rule_run_of_tests;
 #[cfg(test)]
 mod run_group_tests;
 #[cfg(test)]
-mod run_rules_counted_with_tests;
-#[cfg(test)]
 mod run_rules_listed_tests;
 #[cfg(test)]
 mod run_rules_versioned_at_tests;
@@ -122,6 +121,8 @@ mod shared_cmd_tests;
 mod shared_groups_tests;
 #[cfg(test)]
 mod shares_with_tests;
+#[cfg(test)]
+mod stopped_tests;
 #[cfg(test)]
 mod unavailable_tests;
 #[cfg(test)]

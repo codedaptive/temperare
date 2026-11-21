@@ -1,13 +1,13 @@
 //! ZIT for engine_hits.rs: an available engine goes to an adapter that reads the disk, given a folder that does not
 //! exist.
 
-use crate::engine_hits_tests::{hits_of, not_available};
+use crate::engine_hits_tests::hits_of;
 use crate::types::Stop;
 
 #[test]
 fn clippy_goes_to_its_adapter_which_finds_no_cargo_toml() {
     let (got, ran) = hits_of("clippy", "clippy::bool_comparison", true);
-    assert_eq!(got, not_available("no Cargo.toml at or above the rule file's folder"));
+    assert_eq!(got, Err(Stop::NoCargoProject { why: "no Cargo.toml at or above the rule file's folder".to_string() }));
     assert!(ran.is_empty(), "ran {ran:?}");
 }
 
