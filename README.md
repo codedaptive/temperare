@@ -268,7 +268,9 @@ the top-level `owner`.
 
 An exception names one rule and one file. `reason` and `approved` are required, and an optional `what` limits it to
 the findings whose message contains that text. A finding it covers is counted as silenced and left out of the
-findings; the JSON report lists it under `silenced` with the exception that covered it.
+findings; the JSON report lists it under `silenced` with the exception that covered it. An optional
+`expires = "YYYY-MM-DD"` is the exception's last day, in UTC: from the day after, it silences nothing and its
+findings are reported again, unless a later exception in the file covers them.
 
 A rule file can also take a baseline set, a list of rules built into `tm`: `baseline = ["standard@1"]` at the top
 level adds that set's 53 rules, all at severity `warning`, ahead of the file's own, and an `[[override]]` changes

@@ -283,14 +283,16 @@ is not applicable: it is not run, `tm rules` does not list it, and `tm check` li
 the why `required params not given: <names>; give them in the params of an [[override]] for "<rule id>"`.
 
 No rule of `standard@1` requires a param. Five rules of `house@1` do: four require `entity_types` and one
-`own_package`.
+`own_package`, and the set declares each as a list of strings, such as `params = { entity_types = ["Order",
+"Invoice"] }`. An `[[override]]` that gives a typed param as something else is a problem
+([below](#problems-of-baseline-and-override)).
 
 ### Keys only a set's own file has
 
 | Key | Where | Meaning |
 |---|---|---|
-| `required_params` | a set's `[[rule]]` | The names of the params the repository must give, as above |
-| `failing`, `passing` | a set's `[[rule]]` | The rule's two cases, which `tm baseline test` runs ([`OUTPUT.md`](OUTPUT.md#tm-baseline-test)). `failing = { files = [...], path = "...", line = N }` lists the case's files and the one finding it must give; `passing = { files = [...] }` lists files that must give none. Every rule of a set has both |
+| `required_params` | a set's `[[rule]]` | The params the repository must give, as above. Each item is a name, or `{ name = "...", type = "string" }` or `{ name = "...", type = "strings" }` (a list of strings) for a typed one |
+| `failing`, `passing` | a set's `[[rule]]` | The rule's two cases, which `tm baseline test` runs ([`OUTPUT.md`](OUTPUT.md#tm-baseline-test)). `failing = { files = [...], path = "...", line = N }` lists the case's files and the one finding it must give; `passing = { files = [...] }` lists files that must give none. Every rule of a set has both. A case may also carry `params`, such as the required params a repository would give; they are checked against the types in `required_params`, and `tm baseline test` does not run the case with them |
 | `retired` | a set's top level | Rule ids the set has retired. An id is never reused: a retired id is not a rule of the set, nor of another set taken with it. Neither set `tm` carries retires an id |
 
 In a repository's rule file each of these is an unknown key, which is a problem. `enforces`, `leaves` and
@@ -301,8 +303,8 @@ In a repository's rule file each of these is an unknown key, which is a problem.
 | Problem | When |
 |---|---|
 | `malformed baseline entry "<entry>"` | The entry is not a name, `@` and a whole number |
-| `unknown baseline set "<name>"` | `tm` carries no set of that name. The fix names them: `Use one of: house, standard.` |
-| `unknown version <n> of baseline set "<name>"` | `tm` carries the set, and not at that version. The fix names the versions it has |
+| `unknown baseline set "<name>"` | `tm` carries no set of that name. The fix names the sets with a ready version: `Use one of: standard.` |
+| `unknown version <n> of baseline set "<name>"` | `tm` carries the set, and not at that version. The fix names its ready versions, such as `Use one of: standard@1.`, or, when it has none, reads `No version of baseline set "<name>" is ready in this build; remove the entry.` |
 | `baseline set "<name>" is taken twice` | A second entry for a set an earlier entry took, at any version |
 | `<name>@<version> is not ready in this build: its rules are not yet proven` | The set is built in and not ready: `house@1`. The fix is `remove <name>@<version> from baseline` |
 | `rule "<id>" is in both <set> and <set>` | Two taken sets hold a rule of that id. Reported at the later entry |
@@ -311,6 +313,7 @@ In a repository's rule file each of these is an unknown key, which is a problem.
 | `override of unknown baseline rule "<id>": no taken set holds it` | `rule` names no rule of a taken set: a misspelt id, one of the file's own rules, or a file with no `baseline` |
 | `second [[override]] for "<id>"` | A rule has more than one `[[override]]` |
 | `id "<id>" starts with "tm-", which is kept for baseline rules` | A `[[rule]]` of the file's own whose id starts with `tm-` |
+| ``param `<name>` of baseline rule "<id>" must be a list of strings, not <type>`` | An `[[override]]` gives a param the set types as a list of strings as another TOML type. An item that is not a string reads `must be a list of strings; item <n> is <type>`, at the item; a param typed as a string reads `must be a string, not <type>` |
 
 An entry gets the first of the first five that applies, in that order. A `baseline` that is not a list of strings,
 an unknown key in an `[[override]]`, a value of the wrong type, a glob that does not compile and a `params.allow`
@@ -325,13 +328,17 @@ value that begins with `-` are problems as they are in a `[[rule]]`.
 | `reason` | yes | Why the exception stands |
 | `approved` | yes | Who approved it |
 | `what` | no | Limits the exception to findings whose message contains this text. Leave it out to cover every finding of the rule in the file; an empty `what` is a problem |
+| `expires` | no | The last day the exception holds, a string `"YYYY-MM-DD"`, such as `expires = "2027-03-31"`. The day is in UTC. Leave it out for an exception with no end date. A string that is not a real date written that way is a problem |
 
 An exception has no line number, because line numbers drift. A finding is covered by the first exception in the
-file with its rule and its path whose `what`, when given, is in the finding's message.
+file with its rule and its path whose `what`, when given, is in the finding's message, and that has not expired.
+An exception covers on its `expires` day and stops covering the day after, judged against today's date in UTC.
+From then its findings are found again as if it were not there, unless a later exception in the file covers them.
 
 A covered finding is silenced: it is not among the findings, it does not change the exit code, and it is counted.
 `--json` lists it under `silenced` with the exception that covered it. Every report also gives the number of
-exceptions in force, which is every `[[exception]]` in the file, whether or not one was used in this run.
+exceptions in force, which is every `[[exception]]` in the file, whether or not one was used in this run. An
+expired exception is still in that count, and no report lists the expired ones apart.
 
 `approved` is text. Temperare records it and does not check who wrote it, so review a change to `temperare.toml` as
 you review code.
@@ -378,5 +385,6 @@ What is checked:
 - a `security` rule in a file with no top-level `owner`;
 - a `check`, `config` or `params.allow` value that begins with `-`, since it would reach the engine as an option;
 - an exception missing `rule`, `path`, `reason` or `approved`, naming a rule that is neither in the file nor in a
-  taken set, or with an empty `what`;
+  taken set, with an empty `what`, or with an `expires` that is not a real date (`` `expires` must be a real date
+  written YYYY-MM-DD, not "<text>" ``);
 - a rule file that cannot be read, reported at line 0, column 0.

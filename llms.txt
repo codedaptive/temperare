@@ -49,7 +49,8 @@ sources.
   [[override]] per rule; one that names no rule of a taken set is a problem. An [[exception]] may name a set rule.
 - A set rule can require params (none of standard@1 does). Until an [[override]] gives each one in its params the
   rule is not run, tm rules does not list it, and tm check lists it under not_applicable ("required params not
-  given: <names>; give them in the params of an [[override]] for "<rule id>"").
+  given: <names>; give them in the params of an [[override]] for "<rule id>""). A set may type a required param as
+  a string or a list of strings; an [[override]] that gives it as another type is a problem, exit 2.
 - A set's ast-grep rules carry their YAML inside tm: their check is not a path in the repository and no file is
   read for it.
 - The rules of a set: tm rules on a rule file that takes it, or crates/rules/baseline/<name>/<version>/set.toml.
@@ -86,7 +87,7 @@ sources.
   above, except the clippy lint group, an ast-grep rule file that is missing, cannot be read, or leads out of the
   folder through a symlink, and ast-grep's {{name}} params, which are refused only in the run. An ast-grep check that
   is absolute or whose .. climbs above the rule file's folder is refused from the text alone. The order a rule
-  settles in: refused, then covers no file, then not available, then the run (docs/reference/ENGINES.md).
+  settles in: refused, then covers no file, then needs a base, then not available, then the run (docs/reference/ENGINES.md).
 - A check the installed clippy, swiftlint or ruff does not know (a misspelt name, or one newer than the engine) is
   not available (exit 3), with a why naming the engine, its version and the check.
 - check, by engine: clippy, one lint or warnings; swiftlint, one rule identifier; ruff, a rule code, a code prefix,
@@ -97,7 +98,8 @@ sources.
 - A finding has: rule, engine, kind, severity, owner (when the rule file names one), path, line, col (when the
   engine gives one), what (the engine's message), fix (the rule's fix text).
 - An exception is an [[exception]] table in the rule file with rule, path, reason and approved. It records a
-  person's approval. An agent does not add one on its own.
+  person's approval. An agent does not add one on its own. An optional expires = "YYYY-MM-DD" is its last day (UTC):
+  from the day after, it silences nothing. The count of exceptions in force still includes an expired one.
 
 ## What it does not do
 
