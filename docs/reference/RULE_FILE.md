@@ -110,7 +110,7 @@ the owner of the findings in its files.
 | Key | Required | Meaning |
 |---|---|---|
 | `id` | yes | The rule's name in every report. One or more of `a-z`, `0-9` and `-`. No two rules share an id. It may not start with `tm-`, which is kept for the rules of baseline sets |
-| `engine` | yes | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`, `git`, `tessera`, `golangci-lint`, `pylint`, `clang-tidy` or `oclint`, exactly as written here. The last four are accepted, and their rules are "not available" until Temperare has an adapter for each ([`ENGINES.md`](ENGINES.md#engines-with-no-adapter-yet)). `shellcheck` and `git` have adapters, and their rules are not available in this build for other reasons ([`ENGINES.md`](ENGINES.md#shellcheck)) |
+| `engine` | yes | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`, `git`, `tessera`, `golangci-lint`, `pylint`, `clang-tidy` or `oclint`, exactly as written here. The last four are accepted, and their rules are "not available" until Temperare has an adapter for each ([`ENGINES.md`](ENGINES.md#engines-with-no-adapter-yet)). `shellcheck` has an adapter, and its rules are not available in this build for another reason ([`ENGINES.md`](ENGINES.md#shellcheck)); a `git` rule needs `--base` ([`ENGINES.md`](ENGINES.md#git)) |
 | `check` | yes | What the engine is asked. See below |
 | `fix` | yes | The text shown with each finding of this rule |
 | `severity` | no | `error` (the default) or `warning` |
@@ -161,8 +161,9 @@ engine. [`ENGINES.md`](ENGINES.md) has each case.
   escaped so it matches literally, which drops into a `regex:` line as "any of these". A `{{name}}` with no param of
   that name makes the rule fail, and so does a param the YAML never names as `{{name}}`, so a misspelt param name
   cannot pass unnoticed. Two names are not placeholders: `count`, whose only value is `"setup-vs-tests"`, and
-  `shared_setup`, a list of globs that needs `count`. They turn on count mode, which is not available in this build
-  ([`ENGINES.md`](ENGINES.md#ast-grep)); a bad value for either fails the rule.
+  `shared_setup`, a list of globs that needs `count`. `count` turns on count mode, which needs `--base`, reports
+  only files the change adds lines to and counts each whole file ([`ENGINES.md`](ENGINES.md#ast-grep)); a bad value
+  for either fails the rule.
 - **swiftlint:** `max_complexity`, a whole number from 1 to 1000, read only with check `cyclomatic_complexity`; and
   `max_lines`, a whole number from 1 to 100000, read only with check `file_length`. At most one threshold per rule;
   any other param fails the rule.

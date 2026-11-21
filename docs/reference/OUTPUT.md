@@ -340,9 +340,9 @@ file's folder, so put the rule file inside the Cargo project it checks (or run w
 ``ruff: ruff 0.17.4 does not know the check `ZZZ999`: <ruff's own line> (or run without those rules)``. The fix is a
 newer engine or a check it knows. A ShellCheck code that is not on `tm`'s list gives
 `shellcheck: shellcheck 0.11.0: SC2086 is not in temperare's list of shellcheck codes (taken from shellcheck pending) (or run without those rules)`,
-and a git rule or an ast-grep rule in count mode gives
-`git: reports only what a change adds; run with --base (or run without those rules)` (`ast-grep:` for ast-grep),
-with or without `--base` in this build ([`ENGINES.md`](ENGINES.md#git)).
+and a git rule or an ast-grep rule in count mode, run without `--base` with its engine on `PATH`, gives
+`git: reports only what a change adds; run with --base (or run without those rules)` (`ast-grep:` for ast-grep)
+([`ENGINES.md`](ENGINES.md#git), [`ENGINES.md`](ENGINES.md#ast-grep)).
 
 For exit 5 the output meant is the `stderr of <rule> (<engine>):` lines of the text form, which are
 `failed[].stderr_tail` in the JSON.
@@ -362,10 +362,11 @@ A rule with `only_with_base = true` reports only what a change adds. Without `--
 listed as not applicable (a `not applicable:` line in text, `not_applicable` in JSON), with the why
 `reports only what a change adds; run with --base`.
 
-Two kinds of rule count the change themselves and need the base for it: a rule with `engine = "git"`, and an
-ast-grep rule in count mode. In this build `tm check` does not hand the base to the engines, so such a rule is
-listed as not available, with that same why, even when `--base` is given
-([`ENGINES.md`](ENGINES.md#git)). With `only_with_base = true` and no `--base` it is not applicable, as above.
+Two kinds of rule use the commit `--base` names: a rule with `engine = "git"`, which counts the lines a change adds,
+and an ast-grep rule in count mode, which reports the files a change adds lines to
+([`ENGINES.md`](ENGINES.md#git), [`ENGINES.md`](ENGINES.md#ast-grep)). Their findings are on added lines, so the
+filter above keeps them. Without `--base`, with its engine on `PATH`, such a rule is listed as not available, with that same why; with
+`only_with_base = true` and no `--base` it is not applicable, as above.
 
 ## Errors that stop a run, as JSON
 
