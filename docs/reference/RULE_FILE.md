@@ -222,13 +222,10 @@ Each entry is a set's name, `@` and a whole-number version. A set is taken once,
 | Set | Rules | State |
 |---|---|---|
 | `standard@1` | 53, every one `kind = "quality"` and `severity = "warning"` | Ready |
-| `house@1` | 36, 30 at `warning` and 6 at `error`, all `kind = "quality"` | Not ready: a rule file that takes it is refused (below); `tm baseline test --set house@1` tests it |
+| `house@1` | 36, 30 at `warning` and 6 at `error`, all `kind = "quality"` | Ready |
 
-A rule file that takes `house@1` has this problem, at the entry, and nothing runs (exit 2):
-
-```
-/path/to/temperare.toml:2:13  house@1 is not ready in this build: its rules are not yet proven  remove house@1 from baseline
-```
+A file may take either set or both, such as `baseline = ["house@1", "standard@1"]`. Five rules of `house@1` require
+params the file gives; until it does, those five are not applicable ([Required params](#required-params)).
 
 ### The rules of `standard@1`
 
@@ -304,10 +301,9 @@ In a repository's rule file each of these is an unknown key, which is a problem.
 | Problem | When |
 |---|---|
 | `malformed baseline entry "<entry>"` | The entry is not a name, `@` and a whole number |
-| `unknown baseline set "<name>"` | `tm` carries no set of that name. The fix names every ready version of each set: `Use one of: standard@1.` |
-| `unknown version <n> of baseline set "<name>"` | `tm` carries the set, and not at that version. The fix names its ready versions, such as `Use one of: standard@1.`, or, when it has none, reads `No version of baseline set "<name>" is ready in this build; remove the entry.` |
+| `unknown baseline set "<name>"` | `tm` carries no set of that name. The fix names every ready version of each set: `Use one of: house@1, standard@1.` |
+| `unknown version <n> of baseline set "<name>"` | `tm` carries the set, and not at that version. The fix names its ready versions, such as `Use one of: standard@1.` for `standard@2` |
 | `baseline set "<name>" is taken twice` | A second entry for a set an earlier entry took, at any version |
-| `<name>@<version> is not ready in this build: its rules are not yet proven` | The set is built in and not ready: `house@1`. The fix is `remove <name>@<version> from baseline` |
 | `rule "<id>" is in both <set> and <set>` | Two taken sets hold a rule of that id. Reported at the later entry |
 | `baseline set <name>@<version> has a problem at <line>:<col>: <what>` | A fault in the set built into `tm`, not in your file. The fix asks you to report it |
 | ``[[override]] is missing `rule` `` | An `[[override]]` with no `rule` |

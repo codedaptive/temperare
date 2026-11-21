@@ -542,9 +542,9 @@ listed only when the base has none.
 ## `tm baseline test`
 
 `tm baseline test [--set <name@version>] [--json]` tests the rules of the baseline sets built into `tm`, each on
-the cases its set carries for it. With no `--set` it tests every set that is ready, which is `standard@1`; `--set`
-tests the one set it names instead, ready or not, so `--set house@1` tests `house@1` (at the end of this section).
-It reads no rule file and checks nothing in your repository.
+the cases its set carries for it. With no `--set` it tests every set that is ready, which is both sets it carries:
+`house@1` (36 rules), then `standard@1` (53). `--set` tests the one set it names instead, such as
+`--set standard@1`. It reads no rule file and checks nothing in your repository.
 
 Each rule runs alone, by its engine, on two cases. Its failing case must give exactly the one finding the set expects
 (that rule, at that path and line) and nothing else; its passing case must give no finding. Each case is written into
@@ -571,8 +571,8 @@ A case comes to one of four results:
 A rule is broken when either case is broken; else not applicable when either case is; else not available when either
 is; else it holds.
 
-As text. `standard@1` has 53 rules, and a run prints a line for each. The lines below are cut to three of them to
-show three of the results; they are not the record of a run:
+As text. A run prints a line for each rule, 89 with no `--set`. The lines below are cut to three rules of
+`standard@1` to show three of the results; they are not the record of a run:
 
 ```
 standard@1 tm-rust-dead-code (clippy): holds
@@ -625,11 +625,10 @@ The first that applies wins: 2, 1, 3, 0. Exit 3 is never "holds": a rule that wa
 A set `tm` does not carry is the two usage-error lines on stderr, for example `tm baseline test --set standrd@1` prints
 `tm: unknown baseline set "standrd"` and `next: Use one of: house@1, standard@1.`, and with `--json` also the object on
 stdout, as for `tm check`
-([Errors that stop a run, as JSON](#errors-that-stop-a-run-as-json)). Every set `tm` carries is named, ready or not,
-since this command can test each one; a rule file's fix for the same mistake names only the ready ones
+([Errors that stop a run, as JSON](#errors-that-stop-a-run-as-json)). Every set `tm` carries is named. A rule file's
+fix for the same mistake names the ready ones, which today are the same two
 ([`RULE_FILE.md`](RULE_FILE.md#problems-of-baseline-and-override)).
 
-A set that is not ready is tested like a ready one: `tm baseline test --set house@1` runs `house@1`'s 36 rules. Five
-of them require params, and each of their cases gives them (`entity_types` or `own_package`), so they run like the
-rest. A case that lacked one would be not applicable, with the why
+Five of `house@1`'s rules require params, and each of their cases gives them (`entity_types` or `own_package`), so
+they run like the rest. A case that lacked one would be not applicable, with the why
 `the case gives no value for required params: <names>`.

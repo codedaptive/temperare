@@ -36,7 +36,7 @@ sources.
   nothing loosened; 1 something did; 2 a usage error, a --base that names no commit or has no such rule file, or a
   problem in either file. --loosened and --base come together.
 - tm baseline test [--set <name@version>] [--json]: tests each rule of the baseline sets built into tm (with no
-  --set the ready ones, standard@1; --set names one set, ready or not, such as house@1) on its failing case
+  --set the ready ones, house@1 then standard@1; --set names one set, such as standard@1) on its failing case
   (exactly the expected finding) and its passing case (no finding), each in a throwaway git repository. A rule
   holds, is broken, not available or not applicable (a rule that requires a param its case does not give). Each
   case runs with the params it gives over the rule's own. Exits 0
@@ -47,9 +47,9 @@ sources.
   baseline = ["name@version", ...], each set once. standard@1 is ready: 53 rules, all kind quality and severity
   warning, in this order: dead code (5), deprecated calls (1), suppressions written in the code (11), then
   complexity, nesting, dbg! and print, bare and blind except and commented-out code (8), then what a change adds
-  (28, each only_with_base: under not_applicable without --base). house@1 (36 rules) is not ready: a rule file that
-  takes it has a problem, exit 2 ("house@1 is not ready in this build: its rules are not yet proven", fix "remove
-  house@1 from baseline"); tm baseline test --set house@1 tests it.
+  (28, each only_with_base: under not_applicable without --base). house@1 is ready too: 36 rules, all kind quality,
+  30 at warning and 6 at error. Five of them require params (entity_types, own_package) that the rule file gives in
+  an [[override]]; until it does they are not applicable. A file may take both sets.
 - A set's rules come first, in baseline order and each set's own order, then the file's own. tm rules lists them
   that way; nothing names a rule's set. A set rule's id starts with tm-, and an own rule's id may not.
 - [[override]] changes one set rule: rule (its id, required) and any of severity, off = true (the rule is left out:
