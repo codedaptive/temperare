@@ -54,7 +54,8 @@ In order:
    file first names each. An engine that ran is one `tm` found and asked its version, whatever its rules came to: a
    rule refused before its engine ran, or a check the installed engine does not know, still counts. An engine that
    is absent (not on `PATH`, or with no adapter in this build) is left out, and its rules appear only on their
-   `not available:` or `not applicable:` lines, or not at all when `only_with_base` runs with no `--base`. Tessera is never listed today, since `tm` does not look for it.
+   `not available:` or `not applicable:` lines. A rule with `only_with_base` run with no `--base` is on a
+   `not applicable:` line whatever its engine's state. Tessera is never listed today, since `tm` does not look for it.
    `<engine> (version unknown)` when a found engine gave no version. No line when no engine ran.
 6. **The counts line,** ending with the number of not-applicable rules, `0` included.
 7. **Why each failed rule failed:** `stderr of <rule id> (<engine>):`, then the lines of its `stderr_tail`, each
