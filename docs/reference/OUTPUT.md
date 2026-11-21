@@ -335,6 +335,9 @@ With `--base <rev>`, a finding is kept only when its line was added since that c
 A finding on an older line is dropped before exceptions are applied, so it is neither kept nor silenced nor
 counted. A `--base` that names no commit is exit 2, never an empty result.
 
+A rule with `only_with_base = true` reports only what a change adds. Without `--base` it reports nothing and is
+listed under `not_applicable`, with the why `reports only what a change adds; run with --base`.
+
 ## Errors that stop a run, as JSON
 
 A usage error inside `tm check --json` or `tm rules --json` (no rule file, not in a git repository, a path outside
