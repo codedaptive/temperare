@@ -246,7 +246,7 @@ approved = "who approved it"
 | Key of a `[[rule]]` | Meaning |
 |---|---|
 | `id` | The rule's name in every report: lower-case letters, digits and `-`, unique in the file |
-| `engine` | `clippy`, `swiftlint`, `ruff`, `ast-grep` or `tessera`; also `golangci-lint`, `pylint`, `clang-tidy`, `oclint` and `shellcheck`, accepted and "not available" until their adapters land |
+| `engine` | `clippy`, `swiftlint`, `ruff`, `ast-grep` or `tessera`; also `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `shellcheck` and `git`, accepted and "not available" until their adapters land |
 | `check` | What the engine is asked. clippy: one lint the toolchain lists (`clippy::bool_comparison`), or `warnings` for every warning clippy reports; not a lint group. SwiftLint: one rule identifier (`force_cast`). ruff: a rule code, a code prefix or `ALL` (`E711`, `E7`), or several joined by commas. ast-grep: the path of a rule file inside the rule file's folder |
 | `fix` | The text shown with each finding |
 | `severity` | `error` (the default) or `warning` |
@@ -303,7 +303,7 @@ done, 1 when a step failed, and 2 when used wrongly.
 | `ruff` | `ruff check` in the rule file's folder | Python |
 | `ast-grep` | `ast-grep scan` with your rule file, its `params` filled in | Any language ast-grep reads; rules about the shape of code |
 | `tessera` | Nothing | Not available today |
-| `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `shellcheck` | Nothing yet | Accepted in the rule file; not available until each adapter lands |
+| `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `shellcheck`, `git` | Nothing yet | Accepted in the rule file; not available until each adapter lands |
 
 Engines are run as programs. Rules on the same engine with the same `config` and `params` share one run where the
 engine can answer each of them in it, so ten ruff rules for ten codes can be one ruff run; each rule still keeps
@@ -316,7 +316,8 @@ rule's own `severity` and `fix`; the engine's own severity for a finding is not 
 always reported "not available", whether or not Tessera is installed: `tm` neither runs nor looks for it. The
 report gives the reason, and the run ends with exit 3 unless a quality error (1) or a failed engine (5) comes
 first. The `next:` line says Tessera's checks are not available yet; installing Tessera changes nothing, so run
-without those rules.
+without those rules. One exception: a Tessera rule with `only_with_base = true`, run without `--base`, is listed as
+not applicable instead, like any such rule.
 
 **A `check` that cannot be matched is "failed", never clean.** A clippy lint group or `rustdoc::` lint, SwiftLint's
 `custom_rules`, a ruff rule name in place of a code, and an ast-grep rule file outside the rule file's folder each
@@ -392,7 +393,7 @@ Temperare runs other programs with your privileges, and the rule file decides wh
   a command is named only inside one kit, and clippy's `warnings` with an `allow` list.
 - **Platforms:** built and accepted on macOS. The code is written for Unix systems; Linux and Windows are untested.
 - **Not available today:** rules with `engine = "tessera"`, and rules naming `golangci-lint`, `pylint`,
-  `clang-tidy`, `oclint` or `shellcheck`, which the rule file accepts before their adapters land.
+  `clang-tidy`, `oclint`, `shellcheck` or `git`, which the rule file accepts before their adapters land.
 - **License:** MIT. See [`LICENSE`](LICENSE).
 
 ---

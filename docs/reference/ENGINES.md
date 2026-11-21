@@ -57,7 +57,7 @@ Neither is ever "clean".
 | `no Cargo.toml at or above the rule file's folder` | A clippy rule in a folder that is not inside a Cargo package |
 | ``<engine> <version> does not know the check `<check>`: <what it said>`` | The installed clippy, SwiftLint or ruff does not know the rule's `check`: a name it does not have, often because it is older than the rule. `<version>` is `(version unknown)` when the version could not be read |
 | `Tessera's slop records are not defined yet` | Every rule with `engine = "tessera"` |
-| `no adapter for <engine> in this build` | Every rule whose engine the rule file accepts and this `tm` cannot run yet: `golangci-lint`, `pylint`, `clang-tidy`, `oclint` and `shellcheck` ([below](#engines-with-no-adapter-yet)) |
+| `no adapter for <engine> in this build` | Every rule whose engine the rule file accepts and this `tm` cannot run yet: `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `shellcheck` and `git` ([below](#engines-with-no-adapter-yet)) |
 
 An engine too old for a rule is not available rather than failed: the fix is a newer engine, or a `check` this one
 knows. ast-grep and Tessera have no such case: an ast-grep `check` is your own YAML, which ast-grep either reads or
@@ -309,12 +309,18 @@ first. The `next:` line says `Tessera's checks are not available yet` and does n
 exit 0, leave Tessera rules out of the rule file, or check with a rule file that has none
 (`--rules <path>`).
 
+A Tessera rule with `only_with_base = true`, run without `--base`, is not applicable rather than not available, as
+any such rule is ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)).
+
 ## Engines with no adapter yet
 
-A rule may name `golangci-lint`, `pylint`, `clang-tidy`, `oclint` or `shellcheck`. The rule file accepts these
-names, so a rule written for one of them needs no change when its adapter lands. Until then this `tm` cannot run
+A rule may name `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `shellcheck` or `git`. The rule file accepts
+these names, so a rule written for one of them needs no change when its adapter lands. `git` is the engine that
+will count what a change adds against a base; `tm` already runs git itself for `--base`, and that is not this
+engine. Until then this `tm` cannot run
 them: the rule is reported "not available" with the reason `no adapter for <engine> in this build`, whether or
-not the engine is installed, and nothing is run. `tm rules` shows the same reason.
+not the engine is installed, and nothing is run. `tm rules` shows the same reason. A rule with
+`only_with_base = true`, run without `--base`, is not applicable instead.
 
 A run with such a rule ends with exit 3, unless a quality error (1) or a failed engine (5) comes first. The `next:`
 line says `<engine>: no adapter for <engine> in this build (or run without those rules)`; installing the engine

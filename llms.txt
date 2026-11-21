@@ -75,9 +75,11 @@ sources.
   savings_line = false in ~/.config/temperare/config.toml turns the line off.
 - Rules with engine = "tessera" are accepted and are always reported "not available" today, whether or not Tessera
   is installed.
-- Rules with engine = "golangci-lint", "pylint", "clang-tidy", "oclint" or "shellcheck" are accepted and reported
-  "not available" (no adapter for <engine> in this build) until each adapter lands, whether or not the engine is
-  installed.
+- Rules with engine = "golangci-lint", "pylint", "clang-tidy", "oclint", "shellcheck" or "git" are accepted and
+  reported "not available" (no adapter for <engine> in this build) until each adapter lands, whether or not the
+  engine is installed.
+- Either kind with only_with_base = true, run without --base, is listed under not_applicable instead, as any such
+  rule is.
 
 ## Version note
 

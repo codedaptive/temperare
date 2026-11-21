@@ -28,7 +28,7 @@ src/new.py:2:17  error quality no-none-compare  owner payments
 
 not available: file-erosion (tessera): Tessera's slop records are not defined yet
 failed: clippy-warnings (clippy), no exit code
-engines: ruff 0.17.4, clippy (version unknown), tessera (version unknown)
+engines: ruff 0.17.4, clippy 0.1.95
 1 findings (1 error, 0 warning; 0 security), 1 silenced, 1 exceptions in force, 1 not available, 1 failed
 stderr of clippy-warnings (clippy):
   clippy param alow: a clippy rule reads only the `allow`, `max_nesting` param
@@ -47,8 +47,12 @@ In order:
 2. **One line per rule that was not available:** `not available: <rule id> (<engine>): <why>`.
 3. **One line per rule that failed:** `failed: <rule id> (<engine>), exit <code>`, or `no exit code` when the
    engine did not run to an exit.
-4. **The engines line:** `engines: <engine> <version>, ...`, one entry per engine the rules name, in the order the
-   rule file first names each; `<engine> (version unknown)` when no version was read. Left out when the list is empty.
+4. **The engines line:** `engines: <engine> <version>, ...`, one entry per engine that ran, in the order the rule
+   file first names each. An engine that ran is one `tm` found and asked its version, whatever its rules came to: a
+   rule refused before its engine ran, or a check the installed engine does not know, still counts. An engine that
+   is absent (not on `PATH`, or with no adapter in this build) is left out and appears only on its rules'
+   `not available:` lines. Tessera is never listed today, since `tm` does not look for it.
+   `<engine> (version unknown)` when a found engine gave no version. No line when no engine ran.
 5. **The counts line.**
 6. **Why each failed rule failed:** `stderr of <rule id> (<engine>):`, then the lines of its `stderr_tail`, each
    indented two spaces. When there is nothing to show, the one line `stderr of <rule id> (<engine>): (empty)`.
@@ -71,8 +75,7 @@ The run above, as `--json` prints it (on one line; wrapped here to read):
   "date": "2026-11-20",
   "engines": [
     { "engine": "ruff", "version": "0.17.4" },
-    { "engine": "clippy", "version": null },
-    { "engine": "tessera", "version": null }
+    { "engine": "clippy", "version": "0.1.95" }
   ],
   "exceptions_in_force": 1,
   "exit": 1,
@@ -141,7 +144,7 @@ The run above, as `--json` prints it (on one line; wrapped here to read):
 | `failed` | Each rule that failed: `rule`, `engine`, `code` (the engine's exit code, or `null` when it had none or was not run), `stderr_tail` (the last 20 lines of what explains the failure: the engine's stderr, or Temperare's own reason when the engine printed none or was not run) |
 | `base` | The full id of the commit `--base` named. Present only with `--base` |
 | `date` | The day of the check in UTC, as `YYYY-MM-DD`. Always present |
-| `engines` | Always present: one `{ "engine", "version" }` entry per engine the rules name, in the order the rule file first names each; `engine` is the rule-file name, `version` a string, or `null` when it could not be read or the engine is absent. `[]` when no rule names an engine |
+| `engines` | Always present: one `{ "engine", "version" }` entry per engine that ran (as for the text line: found and asked its version, whatever its rules came to), in the order the rule file first names each; `engine` is the rule-file name, `version` a string, or `null` when the found engine gave none. An absent engine is left out and appears only under `not_available`. `[]` when no engine ran |
 | `saved` | The tokens-saved estimate and what it counted. Always present on a report, whatever the user configuration says; shown in full under [Tokens saved](#tokens-saved) |
 | `counts` | The numbers below |
 | `exit` | The exit code of this run |
@@ -221,7 +224,7 @@ no line when no engine ran, under `--json`, when the run stops with exit 2, or o
     { "chars": 0, "engine": "clippy", "rule": "clippy-warnings" },
     { "chars": 0, "engine": "tessera", "rule": "file-erosion" }
   ],
-  "engine_runs": 1, "output_chars": 1225, "output_tokens": 306, "percent": 0, "tokens_saved": 0
+  "engine_runs": 1, "output_chars": 1339, "output_tokens": 335, "percent": 0, "tokens_saved": 0
 }
 ```
 
@@ -350,7 +353,7 @@ the rule file's folder, a `--base` that names no commit) prints the two lines on
 A rule file with problems prints, with `--json`:
 
 ```json
-{"exit":2,"next":"fix each problem listed for /path/to/temperare.toml","problems":[{"col":10,"fix":"Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck.","line":5,"what":"unknown engine \"pylnit\""}],"rule_file":"/path/to/temperare.toml"}
+{"exit":2,"next":"fix each problem listed for /path/to/temperare.toml","problems":[{"col":10,"fix":"Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck, git.","line":5,"what":"unknown engine \"pylnit\""}],"rule_file":"/path/to/temperare.toml"}
 ```
 
 Without `--json` it prints one line per problem, `file:line:col  what  fix`, then the `next:` line. See
