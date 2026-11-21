@@ -4,14 +4,12 @@
 //! its folder flagged, both without running.
 
 use crate::engine_hits::engine_hits;
-use crate::entry::too_old_why;
 use crate::files_in_folder::files_in_folder;
 use crate::host::Host;
-use crate::not_on_path_why::not_on_path_why;
 use crate::rule_folder::rule_folder;
 use crate::run_rules_listed::run_rules_listed;
 use crate::types::{EngineVersion, RuleRun, Stop};
-use rules::{Engine, RelPath, Rule, RuleFile, RuleOutcome};
+use rules::{RelPath, RuleFile};
 use std::path::Path;
 
 /// Each rule's run, as `run_rules_versioned_at` gives its runs, in rule-file order, with the programs run and looked up
@@ -36,36 +34,4 @@ pub(crate) fn run_rules_counted_with(
     });
     let files = folder.as_deref().ok().and_then(files_in_folder);
     run_rules_listed(file, folder.as_deref(), only, host, versions, files.as_deref(), &engine_hits)
-}
-
-/// The outcome of `rule` when it stopped without findings. `NotAvailable` is `NotAvailable` with its why as it is;
-/// `NotOnPath` is `NotAvailable` with `not_on_path_why` naming the program (`rule_run_of` sets the cause from the
-/// stop, `not_available_cause_of`). A check the engine said it does not know is
-/// `NotAvailable`, with `too_old_why` naming the engine by its rule-file name (`Engine::name`) and its version, the
-/// first of `versions` for the rule's engine (`(version unknown)` when there is none or it is `None`). A check not in
-/// temperare's list of its engine's codes (`NotListed`) is `NotAvailable` with `<engine> <version>: ` before what it
-/// said, the engine and version found the same way. `NoFiles` is
-/// `Findings` with none: `rule_run_of` settles a `NoFiles` itself, setting the rule's `no_files` flag, before it
-/// would reach here, so this arm only keeps the match whole.
-pub(crate) fn stopped(rule: &Rule, stop: Stop, versions: &[EngineVersion]) -> RuleOutcome {
-    let (id, engine) = (rule.id.clone(), rule.engine);
-    match stop {
-        Stop::NotAvailable { why } => RuleOutcome::NotAvailable { rule: id, engine, why },
-        Stop::NotOnPath { program } => RuleOutcome::NotAvailable { rule: id, engine, why: not_on_path_why(&program) },
-        Stop::Failed { code, stderr } => RuleOutcome::Failed { rule: id, engine, code, stderr },
-        Stop::NoFiles { .. } => RuleOutcome::Findings(Vec::new()),
-        Stop::UnknownCheck { said } => {
-            let why = too_old_why(engine.name(), version_of(engine, versions), &rule.check, &said);
-            RuleOutcome::NotAvailable { rule: id, engine, why }
-        }
-        Stop::NotListed { said } => {
-            let version = version_of(engine, versions).unwrap_or("(version unknown)");
-            RuleOutcome::NotAvailable { rule: id, engine, why: format!("{} {version}: {said}", engine.name()) }
-        }
-    }
-}
-
-/// The version of `engine`: the first of `versions` for it, None when there is none or it is `None`.
-fn version_of(engine: Engine, versions: &[EngineVersion]) -> Option<&str> {
-    versions.iter().find(|v| v.engine == engine).and_then(|v| v.version.as_deref())
 }

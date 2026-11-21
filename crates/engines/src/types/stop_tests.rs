@@ -1,5 +1,5 @@
 //! ZUT for stop.rs: plain data; equality covers the variant and every field, `NotOnPath`,
-//! `UnknownCheck`, `NotListed` and `NoFiles` included.
+//! `UnknownCheck`, `NotListed`, `NoFiles` and `NoCargoProject` included.
 
 use super::Stop;
 
@@ -48,4 +48,17 @@ fn not_listed_compares_by_what_it_said_and_is_no_other_stop() {
     assert_ne!(unlisted("x"), Stop::NotAvailable { why: "x".to_string() });
     assert_ne!(unlisted("x"), Stop::NoFiles { why: "x".to_string() });
     assert_ne!(unlisted("x"), failed(None, "x"));
+}
+
+#[test]
+fn no_cargo_project_compares_by_its_why_and_is_no_other_stop() {
+    let no_cargo = |why: &str| Stop::NoCargoProject { why: why.to_string() };
+    let why = "no Cargo.toml at or above the rule file's folder";
+    assert_eq!(no_cargo(why), no_cargo(why));
+    assert_ne!(no_cargo(why), no_cargo("no Cargo.toml"));
+    assert_ne!(no_cargo("x"), Stop::NotAvailable { why: "x".to_string() });
+    assert_ne!(no_cargo("x"), Stop::NoFiles { why: "x".to_string() });
+    assert_ne!(no_cargo("x"), Stop::UnknownCheck { said: "x".to_string() });
+    assert_ne!(no_cargo("x"), Stop::NotListed { said: "x".to_string() });
+    assert_ne!(no_cargo("x"), failed(None, "x"));
 }

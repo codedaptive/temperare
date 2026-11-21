@@ -1,4 +1,4 @@
-//! Counted rule runs across adapters with a fake host and a real temporary rule folder.
+//! Counted rule runs across adapters, including clippy without a Cargo project, with a fake host and temporary folders.
 
 use crate::host::Host;
 use crate::run_rules_counted_with::run_rules_counted_with;
@@ -118,4 +118,39 @@ fn counted_runs_keep_order_outcomes_and_distinguish_empty_from_not_run() {
     ]);
     assert_eq!(got.iter().filter_map(|run| run.raw_chars).sum::<usize>(), 89);
     assert_eq!(got.iter().filter(|run| run.raw_chars.is_some()).count(), 3);
+}
+
+#[test]
+fn counted_clippy_without_cargo_project_is_not_available_without_running() {
+    let root = std::env::temp_dir().join(format!("engines-zit-{}-no-cargo-project", std::process::id()));
+    fs::create_dir(&root).unwrap();
+    let repo = fs::canonicalize(root).unwrap();
+    assert!(repo.ancestors().all(|dir| !dir.join("Cargo.toml").is_file()));
+    let file = RuleFile::parse(r#"version = 1
+owner = "repo"
+[[rule]]
+id = "no-cargo"
+engine = "clippy"
+check = "clippy::bool_comparison"
+fix = "f"
+"#, Path::new(".")).unwrap();
+    let raw_chars = Cell::new(None);
+    let host = Host {
+        run: &|cmd| panic!("unexpected command: {cmd:?}"),
+        on_path: &|program| matches!(program, "cargo-clippy" | "clippy-driver" | "cargo"),
+        raw_chars: &raw_chars,
+        base: None,
+    };
+    let got = run_rules_counted_with(&file, &repo, &[], &host, &[]);
+    fs::remove_dir_all(&repo).unwrap();
+    assert_eq!(got, vec![RuleRun::new(
+        "no-cargo".into(),
+        Engine::Clippy,
+        RuleOutcome::NotAvailable {
+            rule: "no-cargo".into(),
+            engine: Engine::Clippy,
+            why: "no Cargo.toml at or above the rule file's folder".into(),
+        },
+        None,
+    ).with_cause(NotAvailableCause::NoCargoProject)]);
 }

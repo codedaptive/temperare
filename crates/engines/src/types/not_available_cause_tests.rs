@@ -1,5 +1,5 @@
-//! ZUT for not_available_cause.rs: a not-available `RuleRun` keeps each of the four causes it is given, so a caller
-//! can tell `EngineNotOnPath`, `HelperNotOnPath`, `UnknownCheck` and `Other` apart on the run.
+//! ZUT for not_available_cause.rs: a not-available `RuleRun` keeps each of the five causes it is given, so a caller
+//! can tell `EngineNotOnPath`, `HelperNotOnPath`, `UnknownCheck`, `NoCargoProject` and `Other` apart on the run.
 
 use super::{NotAvailableCause, RuleRun};
 use rules::{Engine, RuleOutcome};
@@ -10,6 +10,7 @@ fn not_available_cause_each_cause_is_kept_on_the_run() {
         (NotAvailableCause::EngineNotOnPath, Some(NotAvailableCause::EngineNotOnPath)),
         (NotAvailableCause::HelperNotOnPath, Some(NotAvailableCause::HelperNotOnPath)),
         (NotAvailableCause::UnknownCheck, Some(NotAvailableCause::UnknownCheck)),
+        (NotAvailableCause::NoCargoProject, Some(NotAvailableCause::NoCargoProject)),
         (NotAvailableCause::Other, Some(NotAvailableCause::Other)),
     ];
     let wrong: Vec<_> = rows

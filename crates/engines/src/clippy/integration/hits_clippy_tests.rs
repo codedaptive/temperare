@@ -122,7 +122,7 @@ fn counted_clippy_group_refusal_excludes_help() {
 #[test]
 fn no_cargo_toml_at_or_above_the_folder_is_not_available_and_runs_nothing() {
     let (got, seen) = run(Path::new("/engines-zut-no-such-folder/a"), output(0, b"", b""), output(0, b"", b""));
-    assert_eq!(got, Err(Stop::NotAvailable { why: "no Cargo.toml at or above the rule file's folder".to_string() }));
+    assert_eq!(got, Err(Stop::NoCargoProject { why: "no Cargo.toml at or above the rule file's folder".to_string() }));
     assert!(seen.is_empty());
 }
 

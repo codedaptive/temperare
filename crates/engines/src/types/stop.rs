@@ -11,6 +11,8 @@
 /// the why after `<engine> <version>: `. The rule is then not available, never clean.
 /// `NoFiles` means the rule ran nothing because no file it checks exists; `why` says which case. It is neither clean
 /// nor not available: the runner gives it no findings and sets the run's `no_files` flag to `why`.
+/// `NoCargoProject` means a clippy rule's rule file has no `Cargo.toml` at or above its folder; `why` is the text the
+/// run reads. The rule is then not available, never clean.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Stop {
     NotAvailable { why: String },
@@ -19,4 +21,5 @@ pub(crate) enum Stop {
     UnknownCheck { said: String },
     NotListed { said: String },
     NoFiles { why: String },
+    NoCargoProject { why: String },
 }

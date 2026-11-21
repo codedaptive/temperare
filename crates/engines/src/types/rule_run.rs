@@ -26,7 +26,8 @@ pub struct RuleRun {
     /// `None`: the rule had files to check, or stopped for another reason its outcome gives.
     pub no_files: Option<String>,
     /// `Some(cause)` exactly when `outcome` is `RuleOutcome::NotAvailable`: whether a program installing its engine
-    /// supplies is not on PATH, another program it runs is not, the installed engine does not know its check, or
-    /// another reason (`NotAvailableCause`). The why text stays in the outcome. `None` for every other outcome.
+    /// supplies is not on PATH, another program it runs is not, the installed engine does not know its check, a clippy
+    /// rule has no `Cargo.toml` at or above its folder, or another reason (`NotAvailableCause`). The why text stays in
+    /// the outcome. `None` for every other outcome.
     pub not_available_cause: Option<NotAvailableCause>,
 }
