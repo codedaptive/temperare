@@ -123,7 +123,8 @@ code is looked up in `tm`'s list ([shellcheck](#shellcheck)).
 
 Before any rule runs, `tm` asks git for the files of the rule file's folder: the tracked files that are in the work
 tree, and the untracked files git does not ignore. A rule that covers none of them, by its `paths`, `exclude`,
-`kits` and `outside_kits`, runs nothing. Its engine is not run and not looked for on `PATH`. A ShellCheck rule
+`kits` and `outside_kits`, runs nothing. Its engine runs no check for it, and whether the engine is on `PATH` does
+not change its result (the engine is still asked its version for the engines line, below). A ShellCheck rule
 that covers a file is settled the same way when it covers none of the scripts in the folder.
 
 These are not among those files, so a rule that covers only such files covers no file: a file git ignores, a
@@ -383,13 +384,15 @@ rule:
 
 - **Available when** `shellcheck` is on `PATH`. `tm` lists the scripts with git, so git must be there too.
 - **In this build no ShellCheck rule reaches ShellCheck.** A rule's code is looked up in a list of ShellCheck's
-  codes that is built into `tm`, and the list in this build holds no code; its version reads `pending`. Inside a
-  git repository a ShellCheck rule therefore comes to one of these, in the order
-  [a rule settles in](#the-order-a-rule-settles-in):
+  codes that is built into `tm`, and the list in this build holds no code; its version reads `pending`.
+  A ShellCheck rule therefore comes to one of these, in the order [a rule settles in](#the-order-a-rule-settles-in):
   - failed, when its `check` is not one code or it has a param;
-  - nothing run, when it covers no script;
-  - not available, with `git not found on PATH`, when git is not installed and so cannot list the scripts; or failed, with git's own reason, when git cannot list them;
-  - not available, with `shellcheck not found on PATH`;
+  - nothing run, when git lists the scripts and it covers none of them;
+  - not available, with `shellcheck not found on PATH`. This comes before any git error: when git cannot list the
+    scripts, the rule goes on to ShellCheck's own check first, so with neither git nor ShellCheck installed the why
+    is `shellcheck not found on PATH`;
+  - with ShellCheck installed, not available, with `git not found on PATH`, when git is not installed and so cannot
+    list the scripts; or failed, with git's own reason, when git cannot list them;
   - not available, with
     ``shellcheck <version>: <check> is not in temperare's list of shellcheck codes (taken from shellcheck pending)``.
     `<version>` is the installed ShellCheck's, or `(version unknown)` when it could not be read; the last word is

@@ -99,7 +99,8 @@ rule was not available or its engine failed. The counts in the output say so; th
 **A rule can be written so that it matches nothing.** A `check` Temperare cannot match back to findings fails its
 rule and is never clean. A rule whose ast-grep pattern matches no code reports no findings and is not flagged. A
 rule that covers none of the files git lists in the rule file's folder (the tracked files in the work tree and the
-untracked files git does not ignore) is not run at all: its engine is not run and not looked for, and no line or
+untracked files git does not ignore) is not run at all: its engine runs no check for it (it is still asked its
+version), whether the engine is installed does not change the result, and no line or
 count of the report says so. The exit code is what it would be without that rule, so a
 rule with a mistyped `paths` and a missing engine can end in exit 0. A ShellCheck rule that covers no shell script
 is the same. Try a new rule on a file you know breaks it.
