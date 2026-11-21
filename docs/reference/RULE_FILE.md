@@ -338,8 +338,11 @@ From then its findings are found again as if it were not there, unless a later e
 
 A covered finding is silenced: it is not among the findings, it does not change the exit code, and it is counted.
 `--json` lists it under `silenced` with the exception that covered it. Every report also gives the number of
-exceptions in force, which is every `[[exception]]` in the file, whether or not one was used in this run. An
-expired exception is still in that count, and no report lists the expired ones apart.
+exceptions in force: the exceptions that have not expired on the report's day, whether or not one was used in this
+run. An exception still counts on its `expires` day. From the day after it is listed apart instead, as
+`expired: <rule> <path> (expired <YYYY-MM-DD>)` in text and under `expired` in `--json`, and counted as expired
+([`OUTPUT.md`](OUTPUT.md#tm-check-as-text)). `tm rules` still counts every exception in the file, expired ones
+included.
 
 `approved` is text. Temperare records it and does not check who wrote it, so review a change to `temperare.toml` as
 you review code.

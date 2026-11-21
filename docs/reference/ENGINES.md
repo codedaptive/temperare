@@ -152,7 +152,7 @@ A refused rule is not such a rule: it is settled first and is failed, whatever i
 `only_with_base = true`, run without `--base`, is listed as not applicable for want of `--base` whatever it covers,
 as any such rule is. A check whose only rule is one of its own and covers no file prints
 `covers nothing: <rule> (<engine>)`, then
-`0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable, 1 covers nothing`
+`0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable, 1 covers nothing, 0 expired`
 and `next: fix the paths of each rule that covers nothing above, or remove it from <rule file>`, and exits 6. (The
 example line shows no exceptions in force; a rule file with exceptions shows their count.) That is so whether its
 engine is installed or not. The one difference is the engines line: an engine found on `PATH` is still asked its
