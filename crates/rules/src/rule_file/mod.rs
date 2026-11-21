@@ -1,8 +1,8 @@
 //! The rule file: reading and checking it, the baseline sets it takes with its overrides of them, and the exceptions it grants.
 //!
 //! Past 150 lines on purpose: as a bridge file (small-files rule 4) it holds one `mod` line for each file in the
-//! folder (`#[cfg(test)]` on the tests files) and the `pub use` lines, and splitting it would mean sub-folders, churn
-//! with no gain.
+//! folder and one for its `integration` sub-folder (`#[cfg(test)]` on the tests), and the `pub use` lines; splitting
+//! it would mean more sub-folders, churn with no gain.
 
 mod apply_override;
 mod baseline_rules;
@@ -73,8 +73,6 @@ mod wrong_type;
 #[cfg(test)]
 mod apply_override_tests;
 #[cfg(test)]
-mod baseline_rules_tests;
-#[cfg(test)]
 mod baseline_set_tests;
 #[cfg(test)]
 mod baseline_sets_tests;
@@ -99,8 +97,6 @@ mod check_keys_tests;
 #[cfg(test)]
 mod check_not_option_tests;
 #[cfg(test)]
-mod check_override_params_tests;
-#[cfg(test)]
 mod check_param_types_tests;
 #[cfg(test)]
 mod check_security_owner_tests;
@@ -118,6 +114,8 @@ mod embedded_sets_tests;
 mod engine_value_tests;
 #[cfg(test)]
 mod house_1_tests;
+#[cfg(test)]
+mod integration;
 #[cfg(test)]
 mod kind_value_tests;
 #[cfg(test)]

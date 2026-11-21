@@ -70,16 +70,17 @@ fn ready_versions_fix(name: &str, named: &[&BaselineSet]) -> String {
     format!("Use one of: {}.", versions.join(", "))
 }
 
-/// The fix for an unknown set: the names of the sets with at least one ready version, sorted, since only those can be
-/// taken; when none is, the entry can only be removed.
+/// The fix for an unknown set: every ready set as `name@version`, sorted by name then by version as a number, since
+/// only a ready set can be taken and an entry must name a version (a bare name is malformed); when none is ready, the
+/// entry can only be removed.
 fn ready_sets_fix(sets: &[BaselineSet]) -> String {
-    let mut names: Vec<&str> = sets.iter().filter(|set| set.ready).map(|set| set.name).collect();
-    if names.is_empty() {
+    let mut ready: Vec<&BaselineSet> = sets.iter().filter(|set| set.ready).collect();
+    if ready.is_empty() {
         return "No baseline set is ready in this build; remove the entry.".to_string();
     }
-    names.sort_unstable();
-    names.dedup();
-    format!("Use one of: {}.", names.join(", "))
+    ready.sort_unstable_by_key(|set| (set.name, set.version));
+    let ids: Vec<String> = ready.iter().map(|set| format!("{}@{}", set.name, set.version)).collect();
+    format!("Use one of: {}.", ids.join(", "))
 }
 
 /// The name and version of `name@version`: the name not empty, the version only ASCII digits and within u32. The

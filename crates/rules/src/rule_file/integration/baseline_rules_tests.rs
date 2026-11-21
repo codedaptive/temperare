@@ -1,10 +1,10 @@
-//! ZUT for baseline_rules.rs.
+//! ZIT for baseline_rules.rs.
 
-use super::baseline_rules::{baseline_rules, baseline_rules_in};
-use super::baseline_set::BaselineSet;
-use super::house_1::HOUSE_1;
-use super::house_1_tests::expected_rows;
-use super::load_set::load_set;
+use super::super::baseline_rules::{baseline_rules, baseline_rules_in};
+use super::super::baseline_set::BaselineSet;
+use super::super::house_1::HOUSE_1;
+use super::super::house_1_tests::expected_rows;
+use super::super::load_set::load_set;
 use crate::{CaseFile, ExpectedFinding, Problem, Rule, RuleCases};
 
 /// A set not ready: an applicable ast-grep rule carrying its YAML, a ruff rule missing its required param whose
@@ -144,7 +144,7 @@ fn an_unknown_set_is_its_problem() {
         line: 2,
         col: 13,
         what: "unknown baseline set \"nosuch\"".to_string(),
-        fix: "Use one of: house, standard.".to_string(),
+        fix: "Use one of: house@1, standard@1.".to_string(),
     };
     assert_eq!(baseline_rules("nosuch@1").expect_err("nosuch@1 is no set"), vec![expected]);
 }

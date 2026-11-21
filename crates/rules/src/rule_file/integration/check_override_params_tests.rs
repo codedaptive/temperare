@@ -1,7 +1,7 @@
-//! ZUT for check_override_params.rs, through parse_with_sets.
+//! ZIT for check_override_params.rs, through parse_with_sets.
 
-use super::baseline_set::BaselineSet;
-use super::rule_file_parse::parse_with_sets;
+use super::super::baseline_set::BaselineSet;
+use super::super::rule_file_parse::parse_with_sets;
 use crate::Problem;
 use std::path::Path;
 
