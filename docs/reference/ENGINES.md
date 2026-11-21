@@ -96,7 +96,8 @@ Each rule is settled by the first of these that applies:
 
 1. **Refused.** `tm` refuses the rule from the rule file alone, reading no other file and running nothing: a clippy
    `rustdoc::` lint, SwiftLint's `custom_rules`, a ruff `check` with a part that is not a code, a ShellCheck `check`
-   that is not one code, a git `check` other than `test_ratio`, an ast-grep `check` that is an absolute path, a
+   that is not one code, a git `check` other than `test_ratio`, an ast-grep `check` that is an absolute path or
+   whose `..` climbs above the rule file's folder at any step (read from the text alone), a
    param the engine does not take, a param with a bad value, or a threshold out of range or with another check
    (ast-grep's placeholder params apart: see below). The rule is failed (exit 5).
 2. **No file.** The rule covers none of the files git lists in the rule file's folder, or it is a ShellCheck rule
@@ -107,10 +108,11 @@ Each rule is settled by the first of these that applies:
 
 So a refused rule is failed (exit 5) whether or not its engine is installed, and installing the engine would not help it. Its engine is still asked its version, as above. The one exception is an `only_with_base` rule run without `--base`, which is listed under `not_applicable` instead, as any such rule is.
 
-Three refusals need more than the rule file, so they are made in the run, at step 4, after steps 2 and 3:
+Three refusals need more than the rule file, so they are made in the run, at step 4, after steps 2 and 3; the ast-grep YAML's own disk checks are listed in its section:
 
 - a clippy lint group, which is told from a lint by `clippy-driver -W help`;
-- an ast-grep rule file that is missing, cannot be read or lies outside the rule file's folder;
+- an ast-grep rule file that is missing or cannot be read, or that leads outside the rule file's folder through a
+  symlink;
 - an ast-grep placeholder param that cannot be used (a `{{name}}` with no param, a param with no `{{name}}`, a
   param that is neither a string nor a list of strings), which needs the YAML read.
 
@@ -273,8 +275,15 @@ ast-grep is for rules about the shape of code that no stock linter states: a hou
   file is a finding. One file can hold several rules, separated by `---`, for example one per language.
 - **The YAML must be a file inside the rule file's folder.** The rule fails, before the scan runs, when `check`:
   - is an absolute path;
-  - resolves to a place outside the rule file's folder, through `..` or through a symlink;
+  - climbs above the rule file's folder through `..` at any step, read as text: each folder name goes down one, `..`
+    up one, and the path is outside once it goes above the folder, even if a later part names the folder again
+    (`../<this folder>/x.yml` fails);
+  - resolves to a place outside the rule file's folder through a symlink;
   - names a file that is missing or cannot be read.
+
+  The first two are refusals from the rule file alone, made before anything else
+  ([the order a rule settles in](#the-order-a-rule-settles-in)), so they fail the rule whether or not ast-grep is
+  installed. The last two need the disk, so they are made in the run.
 
   A symlink whose target is inside the rule file's folder is resolved by these checks, so it is read.
 
