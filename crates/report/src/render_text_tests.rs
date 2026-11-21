@@ -1,9 +1,9 @@
 //! Unit tests for render_text.rs: whole expected texts, written out by hand from the text format's contract.
 
-use crate::{render_text, Counts, EngineVersion, Failed, NotAvailable, Report, Silenced};
+use crate::{render_text, Counts, EngineVersion, Failed, NotApplicable, NotAvailable, Report, Silenced};
 use rules::{Engine, Exception, Finding, Kind, RelPath, Severity};
 
-const ZERO_COUNTS: &str = "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed\n";
+const ZERO_COUNTS: &str = "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable\n";
 
 fn empty() -> Report {
     Report::default()
@@ -150,7 +150,7 @@ fn the_counts_line_carries_each_count_in_its_place() {
     };
     assert_eq!(
         render_text(&report),
-        "9 findings (4 error, 5 warning; 3 security), 2 silenced, 6 exceptions in force, 7 not available, 8 failed\n"
+        "9 findings (4 error, 5 warning; 3 security), 2 silenced, 6 exceptions in force, 7 not available, 8 failed, 10 not applicable\n"
     );
 }
 
@@ -216,4 +216,48 @@ fn the_engines_line_comes_after_failed_lines_and_before_counts() {
     let expected =
         "failed: r2 (ruff), exit 2\nengines: ruff 0.6.0, clippy (version unknown)\n".to_string() + ZERO_COUNTS;
     assert_eq!(render_text(&report), expected);
+}
+
+fn not_applicable(rule: &str, engine: Engine) -> NotApplicable {
+    NotApplicable { rule: rule.to_string(), engine, why: "no swift files".to_string() }
+}
+
+#[test]
+fn a_not_applicable_rule_gets_its_line() {
+    let report = Report { not_applicable: vec![not_applicable("r3", Engine::SwiftLint)], ..empty() };
+    assert_eq!(render_text(&report), "not applicable: r3 (swiftlint): no swift files\n".to_string() + ZERO_COUNTS);
+}
+
+#[test]
+fn not_applicable_lines_keep_report_order() {
+    let report = Report {
+        not_applicable: vec![not_applicable("zz", Engine::SwiftLint), not_applicable("aa", Engine::AstGrep)],
+        ..empty()
+    };
+    let expected = "not applicable: zz (swiftlint): no swift files\nnot applicable: aa (ast-grep): no swift files\n"
+        .to_string()
+        + ZERO_COUNTS;
+    assert_eq!(render_text(&report), expected);
+}
+
+#[test]
+fn not_applicable_lines_come_after_failed_lines_and_before_the_engines_line() {
+    let report = Report {
+        failed: vec![failed(Some(2))],
+        not_applicable: vec![not_applicable("r3", Engine::SwiftLint)],
+        engines: vec![ran(Engine::Ruff, Some("0.6.0"))],
+        ..empty()
+    };
+    let expected = "failed: r2 (ruff), exit 2\nnot applicable: r3 (swiftlint): no swift files\nengines: ruff 0.6.0\n\
+0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable\n";
+    assert_eq!(render_text(&report), expected);
+}
+
+#[test]
+fn the_counts_line_ends_with_the_not_applicable_count() {
+    let report = Report { counts: Counts { not_applicable: 2, ..Counts::default() }, ..empty() };
+    assert_eq!(
+        render_text(&report),
+        "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 2 not applicable\n"
+    );
 }

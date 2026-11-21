@@ -20,13 +20,14 @@ const NO_REASON: &str = "no reason given";
 /// failed rules by rule. The sorts are stable, so the same input gives the same report. Each outcome carries its own
 /// rule, so the tuple's name is not read. Pure: it runs nothing and reads no file.
 ///
-/// `not_applicable` lists, unsorted, first each rule of `rules.not_applicable_rules` in that list's order, with its
-/// `not_applicable` reason as why ("no reason given" when None); then, only when `base` is None, each rule of
-/// `rules.rules` with `only_with_base`, in that list's order, with the why "reports only what a change adds; run with
-/// --base". With no base, such a rule's outcomes give nothing: a finding whose own `rule` is its id, and a
-/// not-available or failed outcome whose own `rule` is its id, are dropped before `keep_new` and the exceptions, so
-/// none reaches findings, silenced, `silenced_by_rule`, not_available, failed or the counts. `counts.not_applicable` is
-/// the list's length.
+/// `not_applicable` is in rule-file order: it walks `RuleFile::rules_in_order` (by `position`; rules sharing one keep
+/// `rules` first, then `not_applicable_rules`). A rule that sits in `rules.not_applicable_rules`, told by its address
+/// in that list and not by its reason, is listed with its `not_applicable` reason as why ("no reason given" when None),
+/// even if it has `only_with_base`. Otherwise, only when `base` is None, a rule with `only_with_base` is listed with
+/// the why "reports only what a change adds; run with --base". With no base, such a rule of `rules.rules` gives
+/// nothing: a finding whose own `rule` is its id, and a not-available or failed outcome whose own `rule` is its id,
+/// are dropped before `keep_new` and the exceptions, so none reaches findings, silenced, `silenced_by_rule`,
+/// not_available, failed or the counts. `counts.not_applicable` is the list's length.
 pub(crate) fn assemble_report(
     rules: &RuleFile,
     outcomes: Vec<(String, RuleOutcome)>,
@@ -53,7 +54,7 @@ pub(crate) fn assemble_report(
             }
         }
     }
-    let not_applicable = not_applicable(rules, &needs_base);
+    let not_applicable = not_applicable(rules, base.is_none());
     let (mut kept, silenced) = split_by_exceptions(rules, keep_new(findings), day);
     let mut silenced: Vec<Silenced> =
         silenced.into_iter().map(|(finding, exception)| Silenced { finding, exception }).collect();
@@ -76,14 +77,23 @@ pub(crate) fn assemble_report(
     }
 }
 
-/// The rule file's not-applicable rules with their reasons, then `needs_base` with `NEEDS_BASE`.
-fn not_applicable(rules: &RuleFile, needs_base: &[&Rule]) -> Vec<NotApplicable> {
+/// The rules out of play in rule-file order: each of `rules.not_applicable_rules` with its reason, and when `no_base`,
+/// each other rule with `only_with_base` with `NEEDS_BASE`. Membership is by address, so a None reason still counts.
+fn not_applicable(rules: &RuleFile, no_base: bool) -> Vec<NotApplicable> {
+    let set_aside = rules.not_applicable_rules.as_ptr_range();
     rules
-        .not_applicable_rules
-        .iter()
-        .map(|rule| (rule, rule.not_applicable.as_deref().unwrap_or(NO_REASON)))
-        .chain(needs_base.iter().map(|rule| (*rule, NEEDS_BASE)))
-        .map(|(rule, why)| NotApplicable { rule: rule.id.clone(), engine: rule.engine, why: why.to_string() })
+        .rules_in_order()
+        .into_iter()
+        .filter_map(|rule| {
+            let why = if set_aside.contains(&std::ptr::from_ref(rule)) {
+                rule.not_applicable.as_deref().unwrap_or(NO_REASON)
+            } else if no_base && rule.only_with_base {
+                NEEDS_BASE
+            } else {
+                return None;
+            };
+            Some(NotApplicable { rule: rule.id.clone(), engine: rule.engine, why: why.to_string() })
+        })
         .collect()
 }
 

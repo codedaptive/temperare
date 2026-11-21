@@ -1,21 +1,23 @@
 //! `render_text`: the report as the text a person reads.
 
-use crate::{EngineVersion, Failed, NotAvailable, Report};
+use crate::{EngineVersion, Failed, NotApplicable, NotAvailable, Report};
 use rules::{Finding, Kind, Severity};
 
 /// The report as text: a three-line block and a blank line per kept finding, one line per not-available rule, one
-/// line per failed rule, one line of the named engines and their versions (none when the list is empty), then
-/// the counts line. Silenced findings are counted, not listed; a failed rule's stderr tail is printed by the caller
-/// (cli's `failed_tails`), and `--json` carries it. Every line ends with '\n'.
+/// line per failed rule, one line per not-applicable rule in the report's order, one line of the engines that ran and
+/// their versions (none when the list is empty), then the counts line, ending with the not-applicable count.
+/// Silenced findings are counted, not listed; a failed rule's stderr tail is printed by the caller (cli's
+/// `failed_tails`), and `--json` carries it. Every line ends with '\n'.
 pub fn render_text(report: &Report) -> String {
     let mut text = String::new();
     report.findings.iter().for_each(|finding| text.push_str(&finding_block(finding)));
     report.not_available.iter().for_each(|rule| text.push_str(&not_available_line(rule)));
     report.failed.iter().for_each(|rule| text.push_str(&failed_line(rule)));
+    report.not_applicable.iter().for_each(|rule| text.push_str(&not_applicable_line(rule)));
     text.push_str(&engines_line(&report.engines));
     let counts = &report.counts;
     text.push_str(&format!(
-        "{} findings ({} error, {} warning; {} security), {} silenced, {} exceptions in force, {} not available, {} failed\n",
+        "{} findings ({} error, {} warning; {} security), {} silenced, {} exceptions in force, {} not available, {} failed, {} not applicable\n",
         counts.findings,
         counts.errors,
         counts.warnings,
@@ -24,6 +26,7 @@ pub fn render_text(report: &Report) -> String {
         report.exceptions_in_force,
         counts.not_available,
         counts.failed,
+        counts.not_applicable,
     ));
     text
 }
@@ -46,6 +49,10 @@ fn finding_block(finding: &Finding) -> String {
 
 fn not_available_line(rule: &NotAvailable) -> String {
     format!("not available: {} ({}): {}\n", rule.rule, rule.engine.name(), rule.why)
+}
+
+fn not_applicable_line(rule: &NotApplicable) -> String {
+    format!("not applicable: {} ({}): {}\n", rule.rule, rule.engine.name(), rule.why)
 }
 
 fn failed_line(rule: &Failed) -> String {

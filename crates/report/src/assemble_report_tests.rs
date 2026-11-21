@@ -307,7 +307,7 @@ fn with_a_base_a_base_only_rule_is_not_listed_and_its_findings_are_kept() {
 }
 
 #[test]
-fn the_list_is_the_not_applicable_rules_then_the_base_only_rules_each_in_list_order() {
+fn with_every_position_equal_the_list_is_the_base_only_rules_then_the_not_applicable_rules_each_in_list_order() {
     let mut rules = file(vec![]);
     rules.not_applicable_rules = vec![
         not_applicable_rule("na-z", Engine::Ruff, Some("why z")),
@@ -322,13 +322,89 @@ fn the_list_is_the_not_applicable_rules_then_the_base_only_rules_each_in_list_or
     assert_eq!(
         listed(&report),
         vec![
-            ("na-z", Engine::Ruff, "why z"),
-            ("na-a", Engine::SwiftLint, "why a"),
             ("b-z", Engine::Clippy, NEEDS_BASE),
             ("a-m", Engine::AstGrep, NEEDS_BASE),
+            ("na-z", Engine::Ruff, "why z"),
+            ("na-a", Engine::SwiftLint, "why a"),
         ]
     );
     assert_eq!(report.counts.not_applicable, 4);
+}
+
+fn at(position: usize, rule: Rule) -> Rule {
+    Rule { position, ..rule }
+}
+
+#[test]
+fn with_no_base_the_two_kinds_interleave_in_rule_file_order() {
+    let mut rules = file(vec![]);
+    rules.not_applicable_rules = vec![
+        at(4, not_applicable_rule("bee", Engine::Ruff, Some("why bee"))),
+        at(2, not_applicable_rule("kay", Engine::SwiftLint, None)),
+    ];
+    rules.rules = vec![
+        at(3, base_only("alp", Engine::AstGrep)),
+        at(0, Rule::new("plain", Engine::Clippy, "lint")),
+        at(1, base_only("zed", Engine::Clippy)),
+    ];
+    let report = assemble_report(&rules, Vec::new(), None, day(), date(), |f| f);
+    assert_eq!(
+        listed(&report),
+        vec![
+            ("zed", Engine::Clippy, NEEDS_BASE),
+            ("kay", Engine::SwiftLint, "no reason given"),
+            ("alp", Engine::AstGrep, NEEDS_BASE),
+            ("bee", Engine::Ruff, "why bee"),
+        ]
+    );
+    assert_eq!(report.counts.not_applicable, 4);
+}
+
+#[test]
+fn with_a_base_only_the_not_applicable_rules_are_listed_in_rule_file_order() {
+    let mut rules = file(vec![]);
+    rules.not_applicable_rules = vec![
+        at(3, not_applicable_rule("na-m", Engine::Ruff, Some("why m"))),
+        at(5, not_applicable_rule("na-a", Engine::SwiftLint, Some("why a"))),
+        at(1, not_applicable_rule("na-z", Engine::AstGrep, None)),
+    ];
+    rules.rules = vec![at(2, base_only("added", Engine::Clippy))];
+    let oid = Oid::parse("0123456789abcdef0123456789abcdef01234567");
+    let report = assemble_report(&rules, Vec::new(), oid, day(), date(), |f| f);
+    assert_eq!(
+        listed(&report),
+        vec![
+            ("na-z", Engine::AstGrep, "no reason given"),
+            ("na-m", Engine::Ruff, "why m"),
+            ("na-a", Engine::SwiftLint, "why a"),
+        ]
+    );
+    assert_eq!(report.counts.not_applicable, 3);
+}
+
+#[test]
+fn a_not_applicable_rule_with_only_with_base_is_listed_once_with_its_own_why() {
+    let mut rules = file(vec![]);
+    let mut given = at(1, not_applicable_rule("given", Engine::Ruff, Some("param max not given")));
+    given.only_with_base = true;
+    let mut none = at(2, not_applicable_rule("none", Engine::SwiftLint, None));
+    none.only_with_base = true;
+    rules.not_applicable_rules = vec![given, none];
+    let report = assemble_report(&rules, Vec::new(), None, day(), date(), |f| f);
+    assert_eq!(
+        listed(&report),
+        vec![("given", Engine::Ruff, "param max not given"), ("none", Engine::SwiftLint, "no reason given")]
+    );
+    assert_eq!(report.counts.not_applicable, 2);
+}
+
+#[test]
+fn at_a_shared_position_the_base_only_rule_comes_before_the_not_applicable_rule() {
+    let mut rules = file(vec![]);
+    rules.not_applicable_rules = vec![at(2, not_applicable_rule("aaa", Engine::Ruff, Some("why")))];
+    rules.rules = vec![at(2, base_only("zzz", Engine::Clippy))];
+    let report = assemble_report(&rules, Vec::new(), None, day(), date(), |f| f);
+    assert_eq!(listed(&report), vec![("zzz", Engine::Clippy, NEEDS_BASE), ("aaa", Engine::Ruff, "why")]);
 }
 
 #[test]
