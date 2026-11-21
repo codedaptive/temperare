@@ -424,8 +424,8 @@ names its set, and its id starts with `tm-`. Two kinds of set rule are not liste
 ## `tm baseline test`
 
 `tm baseline test [--set <name@version>] [--json]` tests the rules of the baseline sets built into `tm`, each on
-the cases its set carries for it. With no `--set` it tests `standard@1`; `--set` tests the one set it names instead.
-`--set house@1` is refused, exit 2: that set is not ready (at the end of this section).
+the cases its set carries for it. With no `--set` it tests every set that is ready, which is `standard@1`; `--set`
+tests the one set it names instead, ready or not, so `--set house@1` tests `house@1` (at the end of this section).
 It reads no rule file and checks nothing in your repository.
 
 Each rule runs alone, by its engine, on two cases. Its failing case must give exactly the one finding the set expects
@@ -494,18 +494,19 @@ The exit codes of `tm baseline test`:
 |---|---|---|
 | 0 | Every rule holds | `nothing to do` |
 | 1 | At least one rule is broken | `fix each broken rule or its cases above` |
-| 2 | Used wrongly, or `--set` names a set or version `tm` does not carry, or a set that is not ready. Nothing was tested | The fix for the error |
-| 3 | No rule is broken, and at least one is not available or not applicable | Parts, in this order, joined by `; `: First `install <engine>, <engine>, then run tm baseline test again`, naming once, as a rule file names it, each engine of a not-available rule with a case whose why is `<program> not found on PATH` for one of the engine's own programs. Then the why of every other not-available case of those rules, as it is and once each: a missing helper program (`cargo not found on PATH` for clippy, `git not found on PATH` for ShellCheck) and a check the engine does not know are whys, not installs. Last `each not-applicable rule above says why it was not run`, when a rule is not applicable |
+| 2 | Used wrongly, or `--set` names a set or version `tm` does not carry. Nothing was tested | The fix for the error |
+| 3 | No rule is broken, and at least one is not available or not applicable | Parts, in this order, joined by `; `: First `install <engine>, <engine>, then run tm baseline test again`, naming once, as a rule file names it, each engine of a not-available rule with a case where one of the engine's own programs is not on `PATH`. Then the why of every other not-available case of those rules, as it is and once each: a missing helper program (`cargo not found on PATH` for clippy, `git not found on PATH` for ShellCheck) and a check the engine does not know are whys, not installs. Last `each not-applicable rule above says why it was not run`, when a rule is not applicable |
 
 The first that applies wins: 2, 1, 3, 0. Exit 3 is never "holds": a rule that was not run was not tested.
 
 A set `tm` does not carry is the two usage-error lines on stderr, for example `tm baseline test --set standrd@1` prints
-`tm: unknown baseline set "standrd"` and `next: Use one of: standard.` (only sets with a ready version are named), and with `--json` also the object on
+`tm: unknown baseline set "standrd"` and `next: Use one of: house, standard.`, and with `--json` also the object on
 stdout, as for `tm check`
-([Errors that stop a run, as JSON](#errors-that-stop-a-run-as-json)).
+([Errors that stop a run, as JSON](#errors-that-stop-a-run-as-json)). Every set `tm` carries is named, ready or not,
+since this command can test each one; a rule file's fix for the same mistake names only the ready ones
+([`RULE_FILE.md`](RULE_FILE.md#problems-of-baseline-and-override)).
 
-A set that is not ready is refused the same way. `tm baseline test --set house@1` tests nothing and prints
-`tm: house@1 is not ready in this build: its rules are not yet proven` and `next: remove house@1 from baseline`,
-exit 2. That `next:` text is the fix a rule file gets for the same entry
-([`RULE_FILE.md`](RULE_FILE.md#baseline-sets)); this command reads no rule file, so there is nothing to remove, and
-`house@1` cannot be tested in this build.
+A set that is not ready is tested like a ready one: `tm baseline test --set house@1` runs `house@1`'s 36 rules. A rule
+of the set that requires params is not applicable on both cases, with the why
+`required params not given: <names>; give them in the params of an [[override]] for "<rule id>"`, since this command
+gives a rule no params of its own: five of `house@1`'s rules, so such a run exits 3 at best.

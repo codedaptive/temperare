@@ -29,11 +29,12 @@ sources.
 - Commands: tm check, tm rules, tm baseline test, tm install, tm uninstall, tm help, tm --version.
 - tm check [--rules <path>] [--base <rev>] [--kind quality|security] [--json] [<path>...]
 - tm rules [--rules <path>] [--json]
-- tm baseline test [--set <name@version>] [--json]: tests each rule of a baseline set built into tm (standard@1
-  unless --set names another) on its failing case (exactly the expected finding) and its passing case (no
-  finding), each in a throwaway git repository. A rule holds, is broken, not available or not applicable. Exits 0
-  all hold; 1 a rule is broken; 2 used wrongly, an unknown set, or a set that is not ready (--set house@1); 3
-  nothing broke but a rule was not available or not applicable.
+- tm baseline test [--set <name@version>] [--json]: tests each rule of the baseline sets built into tm (with no
+  --set the ready ones, standard@1; --set names one set, ready or not, such as house@1) on its failing case
+  (exactly the expected finding) and its passing case (no finding), each in a throwaway git repository. A rule
+  holds, is broken, not available or not applicable (a rule that requires params is not applicable here). Exits 0
+  all hold; 1 a rule is broken; 2 used wrongly or an unknown set or version; 3 nothing broke but a rule was not available or
+  not applicable.
 - The rule file is --rules <path>, else temperare.toml at the top of the git repository.
 - Baseline sets are rules built into tm. A rule file takes one with the top-level key
   baseline = ["name@version", ...], each set once. standard@1 is ready: 53 rules, all kind quality and severity
@@ -41,7 +42,7 @@ sources.
   complexity, nesting, dbg! and print, bare and blind except and commented-out code (8), then what a change adds
   (28, each only_with_base: under not_applicable without --base). house@1 (36 rules) is not ready: a rule file that
   takes it has a problem, exit 2 ("house@1 is not ready in this build: its rules are not yet proven", fix "remove
-  house@1 from baseline"), and tm baseline test --set house@1 is refused with the same two texts.
+  house@1 from baseline"); tm baseline test --set house@1 tests it.
 - A set's rules come first, in baseline order and each set's own order, then the file's own. tm rules lists them
   that way; nothing names a rule's set. A set rule's id starts with tm-, and an own rule's id may not.
 - [[override]] changes one set rule: rule (its id, required) and any of severity, off = true (the rule is left out:

@@ -221,7 +221,7 @@ Each entry is a set's name, `@` and a whole-number version. A set is taken once,
 | Set | Rules | State |
 |---|---|---|
 | `standard@1` | 53, every one `kind = "quality"` and `severity = "warning"` | Ready |
-| `house@1` | 36, 30 at `warning` and 6 at `error`, all `kind = "quality"` | Not ready: a rule file that takes it is refused (below) |
+| `house@1` | 36, 30 at `warning` and 6 at `error`, all `kind = "quality"` | Not ready: a rule file that takes it is refused (below); `tm baseline test --set house@1` tests it |
 
 A rule file that takes `house@1` has this problem, at the entry, and nothing runs (exit 2):
 
