@@ -4,7 +4,7 @@ mod git_checked;
 mod git_cmd;
 
 pub(crate) use git_checked::git_checked;
-pub(crate) use git_cmd::git_cmd;
+pub use git_cmd::git_cmd;
 
 #[cfg(test)]
 mod git_checked_tests;
