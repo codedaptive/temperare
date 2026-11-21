@@ -199,6 +199,7 @@ The arithmetic, the JSON fields and the log line: [`docs/reference/OUTPUT.md`](d
 |---|---|
 | `tm check [--rules <path>] [--base <rev>] [--kind quality\|security] [--json] [<path>...]` | Runs every rule's engine and prints the report |
 | `tm rules [--rules <path>] [--json]` | Reads and checks the rule file; lists each rule, whether its engine is available, and the exceptions in force. Runs no engine |
+| `tm baseline test [--set <name@version>] [--json]` | Tests the rules of a baseline set built into `tm` (`standard@1` unless `--set` names another) on the cases the set carries, each in a throwaway git repository. Reads no rule file and checks nothing of yours |
 | `tm install [--no-place] [--short-name] [--target claude,codex,cursor] [--mode skill] [--location local] [-y]` | Places the binary, links `tm`, offers the harness skill (see [Install](#install)) |
 | `tm uninstall` | Removes what install placed |
 | `tm help` | The usage text. Also `--help`, `-h`, or no arguments |
@@ -292,7 +293,9 @@ When more than one applies, the first of 2, 1, 5, 3, 4 wins. So exit 0 and exit 
 [`docs/reference/OUTPUT.md`](docs/reference/OUTPUT.md).
 
 `tm rules` exits 0 when the rule file is good and 2 when it is not. `tm install` and `tm uninstall` exit 0 when
-done, 1 when a step failed, and 2 when used wrongly.
+done, 1 when a step failed, and 2 when used wrongly. `tm baseline test` exits 0 when every rule holds, 1 when a rule
+is broken, 2 when used wrongly or the set is unknown, and 3 when nothing broke but a rule was not available or not
+applicable.
 
 ## Engines
 

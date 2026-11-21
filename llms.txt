@@ -26,9 +26,14 @@ sources.
 
 ## Facts an agent needs before running it
 
-- Commands: tm check, tm rules, tm install, tm uninstall, tm help, tm --version.
+- Commands: tm check, tm rules, tm baseline test, tm install, tm uninstall, tm help, tm --version.
 - tm check [--rules <path>] [--base <rev>] [--kind quality|security] [--json] [<path>...]
 - tm rules [--rules <path>] [--json]
+- tm baseline test [--set <name@version>] [--json]: tests each rule of a baseline set built into tm (standard@1
+  unless --set names another) on its failing case (exactly the expected finding) and its passing case (no
+  finding), each in a throwaway git repository. A rule holds, is broken, not available or not applicable. Exits 0
+  all hold; 1 a rule is broken; 2 used wrongly or an unknown set; 3 nothing broke but a rule was not available or
+  not applicable.
 - The rule file is --rules <path>, else temperare.toml at the top of the git repository.
 - --json prints one JSON object on one line on stdout, with exit and next beside the result.
 - tm install [--no-place] [--short-name] [--target claude,codex,cursor] [--mode skill] [--location local] [-y]
