@@ -1,9 +1,9 @@
 //! Unit tests for render_text.rs: whole expected texts, written out by hand from the text format's contract.
 
-use crate::{render_text, Counts, EngineVersion, Failed, NotApplicable, NotAvailable, Report, Silenced};
+use crate::{render_text, Counts, CoversNothing, EngineVersion, Failed, NotApplicable, NotAvailable, Report, Silenced};
 use rules::{Engine, Exception, Finding, Kind, RelPath, Severity};
 
-const ZERO_COUNTS: &str = "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable\n";
+const ZERO_COUNTS: &str = "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable, 0 covers nothing\n";
 
 fn empty() -> Report {
     Report::default()
@@ -145,12 +145,13 @@ fn the_counts_line_carries_each_count_in_its_place() {
             not_available: 7,
             failed: 8,
             not_applicable: 10,
+            covers_nothing: 12,
         },
         ..empty()
     };
     assert_eq!(
         render_text(&report),
-        "9 findings (4 error, 5 warning; 3 security), 2 silenced, 6 exceptions in force, 7 not available, 8 failed, 10 not applicable\n"
+        "9 findings (4 error, 5 warning; 3 security), 2 silenced, 6 exceptions in force, 7 not available, 8 failed, 10 not applicable, 12 covers nothing\n"
     );
 }
 
@@ -240,24 +241,38 @@ fn not_applicable_lines_keep_report_order() {
     assert_eq!(render_text(&report), expected);
 }
 
+fn covers_nothing(rule: &str, engine: Engine) -> CoversNothing {
+    CoversNothing { rule: rule.to_string(), engine }
+}
+
 #[test]
-fn not_applicable_lines_come_after_failed_lines_and_before_the_engines_line() {
+fn a_covers_nothing_rule_gets_its_line() {
+    let report = Report { covers_nothing: vec![covers_nothing("r4", Engine::AstGrep)], ..empty() };
+    assert_eq!(render_text(&report), "covers nothing: r4 (ast-grep)\n".to_string() + ZERO_COUNTS);
+}
+
+#[test]
+fn covers_nothing_lines_keep_report_order() {
     let report = Report {
-        failed: vec![failed(Some(2))],
-        not_applicable: vec![not_applicable("r3", Engine::SwiftLint)],
-        engines: vec![ran(Engine::Ruff, Some("0.6.0"))],
+        covers_nothing: vec![covers_nothing("zz", Engine::Ruff), covers_nothing("aa", Engine::Clippy)],
         ..empty()
     };
-    let expected = "failed: r2 (ruff), exit 2\nnot applicable: r3 (swiftlint): no swift files\nengines: ruff 0.6.0\n\
-0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable\n";
+    let expected = "covers nothing: zz (ruff)\ncovers nothing: aa (clippy)\n".to_string() + ZERO_COUNTS;
     assert_eq!(render_text(&report), expected);
 }
 
 #[test]
-fn the_counts_line_ends_with_the_not_applicable_count() {
-    let report = Report { counts: Counts { not_applicable: 2, ..Counts::default() }, ..empty() };
-    assert_eq!(
-        render_text(&report),
-        "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 2 not applicable\n"
-    );
+fn covers_nothing_lines_come_after_failed_lines_and_before_not_applicable_lines() {
+    let report = Report {
+        failed: vec![failed(Some(2))],
+        covers_nothing: vec![covers_nothing("r4", Engine::AstGrep)],
+        not_applicable: vec![not_applicable("r3", Engine::SwiftLint)],
+        engines: vec![ran(Engine::Ruff, Some("0.6.0"))],
+        ..empty()
+    };
+    let expected = "failed: r2 (ruff), exit 2\ncovers nothing: r4 (ast-grep)\nnot applicable: r3 (swiftlint): no swift files\n\
+engines: ruff 0.6.0\n\
+0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable, 0 covers nothing\n";
+    assert_eq!(render_text(&report), expected);
 }
+

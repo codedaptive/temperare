@@ -11,6 +11,7 @@ impl Counts {
         not_available: usize,
         failed: usize,
         not_applicable: usize,
+        covers_nothing: usize,
     ) -> Counts {
         let count = |keep: fn(&Finding) -> bool| findings.iter().filter(|f| keep(f)).count();
         Counts {
@@ -23,6 +24,7 @@ impl Counts {
             not_available,
             failed,
             not_applicable,
+            covers_nothing,
         }
     }
 }

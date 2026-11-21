@@ -1,5 +1,7 @@
 //! Unit tests for assemble_report.rs: order, the new-only filter before exceptions, counts, per-rule silenced counts,
-//! the carried date and lists, the engines list left empty, and the not-applicable rules with the no-base drop.
+//! the carried date and lists, the engines list left empty, the not-applicable rules with the no-base drop, and the
+//! flagged rules: own ones cover nothing, baseline ones are not applicable, which wins, and their outcomes dropped,
+//! a set-aside rule's apart.
 
 use crate::{assemble_report, RuleCount};
 use procio::Oid;
@@ -64,7 +66,7 @@ fn findings_come_out_sorted_by_path_line_col_rule() {
         finding("a", "src/a.rs", 10, None),
         finding("a", "src/a.rs", 2, Some(0)),
     ];
-    let report = assemble_report(&file(vec![]), of(shuffled), None, day(), date(), |f| f);
+    let report = assemble_report(&file(vec![]), of(shuffled), None, day(), date(), &[], |f| f);
     assert_eq!(
         places(&report.findings),
         vec![
@@ -83,7 +85,7 @@ fn a_finding_keep_new_drops_is_neither_silenced_nor_counted() {
     let rules = file(vec![exception("old", "a.rs"), exception("new", "a.rs")]);
     let findings = vec![finding("old", "a.rs", 1, None), finding("new", "a.rs", 2, None), finding("x", "a.rs", 3, None)];
     let keep_new = |found: Vec<Finding>| found.into_iter().filter(|f| f.line() != Some(1)).collect();
-    let report = assemble_report(&rules, of(findings), None, day(), date(), keep_new);
+    let report = assemble_report(&rules, of(findings), None, day(), date(), &[], keep_new);
     assert_eq!(places(&report.findings), vec![("a.rs", Some(3), None, "x")]);
     let silenced: Vec<_> = report.silenced.iter().map(|s| (s.finding.rule.as_str(), s.exception.rule.as_str())).collect();
     assert_eq!(silenced, vec![("new", "new")]);
@@ -94,7 +96,7 @@ fn a_finding_keep_new_drops_is_neither_silenced_nor_counted() {
 fn silenced_findings_are_sorted_by_their_finding() {
     let rules = file(vec![exception("r", "a.rs"), exception("r", "b.rs")]);
     let findings = vec![finding("r", "b.rs", 1, None), finding("r", "a.rs", 9, None), finding("r", "a.rs", 4, None)];
-    let report = assemble_report(&rules, of(findings), None, day(), date(), |f| f);
+    let report = assemble_report(&rules, of(findings), None, day(), date(), &[], |f| f);
     let lines: Vec<_> = report.silenced.iter().map(|s| (s.finding.path.as_str(), s.finding.line())).collect();
     assert_eq!(lines, vec![("a.rs", Some(4)), ("a.rs", Some(9)), ("b.rs", Some(1))]);
 }
@@ -106,7 +108,7 @@ fn counts_are_by_severity_and_kind() {
         graded(Kind::Quality, Severity::Error, 2),
         graded(Kind::Security, Severity::Error, 3),
     ];
-    let counts = assemble_report(&file(vec![]), of(findings), None, day(), date(), |f| f).counts;
+    let counts = assemble_report(&file(vec![]), of(findings), None, day(), date(), &[], |f| f).counts;
     assert_eq!((counts.findings, counts.errors, counts.warnings), (3, 2, 1));
     assert_eq!((counts.quality, counts.security), (1, 2));
 }
@@ -114,7 +116,7 @@ fn counts_are_by_severity_and_kind() {
 #[test]
 fn exceptions_in_force_is_carried_with_nothing_silenced() {
     let rules = file(vec![exception("a", "x.rs"), exception("b", "y.rs")]);
-    let report = assemble_report(&rules, of(vec![finding("c", "z.rs", 1, None)]), None, day(), date(), |f| f);
+    let report = assemble_report(&rules, of(vec![finding("c", "z.rs", 1, None)]), None, day(), date(), &[], |f| f);
     assert_eq!(report.exceptions_in_force, 2);
     assert!(report.silenced.is_empty());
     assert_eq!(report.counts.silenced, 0);
@@ -129,7 +131,7 @@ fn not_available_and_failed_are_carried_sorted_with_a_twenty_line_tail() {
         ("x".to_string(), RuleOutcome::NotAvailable { rule: "fmt".to_string(), engine: Engine::Ruff, why: "gone".to_string() }),
         ("x".to_string(), RuleOutcome::Failed { rule: "ast".to_string(), engine: Engine::AstGrep, code: Some(2), stderr: "boom\n".to_string() }),
     ];
-    let report = assemble_report(&file(vec![]), outcomes, None, day(), date(), |f| f);
+    let report = assemble_report(&file(vec![]), outcomes, None, day(), date(), &[], |f| f);
     let not_available: Vec<_> = report.not_available.iter().map(|n| (n.rule.as_str(), n.engine, n.why.as_str())).collect();
     assert_eq!(not_available, vec![("fmt", Engine::Ruff, "gone"), ("sec", Engine::Tessera, "absent")]);
     let failed: Vec<_> = report.failed.iter().map(|f| (f.rule.as_str(), f.code)).collect();
@@ -143,21 +145,21 @@ fn not_available_and_failed_are_carried_sorted_with_a_twenty_line_tail() {
 #[test]
 fn the_base_is_carried() {
     let oid = Oid::parse("0123456789abcdef0123456789abcdef01234567");
-    assert_eq!(assemble_report(&file(vec![]), Vec::new(), oid.clone(), day(), date(), |f| f).base, oid);
+    assert_eq!(assemble_report(&file(vec![]), Vec::new(), oid.clone(), day(), date(), &[], |f| f).base, oid);
 }
 
 #[test]
 fn the_same_input_gives_equal_reports() {
     let rules = file(vec![exception("r", "a.rs")]);
     let input = || of(vec![finding("r", "a.rs", 1, None), finding("q", "b.rs", 2, Some(3)), finding("q", "a.rs", 7, None)]);
-    let report = || assemble_report(&rules, input(), None, day(), date(), |f| f);
+    let report = || assemble_report(&rules, input(), None, day(), date(), &[], |f| f);
     assert_eq!(report(), report());
 }
 
 #[test]
 fn a_finding_with_no_line_sorts_before_line_one_of_its_path() {
     let findings = vec![finding("r", "a.rs", 1, None), finding("r", "a.rs", None, None), finding("r", "0.rs", 5, None)];
-    let report = assemble_report(&file(vec![]), of(findings), None, day(), date(), |f| f);
+    let report = assemble_report(&file(vec![]), of(findings), None, day(), date(), &[], |f| f);
     assert_eq!(
         places(&report.findings),
         vec![("0.rs", Some(5), None, "r"), ("a.rs", None, None, "r"), ("a.rs", Some(1), None, "r")]
@@ -167,14 +169,14 @@ fn a_finding_with_no_line_sorts_before_line_one_of_its_path() {
 #[test]
 fn a_silenced_finding_with_no_line_sorts_before_line_one_of_its_path() {
     let findings = vec![finding("r", "a.rs", 1, None), finding("r", "a.rs", None, None)];
-    let report = assemble_report(&file(vec![exception("r", "a.rs")]), of(findings), None, day(), date(), |f| f);
+    let report = assemble_report(&file(vec![exception("r", "a.rs")]), of(findings), None, day(), date(), &[], |f| f);
     let lines: Vec<_> = report.silenced.iter().map(|s| s.finding.line()).collect();
     assert_eq!(lines, vec![None, Some(1)]);
 }
 
 #[test]
 fn the_date_is_carried_exactly() {
-    let report = assemble_report(&file(vec![]), Vec::new(), None, day(), "1999-12-31".to_string(), |f| f);
+    let report = assemble_report(&file(vec![]), Vec::new(), None, day(), "1999-12-31".to_string(), &[], |f| f);
     assert_eq!(report.date, "1999-12-31");
 }
 
@@ -183,7 +185,7 @@ fn silenced_findings_are_counted_by_rule_in_rule_file_order() {
     let rules = with_rules(&["zeta", "alpha"], vec![exception("alpha", "a.rs"), exception("zeta", "a.rs")]);
     let findings =
         vec![finding("alpha", "a.rs", 1, None), finding("zeta", "a.rs", 2, None), finding("alpha", "a.rs", 3, None)];
-    let report = assemble_report(&rules, of(findings), None, day(), date(), |f| f);
+    let report = assemble_report(&rules, of(findings), None, day(), date(), &[], |f| f);
     assert_eq!(report.silenced_by_rule, vec![rule_count("zeta", 1), rule_count("alpha", 2)]);
 }
 
@@ -193,7 +195,7 @@ fn a_silenced_finding_keep_new_drops_is_not_counted_by_rule() {
     let findings =
         vec![finding("old", "a.rs", 1, None), finding("new", "a.rs", 2, None), finding("new", "a.rs", 3, None)];
     let keep_new = |found: Vec<Finding>| found.into_iter().filter(|f| f.line() != Some(1)).collect();
-    let report = assemble_report(&rules, of(findings), None, day(), date(), keep_new);
+    let report = assemble_report(&rules, of(findings), None, day(), date(), &[], keep_new);
     assert_eq!(report.silenced_by_rule, vec![rule_count("new", 2)]);
 }
 
@@ -207,7 +209,7 @@ fn the_counts_by_rule_add_up_to_the_silenced_count() {
         finding("a", "a.rs", 4, None),
         finding("d", "a.rs", 5, None),
     ];
-    let report = assemble_report(&rules, of(findings), None, day(), date(), |f| f);
+    let report = assemble_report(&rules, of(findings), None, day(), date(), &[], |f| f);
     assert_eq!(report.counts.silenced, 4);
     assert_eq!(report.silenced_by_rule.iter().map(|counted| counted.count).sum::<usize>(), 4);
     assert_eq!(report.silenced_by_rule, vec![rule_count("b", 1), rule_count("a", 2), rule_count("c", 1)]);
@@ -216,7 +218,7 @@ fn the_counts_by_rule_add_up_to_the_silenced_count() {
 #[test]
 fn nothing_silenced_gives_an_empty_silenced_by_rule() {
     let rules = with_rules(&["a"], vec![exception("a", "x.rs")]);
-    let report = assemble_report(&rules, of(vec![finding("a", "z.rs", 1, None)]), None, day(), date(), |f| f);
+    let report = assemble_report(&rules, of(vec![finding("a", "z.rs", 1, None)]), None, day(), date(), &[], |f| f);
     assert_eq!(report.silenced_by_rule, Vec::new());
 }
 
@@ -227,7 +229,7 @@ fn the_engines_list_is_left_empty_for_the_caller() {
         ("x".to_string(), RuleOutcome::Findings(vec![finding("r", "a.rs", 1, None)])),
         ("y".to_string(), absent),
     ];
-    let report = assemble_report(&file(vec![]), outcomes, None, day(), date(), |f| f);
+    let report = assemble_report(&file(vec![]), outcomes, None, day(), date(), &[], |f| f);
     assert!(report.engines.is_empty());
 }
 
@@ -256,7 +258,7 @@ fn a_not_applicable_rule_is_listed_with_its_reason_or_no_reason_given() {
         not_applicable_rule("swift-x", Engine::SwiftLint, Some("param max not given")),
         not_applicable_rule("py-y", Engine::Ruff, None),
     ];
-    let report = assemble_report(&rules, Vec::new(), None, day(), date(), |f| f);
+    let report = assemble_report(&rules, Vec::new(), None, day(), date(), &[], |f| f);
     assert_eq!(
         listed(&report),
         vec![("swift-x", Engine::SwiftLint, "param max not given"), ("py-y", Engine::Ruff, "no reason given")]
@@ -274,7 +276,7 @@ fn with_no_base_a_base_only_rule_is_listed_and_its_outcomes_give_nothing() {
         ("x".to_string(), RuleOutcome::NotAvailable { rule: "added".to_string(), engine: Engine::AstGrep, why: "gone".to_string() }),
         ("x".to_string(), RuleOutcome::Failed { rule: "added".to_string(), engine: Engine::AstGrep, code: Some(1), stderr: String::new() }),
     ];
-    let report = assemble_report(&rules, outcomes, None, day(), date(), |f| f);
+    let report = assemble_report(&rules, outcomes, None, day(), date(), &[], |f| f);
     assert_eq!(listed(&report), vec![("added", Engine::AstGrep, NEEDS_BASE)]);
     assert_eq!(places(&report.findings), vec![("b.rs", Some(3), None, "other")]);
     assert!(report.silenced.is_empty());
@@ -291,7 +293,7 @@ fn the_tuple_name_does_not_decide_the_drop() {
     let mut rules = file(vec![]);
     rules.rules = vec![base_only("added", Engine::Clippy)];
     let outcomes = vec![("added".to_string(), RuleOutcome::Findings(vec![finding("kept", "a.rs", 1, None)]))];
-    let report = assemble_report(&rules, outcomes, None, day(), date(), |f| f);
+    let report = assemble_report(&rules, outcomes, None, day(), date(), &[], |f| f);
     assert_eq!(places(&report.findings), vec![("a.rs", Some(1), None, "kept")]);
 }
 
@@ -300,7 +302,7 @@ fn with_a_base_a_base_only_rule_is_not_listed_and_its_findings_are_kept() {
     let mut rules = file(vec![]);
     rules.rules = vec![base_only("added", Engine::Clippy)];
     let oid = Oid::parse("0123456789abcdef0123456789abcdef01234567");
-    let report = assemble_report(&rules, of(vec![finding("added", "a.rs", 4, None)]), oid, day(), date(), |f| f);
+    let report = assemble_report(&rules, of(vec![finding("added", "a.rs", 4, None)]), oid, day(), date(), &[], |f| f);
     assert_eq!(listed(&report), Vec::new());
     assert_eq!(places(&report.findings), vec![("a.rs", Some(4), None, "added")]);
     assert_eq!((report.counts.findings, report.counts.not_applicable), (1, 0));
@@ -318,7 +320,7 @@ fn with_every_position_equal_the_list_is_the_base_only_rules_then_the_not_applic
         Rule::new("plain", Engine::Clippy, "lint"),
         base_only("a-m", Engine::AstGrep),
     ];
-    let report = assemble_report(&rules, Vec::new(), None, day(), date(), |f| f);
+    let report = assemble_report(&rules, Vec::new(), None, day(), date(), &[], |f| f);
     assert_eq!(
         listed(&report),
         vec![
@@ -347,7 +349,7 @@ fn with_no_base_the_two_kinds_interleave_in_rule_file_order() {
         at(0, Rule::new("plain", Engine::Clippy, "lint")),
         at(1, base_only("zed", Engine::Clippy)),
     ];
-    let report = assemble_report(&rules, Vec::new(), None, day(), date(), |f| f);
+    let report = assemble_report(&rules, Vec::new(), None, day(), date(), &[], |f| f);
     assert_eq!(
         listed(&report),
         vec![
@@ -370,7 +372,7 @@ fn with_a_base_only_the_not_applicable_rules_are_listed_in_rule_file_order() {
     ];
     rules.rules = vec![at(2, base_only("added", Engine::Clippy))];
     let oid = Oid::parse("0123456789abcdef0123456789abcdef01234567");
-    let report = assemble_report(&rules, Vec::new(), oid, day(), date(), |f| f);
+    let report = assemble_report(&rules, Vec::new(), oid, day(), date(), &[], |f| f);
     assert_eq!(
         listed(&report),
         vec![
@@ -390,7 +392,7 @@ fn a_not_applicable_rule_with_only_with_base_is_listed_once_with_its_own_why() {
     let mut none = at(2, not_applicable_rule("none", Engine::SwiftLint, None));
     none.only_with_base = true;
     rules.not_applicable_rules = vec![given, none];
-    let report = assemble_report(&rules, Vec::new(), None, day(), date(), |f| f);
+    let report = assemble_report(&rules, Vec::new(), None, day(), date(), &[], |f| f);
     assert_eq!(
         listed(&report),
         vec![("given", Engine::Ruff, "param max not given"), ("none", Engine::SwiftLint, "no reason given")]
@@ -403,14 +405,192 @@ fn at_a_shared_position_the_base_only_rule_comes_before_the_not_applicable_rule(
     let mut rules = file(vec![]);
     rules.not_applicable_rules = vec![at(2, not_applicable_rule("aaa", Engine::Ruff, Some("why")))];
     rules.rules = vec![at(2, base_only("zzz", Engine::Clippy))];
-    let report = assemble_report(&rules, Vec::new(), None, day(), date(), |f| f);
+    let report = assemble_report(&rules, Vec::new(), None, day(), date(), &[], |f| f);
     assert_eq!(listed(&report), vec![("zzz", Engine::Clippy, NEEDS_BASE), ("aaa", Engine::Ruff, "why")]);
 }
 
 #[test]
 fn no_rule_out_of_play_gives_an_empty_list_and_a_zero_count() {
     let rules = with_rules(&["a", "b"], vec![]);
-    let report = assemble_report(&rules, of(vec![finding("a", "a.rs", 1, None)]), None, day(), date(), |f| f);
+    let report = assemble_report(&rules, of(vec![finding("a", "a.rs", 1, None)]), None, day(), date(), &[], |f| f);
     assert_eq!(listed(&report), Vec::new());
     assert_eq!(report.counts.not_applicable, 0);
+}
+
+const NO_FILE_MATCH: &str = "its paths match no file in the rule file's folder";
+const NO_ENGINE_FILE: &str = "no file its engine checks";
+
+fn flags(pairs: &[(&str, &str)]) -> Vec<(String, String)> {
+    pairs.iter().map(|(id, why)| (id.to_string(), why.to_string())).collect()
+}
+
+fn covering(report: &crate::Report) -> Vec<(&str, Engine)> {
+    report.covers_nothing.iter().map(|c| (c.rule.as_str(), c.engine)).collect()
+}
+
+fn rule_ids(findings: &[Finding]) -> Vec<&str> {
+    findings.iter().map(|f| f.rule.as_str()).collect()
+}
+
+#[test]
+fn a_flagged_own_rule_covers_nothing_and_its_outcomes_give_nothing() {
+    for why in [NO_FILE_MATCH, NO_ENGINE_FILE] {
+        let mut rules = file(vec![exception("own-x", "s.rs")]);
+        rules.rules = vec![Rule::new("own-x", Engine::SwiftLint, "lint"), Rule::new("other", Engine::Clippy, "lint")];
+        let outcomes = vec![
+            ("x".to_string(), RuleOutcome::Findings(Vec::new())),
+            ("x".to_string(), RuleOutcome::Findings(vec![finding("own-x", "a.rs", 1, None), finding("own-x", "s.rs", 2, None)])),
+            ("x".to_string(), RuleOutcome::Findings(vec![finding("other", "b.rs", 3, None)])),
+            ("x".to_string(), RuleOutcome::NotAvailable { rule: "own-x".to_string(), engine: Engine::SwiftLint, why: "gone".to_string() }),
+            ("x".to_string(), RuleOutcome::Failed { rule: "own-x".to_string(), engine: Engine::SwiftLint, code: Some(1), stderr: String::new() }),
+        ];
+        let report = assemble_report(&rules, outcomes, None, day(), date(), &flags(&[("own-x", why)]), |f| f);
+        assert_eq!(covering(&report), vec![("own-x", Engine::SwiftLint)], "{why}");
+        assert_eq!(listed(&report), Vec::new(), "{why}");
+        assert_eq!(places(&report.findings), vec![("b.rs", Some(3), None, "other")], "{why}");
+        assert!(report.silenced.is_empty() && report.silenced_by_rule.is_empty(), "{why}");
+        assert!(report.not_available.is_empty() && report.failed.is_empty(), "{why}");
+        let counts = report.counts;
+        assert_eq!((counts.covers_nothing, counts.not_applicable, counts.findings, counts.silenced), (1, 0, 1, 0), "{why}");
+        assert_eq!((counts.not_available, counts.failed), (0, 0), "{why}");
+    }
+}
+
+#[test]
+fn a_flagged_baseline_rule_is_not_applicable_with_the_flag_why() {
+    let rows = [
+        (vec![("tm-y", NO_FILE_MATCH)], NO_FILE_MATCH),
+        (vec![("tm-y", NO_ENGINE_FILE)], NO_ENGINE_FILE),
+        (vec![("tm-y", NO_ENGINE_FILE), ("tm-y", NO_FILE_MATCH)], NO_ENGINE_FILE),
+    ];
+    for (pairs, why) in rows {
+        let mut rules = file(vec![]);
+        rules.rules = vec![Rule::new("tm-y", Engine::Ruff, "lint")];
+        let outcomes = vec![
+            ("x".to_string(), RuleOutcome::Findings(vec![finding("tm-y", "a.rs", 1, None)])),
+            ("x".to_string(), RuleOutcome::Failed { rule: "tm-y".to_string(), engine: Engine::Ruff, code: None, stderr: String::new() }),
+        ];
+        let report = assemble_report(&rules, outcomes, None, day(), date(), &flags(&pairs), |f| f);
+        assert_eq!(listed(&report), vec![("tm-y", Engine::Ruff, why)], "{pairs:?}");
+        assert_eq!(covering(&report), Vec::new(), "{pairs:?}");
+        assert!(report.findings.is_empty() && report.failed.is_empty(), "{pairs:?}");
+        assert_eq!((report.counts.covers_nothing, report.counts.not_applicable, report.counts.failed), (0, 1, 0));
+    }
+}
+
+#[test]
+fn flagged_own_and_baseline_rules_are_listed_in_rule_file_order() {
+    let mut rules = file(vec![]);
+    rules.not_applicable_rules = vec![at(3, not_applicable_rule("na-m", Engine::AstGrep, Some("why m")))];
+    rules.rules = vec![
+        at(4, Rule::new("tm-b", Engine::Ruff, "lint")),
+        at(0, Rule::new("plain", Engine::Clippy, "lint")),
+        at(5, Rule::new("own-a", Engine::Clippy, "lint")),
+        at(1, Rule::new("own-z", Engine::SwiftLint, "lint")),
+        at(6, Rule::new("plain-2", Engine::Ruff, "lint")),
+        at(2, Rule::new("tm-a", Engine::Tessera, "lint")),
+    ];
+    let no_files =
+        flags(&[("own-a", NO_FILE_MATCH), ("tm-b", NO_FILE_MATCH), ("own-z", NO_ENGINE_FILE), ("tm-a", NO_ENGINE_FILE)]);
+    let report = assemble_report(&rules, Vec::new(), None, day(), date(), &no_files, |f| f);
+    assert_eq!(covering(&report), vec![("own-z", Engine::SwiftLint), ("own-a", Engine::Clippy)]);
+    assert_eq!(
+        listed(&report),
+        vec![
+            ("tm-a", Engine::Tessera, NO_ENGINE_FILE),
+            ("na-m", Engine::AstGrep, "why m"),
+            ("tm-b", Engine::Ruff, NO_FILE_MATCH),
+        ]
+    );
+    assert_eq!((report.counts.covers_nothing, report.counts.not_applicable), (2, 3));
+}
+
+#[test]
+fn a_flag_gives_way_to_a_not_applicable_rule_and_to_a_missing_base() {
+    let oid = Oid::parse("0123456789abcdef0123456789abcdef01234567");
+    let base_rules = || vec![at(0, base_only("own-b", Engine::Clippy)), at(1, base_only("tm-b", Engine::AstGrep))];
+    let rows = [
+        (
+            "flagged and not applicable",
+            vec![
+                at(0, not_applicable_rule("own-n", Engine::Ruff, Some("param max not given"))),
+                at(1, not_applicable_rule("tm-n", Engine::SwiftLint, None)),
+            ],
+            Vec::new(),
+            None,
+            vec![("own-n", Engine::Ruff, "param max not given"), ("tm-n", Engine::SwiftLint, "no reason given")],
+            vec![],
+            vec!["ghost", "tm-ghost", "plain", "own-b", "tm-b", "own-n", "tm-n"],
+        ),
+        (
+            "flagged, only with a base, no base",
+            Vec::new(),
+            base_rules(),
+            None,
+            vec![("own-b", Engine::Clippy, NEEDS_BASE), ("tm-b", Engine::AstGrep, NEEDS_BASE)],
+            vec![],
+            vec!["ghost", "tm-ghost", "plain", "own-n", "tm-n"],
+        ),
+        (
+            "flagged, only with a base, a base",
+            Vec::new(),
+            base_rules(),
+            oid,
+            vec![("tm-b", Engine::AstGrep, NO_FILE_MATCH)],
+            vec![("own-b", Engine::Clippy)],
+            vec!["ghost", "tm-ghost", "plain", "own-n", "tm-n"],
+        ),
+        (
+            "flagged ids naming no rule",
+            Vec::new(),
+            vec![Rule::new("plain", Engine::Clippy, "lint")],
+            None,
+            vec![],
+            vec![],
+            vec!["ghost", "tm-ghost", "plain", "own-b", "tm-b", "own-n", "tm-n"],
+        ),
+    ];
+    let no_files = flags(&[
+        ("own-n", NO_FILE_MATCH),
+        ("tm-n", NO_FILE_MATCH),
+        ("own-b", NO_FILE_MATCH),
+        ("tm-b", NO_FILE_MATCH),
+        ("ghost", NO_FILE_MATCH),
+        ("tm-ghost", NO_ENGINE_FILE),
+    ]);
+    for (case, set_aside, applied, base, not_applicable, covers_nothing, kept) in rows {
+        let mut rules = file(vec![]);
+        rules.not_applicable_rules = set_aside;
+        rules.rules = applied;
+        let found = ["ghost", "tm-ghost", "plain", "own-b", "tm-b", "own-n", "tm-n"];
+        let findings = found.iter().zip(1..).map(|(rule, line)| finding(rule, "a.rs", line, None)).collect();
+        let report = assemble_report(&rules, of(findings), base, day(), date(), &no_files, |f| f);
+        assert_eq!(listed(&report), not_applicable, "{case}");
+        assert_eq!(covering(&report), covers_nothing, "{case}");
+        assert_eq!(rule_ids(&report.findings), kept, "{case}");
+    }
+}
+
+#[test]
+fn the_covers_nothing_and_not_applicable_counts_are_the_lists_lengths() {
+    let rows = [
+        (vec![], vec![], (0, 0)),
+        (
+            vec![("own-a", NO_FILE_MATCH)],
+            vec![not_applicable_rule("na", Engine::Ruff, None), not_applicable_rule("na-2", Engine::Ruff, None)],
+            (1, 2),
+        ),
+        (
+            vec![("own-a", NO_FILE_MATCH), ("own-b", NO_ENGINE_FILE), ("tm-c", NO_FILE_MATCH)],
+            vec![not_applicable_rule("na", Engine::Ruff, None), not_applicable_rule("na-2", Engine::Ruff, None)],
+            (2, 3),
+        ),
+    ];
+    for (pairs, set_aside, (covering_count, not_applicable_count)) in rows {
+        let mut rules = with_rules(&["own-a", "own-b", "tm-c"], vec![]);
+        rules.not_applicable_rules = set_aside;
+        let report = assemble_report(&rules, Vec::new(), None, day(), date(), &flags(&pairs), |f| f);
+        let counts = (report.counts.covers_nothing, report.counts.not_applicable);
+        assert_eq!(counts, (covering_count, not_applicable_count), "{pairs:?}");
+    }
 }

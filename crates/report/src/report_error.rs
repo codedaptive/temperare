@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-/// Why `build_report` gave no report.
+/// Why `build_report` or `build_report_with_no_files` gave no report.
 #[derive(Debug)]
 pub enum ReportError {
     /// A git operation failed: finding the repository top, the added lines or the untracked files.
