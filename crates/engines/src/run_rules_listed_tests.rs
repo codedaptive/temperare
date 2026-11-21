@@ -1,13 +1,14 @@
 //! ZUT for run_rules_listed.rs: rules flagged by a listing of the folder's files made by hand, with a fake host. The host
 //! panics on any run or PATH lookup it must not see, so a flagged rule is shown to run nothing and look nothing up.
 //! The ruff flow reads no file, so the rule file's folder is a path that need not exist; an ast-grep rule refused for its
-//! count param is settled before its engine is looked up, so it reads none either.
+//! count param or for a check climbing above the folder is settled before its engine is looked up, so it reads none
+//! either.
 
 use crate::entry::entry_cmd;
 use crate::entry_for::entry_for;
 use crate::host::Host;
 use crate::run_rules_listed::run_rules_listed;
-use crate::types::{RuleRun, Stop};
+use crate::types::{NotAvailableCause, RuleRun, Stop};
 use procio::{Cmd, Output, ProcError};
 use rules::{Engine, Finding, Kind, RelPath, Rule, RuleFile, RuleOutcome, Severity};
 use std::cell::{Cell, RefCell};
@@ -238,6 +239,43 @@ fn a_refused_rule_is_failed_before_the_no_file_flag_with_nothing_run_or_looked_u
 }
 
 #[test]
+fn each_not_available_cause_and_no_cause_on_another_outcome() {
+    let cases = [
+        ("absent", "ruff", "E711", false, 0, "", "", RuleRun::new(
+            "r".into(), Engine::Ruff,
+            RuleOutcome::NotAvailable { rule: "r".into(), engine: Engine::Ruff, why: "ruff not found on PATH".into() }, None,
+        ).with_cause(NotAvailableCause::EngineNotOnPath)),
+        ("clippy absent", "clippy", "clippy::bool_comparison", false, 0, "", "", RuleRun::new(
+            "r".into(), Engine::Clippy,
+            RuleOutcome::NotAvailable { rule: "r".into(), engine: Engine::Clippy, why: "cargo-clippy not found on PATH".into() }, None,
+        ).with_cause(NotAvailableCause::EngineNotOnPath)),
+        ("unknown", "ruff", "ZZZ999", true, 2, "", "ruff failed\n  Cause: Unknown rule selector `ZZZ999` in `select` from the CLI\n", RuleRun::new(
+            "r".into(), Engine::Ruff,
+            RuleOutcome::NotAvailable { rule: "r".into(), engine: Engine::Ruff, why: "ruff (version unknown) does not know the check `ZZZ999`: Cause: Unknown rule selector `ZZZ999` in `select` from the CLI".into() }, Some(77),
+        ).with_cause(NotAvailableCause::UnknownCheck)),
+        ("tessera", "tessera", "slop", false, 0, "", "", RuleRun::new(
+            "r".into(), Engine::Tessera,
+            RuleOutcome::NotAvailable { rule: "r".into(), engine: Engine::Tessera, why: "Tessera's slop records are not defined yet".into() }, None,
+        ).with_cause(NotAvailableCause::Other)),
+        ("clean", "ruff", "E711", true, 0, "[]", "", RuleRun::new(
+            "r".into(), Engine::Ruff, RuleOutcome::Findings(vec![]), Some(2),
+        )),
+    ];
+    for (name, engine, check, present, code, stdout, stderr, expected) in cases {
+        let text = format!("version = 1\n[[rule]]\nid = \"r\"\nengine = \"{engine}\"\ncheck = \"{check}\"\nfix = \"f\"\n");
+        let file = RuleFile::parse(&text, Path::new(".")).unwrap();
+        let run = |cmd: &Cmd| {
+            assert!(present && engine == "ruff", "unexpected run in {name}: {cmd:?}");
+            Ok(Output { code: Some(code), stdout: stdout.as_bytes().to_vec(), stderr: stderr.as_bytes().to_vec() })
+        };
+        let on_path = |program: &str| present && program == "ruff";
+        let host = Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None), base: None };
+        let got = run_rules_listed(&file, Ok(Path::new(FOLDER)), &[], &host, &[], None, &crate::engine_hits::engine_hits);
+        assert_eq!(got, vec![expected], "{name}");
+    }
+}
+
+#[test]
 fn a_bad_count_param_with_ast_grep_absent_is_failed_not_not_available() {
     let text = "version = 1\n[[rule]]\nid = \"r\"\nengine = \"ast-grep\"\ncheck = \"names.yml\"\npaths = [\"src/**\"]\nparams = { count = \"wrong\" }\nfix = \"f\"\n";
     let file = RuleFile::parse(text, Path::new(".")).unwrap();
@@ -248,5 +286,20 @@ fn a_bad_count_param_with_ast_grep_absent_is_failed_not_not_available() {
     for listing in listings {
         let got = run_rules_listed(&file, Ok(Path::new(FOLDER)), &[], &host, &[], listing, &crate::engine_hits::engine_hits);
         assert_eq!(got, vec![RuleRun::new("r".into(), Engine::AstGrep, failed.clone(), None)], "listing {listing:?}");
+    }
+}
+
+#[test]
+fn a_check_climbing_above_the_folder_with_ast_grep_absent_is_failed_not_not_available() {
+    let text = "version = 1\n[[rule]]\nid = \"r\"\nengine = \"ast-grep\"\ncheck = \"../x.yml\"\npaths = [\"src/**\"]\nfix = \"f\"\n";
+    let file = RuleFile::parse(text, Path::new(".")).unwrap();
+    let host = Host { run: &no_run, on_path: &|_| false, raw_chars: &Cell::new(None), base: None };
+    let stderr = "ast-grep rule ../x.yml is outside the rule file's folder";
+    let failed = RuleOutcome::Failed { rule: "r".into(), engine: Engine::AstGrep, code: None, stderr: stderr.into() };
+    let listings: [Option<&[RelPath]>; 2] = [None, Some(&[])];
+    for listing in listings {
+        let got = run_rules_listed(&file, Ok(Path::new(FOLDER)), &[], &host, &[], listing, &crate::engine_hits::engine_hits);
+        assert_eq!(got, vec![RuleRun::new("r".into(), Engine::AstGrep, failed.clone(), None)], "listing {listing:?}");
+        assert_eq!(got[0].no_files, None, "listing {listing:?}");
     }
 }

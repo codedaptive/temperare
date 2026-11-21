@@ -1,7 +1,7 @@
 //! ZUT for rule_run_of.rs: each kind of flow result made by hand, read into one rule's run. Nothing runs.
 
 use crate::rule_run_of::rule_run_of;
-use crate::types::{EngineVersion, Hit, RuleRun, Stop};
+use crate::types::{EngineVersion, Hit, NotAvailableCause, RuleRun, Stop};
 use rules::{Engine, Finding, Kind, RelPath, Rule, RuleFile, RuleOutcome, Severity};
 use std::path::Path;
 
@@ -48,13 +48,14 @@ fn no_files_is_no_findings_with_its_why_as_the_flag() {
 }
 
 #[test]
-fn another_stop_is_its_outcome_with_no_flag() {
+fn another_stop_is_its_outcome_with_its_cause_and_no_flag() {
     let (file, rule) = file();
     let versions = [EngineVersion { engine: Engine::Ruff, version: Some("0.17.4".into()) }];
     let got = rule_run_of(&file, &rule, Err(Stop::UnknownCheck { said: "unknown".into() }), &[], &versions, Some(77));
     let why = "ruff 0.17.4 does not know the check `E711`: unknown";
     let outcome = RuleOutcome::NotAvailable { rule: "none-compare".into(), engine: Engine::Ruff, why: why.into() };
-    assert_eq!(got, RuleRun::new("none-compare".into(), Engine::Ruff, outcome, Some(77)));
+    let want = RuleRun::new("none-compare".into(), Engine::Ruff, outcome, Some(77)).with_cause(NotAvailableCause::UnknownCheck);
+    assert_eq!(got, want);
 }
 
 #[test]
@@ -63,4 +64,19 @@ fn a_failed_stop_keeps_its_code_and_stderr() {
     let got = rule_run_of(&file, &rule, Err(Stop::Failed { code: Some(2), stderr: "boom".into() }), &[], &[], None);
     let outcome = RuleOutcome::Failed { rule: "none-compare".into(), engine: Engine::Ruff, code: Some(2), stderr: "boom".into() };
     assert_eq!(got, RuleRun::new("none-compare".into(), Engine::Ruff, outcome, None));
+}
+
+#[test]
+fn a_program_the_engine_does_not_need_missing_is_a_helper_not_on_path() {
+    let cases = [
+        ("clippy", "clippy::bool_comparison", Engine::Clippy, "cargo", "cargo not found on PATH"),
+        ("shellcheck", "SC2086", Engine::ShellCheck, "git", "git not found on PATH"),
+    ];
+    for (name, check, engine, program, why) in cases {
+        let text = format!("version = 1\n[[rule]]\nid = \"r\"\nengine = \"{name}\"\ncheck = \"{check}\"\nfix = \"f\"\n");
+        let file = RuleFile::parse(&text, Path::new(".")).unwrap();
+        let got = rule_run_of(&file, &file.rules[0], Err(Stop::NotOnPath { program: program.into() }), &[], &[], None);
+        let outcome = RuleOutcome::NotAvailable { rule: "r".into(), engine, why: why.into() };
+        assert_eq!(got, RuleRun::new("r".into(), engine, outcome, None).with_cause(NotAvailableCause::HelperNotOnPath), "{name}");
+    }
 }

@@ -1,7 +1,8 @@
 //! ZUT for run_rules_counted_with.rs's `stopped`: a check the engine said it does not know becomes `NotAvailable`
 //! with a why naming the engine, its version from the versions given (`(version unknown)` without one) and the check;
 //! a check not in temperare's list of its engine's codes becomes `NotAvailable` with the engine and its version before
-//! what it said; `NoFiles` is no findings and the other stops keep their kind. No engine runs in these. The unknown-check path is that of clippy, swiftlint and ruff, the
+//! what it said; `NotOnPath` and `NotAvailable` become `NotAvailable` with their why; `NoFiles` is no findings and
+//! `Failed` keeps its kind. No engine runs in these. The unknown-check path is that of clippy, swiftlint and ruff, the
 //! engines that can say a check is unknown: one test reaches it through `engine_hits` with swiftlint's output on a
 //! fake host, the others hand `stopped` a made-up stop for ruff and ast-grep. ast-grep has no such path itself: its
 //! check is the repository's YAML, and a YAML ast-grep rejects stays `Failed`.
@@ -57,8 +58,11 @@ fn an_unknown_check_names_the_engine_by_its_rule_file_name() {
 #[test]
 fn not_available_and_failed_keep_their_kind() {
     let rule = rule("ruff", "E711");
-    let not_available = stopped(&rule, Stop::NotAvailable { why: "ruff not found on PATH".to_string() }, &[]);
+    let not_on_path = stopped(&rule, Stop::NotOnPath { program: "ruff".to_string() }, &[]);
     let want = RuleOutcome::NotAvailable { rule: "r".into(), engine: Engine::Ruff, why: "ruff not found on PATH".into() };
+    assert_eq!(not_on_path, want);
+    let not_available = stopped(&rule, Stop::NotAvailable { why: "no Cargo.toml".to_string() }, &[]);
+    let want = RuleOutcome::NotAvailable { rule: "r".into(), engine: Engine::Ruff, why: "no Cargo.toml".into() };
     assert_eq!(not_available, want);
     let failed = stopped(&rule, Stop::Failed { code: Some(2), stderr: "boom".to_string() }, &[]);
     assert_eq!(failed, RuleOutcome::Failed { rule: "r".into(), engine: Engine::Ruff, code: Some(2), stderr: "boom".into() });

@@ -10,6 +10,9 @@ use std::cell::Cell;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+#[path = "../../../tests/support/git.rs"]
+mod git_support;
+
 const LIST: &str = "# source: test\n# version: test\nSC2086\n";
 
 struct TempRepo(PathBuf);
@@ -33,12 +36,7 @@ impl Drop for TempRepo {
 }
 
 fn git(repo: &Path, args: &[&str]) {
-    let out = procio::run(&Cmd {
-        args: args.iter().map(|arg| (*arg).into()).collect(),
-        cwd: Some(repo.to_path_buf()),
-        ..Cmd::new("git")
-    }).unwrap();
-    assert_eq!(out.code, Some(0), "git {args:?}: {}", String::from_utf8_lossy(&out.stderr));
+    git_support::git(repo, args, b"");
 }
 
 fn check(repo: &Path) -> (Result<Vec<Hit>, Stop>, Option<usize>) {

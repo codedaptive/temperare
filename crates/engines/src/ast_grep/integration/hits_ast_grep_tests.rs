@@ -104,7 +104,7 @@ fn counted_ast_grep_unknown_param_leaves_no_count() {
 #[test]
 fn counted_ast_grep_not_found_counts_nothing() {
     let (got, chars, _) = counted_ast_grep("absent", NAMES, || Err(ProcError::NotFound { program: "ast-grep".into() }));
-    assert_eq!(got, Err(Stop::NotAvailable { why: "ast-grep not found on PATH".to_string() }));
+    assert_eq!(got, Err(Stop::NotOnPath { program: "ast-grep".to_string() }));
     assert_eq!(chars, None);
 }
 
@@ -152,7 +152,7 @@ fn garbage_output_is_failed_with_the_exit_code_and_the_copy_is_gone() {
 fn ast_grep_not_found_is_not_available_and_the_copy_is_gone() {
     let answer = || Err(ProcError::NotFound { program: "ast-grep".into() });
     let (got, _, seen) = run_rule("absent", Some(YAML), &rule_text("names.yml", NAMES), answer);
-    assert_eq!(got, Err(Stop::NotAvailable { why: "ast-grep not found on PATH".to_string() }));
+    assert_eq!(got, Err(Stop::NotOnPath { program: "ast-grep".to_string() }));
     let seen = seen.unwrap();
     assert_eq!(seen.text.as_deref(), Some(FILLED));
     assert!(!seen.rule.exists());

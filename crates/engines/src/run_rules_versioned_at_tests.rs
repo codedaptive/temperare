@@ -5,7 +5,7 @@
 //! ways, through `check_change` with and without the base, so no copy is written here. The pieces are proved by
 //! check_host_tests.rs (the base goes into the check's host) and git/run_git_with_tests.rs (the git entry reads it).
 
-use crate::{run_rules_versioned, run_rules_versioned_at, CheckedRules, EngineVersion, RuleRun};
+use crate::{run_rules_versioned, run_rules_versioned_at, CheckedRules, EngineVersion, NotAvailableCause, RuleRun};
 use rules::{Engine, RuleFile, RuleOutcome};
 use std::path::Path;
 
@@ -33,6 +33,7 @@ fn any_base_gives_run_rules_versioneds_check_on_rules_that_do_not_read_the_base(
         outcome: RuleOutcome::NotAvailable { rule: rule.to_string(), engine, why: why.to_string() },
         raw_chars: None,
         no_files: None,
+        not_available_cause: Some(NotAvailableCause::Other),
     };
     let want = CheckedRules {
         runs: vec![

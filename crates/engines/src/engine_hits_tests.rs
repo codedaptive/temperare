@@ -1,7 +1,7 @@
-//! ZUT for engine_hits.rs: an absent engine stops before anything runs, with availability's why; Tessera is never
-//! available (S-20); ruff and SwiftLint go to their entries' flows; an unresolved folder fails only an available
-//! engine. The host is a fake; nothing runs. ShellCheck, whose scripts are listed before availability, is
-//! engine_hits_with_tests.rs's.
+//! ZUT for engine_hits.rs: an absent engine stops `NotOnPath` before anything runs, naming the program `unavailable`
+//! found missing; Tessera is never available (S-20); ruff and SwiftLint go to their entries' flows; an unresolved
+//! folder fails only an available engine. The host is a fake; nothing runs. ShellCheck, whose scripts are listed
+//! before availability, is engine_hits_with_tests.rs's.
 
 use crate::engine_hits::engine_hits;
 use crate::host::Host;
@@ -49,28 +49,34 @@ fn an_unresolved_folder_fails_an_available_engine() {
 
 #[test]
 fn an_unresolved_folder_leaves_absent_engines_and_tessera_not_available() {
-    assert_eq!(hits_without_folder("swiftlint", "force_cast", false), not_available("swiftlint not found on PATH"));
+    assert_eq!(hits_without_folder("swiftlint", "force_cast", false), not_on_path("swiftlint"));
     assert_eq!(
         hits_without_folder("tessera", "slop", true),
         not_available("Tessera's slop records are not defined yet")
     );
 }
 
+/// The stop of an engine not available for a reason other than a program missing from PATH.
 pub(crate) fn not_available(why: &str) -> Result<Vec<Hit>, Stop> {
     Err(Stop::NotAvailable { why: why.to_string() })
 }
 
+/// The stop of an engine whose `program` is not on PATH.
+fn not_on_path(program: &str) -> Result<Vec<Hit>, Stop> {
+    Err(Stop::NotOnPath { program: program.to_string() })
+}
+
 #[test]
-fn an_absent_engine_is_not_available_with_availabilitys_why_and_nothing_runs() {
+fn an_absent_engine_is_not_on_path_naming_unavailables_program_and_nothing_runs() {
     let cases = [
-        ("clippy", "clippy::bool_comparison", "cargo-clippy not found on PATH"),
-        ("swiftlint", "force_cast", "swiftlint not found on PATH"),
-        ("ruff", "E711", "ruff not found on PATH"),
-        ("ast-grep", "rules/x.yml", "ast-grep not found on PATH"),
+        ("clippy", "clippy::bool_comparison", "cargo-clippy"),
+        ("swiftlint", "force_cast", "swiftlint"),
+        ("ruff", "E711", "ruff"),
+        ("ast-grep", "rules/x.yml", "ast-grep"),
     ];
-    for (engine, check, why) in cases {
+    for (engine, check, program) in cases {
         let (got, ran) = hits_of(engine, check, false);
-        assert_eq!(got, not_available(why), "{engine}");
+        assert_eq!(got, not_on_path(program), "{engine}");
         assert!(ran.is_empty(), "{engine} ran {ran:?}");
     }
 }

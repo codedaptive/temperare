@@ -6,7 +6,7 @@ use std::io;
 /// The same variant as `err`, naming the same program: `TimedOut` with the same `after`; `Spawn` with an `io::Error`
 /// of the same kind and the same message (an OS error's code is not kept, only its words). `ProcError` is not
 /// `Clone`, and one failed shared run must reach every rule that shares it as the same `Stop` (`ran` reads
-/// `NotFound` as not available, naming the program, and the others as failed, quoting their message).
+/// `NotFound` as `NotOnPath`, naming the program, and the others as failed, quoting their message).
 pub(crate) fn proc_error_copy(err: &ProcError) -> ProcError {
     match err {
         ProcError::NotFound { program } => ProcError::NotFound { program: program.clone() },

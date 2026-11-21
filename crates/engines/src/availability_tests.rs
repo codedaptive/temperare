@@ -3,7 +3,7 @@
 //! available whatever is on PATH, both from `availability_from` and as a rule's outcome from `run_rules_versioned`.
 
 use crate::availability::availability_from;
-use crate::types::{Availability, RuleRun};
+use crate::types::{Availability, NotAvailableCause, RuleRun};
 use rules::{Engine, RuleFile, RuleOutcome};
 use std::cell::RefCell;
 use std::path::Path;
@@ -112,6 +112,7 @@ fn a_pylint_rule_run_is_not_available_with_no_adapter_and_counts_nothing() {
             why: "no adapter for pylint in this build".to_string(),
         },
         None,
-    );
+    )
+    .with_cause(NotAvailableCause::Other);
     assert_eq!(runs, vec![want]);
 }

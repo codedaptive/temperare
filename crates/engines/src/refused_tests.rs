@@ -1,6 +1,7 @@
-//! ZUT for refused.rs: rules from in-memory rule-file text, each source of refusal (ast-grep's count params among
-//! them) and the rules refused by none, among them a good count rule and an ast-grep rule whose set carries its YAML
-//! (`embedded_text`), whose absolute check names no file.
+//! ZUT for refused.rs: rules from in-memory rule-file text, each source of refusal (ast-grep's count params and a
+//! check whose `..` climbs above the rule file's folder among them) and the rules refused by none, among them a good
+//! count rule, a check whose `..` stays inside the folder, and an ast-grep rule whose set carries its YAML
+//! (`embedded_text`), whose absolute or climbing check names no file.
 //! Nothing is read from disk and nothing runs.
 
 use crate::refused::refused;
@@ -16,7 +17,7 @@ fn rule(engine: &str, check: &str, extra: &str) -> Rule {
 
 #[test]
 fn a_refused_check_or_param_is_failed_with_its_flows_stderr_and_any_other_rule_is_not_refused() {
-    let cases: [(&str, &str, &str, Option<&str>); 20] = [
+    let cases: [(&str, &str, &str, Option<&str>); 29] = [
         (
             "ruff",
             "flake8-bugbear",
@@ -57,6 +58,15 @@ fn a_refused_check_or_param_is_failed_with_its_flows_stderr_and_any_other_rule_i
             Some("git param foo: a git rule reads only the `max_ratio`, `floor`, `test_paths` param"),
         ),
         ("ast-grep", "/abs/names.yml", "", Some("ast-grep rule /abs/names.yml is an absolute path: a check names a file inside the rule file's folder")),
+        ("ast-grep", "../x.yml", "", Some("ast-grep rule ../x.yml is outside the rule file's folder")),
+        ("ast-grep", "a/../../x.yml", "", Some("ast-grep rule a/../../x.yml is outside the rule file's folder")),
+        ("ast-grep", "../rules/x.yml", "", Some("ast-grep rule ../rules/x.yml is outside the rule file's folder")),
+        ("ast-grep", "./../x.yml", "", Some("ast-grep rule ./../x.yml is outside the rule file's folder")),
+        ("ast-grep", "x.yml", "", None),
+        ("ast-grep", "a/../x.yml", "", None),
+        ("ast-grep", "./x.yml", "", None),
+        ("ast-grep", "a/b/../../x.yml", "", None),
+        ("tessera", "slop", "params = { a = \"b\" }\n", Some("tessera param a: a tessera rule takes no params")),
         ("clippy", "rustdoc::broken_intra_doc_links", "", Some("clippy check `rustdoc::broken_intra_doc_links` is a rustdoc lint: clippy never runs rustdoc lints, so tm cannot report it")),
         ("ruff", "E711", "", None),
         ("ruff", "C901", "params = { max_complexity = 5 }\n", None),
@@ -85,8 +95,10 @@ fn a_refused_check_or_param_is_failed_with_its_flows_stderr_and_any_other_rule_i
 }
 
 #[test]
-fn an_ast_grep_rule_carrying_its_yaml_is_not_refused_for_an_absolute_check() {
-    let mut carried = rule("ast-grep", "/abs/names.yml", "");
-    carried.embedded_text = Some("id: names\nlanguage: rust\nrule:\n  pattern: $X.unwrap()\n");
-    assert_eq!(refused(&carried), None);
+fn an_ast_grep_rule_carrying_its_yaml_is_not_refused_for_a_check_outside_the_folder() {
+    for check in ["/abs/names.yml", "../x.yml"] {
+        let mut carried = rule("ast-grep", check, "");
+        carried.embedded_text = Some("id: names\nlanguage: rust\nrule:\n  pattern: $X.unwrap()\n");
+        assert_eq!(refused(&carried), None, "{check}");
+    }
 }

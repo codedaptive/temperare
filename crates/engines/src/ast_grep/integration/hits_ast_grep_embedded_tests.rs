@@ -108,7 +108,7 @@ fn the_temporary_file_is_gone_after_findings() {
 fn the_temporary_file_is_gone_after_a_run_error() {
     let answer = || Err(ProcError::NotFound { program: "ast-grep".into() });
     let ran = run_embedded("gone-absent", Some(EMBEDDED), None, NAMES, answer);
-    assert_eq!(ran.got, Err(Stop::NotAvailable { why: "ast-grep not found on PATH".to_string() }));
+    assert_eq!(ran.got, Err(Stop::NotOnPath { program: "ast-grep".to_string() }));
     let seen = ran.seen.expect("ast-grep ran");
     assert_eq!(seen.text.as_deref(), Some(EMBEDDED_FILLED));
     assert!(!seen.rule.exists(), "{} is left behind", seen.rule.display());

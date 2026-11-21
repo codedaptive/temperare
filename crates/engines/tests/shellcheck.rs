@@ -6,8 +6,10 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 use engines::{availability, entry_for, run_rules_versioned, Availability};
-use procio::Cmd;
 use rules::{Engine, RuleFile, RuleOutcome};
+
+#[path = "support/git.rs"]
+mod git_support;
 
 struct TempFolder(PathBuf);
 
@@ -37,12 +39,7 @@ impl Drop for PathGuard {
 }
 
 fn git(repo: &Path, args: &[&str]) {
-    let out = procio::run(&Cmd {
-        args: args.iter().map(|arg| (*arg).into()).collect(),
-        cwd: Some(repo.to_path_buf()),
-        ..Cmd::new("git")
-    }).unwrap();
-    assert_eq!(out.code, Some(0), "git {args:?}: {}", String::from_utf8_lossy(&out.stderr));
+    git_support::git(repo, args, b"");
 }
 
 #[test]

@@ -36,9 +36,9 @@ fn the_host_runs_the_cmd_it_is_given() {
 }
 
 #[test]
-fn a_program_not_found_is_not_available_with_availabilitys_text() {
+fn a_program_not_found_is_not_on_path_naming_it() {
     let got = ran_with(&Cmd::new("swiftlint"), || Err(ProcError::NotFound { program: "swiftlint".into() }));
-    assert_eq!(got, Err(Stop::NotAvailable { why: "swiftlint not found on PATH".to_string() }));
+    assert_eq!(got, Err(Stop::NotOnPath { program: "swiftlint".to_string() }));
 }
 
 #[test]

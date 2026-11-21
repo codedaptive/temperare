@@ -102,7 +102,7 @@ fn counted_clippy_check_run_not_found_counts_nothing_though_help_and_locate_prin
     let (got, chars, seen) =
         counted_clippy("clippy::bool_comparison", &root, &|| Err(ProcError::NotFound { program: "cargo".into() }));
     fs::remove_dir_all(&root).unwrap();
-    assert_eq!(got, Err(Stop::NotAvailable { why: "cargo not found on PATH".to_string() }));
+    assert_eq!(got, Err(Stop::NotOnPath { program: "cargo".to_string() }));
     assert_eq!(chars, None);
     assert_eq!(seen.len(), 3);
     assert_eq!(seen[2].args[0], "clippy");

@@ -23,7 +23,7 @@ use std::path::Path;
 /// 2. The Cargo root, the nearest folder at or above `folder` holding a `Cargo.toml`: none is `NotAvailable`.
 /// 3. `clippy-driver -W help` (`lint_groups_cmd`) run in the Cargo root: it is a rustup proxy, as `cargo` is, so it
 ///    uses the toolchain the `cargo clippy` below uses, and lints and groups added by a newer toolchain are in that
-///    toolchain's own help. `clippy-driver` absent is `NotAvailable`; help that cannot be run is `Failed`.
+///    toolchain's own help. `clippy-driver` absent is `NotOnPath`; help that cannot be run is `Failed`.
 /// 4. The lint groups from that help: none listed is `Failed`, so the rule never reads clean. A check naming a group
 ///    (`lint_group`) is `Failed` and nothing more runs: a group cannot be matched by code, so the rule must name each
 ///    lint, or `warnings`.
