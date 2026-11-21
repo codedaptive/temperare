@@ -1,4 +1,5 @@
-//! Unit tests for usage.rs: command, rule-file, short-name and savings help as whole lines.
+//! Unit tests for usage.rs: command, rule-file, short-name, savings and exit-code help as whole lines; the loosened exits
+//! by their tokens.
 
 use super::USAGE;
 
@@ -14,6 +15,32 @@ fn has_the_check_line() {
 #[test]
 fn has_the_rules_line() {
     assert!(has_line("tm rules [--rules <path>] [--json]"));
+}
+
+#[test]
+fn has_the_loosened_line_right_after_the_rules_line() {
+    let lines: Vec<&str> = USAGE.lines().collect();
+    let rules = lines.iter().position(|l| *l == "tm rules [--rules <path>] [--json]");
+    assert_eq!(
+        rules.and_then(|i| lines.get(i + 1)).copied(),
+        Some("tm rules --loosened --base <rev> [--rules <path>] [--json]")
+    );
+}
+
+#[test]
+fn gives_the_loosened_exit_codes_after_the_check_exits() {
+    let lines: Vec<&str> = USAGE.lines().collect();
+    let precedence = lines.iter().position(|l| l.starts_with("The first that applies wins"));
+    let line = precedence.and_then(|i| lines.get(i + 1)).copied().unwrap_or("");
+    assert!(line.starts_with("tm rules --loosened exits "), "{line}");
+    for token in ["0 when nothing loosened", "1 when something did", "2 for a bad --base or rule file"] {
+        assert!(line.contains(token), "{token}: {line}");
+    }
+}
+
+#[test]
+fn has_the_baseline_line() {
+    assert!(has_line("tm baseline test [--set <name@version>] [--json]"));
 }
 
 #[test]
@@ -63,6 +90,12 @@ fn savings_contract_explains_the_switch_and_json() {
 #[test]
 fn savings_contract_names_the_savings_log() {
     assert!(has_line("Each check that ran an engine appends a line to ~/.local/state/temperare/savings.jsonl."));
+}
+
+#[test]
+fn lists_exit_6_and_the_exit_precedence() {
+    assert!(has_line("6  a rule of the repository's own covers nothing"));
+    assert!(has_line("The first that applies wins, in this order: 2, 1, 5, 3, 4, 6, 0."));
 }
 
 #[test]

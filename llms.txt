@@ -14,7 +14,7 @@ sources.
 
 ## Reference
 
-- The rule file, temperare.toml, every key: docs/reference/RULE_FILE.md
+- The rule file, temperare.toml, every key, the baseline sets and [[override]]: docs/reference/RULE_FILE.md
 - Text output, JSON output, exit codes, the next line: docs/reference/OUTPUT.md
 - Each engine: the exact command line, what check means, not available and failed: docs/reference/ENGINES.md
 
@@ -26,10 +26,42 @@ sources.
 
 ## Facts an agent needs before running it
 
-- Commands: tm check, tm rules, tm install, tm uninstall, tm help, tm --version.
+- Commands: tm check, tm rules, tm baseline test, tm install, tm uninstall, tm help, tm --version.
 - tm check [--rules <path>] [--base <rev>] [--kind quality|security] [--json] [<path>...]
 - tm rules [--rules <path>] [--json]
+- tm rules --loosened --base <rev> [--rules <path>] [--json]: compares the rule file as committed at <rev> with the
+  working file, baseline sets included, and lists each loosening as {kind, about, before, after}: rule_gone,
+  rule_not_applicable, severity_lowered, path_removed, paths_limited, exclude_added, kit_removed, kits_limited,
+  outside_kit_added, exception_added, expiry_later, expiry_dropped, set_dropped, set_older. Runs no engine. Exits 0
+  nothing loosened; 1 something did; 2 a usage error, a --base that names no commit or has no such rule file, or a
+  problem in either file. --loosened and --base come together.
+- tm baseline test [--set <name@version>] [--json]: tests each rule of the baseline sets built into tm (with no
+  --set the ready ones, house@1 then standard@1; --set names one set, such as standard@1) on its failing case
+  (exactly the expected finding) and its passing case (no finding), each in a throwaway git repository. A rule
+  holds, is broken, not available or not applicable (a rule that requires a param its case does not give). Each
+  case runs with the params it gives over the rule's own. Exits 0
+  all hold; 1 a rule is broken; 2 used wrongly or an unknown set or version; 3 nothing broke but a rule was not available or
+  not applicable.
 - The rule file is --rules <path>, else temperare.toml at the top of the git repository.
+- Baseline sets are rules built into tm. A rule file takes one with the top-level key
+  baseline = ["name@version", ...], each set once. standard@1 is ready: 53 rules, all kind quality and severity
+  warning, in this order: dead code (5), deprecated calls (1), suppressions written in the code (11), then
+  complexity, nesting, dbg! and print, bare and blind except and commented-out code (8), then what a change adds
+  (28, each only_with_base: under not_applicable without --base). house@1 is ready too: 36 rules, all kind quality,
+  30 at warning and 6 at error. Five of them require params (entity_types, own_package) that the rule file gives in
+  an [[override]]; until it does they are not applicable. A file may take both sets.
+- A set's rules come first, in baseline order and each set's own order, then the file's own. tm rules lists them
+  that way; nothing names a rule's set. A set rule's id starts with tm-, and an own rule's id may not.
+- [[override]] changes one set rule: rule (its id, required) and any of severity, off = true (the rule is left out:
+  not run, not listed), paths, exclude (each in place of the set's) and params (laid over the set's, key by key). One
+  [[override]] per rule; one that names no rule of a taken set is a problem. An [[exception]] may name a set rule.
+- A set rule can require params (none of standard@1 does). Until an [[override]] gives each one in its params the
+  rule is not run, tm rules does not list it, and tm check lists it under not_applicable ("required params not
+  given: <names>; give them in the params of an [[override]] for "<rule id>""). A set may type a required param as
+  a string or a list of strings; an [[override]] that gives it as another type is a problem, exit 2.
+- A set's ast-grep rules carry their YAML inside tm: their check is not a path in the repository and no file is
+  read for it.
+- The rules of a set: tm rules on a rule file that takes it, or crates/rules/baseline/<name>/<version>/set.toml.
 - --json prints one JSON object on one line on stdout, with exit and next beside the result.
 - tm install [--no-place] [--short-name] [--target claude,codex,cursor] [--mode skill] [--location local] [-y]
 - tm install copies the binary to ~/.local/bin/temperare, links tm beside it, writes a skill file for the harnesses
@@ -37,30 +69,53 @@ sources.
   names. Both exit 0 when done, 1 when a step failed, 2 when used wrongly.
 - Exit codes of tm check: 0 nothing to refuse; 1 a quality error was found; 2 used wrongly or the rule file has a
   problem, nothing checked; 3 a rule was not available; 4 the only errors are security findings, which never
-  refuse; 5 a rule failed. The first of 2, 1, 5, 3, 4 that applies wins.
-- Exit 0 and exit 4 mean every rule ran or is listed under not_applicable. Exit 1 does not: read
-  counts.not_available and counts.failed.
+  refuse; 5 a rule failed; 6 a rule of the repository's own covers nothing. The first of 2, 1, 5, 3, 4, 6 that
+  applies wins.
+- Exit 0 means every rule ran or is listed under not_applicable. Exit 4 means the same, except that a rule may cover
+  nothing (4 ranks above 6). Exit 1 does not: read counts.not_available, counts.failed and counts.covers_nothing.
+- A rule that covers none of the files git lists in the rule file's folder (tracked files in the work tree, and
+  untracked files git does not ignore), or a ShellCheck rule that covers none of the scripts there, runs nothing,
+  and whether its engine is installed does not change its result (the engine is still asked its version for the
+  engines list). One of the repository's own rules is then listed as covers nothing: a "covers nothing: <rule>
+  (<engine>)" line, covers_nothing in JSON ({rule, engine}), counts.covers_nothing, and exit 6, with next "fix the
+  paths of each rule that covers nothing above, or remove it from <rule file>" (under --json, "fix the paths of
+  each rule in covers_nothing, or remove it from <rule file>"). A baseline set's rule is listed under
+  not_applicable instead, with why "its paths match no file in the rule file's folder" (ShellCheck: "no file its
+  engine checks"). When git cannot list the files, no rule is settled this way.
 - --base <rev> keeps only findings on lines added since that commit. A rule with only_with_base = true reports only
   what a change adds: without --base it reports nothing and is listed under not_applicable ("reports only what a
   change adds; run with --base"). not_applicable is never a finding and never "not available".
 - Exit 3 and exit 5 are never clean: the code was not fully checked.
 - A rule fails (exit 5) when its engine gives no answer that can be read, or when its check cannot be matched back
   to findings: a clippy lint group, SwiftLint's custom_rules, a ruff rule name in place of a code, an ast-grep rule
-  file outside the rule file's folder. It fails too on a param its engine does not take, or a bad value: clippy
+  file outside the rule file's folder, a shellcheck check that is not one code, a git check other than test_ratio.
+  It fails too on a param its engine does not take, or a bad value: clippy
   takes allow, and max_nesting (1-1000) with check clippy::excessive_nesting; swiftlint takes max_complexity
   (1-1000) with check cyclomatic_complexity, or max_lines (1-100000) with check file_length; ruff takes
-  max_complexity (1-1000) with check C901; ast-grep takes only the names its YAML has as {{name}}. A threshold wins
+  max_complexity (1-1000) with check C901; ast-grep takes the names its YAML has as {{name}}, and count
+  ("setup-vs-tests") with shared_setup (a list of globs); git takes max_ratio (0.1-100), floor (0-100000) and
+  test_paths (a list of globs), all three required; shellcheck and tessera take none. A threshold wins
   over the rule's config, and no config file of the repository is changed. The reason is in failed[].stderr_tail.
+- A rule tm can refuse from the rule file alone fails whether or not its engine is installed: every check and param
+  above, except the clippy lint group, an ast-grep rule file that is missing, cannot be read, or leads out of the
+  folder through a symlink, and ast-grep's {{name}} params, which are refused only in the run. An ast-grep check that
+  is absolute or whose .. climbs above the rule file's folder is refused from the text alone. The order a rule
+  settles in: refused, then covers no file, then needs a base, then not available, then the run (docs/reference/ENGINES.md).
 - A check the installed clippy, swiftlint or ruff does not know (a misspelt name, or one newer than the engine) is
   not available (exit 3), with a why naming the engine, its version and the check.
 - check, by engine: clippy, one lint or warnings; swiftlint, one rule identifier; ruff, a rule code, a code prefix,
-  ALL, or several joined by commas; ast-grep, the path of a rule file inside the rule file's folder.
+  ALL, or several joined by commas; ast-grep, the path of a rule file inside the rule file's folder; shellcheck, one
+  code such as SC2086; git, test_ratio.
 - A clippy rule needs cargo-clippy and clippy-driver on PATH.
 - Every finding's path is relative to the rule file's folder.
 - A finding has: rule, engine, kind, severity, owner (when the rule file names one), path, line, col (when the
   engine gives one), what (the engine's message), fix (the rule's fix text).
 - An exception is an [[exception]] table in the rule file with rule, path, reason and approved. It records a
-  person's approval. An agent does not add one on its own.
+  person's approval. An agent does not add one on its own. An optional expires = "YYYY-MM-DD" is its last day (UTC):
+  from the day after, it silences nothing and tm check lists it as expired: an "expired: <rule> <path> (expired
+  <YYYY-MM-DD>)" line, expired in JSON ({rule, path, what|null, expires, reason, approved}) and counts.expired.
+  Exceptions in force counts only the exceptions not expired, in tm check and tm rules alike; tm rules lists the
+  expired ones apart (expired and exceptions_expired in JSON, each with expires).
 
 ## What it does not do
 
@@ -73,15 +128,24 @@ sources.
 - When an engine ran, tm check's text output opens with an estimate of the tokens saved against the engines' raw
   output, ending in an ask to the agent to tell the user the turn's total; --json carries it as "saved", and
   savings_line = false in ~/.config/temperare/config.toml turns the line off.
-- Rules with engine = "tessera" are accepted and are always reported "not available" today, whether or not Tessera
-  is installed.
-- Rules with engine = "golangci-lint", "pylint", "clang-tidy", "oclint", "shellcheck" or "git" are accepted and
+- Rules with engine = "tessera" are accepted and, when they cover a file and have no params, are reported "not
+  available" today, whether or not Tessera is installed. A Tessera rule with a param fails (exit 5).
+- Rules with engine = "golangci-lint", "pylint", "clang-tidy" or "oclint" are accepted and, when they cover a file,
   reported "not available" (no adapter for <engine> in this build) until each adapter lands, whether or not the
   engine is installed.
-- Either kind with only_with_base = true, run without --base, is listed under not_applicable instead, as any such
+- Rules with engine = "shellcheck" are not available in this build. A rule's code is looked up in a list of
+  ShellCheck codes built into tm, and that list holds no code: a rule with a well-formed code and a shell script to
+  check is "not available" even with ShellCheck installed (<check> is not in temperare's list of shellcheck codes),
+  and ShellCheck is not run. A rule that covers no shell script runs nothing and covers nothing (not applicable,
+  "no file its engine checks", for a baseline set's rule).
+- Rules with engine = "git" (check test_ratio) count the lines a change adds against the commit tm check --base
+  names; ast-grep rules with params.count count each file's setup and test lines whole, reporting the files the
+  change adds lines to. Without --base such a rule is "not available" ("reports only what a change adds; run with
+  --base") when its engine is on PATH.
+- Any of these with only_with_base = true, run without --base, is listed under not_applicable instead, as any such
   rule is.
 
 ## Version note
 
-This is version 0.2.0, built from source. There are no release downloads. It is built and accepted on macOS; Linux
+This is version 0.3.0, built from source. There are no release downloads. It is built and accepted on macOS; Linux
 and Windows are untested.

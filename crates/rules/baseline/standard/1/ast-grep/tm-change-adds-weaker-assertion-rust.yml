@@ -1,0 +1,10 @@
+id: tm-change-adds-weaker-assertion-rust
+language: rust
+message: this change adds a weaker assertion
+severity: warning
+rule:
+  kind: macro_invocation
+  has: { field: macro, regex: ^assert$ }
+  any:
+    - regex: ^assert!\s*\(\s*true\s*(,[\s\S]*)?\)$
+    - regex: ^assert!\s*\(\s*(?:[^&|=!,()]|\((?:[^()]|\([^()]*\))*\))+\.is_ok\(\s*\)\s*(,[\s\S]*)?\)$

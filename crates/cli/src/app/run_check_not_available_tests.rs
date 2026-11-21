@@ -4,7 +4,8 @@ use super::{run_check, CheckWorld};
 use crate::CheckArgs;
 use procio::Oid;
 use report::{NotAvailable, Report};
-use rules::{Engine, RuleFile, RuleOutcome};
+use engines::{CheckedRules, NotAvailableCause, RuleRun};
+use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 use std::path::{Path, PathBuf};
 
 const TEXT: &str = "version = 1
@@ -19,13 +20,25 @@ const CARGO_WHY: &str = "no Cargo.toml at or above the rule file's folder";
 
 type Outcomes = Vec<(String, RuleOutcome)>;
 
-fn unavailable(rule: &str, engine: Engine, why: &str) -> NotAvailable {
-    NotAvailable { rule: rule.to_string(), engine, why: why.to_string() }
+/// A not-available report entry and the cause its rule's run carries.
+fn unavailable(rule: &str, engine: Engine, why: &str, cause: NotAvailableCause) -> (NotAvailable, NotAvailableCause) {
+    (NotAvailable { rule: rule.to_string(), engine, why: why.to_string() }, cause)
 }
 
-fn check(not_available: Vec<NotAvailable>, json: bool) -> (u8, String, String) {
-    let build_report = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>| {
-        Ok(Report { not_available: not_available.clone(), ..Default::default() })
+/// `tm check` whose run gives each entry's rule not available with its cause, and whose report lists the entries.
+fn check(entries: Vec<(NotAvailable, NotAvailableCause)>, json: bool) -> (u8, String, String) {
+    let run_rules = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| {
+        let runs = entries
+            .iter()
+            .map(|(na, cause)| {
+                let outcome = RuleOutcome::NotAvailable { rule: na.rule.clone(), engine: na.engine, why: na.why.clone() };
+                RuleRun::new(na.rule.clone(), na.engine, outcome, None).with_cause(*cause)
+            })
+            .collect();
+        CheckedRules { runs, engines: vec![] }
+    };
+    let build_report = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>, _: Vec<(String, String)>| {
+        Ok(Report { not_available: entries.iter().map(|(na, _)| na.clone()).collect(), ..Default::default() })
     };
     let world = CheckWorld {
         toplevel: &|_| Ok(PathBuf::from("/repo")),
@@ -35,7 +48,7 @@ fn check(not_available: Vec<NotAvailable>, json: bool) -> (u8, String, String) {
             Ok(RuleFile::parse(TEXT, Path::new("/repo")).unwrap())
         },
         rev_parse: &|_, _| unreachable!("rev_parse"),
-        run_rules: &|_, _, _| engines::CheckedRules { runs: vec![], engines: vec![] },
+        run_rules: &run_rules,
         availability: &|_| engines::Availability::Available,
         build_report: &build_report,
         home: &|| None,
@@ -54,7 +67,7 @@ fn check(not_available: Vec<NotAvailable>, json: bool) -> (u8, String, String) {
 
 #[test]
 fn clippy_without_a_cargo_project_explains_where_to_put_the_rule_file() {
-    let (code, out, err) = check(vec![unavailable("c", Engine::Clippy, CARGO_WHY)], false);
+    let (code, out, err) = check(vec![unavailable("c", Engine::Clippy, CARGO_WHY, NotAvailableCause::NoCargoProject)], false);
     assert_eq!((code, err.as_str()), (3, ""));
     assert_eq!(
         out.split_inclusive('\n').last().unwrap(),
@@ -66,9 +79,9 @@ fn clippy_without_a_cargo_project_explains_where_to_put_the_rule_file() {
 fn mixed_unavailable_entries_each_get_their_own_next_step() {
     let (code, out, err) = check(
         vec![
-            unavailable("s", Engine::SwiftLint, "swiftlint not found on PATH"),
-            unavailable("c", Engine::Clippy, CARGO_WHY),
-            unavailable("t", Engine::Tessera, "Tessera's slop records are not defined yet"),
+            unavailable("s", Engine::SwiftLint, "swiftlint not found on PATH", NotAvailableCause::EngineNotOnPath),
+            unavailable("c", Engine::Clippy, CARGO_WHY, NotAvailableCause::NoCargoProject),
+            unavailable("t", Engine::Tessera, "Tessera's slop records are not defined yet", NotAvailableCause::Other),
         ],
         false,
     );
@@ -81,7 +94,7 @@ fn mixed_unavailable_entries_each_get_their_own_next_step() {
 
 #[test]
 fn json_next_explains_clippy_without_a_cargo_project() {
-    let (code, out, err) = check(vec![unavailable("c", Engine::Clippy, CARGO_WHY)], true);
+    let (code, out, err) = check(vec![unavailable("c", Engine::Clippy, CARGO_WHY, NotAvailableCause::NoCargoProject)], true);
     assert_eq!((code, err.as_str()), (3, ""));
     let value: serde_json::Value = serde_json::from_str(&out).unwrap();
     assert_eq!(

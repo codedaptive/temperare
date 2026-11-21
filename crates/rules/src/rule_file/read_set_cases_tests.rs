@@ -8,6 +8,7 @@ use toml::de::DeTable;
 const SET: BaselineSet = BaselineSet {
     name: "house",
     version: 2,
+    ready: true,
     text: "",
     yaml: &[],
     cases: &[
@@ -32,7 +33,10 @@ fn rule(id: &str, cases: &str) -> String {
     format!("[[rule]]\nid = {id}\nengine = \"ruff\"\ncheck = \"E1\"\nfix = \"f\"\n{cases}")
 }
 
-fn read(text: &str) -> (Vec<(String, RuleCases)>, Vec<Problem>) {
+/// A rule's id, cases, failing params and passing params.
+type Found = (String, RuleCases, toml::Table, toml::Table);
+
+fn read(text: &str) -> (Vec<Found>, Vec<Problem>) {
     let doc = DeTable::parse(text).expect("valid TOML");
     let mut out = Vec::new();
     let found = read_set_cases(text, doc.get_ref(), &SET, &mut out);
@@ -43,11 +47,25 @@ fn file(path: &str, text: &'static str) -> CaseFile {
     CaseFile { path: path.to_string(), text }
 }
 
-fn cases_a() -> (String, RuleCases) {
+/// tm-a's cases, with no params.
+fn cases_a() -> Found {
     let expected = ExpectedFinding { rule_id: "tm-a".to_string(), path: "a.rs".to_string(), line: 2 };
     let failing = vec![file("a.rs", "a\nfailing\n")];
-    ("tm-a".to_string(), RuleCases { failing, passing: vec![file("a.rs", "a passing\n")], expected })
+    let cases = RuleCases { failing, passing: vec![file("a.rs", "a passing\n")], expected };
+    ("tm-a".to_string(), cases, toml::Table::new(), toml::Table::new())
 }
+
+/// tm-b's cases: its nine-line failing b.rs with the finding on line 9, and its passing b.rs.
+fn cases_b() -> RuleCases {
+    RuleCases {
+        failing: vec![file("b.rs", "b\nfailing\n3\n4\n5\n6\n7\n8\nfinding\n")],
+        passing: vec![file("b.rs", "b passing\n")],
+        expected: ExpectedFinding { rule_id: "tm-b".to_string(), path: "b.rs".to_string(), line: 9 },
+    }
+}
+
+/// tm-b's typed required param `types`, a list of strings.
+const TYPED: &str = "required_params = [{ name = \"types\", type = \"strings\" }]\n";
 
 /// tm-b has no failing case, its header at `line`.
 fn missing_failing(line: usize) -> Problem {
@@ -56,7 +74,8 @@ fn missing_failing(line: usize) -> Problem {
         col: 1,
         what: "baseline rule \"tm-b\" has no failing case".to_string(),
         fix: "Add failing = { files = [...], path = \"...\", line = N } to the rule, and put its files in \
-              crates/rules/baseline/house/2/cases/tm-b/failing/, listed in the set's cases in EMBEDDED_SETS."
+              crates/rules/baseline/house/2/cases/tm-b/failing/, listed in the set's cases in \
+              crates/rules/src/rule_file/house_2.rs."
             .to_string(),
     }
 }
@@ -68,7 +87,7 @@ fn missing_passing(line: usize, id: &str) -> Problem {
         what: format!("baseline rule \"{id}\" has no passing case"),
         fix: format!(
             "Add passing = {{ files = [...] }} to the rule, and put its files in crates/rules/baseline/house/2/cases/\
-             {id}/passing/, listed in the set's cases in EMBEDDED_SETS."
+             {id}/passing/, listed in the set's cases in crates/rules/src/rule_file/house_2.rs."
         ),
     }
 }
@@ -76,13 +95,53 @@ fn missing_passing(line: usize, id: &str) -> Problem {
 #[test]
 fn every_rule_gives_its_id_and_cases_in_file_order() {
     let text = format!("version = 1\n{}{}", rule("\"tm-a\"", CASES_A), rule("\"tm-b\"", CASES_B));
-    let expected_b = ExpectedFinding { rule_id: "tm-b".to_string(), path: "b.rs".to_string(), line: 9 };
-    let b = RuleCases {
-        failing: vec![file("b.rs", "b\nfailing\n3\n4\n5\n6\n7\n8\nfinding\n")],
-        passing: vec![file("b.rs", "b passing\n")],
-        expected: expected_b,
-    };
-    assert_eq!(read(&text), (vec![cases_a(), ("tm-b".to_string(), b)], vec![]));
+    let b = ("tm-b".to_string(), cases_b(), toml::Table::new(), toml::Table::new());
+    assert_eq!(read(&text), (vec![cases_a(), b], vec![]));
+}
+
+#[test]
+fn each_case_gives_the_params_it_carries_and_a_case_without_params_none() {
+    let cases = format!(
+        "{TYPED}failing = {{ files = [\"b.rs\"], path = \"b.rs\", line = 9, params = {{ types = [\"Drawer\"] }} }}\n\
+         passing = {{ files = [\"b.rs\"], params = {{ types = [\"Shelf\", \"Bin\"], depth = 2 }} }}\n"
+    );
+    let text = format!("version = 1\n{}{}", rule("\"tm-a\"", CASES_A), rule("\"tm-b\"", &cases));
+    let failing: toml::Table = toml::from_str("types = [\"Drawer\"]").expect("valid TOML");
+    let passing: toml::Table = toml::from_str("types = [\"Shelf\", \"Bin\"]\ndepth = 2").expect("valid TOML");
+    assert_eq!(read(&text), (vec![cases_a(), ("tm-b".to_string(), cases_b(), failing, passing)], vec![]));
+}
+
+#[test]
+fn a_case_whose_params_have_a_problem_leaves_its_rule_out() {
+    // tm-b's [[rule]] header is line 2, so its required_params is line 7 and its cases lines 8 and 9.
+    // `failing = { files = ["b.rs"], path = "b.rs", line = 9, params = { types = ` is 74 chars, and
+    // `passing = { files = ["b.rs"], params = ` 39.
+    let fix = "Write `types` as a list of strings, e.g. `types = [\"...\"]`.";
+    let rows = [
+        (
+            "failing = { files = [\"b.rs\"], path = \"b.rs\", line = 9, params = { types = \"Drawer\" } }\n\
+             passing = { files = [\"b.rs\"] }\n",
+            Problem {
+                line: 8,
+                col: 75,
+                what: "param `types` of baseline rule \"tm-b\" must be a list of strings, not string".to_string(),
+                fix: fix.to_string(),
+            },
+        ),
+        (
+            "failing = { files = [\"b.rs\"], path = \"b.rs\", line = 9 }\npassing = { files = [\"b.rs\"], params = 1 }\n",
+            Problem {
+                line: 9,
+                col: 40,
+                what: "`params` must be a table, not integer".to_string(),
+                fix: "Write `params` as a table.".to_string(),
+            },
+        ),
+    ];
+    for (cases, expected) in rows {
+        let text = format!("version = 1\n{}", rule("\"tm-b\"", &format!("{TYPED}{cases}")));
+        assert_eq!(read(&text), (vec![], vec![expected]), "{cases}");
+    }
 }
 
 #[test]
@@ -119,7 +178,7 @@ fn a_problem_in_a_case_leaves_its_rule_out() {
         col: 22,
         what: "case file \"gone.rs\" of baseline rule \"tm-b\" is not carried by baseline set house@2".to_string(),
         fix: "Put it at crates/rules/baseline/house/2/cases/tm-b/passing/gone.rs and list it in the set's cases in \
-              EMBEDDED_SETS, or correct files."
+              crates/rules/src/rule_file/house_2.rs, or correct files."
             .to_string(),
     };
     assert_eq!(read(&text), (vec![cases_a()], vec![expected]));

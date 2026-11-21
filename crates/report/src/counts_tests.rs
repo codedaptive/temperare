@@ -15,10 +15,12 @@ fn serializes_every_count_in_order() {
         not_available: 7,
         failed: 8,
         not_applicable: 9,
+        covers_nothing: 10,
+        expired: 11,
     };
     assert_eq!(
         to_json(&counts),
-        r#"{"findings":1,"errors":2,"warnings":3,"quality":4,"security":5,"silenced":6,"not_available":7,"failed":8,"not_applicable":9}"#
+        r#"{"findings":1,"errors":2,"warnings":3,"quality":4,"security":5,"silenced":6,"not_available":7,"failed":8,"not_applicable":9,"covers_nothing":10,"expired":11}"#
     );
 }
 
@@ -34,6 +36,8 @@ fn default_is_every_count_at_zero() {
         not_available: 0,
         failed: 0,
         not_applicable: 0,
+        covers_nothing: 0,
+        expired: 0,
     };
     assert_eq!(Counts::default(), zero);
 }

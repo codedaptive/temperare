@@ -5,6 +5,7 @@ use super::baseline_set::BaselineSet;
 const SET: BaselineSet = BaselineSet {
     name: "test",
     version: 1,
+    ready: true,
     text: "version = 1\n",
     // A YAML file at the path of a case file: case_for reads only `cases`.
     yaml: &[("cases/tm-a/passing/b.rs", "rule: yaml\n")],

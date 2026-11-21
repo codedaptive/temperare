@@ -1,25 +1,18 @@
-//! `engine_hits`: one rule's hits from its engine's entry, once the engine is known to be available.
+//! `engine_hits`: one rule's hits from its engine's entry, ShellCheck's scripts listed from the repository.
 
-use crate::availability::availability_from;
-use crate::entry_for::entry_for;
+use crate::engine_hits_with::engine_hits_with;
 use crate::host::Host;
-use crate::no_adapter_why::no_adapter_why;
-use crate::types::{Availability, Hit, Stop};
+use crate::shellcheck::shell_files;
+use crate::types::{Hit, Stop};
 use rules::Rule;
 use std::path::Path;
 
-/// The hits of `rule` under `folder`: the rule file's canonical folder, or the `Stop` its resolving gave. An engine
-/// that `availability` says is not available is `NotAvailable` with that same why, whatever `folder` is, and nothing
-/// runs (this covers an engine with no entry in this build, why `no_adapter_why`); an available engine with an
-/// unresolved folder gets that folder's `Stop`; otherwise the flow of the rule's engine's entry (`entry_for`) runs it
-/// through `host`.
+/// `engine_hits_with` listing ShellCheck's scripts with `shell_files` (git): a ShellCheck rule's scripts are listed
+/// before availability, so an absent ShellCheck with no script in the rule's paths is `NoFiles`, not `NotAvailable`
+/// (no file before not available). Then a rule with `only_with_base` and no base is `NotAvailable` with
+/// `rules::ONLY_WITH_BASE_WHY` before any lookup. Otherwise the engine is looked up (no entry is `NotAvailable`), then
+/// one whose program is missing is `NotOnPath`, and its flow never runs; an available engine with an unresolved folder
+/// gets that folder's `Stop`; otherwise its entry's flow runs the rule through `host`.
 pub(crate) fn engine_hits(rule: &Rule, folder: Result<&Path, &Stop>, host: &Host) -> Result<Vec<Hit>, Stop> {
-    if let Availability::NotAvailable { why } = availability_from(rule.engine, host.on_path) {
-        return Err(Stop::NotAvailable { why });
-    }
-    let folder = folder.map_err(Stop::clone)?;
-    let Some(entry) = entry_for(rule.engine) else {
-        return Err(Stop::NotAvailable { why: no_adapter_why(rule.engine) });
-    };
-    (entry.run)(entry, rule, folder, host)
+    engine_hits_with(rule, folder, host, &shell_files)
 }

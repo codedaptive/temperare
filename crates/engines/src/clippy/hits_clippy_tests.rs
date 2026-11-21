@@ -49,7 +49,7 @@ pub(super) fn run_rules_with_help(rules: &str, folder: &Path, help: Output, loca
         }
     };
     let on_path = |_: &str| -> bool { panic!("hits_clippy looks nothing up on PATH") };
-    let got = hits_clippy(&CLIPPY, &file.rules[0], folder, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) });
+    let got = hits_clippy(&CLIPPY, &file.rules[0], folder, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None), base: None });
     (got, seen.into_inner())
 }
 

@@ -1,24 +1,26 @@
 //! `run_rules_counted_with`: every rule of a rule file run by its engine through a host, rules that can share one
-//! engine run sharing it, each with its outcome and its count, a too-old check naming its engine's version.
+//! engine run sharing it, each with its outcome and its count, a too-old check and a check not in temperare's list of
+//! its engine's codes naming the engine's version, a rule tm refuses `Failed` and a rule whose paths match no file of
+//! its folder flagged, both without running.
 
 use crate::engine_hits::engine_hits;
-use crate::entry::too_old_why;
-use crate::findings_from::findings_from;
+use crate::files_in_folder::files_in_folder;
 use crate::host::Host;
 use crate::rule_folder::rule_folder;
-use crate::run_group::run_group;
-use crate::shared_groups::shared_groups;
+use crate::run_rules_listed::run_rules_listed;
 use crate::types::{EngineVersion, RuleRun, Stop};
-use rules::{RelPath, Rule, RuleFile, RuleOutcome};
+use rules::{RelPath, RuleFile};
 use std::path::Path;
 
-/// Each rule's run, as `run_rules_counted` gives it, in rule-file order, with the programs run and looked up through
-/// `host`. The rules are split into groups that can share one engine run (`shared_groups`). A group of one runs alone,
-/// its count read from `host.raw_chars`, cleared before it runs; a larger group runs through `run_group`, one counted
-/// run per shared run: `Some` on the first rule it settled, `None` on the rest. A check the engine said it does not
-/// know names the engine's version from `versions` (`stopped`). The folder is resolved once. When it cannot be, a
-/// rule whose engine is not available is still `NotAvailable`, and every other rule is `Failed` with no exit code and
-/// nothing runs.
+/// Each rule's run, as `run_rules_versioned_at` gives its runs, in rule-file order, with the programs run and looked up
+/// through `host`. The folder is resolved once and, when it resolves, its tracked and untracked-not-ignored files are
+/// listed once (`files_in_folder`, None outside a git repository); `run_rules_listed` then fails each rule tm refuses
+/// and flags each rule whose paths match none of them, with nothing run for either, and runs the rest, sharing a run
+/// where rules can (`shared_groups`, `run_group`). A check the engine said it does not know, or one not in temperare's list of its engine's codes,
+/// names the engine's version from `versions` (`stopped`).
+/// When the folder cannot be resolved, nothing is listed, a rule tm refuses is still `Failed` with its refusal, a rule
+/// with `only_with_base` and no base is still `NotAvailable` with `rules::ONLY_WITH_BASE_WHY`, a rule whose engine
+/// is not available is still `NotAvailable`, and every other rule is `Failed` with no exit code and nothing runs.
 pub(crate) fn run_rules_counted_with(
     file: &RuleFile,
     repo: &Path,
@@ -30,48 +32,6 @@ pub(crate) fn run_rules_counted_with(
         code: None,
         stderr: format!("cannot resolve the rule file's folder {}: {err}", repo.join(&file.folder).display()),
     });
-    let mut runs: Vec<(usize, RuleRun)> = Vec::new();
-    for group in shared_groups(&file.rules) {
-        if let [at] = group[..] {
-            runs.push((at, run_alone(file, &file.rules[at], folder.as_deref(), only, host, versions)));
-            continue;
-        }
-        let rules: Vec<&Rule> = group.iter().map(|at| &file.rules[*at]).collect();
-        runs.extend(group.into_iter().zip(run_group(file, &rules, folder.as_deref(), only, host, versions)));
-    }
-    runs.sort_by_key(|(at, _)| *at);
-    runs.into_iter().map(|(_, run)| run).collect()
-}
-
-/// `rule` run on its own through `host`, its count read from `host.raw_chars`, cleared first.
-fn run_alone(
-    file: &RuleFile,
-    rule: &Rule,
-    folder: Result<&Path, &Stop>,
-    only: &[RelPath],
-    host: &Host,
-    versions: &[EngineVersion],
-) -> RuleRun {
-    host.raw_chars.set(None);
-    let outcome = match engine_hits(rule, folder, host) {
-        Ok(hits) => RuleOutcome::Findings(findings_from(file, rule, hits, only)),
-        Err(stop) => stopped(rule, stop, versions),
-    };
-    RuleRun { rule: rule.id.clone(), engine: rule.engine, outcome, raw_chars: host.raw_chars.get() }
-}
-
-/// The outcome of `rule` when it stopped without findings. A check the engine said it does not know is
-/// `NotAvailable`, with `too_old_why` naming the engine by its rule-file name (`Engine::name`) and its version, the
-/// first of `versions` for the rule's engine (`(version unknown)` when there is none or it is `None`).
-pub(crate) fn stopped(rule: &Rule, stop: Stop, versions: &[EngineVersion]) -> RuleOutcome {
-    let (id, engine) = (rule.id.clone(), rule.engine);
-    match stop {
-        Stop::NotAvailable { why } => RuleOutcome::NotAvailable { rule: id, engine, why },
-        Stop::Failed { code, stderr } => RuleOutcome::Failed { rule: id, engine, code, stderr },
-        Stop::UnknownCheck { said } => {
-            let version = versions.iter().find(|v| v.engine == engine).and_then(|v| v.version.as_deref());
-            let why = too_old_why(engine.name(), version, &rule.check, &said);
-            RuleOutcome::NotAvailable { rule: id, engine, why }
-        }
-    }
+    let files = folder.as_deref().ok().and_then(files_in_folder);
+    run_rules_listed(file, folder.as_deref(), only, host, versions, files.as_deref(), &engine_hits)
 }

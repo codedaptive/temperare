@@ -1,0 +1,52 @@
+id: tm-change-adds-retry-typescript
+language: typescript
+message: this change adds a retry
+severity: warning
+utils:
+  retry-name:
+    any:
+      - kind: identifier
+      - kind: property_identifier
+    regex: (?i)retr(y|ies|ying)|attempt
+  retry-label:
+    inside: { kind: labeled_statement, has: { field: label, regex: (?i)retr(y|ies|ying)|attempt } }
+  names-retries:
+    any:
+      - has: { field: initializer, has: { matches: retry-name, stopBy: end } }
+      - has: { field: condition, has: { matches: retry-name, stopBy: end } }
+      - has: { field: increment, has: { matches: retry-name, stopBy: end } }
+  counts-retries:
+    has:
+      field: body
+      has:
+        any:
+          - kind: update_expression
+            regex: (?i)^(\+\+)?[\w.]*(retr(y|ies|ying)|attempt)\w*(\+\+)?$
+          - kind: augmented_assignment_expression
+            regex: (?i)^[\w.]*(retr(y|ies|ying)|attempt)\w*\s*\+=\s*1$
+        stopBy: end
+rule:
+  any:
+    - kind: call_expression
+      has:
+        field: function
+        regex: ^(pRetry|promiseRetry|asyncRetry|retry|jest\.retryTimes|this\.retries)$
+    - kind: for_in_statement
+      any:
+        - matches: retry-label
+        - has: { field: left, regex: (?i)retr(y|ies|ying)|attempt }
+    - kind: for_statement
+      any:
+        - matches: retry-label
+        - matches: names-retries
+        - matches: counts-retries
+    - kind: while_statement
+      any:
+        - matches: retry-label
+        - matches: names-retries
+        - matches: counts-retries
+    - kind: do_statement
+      any:
+        - matches: retry-label
+        - matches: names-retries
+        - matches: counts-retries

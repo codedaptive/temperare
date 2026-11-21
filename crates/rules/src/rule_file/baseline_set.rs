@@ -6,6 +6,9 @@
 pub(crate) struct BaselineSet {
     pub(crate) name: &'static str,
     pub(crate) version: u32,
+    /// Whether a rule file's `baseline` may take the set: one not ready is refused there, its rules not yet proven.
+    /// `baseline_rules` loads every set, ready or not, for `tm baseline test` to run its rules' cases.
+    pub(crate) ready: bool,
     pub(crate) text: &'static str,
     /// Each YAML file the set carries: its path relative to the set's folder, as a set rule's `check` names it, and
     /// the file's text.

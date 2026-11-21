@@ -61,7 +61,7 @@ fn counted_clippy(
             _ => panic!("unexpected command: {cmd:?}"),
         }
     };
-    let host = Host { run: &run, on_path: &|_| panic!("unexpected PATH lookup"), raw_chars: &raw_chars };
+    let host = Host { run: &run, on_path: &|_| panic!("unexpected PATH lookup"), raw_chars: &raw_chars, base: None };
     let got = hits_clippy(&CLIPPY, &file.rules[0], root, &host);
     (got, raw_chars.get(), seen.into_inner())
 }
@@ -102,7 +102,7 @@ fn counted_clippy_check_run_not_found_counts_nothing_though_help_and_locate_prin
     let (got, chars, seen) =
         counted_clippy("clippy::bool_comparison", &root, &|| Err(ProcError::NotFound { program: "cargo".into() }));
     fs::remove_dir_all(&root).unwrap();
-    assert_eq!(got, Err(Stop::NotAvailable { why: "cargo not found on PATH".to_string() }));
+    assert_eq!(got, Err(Stop::NotOnPath { program: "cargo".to_string() }));
     assert_eq!(chars, None);
     assert_eq!(seen.len(), 3);
     assert_eq!(seen[2].args[0], "clippy");
@@ -122,7 +122,7 @@ fn counted_clippy_group_refusal_excludes_help() {
 #[test]
 fn no_cargo_toml_at_or_above_the_folder_is_not_available_and_runs_nothing() {
     let (got, seen) = run(Path::new("/engines-zut-no-such-folder/a"), output(0, b"", b""), output(0, b"", b""));
-    assert_eq!(got, Err(Stop::NotAvailable { why: "no Cargo.toml at or above the rule file's folder".to_string() }));
+    assert_eq!(got, Err(Stop::NoCargoProject { why: "no Cargo.toml at or above the rule file's folder".to_string() }));
     assert!(seen.is_empty());
 }
 

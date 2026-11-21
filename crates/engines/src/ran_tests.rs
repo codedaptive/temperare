@@ -13,7 +13,7 @@ use std::time::Duration;
 fn ran_with(cmd: &Cmd, answer: impl Fn() -> Result<Output, ProcError>) -> Result<Output, Stop> {
     let run = |_: &Cmd| answer();
     let on_path = |_: &str| -> bool { panic!("ran looks nothing up on PATH") };
-    ran(cmd, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) })
+    ran(cmd, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None), base: None })
 }
 
 #[test]
@@ -31,14 +31,14 @@ fn the_host_runs_the_cmd_it_is_given() {
         Ok(Output { code: Some(0), stdout: Vec::new(), stderr: Vec::new() })
     };
     let on_path = |_: &str| false;
-    ran(&cmd, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) }).unwrap();
+    ran(&cmd, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None), base: None }).unwrap();
     assert_eq!(seen.into_inner(), Some(cmd));
 }
 
 #[test]
-fn a_program_not_found_is_not_available_with_availabilitys_text() {
+fn a_program_not_found_is_not_on_path_naming_it() {
     let got = ran_with(&Cmd::new("swiftlint"), || Err(ProcError::NotFound { program: "swiftlint".into() }));
-    assert_eq!(got, Err(Stop::NotAvailable { why: "swiftlint not found on PATH".to_string() }));
+    assert_eq!(got, Err(Stop::NotOnPath { program: "swiftlint".to_string() }));
 }
 
 #[test]

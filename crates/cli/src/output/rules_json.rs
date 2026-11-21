@@ -1,16 +1,20 @@
 //! `rules_json`: the `tm rules` listing as one JSON object.
 
+use super::split_exceptions::split_exceptions;
 use serde_json::{json, Map, Value};
 use std::path::Path;
 
-/// The rule file, its rules and its exceptions in force, in file order, with their count. Engine, kind and severity
-/// take their serde names, which are the rule-file names. Each rule carries `available`, whether `availability` says
-/// its engine can be run here, and `why` (the reason when not available, null when available); `outside_kits` is
-/// always present, [] when the rule has none. An exception's `what` is present only when the exception names one.
+/// The rule file, its rules, its exceptions in force on `day` (`exceptions`, counted in `exceptions_in_force`) and
+/// those expired by `day` (`expired`, each with its `expires` as "YYYY-MM-DD", counted in `exceptions_expired`), each
+/// list in file order; `rf.exceptions_expired(day)` alone decides which are expired. Engine, kind and severity take
+/// their serde names, which are the rule-file names. Each rule carries `available`, whether `availability` says its
+/// engine can be run here, and `why` (the reason when not available, null when available); `outside_kits` is always
+/// present, [] when the rule has none. An exception's `what` is present only when the exception names one.
 pub fn rules_json(
     file: &Path,
     rf: &rules::RuleFile,
     availability: &dyn Fn(rules::Engine) -> engines::Availability,
+    day: rules::Date,
 ) -> Value {
     let rules: Vec<Value> = rf
         .rules
@@ -35,18 +39,30 @@ pub fn rules_json(
             })
         })
         .collect();
-    let in_force = rf.exceptions_in_force();
-    let exceptions: Vec<Value> = in_force.iter().map(exception_json).collect();
+    let (in_force, expired_list) = split_exceptions(rf, day);
+    let exceptions: Vec<Value> = in_force.into_iter().map(|e| Value::Object(exception_fields(e))).collect();
+    let expired: Vec<Value> = expired_list.into_iter().map(expired_json).collect();
     json!({
         "rule_file": file.display().to_string(),
         "rules": rules,
+        "exceptions_in_force": exceptions.len(),
         "exceptions": exceptions,
-        "exceptions_in_force": in_force.len(),
+        "exceptions_expired": expired.len(),
+        "expired": expired,
     })
 }
 
-/// One exception as an object with `rule`, `path`, `reason` and `approved`, and `what` only when it names one.
-fn exception_json(e: &rules::Exception) -> Value {
+/// An expired exception: `exception_fields` with `expires` as "YYYY-MM-DD" added.
+fn expired_json(e: &rules::Exception) -> Value {
+    let mut object = exception_fields(e);
+    if let Some(expires) = e.expires {
+        object.insert("expires".to_string(), json!(expires.to_string()));
+    }
+    Value::Object(object)
+}
+
+/// One exception's fields: `rule`, `path`, `reason` and `approved`, and `what` only when it names one.
+fn exception_fields(e: &rules::Exception) -> Map<String, Value> {
     let mut object = Map::new();
     object.insert("rule".to_string(), json!(e.rule));
     object.insert("path".to_string(), json!(e.path.as_str()));
@@ -55,5 +71,5 @@ fn exception_json(e: &rules::Exception) -> Value {
     }
     object.insert("reason".to_string(), json!(e.reason));
     object.insert("approved".to_string(), json!(e.approved));
-    Value::Object(object)
+    object
 }

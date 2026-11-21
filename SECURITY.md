@@ -17,25 +17,33 @@ These are properties of the code, not of how it is deployed.
   that resolves outside the folder through `..` or a symlink, fails the rule and ast-grep is not run. On Unix the
   file is opened one path component at a time from that folder, following no symlink, and a file with a second
   hard link is refused. On other systems only the path checks apply.
+- **The scripts listed for a ShellCheck rule never include a symlink.** `tm` picks them among the files git lists
+  in the rule file's folder and leaves out every path that is a symlink or lies under a symlinked folder, whatever
+  it points at, and everything that is not a regular file. To tell a script that has no extension it reads at most
+  the file's first 257 bytes, on Unix only, opened without following a symlink and without waiting on a FIFO; on
+  other systems it reads none and such a file is left out.
 - **One place starts programs.** Everything Temperare runs, git included, goes through one small crate, `procio`.
   The repository's own rule file holds that line: a rule reports any other code that starts a process.
 - **It does not edit what it checks.** `tm check` and `tm rules` write to stdout and stderr. `tm check` creates
   temporary files in the system's temporary folder for three kinds of rule, and only for them:
-  - an ast-grep rule (each one, with or without `params`): a copy of its rule file with its params filled in,
-    `tm-ast-grep-<pid>-<n>.yml`;
+  - an ast-grep rule that gets as far as its scan (each one, with or without `params`): a copy of its rule file
+    with its params filled in, `tm-ast-grep-<pid>-<n>.yml`;
   - a SwiftLint rule with `max_complexity` or `max_lines`: the threshold as a SwiftLint config,
     `tm-swiftlint-<pid>-<n>.yml`;
   - a clippy rule with `max_nesting`: a new folder `tm-clippy-<pid>-<n>` holding one `clippy.toml` with the
     threshold.
 
   Each is created new, never opened over an existing file or folder, and removed when the run of that rule ends. If
-  `tm` is killed in between, it is left there. No config file of the repository is written. Besides these, `tm check`
-  appends one line to its savings log, `~/.local/state/temperare/savings.jsonl`, when an engine ran, making that folder when it is missing.
+  `tm` is killed in between, it is left there. No config file of the repository is written. A ruff threshold is
+  passed as an argument, and a ShellCheck or git rule writes no file. A rule that is refused, or that covers no
+  file, writes none either. Besides these, `tm check` appends one line to its savings log,
+  `~/.local/state/temperare/savings.jsonl`, when an engine ran, making that folder when it is missing.
   The line holds the time, the rule file's folder as an absolute path, the verb and two token counts; no code and no
   finding.
 - **No network code.** Temperare opens no connection. Its dependencies are parsers (TOML, JSON, globs,
-  regular-expression syntax) and their support crates, and on Unix `libc`, for the one call that opens an ast-grep
-  rule file without following a symlink.
+  regular-expression syntax) and their support crates, and on Unix `libc`, for the calls that open a file without
+  following a symlink: an ast-grep rule file, the first bytes of a file that may be a shell script, and the savings
+  log.
 - **A check reads nothing back between runs.** There is no cache and no background process. The files Temperare
   keeps are the record `temperare install` writes (see [What install touches](#what-install-touches)) and the savings
   log above, which it only appends to and never reads. It reads one file of the user's,
@@ -43,8 +51,10 @@ These are properties of the code, not of how it is deployed.
 - **git is pointed at one repository.** git runs with the variables that could redirect it to another repository,
   index or object store removed, with credential prompts turned off, and without taking the index lock.
 - **A program it runs cannot read your terminal.** The caller's stdin is never passed on.
-- **"Not available" is never "clean".** A rule whose engine is missing, or that cannot be run, is reported as such,
-  is counted, and has its own exit code. A rule that failed has another.
+- **"Not available" is never "clean".** A rule that has a file to check and whose engine is missing, or that cannot
+  be run, is reported as such, is counted, and has its own exit code. A rule that failed has another, and a rule
+  `tm` refuses from the rule file alone fails whether or not its engine is installed. A rule that covers no file is
+  not run, and the report does not say so ([below](#what-this-does-not-defend-against)).
 
 ## What this does not defend against
 
@@ -57,18 +67,18 @@ SwiftLint or ruff as written and may name any file, inside the repository or not
 repository's own, and ast-grep runs whatever it holds over the code. Running `tm check` in a repository is running
 that repository's instructions.
 
-**The engines are trusted programs.** Temperare finds git, cargo, SwiftLint, ruff and ast-grep on your `PATH` and
-runs whatever is there, with your environment and your privileges. Whoever controls `PATH` controls what runs.
+**The engines are trusted programs.** Temperare finds git, cargo, SwiftLint, ruff, ast-grep and ShellCheck on your
+`PATH` and runs whatever is there, with your environment and your privileges. Whoever controls `PATH` controls what runs.
 There is no sandbox.
 
 **A clippy rule builds the code.** `cargo clippy` compiles the crate. A build runs that crate's build scripts and
 procedural macros, and cargo may download its dependencies. That is code from the repository running as you.
 
 **The engines read their own configuration.** Each engine looks for its config in the code it checks, as it always
-does. Temperare passes no flag that turns that off, so a repository's own linter config shapes what its linter
-reports. Two exceptions: for a clippy rule with `max_nesting`, `CLIPPY_CONF_DIR` points that run at Temperare's
+does. Except for the exceptions below, Temperare passes no flag that turns that off, so a repository's own linter config shapes what its linter
+reports. Three exceptions: for a clippy rule with `max_nesting`, `CLIPPY_CONF_DIR` points that run at Temperare's
 temporary `clippy.toml`, which clippy reads in place of the repository's own; and a SwiftLint run given `--config`
-(the rule's own `config`, or Temperare's threshold file) reads those files in place of its own config search.
+(the rule's own `config`, or Temperare's threshold file) reads those files in place of its own config search; and a ShellCheck run, which passes `--norc` unless the rule gives a `config`, so the repository's `.shellcheckrc` is not read (with a `config`, that file is read in its place).
 
 **There is no time limit.** Temperare waits for an engine for as long as it runs. An engine that hangs, hangs the
 check.
@@ -87,8 +97,13 @@ that.
 rule was not available or its engine failed. The counts in the output say so; the exit code alone does not.
 
 **A rule can be written so that it matches nothing.** A `check` Temperare cannot match back to findings fails its
-rule and is never clean. A rule whose `paths` match no file, or whose ast-grep pattern matches no code, reports no
-findings and is not flagged. Try a new rule on a file you know breaks it.
+rule and is never clean. A rule whose ast-grep pattern matches no code reports no findings and is not flagged. A
+rule that covers none of the files git lists in the rule file's folder (the tracked files in the work tree and the
+untracked files git does not ignore) is not run at all: its engine runs no check for it (it is still asked its
+version), whether the engine is installed does not change the result, and no line or
+count of the report says so. The exit code is what it would be without that rule, so a
+rule with a mistyped `paths` and a missing engine can end in exit 0. A ShellCheck rule that covers no shell script
+is the same. Try a new rule on a file you know breaks it.
 
 **Engine messages are printed as given.** In the text output a finding's message is the engine's own text. The JSON
 output escapes it.
@@ -132,7 +147,8 @@ Anything that breaks a property under "Security by construction" or "What instal
 
 - a way to make Temperare run a program, or pass an argument, that the rule file and `PATH` did not name;
 - a way to make it write or remove a file other than the ones named above;
-- a rule reported as clean when its engine did not run, or a silenced finding that is not counted;
+- a rule that has a file to check reported as clean when its engine did not run, or a silenced finding that is not
+  counted;
 - a `--base` value read as an option by git, or a path on the command line reaching git or an engine;
 - a rule's `check`, `config` or `allow` value read by an engine as an option;
 - an ast-grep rule file read from outside the rule file's folder;

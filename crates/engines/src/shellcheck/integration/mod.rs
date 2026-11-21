@@ -7,3 +7,5 @@ mod is_regular_file_tests;
 mod read_head_tests;
 #[cfg(unix)]
 mod shell_files_tests;
+#[cfg(unix)]
+mod run_shellcheck_with_tests;

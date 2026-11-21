@@ -1,2 +1,6 @@
+mod report_engines_tests;
+mod rules_world_real_tests;
+mod run_check_covers_nothing_tests;
+mod run_check_engines_tests;
 mod run_check_home_tests;
 mod run_check_kind_not_applicable_tests;

@@ -22,6 +22,17 @@ fn teaches_both_commands_as_temperare() {
 }
 
 #[test]
+fn teaches_rules_loosened_and_its_three_exits() {
+    let start = SKILL_TEXT.find("- `temperare rules --loosened --base <rev>`: ");
+    let rest = start.map_or("", |i| &SKILL_TEXT[i + 2..]);
+    let end = rest.find("\n- ").into_iter().chain(rest.find("\n\n")).min().unwrap_or(rest.len());
+    let bullet = rest[..end].split_whitespace().collect::<Vec<_>>().join(" ");
+    for token in ["exit 0 nothing", "1 something loosened", "2 a bad --base or rule file"] {
+        assert!(bullet.contains(token), "{token}: {bullet}");
+    }
+}
+
+#[test]
 fn says_tm_is_the_short_name_only_where_install_made_the_link() {
     assert!(SKILL_TEXT.lines().any(|line| line == "`tm` is its short name where `temperare install` made the link."));
     assert!(!SKILL_TEXT.contains("answer every command"));
@@ -29,7 +40,7 @@ fn says_tm_is_the_short_name_only_where_install_made_the_link() {
 
 #[test]
 fn gives_every_exit_code() {
-    for code in ["- 0: ", "- 1: ", "- 2: ", "- 3: ", "- 4: ", "- 5: "] {
+    for code in ["- 0: ", "- 1: ", "- 2: ", "- 3: ", "- 4: ", "- 5: ", "- 6: "] {
         assert!(SKILL_TEXT.contains(code), "{code}");
     }
     assert!(SKILL_TEXT.contains("1: a quality error finding refuses"));
@@ -37,6 +48,7 @@ fn gives_every_exit_code() {
     assert!(SKILL_TEXT.contains("put the rule file inside the Cargo project it checks"));
     assert!(SKILL_TEXT.contains("4: security error findings only"));
     assert!(SKILL_TEXT.contains("5: an engine failed"));
+    assert!(SKILL_TEXT.contains("6: a rule of the repository's own covers nothing"));
 }
 
 #[test]

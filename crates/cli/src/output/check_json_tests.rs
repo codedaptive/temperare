@@ -1,4 +1,5 @@
-//! Unit tests for check_json.rs: the required top-level keys (the report's fields, `exit`, `next`; `base` only with a base), and a finding's fields carried through.
+//! Unit tests for check_json.rs: the required top-level keys (the report's fields, `exit`, `next`; `base` only with a base;
+//! a presence check, not the exact key set), and a finding's fields carried through.
 
 use super::check_json::check_json;
 use report::{Counts, Report};
@@ -22,7 +23,11 @@ fn report(base: Option<procio::Oid>) -> Report {
 }
 
 fn assert_required_keys(value: &serde_json::Value) {
-    for key in ["findings", "silenced", "exceptions_in_force", "not_available", "failed", "counts", "exit", "next"] {
+    let keys = [
+        "findings", "silenced", "exceptions_in_force", "not_available", "failed", "covers_nothing", "not_applicable",
+        "date", "silenced_by_rule", "engines", "counts", "exit", "next",
+    ];
+    for key in keys {
         assert!(value.get(key).is_some(), "missing {key}");
     }
 }

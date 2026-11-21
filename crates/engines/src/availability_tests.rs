@@ -1,5 +1,6 @@
-//! Unit tests for availability.rs: engine program lookups, including both Clippy programs, exact absence reasons, and
-//! Tessera never available.
+//! Unit tests for availability.rs: engine program lookups, including both Clippy programs and ShellCheck, exact absence
+//! reasons, Tessera never available, and an engine with no adapter in this build (Pylint) not
+//! available whatever is on PATH, from `availability_from`.
 
 use crate::availability::availability_from;
 use crate::types::Availability;
@@ -16,6 +17,7 @@ fn each_absent_engine_says_why() {
     assert_eq!(availability_from(Engine::SwiftLint, |_| false), not_available("swiftlint not found on PATH"));
     assert_eq!(availability_from(Engine::Ruff, |_| false), not_available("ruff not found on PATH"));
     assert_eq!(availability_from(Engine::AstGrep, |_| false), not_available("ast-grep not found on PATH"));
+    assert_eq!(availability_from(Engine::ShellCheck, |_| false), not_available("shellcheck not found on PATH"));
 }
 
 #[test]
@@ -27,7 +29,7 @@ fn tessera_is_not_available_whatever_is_on_path() {
 
 #[test]
 fn each_present_engine_is_available() {
-    for engine in [Engine::Clippy, Engine::SwiftLint, Engine::Ruff, Engine::AstGrep] {
+    for engine in [Engine::Clippy, Engine::SwiftLint, Engine::Ruff, Engine::AstGrep, Engine::ShellCheck] {
         assert_eq!(availability_from(engine, |_| true), Availability::Available, "{engine:?}");
     }
 }
@@ -39,6 +41,7 @@ fn each_engine_looks_up_its_program() {
         (Engine::SwiftLint, "swiftlint"),
         (Engine::Ruff, "ruff"),
         (Engine::AstGrep, "ast-grep"),
+        (Engine::ShellCheck, "shellcheck"),
     ];
     for (engine, program) in cases {
         assert_eq!(asked_for(engine), vec![program.to_string()], "{engine:?}");
@@ -82,4 +85,12 @@ fn clippy_looks_up_both_programs_in_order_when_present() {
         true
     });
     assert_eq!(asked.into_inner(), vec!["cargo-clippy", "clippy-driver"]);
+}
+
+#[test]
+fn pylint_has_no_adapter_whatever_is_on_path_and_looks_up_nothing() {
+    let why = not_available("no adapter for pylint in this build");
+    assert_eq!(availability_from(Engine::Pylint, |_| true), why);
+    assert_eq!(availability_from(Engine::Pylint, |_| false), why);
+    assert_eq!(asked_for(Engine::Pylint), Vec::<String>::new());
 }

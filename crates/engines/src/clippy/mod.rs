@@ -1,11 +1,13 @@
-//! The clippy adapter: the clippy entry (its `cargo clippy` command and its `allow` param), the flow that finds the
-//! Cargo root and the workspace root, the `clippy-driver -W help` and `cargo locate-project` commands and their
-//! readers, the reader of clippy's output, and what tells a lint group and an unlisted name from one lint. The
-//! toolchain's lints and lint groups come from the toolchain itself (`-W help` in the Cargo root), never from a list
-//! kept here, so a group a newer toolchain adds is still refused and a lint it adds is still taken.
+//! The clippy adapter: the clippy entry (its `cargo clippy` command, its `allow` param and its refusal of rustdoc
+//! lints), the flow that finds the Cargo root and the workspace root, the `clippy-driver -W help` and
+//! `cargo locate-project` commands and their readers, the reader of clippy's output, and what tells a lint group and an
+//! unlisted name from one lint. The toolchain's lints and lint groups come from the toolchain itself (`-W help` in the
+//! Cargo root), never from a list kept here, so a group a newer toolchain adds is still refused and a lint it adds is
+//! still taken.
 
 mod cargo_root;
 mod clippy_entry;
+mod clippy_refusal;
 mod help_names;
 mod hits_clippy;
 mod known_lint;
@@ -19,6 +21,8 @@ mod parse_locate_workspace;
 
 #[cfg(test)]
 mod clippy_entry_tests;
+#[cfg(test)]
+mod clippy_refusal_tests;
 #[cfg(test)]
 mod help_names_tests;
 #[cfg(test)]
@@ -44,6 +48,7 @@ mod parse_locate_workspace_tests;
 
 pub use cargo_root::cargo_root;
 pub use clippy_entry::CLIPPY;
+use clippy_refusal::clippy_refusal;
 pub(crate) use help_names::help_names;
 pub(crate) use hits_clippy::hits_clippy;
 pub(crate) use known_lint::known_lint;

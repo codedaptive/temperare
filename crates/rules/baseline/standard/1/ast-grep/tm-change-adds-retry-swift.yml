@@ -1,0 +1,39 @@
+id: tm-change-adds-retry-swift
+language: swift
+message: this change adds a retry
+severity: warning
+utils:
+  retry-label:
+    follows: { kind: statement_label, regex: (?i)retr(y|ies|ying)|attempt }
+  retry-name:
+    kind: simple_identifier
+    regex: (?i)retr(y|ies|ying)|attempt
+  names-retries:
+    has:
+      field: condition
+      any:
+        - matches: retry-name
+        - has: { matches: retry-name, stopBy: end }
+  counts-retries:
+    has:
+      kind: statements
+      has:
+        kind: assignment
+        regex: (?i)^[\w.]*(retr(y|ies|ying)|attempt)\w*\s*\+=\s*1$
+        stopBy: end
+rule:
+  any:
+    - kind: for_statement
+      any:
+        - matches: retry-label
+        - has: { field: item, regex: (?i)retr(y|ies|ying)|attempt }
+    - kind: while_statement
+      any:
+        - matches: retry-label
+        - matches: names-retries
+        - matches: counts-retries
+    - kind: repeat_while_statement
+      any:
+        - matches: retry-label
+        - matches: names-retries
+        - matches: counts-retries

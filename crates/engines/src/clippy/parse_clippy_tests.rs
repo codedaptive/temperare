@@ -12,7 +12,7 @@
 //! unknown_lint.jsonl and dashed_and_bare_group.jsonl are hand-built in the reported clippy 0.1.95 shape.
 //! renamed_allowed_check.jsonl is captured from clippy 0.1.95, exit 0, with
 //! `cargo clippy --all-targets --message-format=json --quiet -- --warn=clippy::blocks_in_conditions --allow=clippy::block_in_if_condition_expr`.
-//! Its `/private/tmp/engines-probe` path prefix is replaced by `/work/project`.
+//! Its capture folder's path prefix (under `/private/tmp`) is replaced by `/work/project`.
 //! The other captured fixtures' home-folder paths are replaced by `/work/project`, so those paths, `CAPTURED`,
 //! `ALL_TARGETS` and the absolute paths in `all_targets_warnings.jsonl` all start with it.
 

@@ -16,9 +16,14 @@ use rules::{Engine, Rule};
 ///   "non-enabled" by whether E711 is selected, so its answer depends on the other checks in the run.
 /// - SwiftLint: the checks are equal, or neither is `superfluous_disable_command`, which judges a
 ///   `swiftlint:disable` comment against the rules that are running.
-/// - AstGrep: the checks name the same YAML and it takes no params. A hit carries no rule file, so different YAMLs
-///   cannot be told apart in one output, and a YAML that takes params is filled per rule.
-/// - Tessera, and any engine this function does not name: never, so a new engine runs alone until it is named here.
+/// - AstGrep: the checks name the same YAML, the rules carry the same YAML text (`embedded_text`: a set rule's YAML,
+///   None for a repository rule) and it takes no params. A hit carries no rule file, so different YAMLs cannot be
+///   told apart in one output, and a YAML that takes params is filled per rule.
+/// - ShellCheck: never. The shared run finds each rule's own check run by its pick argument (`pick_at`), and
+///   shellcheck's check run carries none (the check is never passed), so a group would run it as a helper command
+///   and count it on no rule.
+/// - Git: never. A git rule makes one count of the change for itself, so there is no run to share.
+/// - Tessera, and every engine with no arm of its own: never, so a new engine runs alone until it is named here.
 pub(crate) fn shares_with(a: &Rule, b: &Rule) -> bool {
     if a.engine != b.engine || a.config != b.config || a.params != b.params || writes_temp_params(a) {
         return false;
@@ -35,11 +40,11 @@ pub(crate) fn shares_with(a: &Rule, b: &Rule) -> bool {
         Engine::SwiftLint => {
             a.check == b.check || (a.check != "superfluous_disable_command" && b.check != "superfluous_disable_command")
         }
-        Engine::AstGrep => a.check == b.check && a.params.is_empty(),
+        Engine::AstGrep => a.check == b.check && a.embedded_text == b.embedded_text && a.params.is_empty(),
+        Engine::ShellCheck => false,
+        Engine::Git => false,
         Engine::Tessera => false,
-        // An engine added to rules before its adapter lands runs alone. Every variant has an arm today, so this arm
-        // is unreachable; the allow silences that warning until a variant without an arm exists.
-        #[allow(unreachable_patterns)]
+        // An engine with no arm here (one with no adapter in this build) runs alone.
         _ => false,
     }
 }
@@ -69,14 +74,12 @@ fn ruff_splits_a_pair(a: &str, b: &str) -> bool {
     })
 }
 
-/// True when tm writes the rule's params into a temporary file or folder for its run: the entry takes
-/// `Params::Config` (`temp_config` writes the file even for no params), or the entry's thresholds reach it by
-/// `Reach::File` or `Reach::Dir` and the rule names one of them. Each call makes a new path (`tm-<name>-<pid>-<n>`, or clippy's `CLIPPY_CONF_DIR`), so
-/// two rules' check commands never match as one shared run. A `Reach::Arg` threshold is the same argument for every
-/// rule and still shares.
+/// True when tm writes the rule's params into a temporary file or folder for its run: the entry's thresholds reach
+/// it by `Reach::File` or `Reach::Dir` and the rule names one of them. Each call makes a new path
+/// (`tm-<name>-<pid>-<n>`, or clippy's `CLIPPY_CONF_DIR`), so two rules' check commands never match as one shared run.
+/// A `Reach::Arg` threshold is the same argument for every rule and still shares.
 fn writes_temp_params(rule: &Rule) -> bool {
     match entry_for(rule.engine).map(|entry| entry.params) {
-        Some(Params::Config(_)) => true,
         Some(Params::Thresholds { thresholds, reach: Reach::File { .. } | Reach::Dir { .. }, .. }) => {
             thresholds.iter().any(|threshold| rule.params.contains_key(threshold.name))
         }

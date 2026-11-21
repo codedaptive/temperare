@@ -1,9 +1,12 @@
 //! Scoping a rule to files, the rule and exception types, and the calendar day.
 
 mod date;
+mod date_display;
 mod date_new;
 mod date_parse;
 mod exception;
+mod exception_covers_finding;
+mod exception_holds_on;
 mod exception_new;
 mod rule;
 mod rule_applies;
@@ -16,11 +19,17 @@ mod scope_build;
 mod scope_matches;
 
 #[cfg(test)]
+mod date_display_tests;
+#[cfg(test)]
 mod date_new_tests;
 #[cfg(test)]
 mod date_parse_tests;
 #[cfg(test)]
 mod date_tests;
+#[cfg(test)]
+mod exception_covers_finding_tests;
+#[cfg(test)]
+mod exception_holds_on_tests;
 #[cfg(test)]
 mod exception_new_tests;
 #[cfg(test)]

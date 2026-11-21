@@ -14,6 +14,6 @@ fn a_tessera_rule_is_not_available_and_touches_no_program() {
     let file = RuleFile::parse(text, Path::new("/repo")).unwrap();
     let run = |_: &Cmd| -> Result<Output, ProcError> { panic!("hits_tessera runs nothing") };
     let on_path = |_: &str| -> bool { panic!("hits_tessera looks nothing up on PATH") };
-    let got = hits_tessera(&TESSERA, &file.rules[0], Path::new("/repo"), &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) });
+    let got = hits_tessera(&TESSERA, &file.rules[0], Path::new("/repo"), &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None), base: None });
     assert_eq!(got, Err(Stop::NotAvailable { why: "Tessera's slop records are not defined yet".to_string() }));
 }

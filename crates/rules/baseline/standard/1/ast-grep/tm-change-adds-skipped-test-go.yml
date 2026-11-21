@@ -1,0 +1,19 @@
+id: tm-change-adds-skipped-test-go
+language: go
+message: this change adds a skipped test
+severity: warning
+rule:
+  kind: call_expression
+  has:
+    field: function
+    kind: selector_expression
+    has: { field: field, regex: ^Skip(f|Now)?$ }
+  inside:
+    any:
+      - kind: function_declaration
+      - kind: method_declaration
+      - kind: func_literal
+    has:
+      field: parameters
+      has: { kind: qualified_type, regex: ^testing\.(T|B|F|TB)$, stopBy: end }
+    stopBy: end

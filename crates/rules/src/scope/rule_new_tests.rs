@@ -34,6 +34,8 @@ fn the_baseline_fields_take_their_empty_values() {
     assert_eq!(r.not_applicable, None);
     assert_eq!(r.embedded_yaml(), None);
     assert_eq!(r.embedded_cases, None);
+    assert_eq!(r.failing_params, toml::Table::new());
+    assert_eq!(r.passing_params, toml::Table::new());
 }
 
 #[test]

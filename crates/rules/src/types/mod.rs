@@ -1,5 +1,5 @@
-//! The shared value types: engine, kind, severity, relative path, finding, rule outcome, rule-file problem, and a
-//! baseline rule's cases (case file, expected finding, rule cases).
+//! The shared value types: engine, kind, severity, relative path, finding, rule outcome, rule-file problem, a
+//! baseline rule's cases (case file, expected finding, rule cases), and the why for a base-only rule with no base.
 
 mod case_file;
 mod engine;
@@ -12,6 +12,7 @@ mod finding_line;
 mod finding_new;
 mod kind;
 mod kind_from_name;
+mod only_with_base_why;
 mod problem;
 mod rel_path;
 mod rel_path_as_str;
@@ -44,6 +45,8 @@ mod kind_from_name_tests;
 #[cfg(test)]
 mod kind_tests;
 #[cfg(test)]
+mod only_with_base_why_tests;
+#[cfg(test)]
 mod problem_tests;
 #[cfg(test)]
 mod rel_path_as_str_tests;
@@ -65,6 +68,7 @@ pub use engine::Engine;
 pub use expected_finding::ExpectedFinding;
 pub use finding::Finding;
 pub use kind::Kind;
+pub use only_with_base_why::ONLY_WITH_BASE_WHY;
 pub use problem::Problem;
 pub use rel_path::RelPath;
 pub use rule_cases::RuleCases;

@@ -1,0 +1,13 @@
+# A test written against XCTest, where Swift Testing is wanted: an import of XCTest or one of its
+# submodules, with or without attributes such as @testable. A module whose name only starts with XCTest
+# (XCTestDynamicOverlay) is another module and passes.
+id: tm-house-swift-testing-swift
+language: swift
+message: this file imports $MODULE
+severity: warning
+rule:
+  kind: import_declaration
+  has:
+    kind: identifier
+    regex: ^XCTest(\.|$)
+    pattern: $MODULE

@@ -1,0 +1,23 @@
+id: tm-house-unit-test-fakes-own-kit-rust
+language: rust
+message: this unit test fakes code of its own kit
+severity: warning
+rule:
+  any:
+    # mockall's generated fakes, written in the kit's own test file.
+    - kind: attribute_item
+      regex: '^#\[\s*(mockall::)?automock\b'
+    - kind: macro_invocation
+      has: { field: macro, regex: '^(mockall::)?mock$' }
+    # A trait of this crate (crate::… or super::…) implemented for a type the test file defines.
+    - kind: impl_item
+      all:
+        - has: { field: trait, regex: '^(crate|super)::' }
+        - has: { field: type, kind: type_identifier, pattern: $FAKE }
+        - inside:
+            kind: source_file
+            stopBy: end
+            has:
+              any: [{ kind: struct_item }, { kind: enum_item }]
+              stopBy: end
+              has: { field: name, pattern: $FAKE }

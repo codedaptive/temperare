@@ -1,6 +1,6 @@
 # Temperare's own rule file: the repository is checked by itself.
 version = 1
-owner = "orc"
+owner = "maintainers"
 
 [kits.procio]
 paths = ["crates/procio/**"]

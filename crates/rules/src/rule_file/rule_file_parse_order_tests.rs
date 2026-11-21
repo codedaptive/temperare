@@ -10,6 +10,7 @@ const SETS: &[BaselineSet] = &[
     BaselineSet {
         name: "one",
         version: 1,
+        ready: true,
         text: "version = 1\n\
                [[rule]]\nid = \"tm-a1\"\nengine = \"ruff\"\ncheck = \"a1\"\nfix = \"f\"\n\
                failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n\
@@ -30,6 +31,7 @@ const SETS: &[BaselineSet] = &[
     BaselineSet {
         name: "two",
         version: 1,
+        ready: true,
         text: "version = 1\n\
                [[rule]]\nid = \"tm-b1\"\nengine = \"ruff\"\ncheck = \"b1\"\nfix = \"f\"\n\
                failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n\

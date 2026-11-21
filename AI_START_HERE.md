@@ -131,14 +131,16 @@ Tell the user what changed: the binary's place, whether `tm` was linked, and eac
 
 | Exit | What you do |
 |---|---|
-| 0 | Nothing. Every rule ran and nothing refuses |
-| 1 | Fix the findings. Then check `counts.not_available` and `counts.failed` too: exit 1 does not mean every rule ran |
+| 0 | Nothing. Every rule that applies ran and nothing refuses. `not_applicable` lists the rules set aside by the rule file, the baseline set's rules that cover no file and, without `--base`, the `only_with_base` rules, each with why |
+| 1 | Fix the findings. Then check `counts.not_available`, `counts.failed` and `counts.covers_nothing` too: exit 1 does not mean every rule ran |
 | 2 | Fix the command or the rule file. `next` says how. Nothing was checked |
 | 3 | Tell the user which rule and which engine. The code was not fully checked. Do not report it as clean |
 | 4 | Report each security finding to the user with its severity, place and owner. This code does not refuse, and you must not hide it |
 | 5 | Read `failed[].stderr_tail` in the JSON (the text prints it under the counts line) and report it. The code was not fully checked |
+| 6 | Tell the user which rules are in `covers_nothing`: each is a rule of the repository's own that checked no file, so it checked nothing. Fixing its `paths` or removing it changes the rule file: do it only when the user asks |
 
-`next` in the JSON, and the last line of the text, carry the same advice in the program's own words.
+`next` in the JSON, and the last line of the text, carry the same advice in the program's own words. For exit 6
+the JSON names `covers_nothing` where the text says "above".
 
 ## Safety rules
 

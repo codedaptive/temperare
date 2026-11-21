@@ -25,6 +25,8 @@ The rules come from `temperare.toml` at the top of the git repository.
 - `temperare check [--base <rev>] [--json] [<path>...]`: check the repository, or only the paths given. With
   `--base`, only violations new since that commit are reported. `--json` prints the report as JSON.
 - `temperare rules`: list the rules in force and whether each one's engine is available.
+- `temperare rules --loosened --base <rev>`: list what the rule file loosened since that commit; exit 0 nothing, 1
+  something loosened, 2 a bad --base or rule file.
 
 ## Tokens saved
 
@@ -44,6 +46,7 @@ of each such line across your temperare calls. With `--json` there is no line: t
   Tessera's checks are not available yet, so installing Tessera changes nothing.
 - 4: security error findings only. Raise them with their owner; work goes on.
 - 5: an engine failed. Read its output.
+- 6: a rule of the repository's own covers nothing: its paths match no file, or no file its engine checks.
 
 \"Not available\" is never \"clean\": exit 3 means some rules did not run, so the code was not fully checked.
 ";

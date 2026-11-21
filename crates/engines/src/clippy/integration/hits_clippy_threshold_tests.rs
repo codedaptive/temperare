@@ -52,7 +52,7 @@ fn run_nesting(name: &str, params: &str) -> (Result<Vec<Hit>, Stop>, Vec<Seen>) 
             _ => panic!("unexpected command: {cmd:?}"),
         }
     };
-    let host = Host { run: &run, on_path: &|_| panic!("unexpected PATH lookup"), raw_chars: &Cell::new(None) };
+    let host = Host { run: &run, on_path: &|_| panic!("unexpected PATH lookup"), raw_chars: &Cell::new(None), base: None };
     let got = hits_clippy(&CLIPPY, &file.rules[0], &root, &host);
     fs::remove_dir_all(&root).unwrap();
     (got, seen.into_inner())

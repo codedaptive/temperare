@@ -1,0 +1,10 @@
+id: tm-change-adds-wider-catch-swift
+language: swift
+message: this change adds a wider catch
+severity: warning
+rule:
+  any:
+    - kind: try_expression
+      has: { kind: try_operator, regex: ^try\s*\?$ }
+    - kind: catch_block
+      not: { has: { field: error, regex: . } }

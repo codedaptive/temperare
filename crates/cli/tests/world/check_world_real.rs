@@ -1,13 +1,13 @@
 //! Tests of crates/cli/src/app/check_world_real.rs: six of the nine seams of `CheckWorld::real()` (toplevel, exists,
 //! read, rev_parse, run_rules, build_report) are wired to their real functions. `availability`, `home` and `now` have
 //! no case here: `availability` would look at the real PATH, `home` would read the real HOME and `now` the real
-//! clock. The file mixes kinds, each case marked: interface tests (cli→procio/rules/engines/report, kept beside their caller)
+//! clock. The file mixes kinds, each case marked: RITs (cli→procio/rules/engines/report, kept beside their caller)
 //! and a std disk seam. `exists` and `read` are told from stubs on
 //! a file the tests write in a throwaway folder under the system temp folder, removed on drop; `run_rules` (wired to
-//! `engines::run_rules_versioned`) and `build_report` on a rule file with no rules in such a folder; `toplevel` and
-//! `rev_parse` are told by a folder that does not exist, where git fails. Nothing here needs a real repository or an
-//! engine: `run_rules` and `build_report` get rule files with no rules, so no engine is looked up, and the report has
-//! no base, so no git diff is run.
+//! `engines::run_rules_versioned_at`) and `build_report` (wired to `report::build_report_with_no_files`) on a rule file
+//! with no rules in such a folder; `toplevel` and `rev_parse` are told by a folder that does not exist, where git
+//! fails. Nothing here needs a real repository or an engine: `run_rules` and `build_report` get rule files with no
+//! rules, so no engine is looked up, and the report has no base, so no git diff is run.
 
 use cli::CheckWorld;
 use rules::{Exception, RuleFile};
@@ -94,24 +94,25 @@ fn toplevel_and_rev_parse_of_a_missing_folder_are_errors() {
     assert!((world.rev_parse)(&missing, "HEAD").is_err());
 }
 
-/// Interface test: `engines::run_rules_versioned` (which wires procio in) and `rule_folder` (`fs::canonicalize` of the rule
+/// Cross-crate integration test: `engines::run_rules_versioned_at` (which wires procio in) and `rule_folder` (`fs::canonicalize` of the rule
 /// file's folder): a rule file with no rules runs nothing and names no engine.
 #[test]
 fn run_rules_of_a_rule_file_with_no_rules_is_empty() {
     let world = CheckWorld::real();
     let dir = TempFolder::new("run");
-    let checked = (world.run_rules)(&empty_rules(dir.0.clone(), Vec::new()), &dir.0, &[]);
+    let checked = (world.run_rules)(&empty_rules(dir.0.clone(), Vec::new()), &dir.0, &[], None);
     assert!(checked.runs.is_empty());
     assert!(checked.engines.is_empty());
 }
 
-/// Interface test: with no base, report's `build_report` returns pure `assemble_report`; the setup touches disk.
+/// Cross-crate integration test: with no base and no rule flagged as having no file, report's `build_report_with_no_files` returns pure
+/// `assemble_report`; the setup touches disk.
 #[test]
 fn build_report_with_no_base_counts_the_exception_in_force() {
     let world = CheckWorld::real();
     let dir = TempFolder::new("report");
     let exception = Exception::new("lint-all", "old.rs", "legacy", "Bob, 2026-11-17");
-    let report = (world.build_report)(&empty_rules(dir.0.clone(), vec![exception]), Vec::new(), None).unwrap();
+    let report = (world.build_report)(&empty_rules(dir.0.clone(), vec![exception]), Vec::new(), None, Vec::new()).unwrap();
     assert!(report.findings.is_empty());
     assert_eq!(report.exceptions_in_force, 1);
 }

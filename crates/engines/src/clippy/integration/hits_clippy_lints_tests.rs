@@ -1,6 +1,6 @@
-//! Integration tests for lint discovery: `hits_clippy` with the real `parse_lints` and `known_lint`, the captured clippy-driver
-//! help and a fake process host. An unlisted or renamed check is an unknown check, and a rustdoc check is failed,
-//! after the help and before locate-project; a listed lint runs help, locate-project and clippy.
+//! Zone integration tests for lint discovery: `hits_clippy` with the real `parse_lints` and `known_lint`, the captured clippy-driver
+//! help and a fake process host. An unlisted or renamed check is an unknown check after the help and before
+//! locate-project; a listed lint runs help, locate-project and clippy.
 
 use super::hits_clippy_groups_tests::{assert_help_only, tree};
 use crate::clippy::hits_clippy_tests::{output, run_rules_with_help, RULES};
@@ -33,13 +33,6 @@ fn unknown_lint_is_an_unknown_check_before_locate() {
 #[test]
 fn renamed_lint_not_in_help_is_an_unknown_check_before_locate() {
     assert_unknown("renamed", "clippy::stutter", "");
-}
-
-#[test]
-fn rustdoc_lint_is_failed_before_locate() {
-    let (got, seen, root) = run_check("rustdoc", "rustdoc::broken_intra_doc_links", "");
-    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "clippy check `rustdoc::broken_intra_doc_links` is a rustdoc lint: clippy never runs rustdoc lints, so tm cannot report it".to_string() }));
-    assert_help_only(&seen, &root);
 }
 
 #[test]

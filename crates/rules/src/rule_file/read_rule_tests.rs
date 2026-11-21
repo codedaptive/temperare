@@ -155,6 +155,15 @@ fn required_params_are_read_on_a_set_rule() {
 }
 
 #[test]
+fn typed_required_params_give_their_names_on_a_set_rule() {
+    let text = "[[rule]]\nid = \"tm-x\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\n\
+                required_params = [\"entities\", { name = \"own_package\", type = \"strings\" }]\n";
+    let (rule, out) = read_from(text, toml::Table::new(), true);
+    assert_eq!(out, vec![]);
+    assert_eq!(rule.expect("no problems").required_params, vec!["entities".to_string(), "own_package".to_string()]);
+}
+
+#[test]
 fn required_params_in_an_own_rule_is_an_unknown_key() {
     let text = "[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\nrequired_params = [\"e\"]\n";
     let (rule, out) = read(text, toml::Table::new());

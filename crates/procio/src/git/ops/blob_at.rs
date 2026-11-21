@@ -7,8 +7,9 @@ use super::exit_128_saying::exit_128_saying;
 use crate::git::{git_checked, git_cmd, GitError};
 use crate::{run, Cmd, Output};
 
-/// The bytes of `path` at `rev`, exactly as committed, or `None` when `rev` holds no such path. `path` is relative
-/// to the top of the repository. A `rev` that names nothing is `GitError::Exit`.
+/// The bytes of `path` at `rev`, exactly as committed, or `None` when `rev` holds no such path. A `path` that starts
+/// with `./` or `../` is relative to `repo` (git runs in `repo`); any other path is relative to the top of the
+/// repository. A `rev` that names nothing is `GitError::Exit`.
 pub fn blob_at(repo: &Path, rev: &str, path: &Path) -> Result<Option<Vec<u8>>, GitError> {
     let cmd = git_cmd(repo, blob_at_args(rev, path));
     let out = run(&cmd)?;

@@ -2,6 +2,39 @@
 
 All notable changes to Temperare are recorded here, newest first.
 
+## 0.3.0
+
+Built from source; there are no release downloads yet. MIT licensed.
+
+### Added
+
+- Baseline sets: `standard@1` (53 rules) and `house@1` (36 rules) are ready, and the acceptance record has all 89 rules
+  holding. A rule file takes a set with `baseline = [...]`; `house@1` may be taken alone or with `standard@1`, and its
+  five param rules are not applicable until an `[[override]]` gives the params. See `docs/reference/RULE_FILE.md`.
+- `tm baseline test [--set <name@version>] [--json]` runs each rule of a built-in set on the failing and passing cases
+  the set carries, each case in a throwaway git repository. With no `--set` it tests the ready sets. Exits 0, 1, 2 or 3;
+  see `docs/reference/OUTPUT.md`.
+- `tm rules --loosened --base <rev> [--rules <path>] [--json]` lists how the rule file was loosened since a commit:
+  a rule gone, a severity lowered, paths narrowed, an exception added or its date moved later, a set dropped.
+- Exit 6: a rule of the repository's own covers no file. The report lists it as `covers nothing` (`covers_nothing` in
+  `--json`) and counts it.
+- Exceptions take an optional `expires` day. An exception still covers on that day and silences nothing after it; the
+  report lists the expired ones (`expired` in `--json`) and counts them.
+- Adapters for ShellCheck and for git (`test_ratio`), and an ast-grep count mode for rules that compare against a base.
+  Four engine names still have no adapter: golangci-lint, pylint, clang-tidy and oclint.
+- `procio::git_cmd` is public, for programs that run git the way Temperare does.
+
+### Changed
+
+- `tm check` hands `--base` to the engines, so a rule that needs a base runs against it; with no base given it is
+  listed as "not applicable".
+- An engine's "not available" carries its cause, and `tm check` advises an install only for an engine whose own
+  program is missing from `PATH`.
+- A rule that covers no file runs no check; its engine is still looked up and asked its version, except for a
+  ShellCheck rule with no script, which stops before any lookup.
+- The fix for an unknown set names the sets as `name@version`, ready ones only for a rule file.
+- `exceptions_in_force` counts only exceptions not expired.
+
 ## 0.2.0
 
 Built from source; there are no release downloads yet. MIT licensed.

@@ -7,8 +7,8 @@ use crate::Problem;
 use toml::de::DeTable;
 
 /// The sets of `sets` that `baseline = ["name@version", ...]` takes, in file order, each with the byte offset of its
-/// entry string; absent is none. An entry that is malformed, names no set or version in `sets`, or names a set an
-/// earlier entry already took is a Problem at the entry and is left out.
+/// entry string; absent is none. An entry that is malformed, names no set or version in `sets`, names a set an
+/// earlier entry already took, or names a set that is not ready is a Problem at the entry and is left out.
 pub(crate) fn read_baseline<'a>(
     text: &str,
     root: &DeTable,
@@ -26,7 +26,7 @@ pub(crate) fn read_baseline<'a>(
 }
 
 /// The set `entry` names, or the Problem's what and fix. The checks run in a fixed order (malformed, unknown set,
-/// unknown version, taken twice) so an entry gets the first thing wrong with it.
+/// unknown version, taken twice, not ready) so an entry gets the first thing wrong with it.
 fn take<'a>(
     entry: &str,
     sets: &'a [BaselineSet],
@@ -40,23 +40,47 @@ fn take<'a>(
     };
     let mut named: Vec<&BaselineSet> = sets.iter().filter(|set| set.name == name).collect();
     if named.is_empty() {
-        let mut names: Vec<&str> = sets.iter().map(|set| set.name).collect();
-        names.sort_unstable();
-        names.dedup();
-        return Err((format!("unknown baseline set \"{name}\""), format!("Use one of: {}.", names.join(", "))));
+        return Err((format!("unknown baseline set \"{name}\""), ready_sets_fix(sets)));
     }
     named.sort_by_key(|set| set.version);
     let Some(set) = named.iter().find(|set| set.version == version) else {
-        let versions: Vec<String> = named.iter().map(|set| format!("{name}@{}", set.version)).collect();
-        return Err((
-            format!("unknown version {version} of baseline set \"{name}\""),
-            format!("Use one of: {}.", versions.join(", ")),
-        ));
+        return Err((format!("unknown version {version} of baseline set \"{name}\""), ready_versions_fix(name, &named)));
     };
     if taken.iter().any(|(earlier, _)| earlier.name == name) {
         return Err((format!("baseline set \"{name}\" is taken twice"), "Take each set once, at one version.".to_string()));
     }
+    if !set.ready {
+        let id = format!("{}@{}", set.name, set.version);
+        return Err((
+            format!("{id} is not ready in this build: its rules are not yet proven"),
+            format!("remove {id} from baseline"),
+        ));
+    }
     Ok(set)
+}
+
+/// The fix for an unknown version of `name`: its ready versions as `name@version`, in the order of `named` (sorted by
+/// version), since an unready one would be refused in turn; when none is, the entry can only be removed.
+fn ready_versions_fix(name: &str, named: &[&BaselineSet]) -> String {
+    let versions: Vec<String> =
+        named.iter().filter(|set| set.ready).map(|set| format!("{name}@{}", set.version)).collect();
+    if versions.is_empty() {
+        return format!("No version of baseline set \"{name}\" is ready in this build; remove the entry.");
+    }
+    format!("Use one of: {}.", versions.join(", "))
+}
+
+/// The fix for an unknown set: every ready set as `name@version`, sorted by name then by version as a number, since
+/// only a ready set can be taken and an entry must name a version (a bare name is malformed); when none is ready, the
+/// entry can only be removed.
+fn ready_sets_fix(sets: &[BaselineSet]) -> String {
+    let mut ready: Vec<&BaselineSet> = sets.iter().filter(|set| set.ready).collect();
+    if ready.is_empty() {
+        return "No baseline set is ready in this build; remove the entry.".to_string();
+    }
+    ready.sort_unstable_by_key(|set| (set.name, set.version));
+    let ids: Vec<String> = ready.iter().map(|set| format!("{}@{}", set.name, set.version)).collect();
+    format!("Use one of: {}.", ids.join(", "))
 }
 
 /// The name and version of `name@version`: the name not empty, the version only ASCII digits and within u32. The

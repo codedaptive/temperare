@@ -1,5 +1,5 @@
 # Temperare workspace targets. Extra test targets of the team's harness are supplied from outside this
-# repository (MAKEFILES=<path>); the targets here need nothing but cargo.
+# repository (MAKEFILES=<path>); the targets here need no team harness.
 CARGO ?= cargo
 .PHONY: test-one test-group check test accept
 

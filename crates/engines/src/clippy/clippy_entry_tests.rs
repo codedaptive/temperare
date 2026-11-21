@@ -27,7 +27,7 @@ fn the_entry_is_clippy_through_cargo_needing_both_clippy_programs() {
 }
 
 #[test]
-fn clippy_refuses_no_check_before_its_flow_and_reads_no_unknown_words() {
+fn clippy_refuses_no_clippy_lint_and_reads_no_unknown_words() {
     assert_eq!((CLIPPY.refuse)("clippy::bool_comparison"), None);
     let out = Output { code: Some(101), stdout: Vec::new(), stderr: b"error: unknown lint: `x`".to_vec() };
     assert_eq!((CLIPPY.unknown)(&out, "x"), None);

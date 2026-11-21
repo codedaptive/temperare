@@ -1,0 +1,21 @@
+id: tm-change-adds-wider-catch-python
+language: python
+message: this change adds a wider catch
+severity: warning
+utils:
+  broad:
+    kind: identifier
+    regex: ^(Exception|BaseException)$
+  broad-or-tuple:
+    any:
+      - matches: broad
+      - kind: tuple
+        has: { matches: broad }
+rule:
+  kind: except_clause
+  has:
+    field: value
+    any:
+      - matches: broad-or-tuple
+      - kind: as_pattern
+        has: { matches: broad-or-tuple }

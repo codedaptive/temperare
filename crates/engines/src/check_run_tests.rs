@@ -17,7 +17,7 @@ fn counted(
     let run = |_: &Cmd| answer();
     let on_path = |_: &str| -> bool { panic!("check_run looks nothing up on PATH") };
     let raw_chars = Cell::new(start);
-    let got = check_run(&Cmd::new("ruff"), &Host { run: &run, on_path: &on_path, raw_chars: &raw_chars });
+    let got = check_run(&Cmd::new("ruff"), &Host { run: &run, on_path: &on_path, raw_chars: &raw_chars, base: None });
     (got, raw_chars.get())
 }
 
@@ -57,7 +57,7 @@ fn empty_output_counts_zero() {
 #[test]
 fn a_program_not_found_leaves_the_count_and_is_not_available() {
     let (got, chars) = counted(None, || Err(ProcError::NotFound { program: "ruff".into() }));
-    assert_eq!(got, Err(Stop::NotAvailable { why: "ruff not found on PATH".to_string() }));
+    assert_eq!(got, Err(Stop::NotOnPath { program: "ruff".to_string() }));
     assert_eq!(chars, None);
 }
 

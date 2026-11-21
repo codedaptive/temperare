@@ -14,7 +14,7 @@ fn args(args: &[&str]) -> Vec<OsString> {
 #[test]
 fn git_not_found_is_not_available() {
     let got = git_stop(GitError::Run(ProcError::NotFound { program: "git".into() }));
-    assert_eq!(got, Stop::NotAvailable { why: "git not found on PATH".to_string() });
+    assert_eq!(got, Stop::NotOnPath { program: "git".to_string() });
 }
 
 #[test]

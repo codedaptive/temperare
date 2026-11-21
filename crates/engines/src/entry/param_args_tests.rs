@@ -1,12 +1,13 @@
 //! Unit tests for param_args.rs: listed params to arguments in the list's order; an unlisted key, a param that is not a
 //! list of strings and params that are not a table are `Bad`, with clippy's texts; an empty list refuses any param
-//! as taking none; `Template` and `Config` give no arguments. A `Thresholds` entry's args work as `Args`, its
-//! threshold keys give no arguments, and a key in neither list is `Bad` naming both lists.
+//! as taking none; `Template` gives no arguments. A `Thresholds` entry's args work as `Args`, its
+//! threshold keys give no arguments, and a key in neither list is `Bad` naming both lists. A `Flow` entry refuses a
+//! key not in its names as `Bad` naming them, returns its check's error, and gives no arguments.
 
 use super::entry_cmd_tests::fake_entry;
-use super::{param_args, ConfigParams, Entry, ParamArg, Params, Pick, Reach, Threshold};
+use super::{param_args, Entry, ParamArg, Params, Pick, Reach, Threshold};
 use crate::ParamError;
-use serde_json::json;
+use serde_json::{json, Map, Value};
 use std::ffi::OsString;
 
 static ALLOW: [ParamArg; 1] = [ParamArg { name: "allow", flag: "--allow=" }];
@@ -81,12 +82,9 @@ fn an_empty_list_with_no_params_gives_no_arguments() {
 }
 
 #[test]
-fn template_and_config_give_no_arguments_whatever_the_params() {
-    let config = ConfigParams { option: "--config=", ext: "toml", text: |_| Ok(String::new()) };
-    for params in [Params::Template, Params::Config(config)] {
-        let entry = fake_entry(Pick::Arg("--select="), params, None);
-        assert_eq!(param_args(&entry, &json!({"anything": 1})), Ok(Vec::new()), "{params:?}");
-    }
+fn template_gives_no_arguments_whatever_the_params() {
+    let entry = fake_entry(Pick::Arg("--select="), Params::Template, None);
+    assert_eq!(param_args(&entry, &json!({"anything": 1})), Ok(Vec::new()));
 }
 
 static NESTING: [Threshold; 1] =
@@ -115,4 +113,36 @@ fn a_thresholds_entry_with_both_lists_empty_takes_no_params() {
     let params = Params::Thresholds { args: &[], thresholds: &[], reach: Reach::Arg("--config=") };
     let entry = fake_entry(Pick::Arg("--select="), params, None);
     assert_eq!(param_args(&entry, &json!({"foo": 1})), bad("foo", "a lint rule takes no params"));
+}
+
+static FLOW_NAMES: [&str; 2] = ["max_ratio", "floor"];
+
+fn no_floor_seven(params: &Map<String, Value>) -> Result<(), ParamError> {
+    match params.get("floor") {
+        Some(floor) if floor == &json!(7) => {
+            Err(ParamError::Bad { name: "floor".to_string(), why: "seven is refused".to_string() })
+        }
+        _ => Ok(()),
+    }
+}
+
+#[test]
+fn a_flow_entry_refuses_unlisted_keys_then_runs_its_check_and_gives_no_arguments() {
+    let entry = fake_entry(Pick::Arg("--select="), Params::Flow { names: &FLOW_NAMES, check: no_floor_seven }, None);
+    let rows: [(&str, Value, Result<Vec<OsString>, ParamError>); 5] = [
+        ("unlisted key", json!({"foo": 1}), bad("foo", "a lint rule reads only the `max_ratio`, `floor` param")),
+        ("check refuses", json!({"max_ratio": 3, "floor": 7}), bad("floor", "seven is refused")),
+        ("good table", json!({"max_ratio": 3, "floor": 2}), Ok(Vec::new())),
+        ("empty table", json!({}), Ok(Vec::new())),
+        ("not a table", json!(["floor"]), bad("params", "not a table of named params")),
+    ];
+    for (case, params, want) in rows {
+        assert_eq!(param_args(&entry, &params), want, "{case}");
+    }
+}
+
+#[test]
+fn a_flow_entry_with_no_names_takes_no_params() {
+    let entry = fake_entry(Pick::Arg("--select="), Params::Flow { names: &[], check: |_| Ok(()) }, None);
+    assert_eq!(param_args(&entry, &json!({"floor": 2})), bad("floor", "a lint rule takes no params"));
 }

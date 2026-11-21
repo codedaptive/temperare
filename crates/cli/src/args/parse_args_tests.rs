@@ -1,9 +1,9 @@
-//! Unit tests for parse_args.rs: help and version forms, dispatch to each command (install and uninstall included), flags
-//! given twice, unknown commands.
+//! Unit tests for parse_args.rs: help and version forms, dispatch to each command (install, uninstall and baseline
+//! included), flags given twice, unknown commands.
 
 use std::path::PathBuf;
 
-use super::{parse_args, CheckArgs, Command, InstallArgs, RulesArgs, UsageError};
+use super::{parse_args, BaselineArgs, CheckArgs, Command, InstallArgs, RulesArgs, UsageError};
 use crate::Harness;
 
 fn parse(args: &[&str]) -> Result<Command, UsageError> {
@@ -55,7 +55,7 @@ fn an_argument_after_version_is_refused() {
 fn rules_command() {
     assert_eq!(
         parse(&["rules", "--rules", "t.toml", "--json"]),
-        Ok(Command::Rules(RulesArgs { rules: Some(PathBuf::from("t.toml")), json: true }))
+        Ok(Command::Rules(RulesArgs { rules: Some(PathBuf::from("t.toml")), json: true, ..RulesArgs::default() }))
     );
 }
 
@@ -72,10 +72,23 @@ fn check_command() {
 }
 
 #[test]
+fn baseline_command() {
+    assert_eq!(
+        parse(&["baseline", "test", "--set", "house@1", "--json"]),
+        Ok(Command::Baseline(BaselineArgs { set: Some("house@1".to_string()), json: true }))
+    );
+    assert_eq!(parse(&["baseline"]), Err(error("tm baseline needs a subcommand", "Run tm baseline test.")));
+    assert_eq!(
+        parse(&["baseline", "test", "--json", "--json"]),
+        Err(error("--json given twice", "Give --json once."))
+    );
+}
+
+#[test]
 fn sub_parser_errors_come_through() {
     assert_eq!(
         parse(&["rules", "--base", "main"]),
-        Err(error("unknown flag '--base' for tm rules", "Run tm help to see the flags of tm rules."))
+        Err(error("--base is only for tm rules --loosened", "Add --loosened, or leave --base out."))
     );
 }
 
@@ -84,6 +97,10 @@ fn a_flag_given_twice() {
     assert_eq!(
         parse(&["rules", "--rules", "a.toml", "--rules", "b.toml"]),
         Err(error("--rules given twice", "Give --rules once."))
+    );
+    assert_eq!(
+        parse(&["rules", "--loosened", "--base", "a", "--base", "b"]),
+        Err(error("--base given twice", "Give --base once."))
     );
     assert_eq!(
         parse(&["check", "--json", "src", "--json"]),

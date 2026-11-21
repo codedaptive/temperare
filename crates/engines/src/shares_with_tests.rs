@@ -1,7 +1,7 @@
 //! Unit tests for shares_with.rs: each case that keeps two rules apart, by itself, and the cases that share.
 
 use crate::shares_with::shares_with;
-use rules::RuleFile;
+use rules::{Rule, RuleFile};
 use std::path::Path;
 
 /// One `[[rule]]` block of `engine` and `check`, with `extra` lines (config, params) after it.
@@ -190,4 +190,56 @@ fn ruff_halves_of_different_pairs_share() {
 #[test]
 fn ruff_equal_pair_halves_share() {
     assert!(shares(("ruff", "D203", ""), ("ruff", "D203", "")));
+}
+
+#[test]
+fn shellcheck_never_shares_even_with_the_same_check_config_and_params() {
+    assert!(!shares(("shellcheck", "SC2086", ""), ("shellcheck", "SC2086", "")));
+    assert!(!shares(("shellcheck", "SC2086", "config = \"x.rc\"\n"), ("shellcheck", "SC2086", "config = \"x.rc\"\n")));
+    assert!(!shares(("shellcheck", "SC2086", ""), ("shellcheck", "SC2250", "")));
+}
+
+#[test]
+fn git_never_shares_even_with_the_same_check_and_params() {
+    let params = "params = { max_ratio = 1.5, floor = 40, test_paths = [\"tests/**\"] }\n";
+    assert!(!shares(("git", "test_ratio", params), ("git", "test_ratio", params)));
+}
+
+#[test]
+fn an_engine_with_no_adapter_never_shares() {
+    assert!(!shares(("pylint", "C0114", ""), ("pylint", "C0114", "")));
+}
+
+/// Two ast-grep rules of check `rules/no-unwrap.yml` with no params, carrying `a` and `b` as their YAML text.
+fn ast_grep_with_texts(a: Option<&'static str>, b: Option<&'static str>) -> (Rule, Rule) {
+    let text = format!("version = 1\n{}{}", block("a", "ast-grep", "rules/no-unwrap.yml", ""), block("b", "ast-grep", "rules/no-unwrap.yml", ""));
+    let mut rules = RuleFile::parse(&text, Path::new(".")).unwrap().rules;
+    let mut second = rules.remove(1);
+    let mut first = rules.remove(0);
+    first.embedded_text = a;
+    second.embedded_text = b;
+    (first, second)
+}
+
+#[test]
+fn ast_grep_repository_rule_and_set_rule_with_the_same_check_do_not_share_either_way() {
+    let (repo, set) = ast_grep_with_texts(None, Some("id: x\nlanguage: rust\nrule:\n  pattern: $A.unwrap()\n"));
+    assert!(!shares_with(&repo, &set));
+    assert!(!shares_with(&set, &repo));
+}
+
+#[test]
+fn ast_grep_set_rules_with_the_same_check_and_text_share() {
+    let yaml = "id: x\nlanguage: rust\nrule:\n  pattern: $A.unwrap()\n";
+    let (a, b) = ast_grep_with_texts(Some(yaml), Some(yaml));
+    assert!(shares_with(&a, &b));
+}
+
+#[test]
+fn ast_grep_set_rules_with_the_same_check_and_different_texts_do_not_share() {
+    let (a, b) = ast_grep_with_texts(
+        Some("id: x\nlanguage: rust\nrule:\n  pattern: $A.unwrap()\n"),
+        Some("id: x\nlanguage: rust\nrule:\n  pattern: $A.expect($B)\n"),
+    );
+    assert!(!shares_with(&a, &b));
 }

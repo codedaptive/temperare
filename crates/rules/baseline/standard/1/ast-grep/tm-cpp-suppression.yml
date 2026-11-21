@@ -1,0 +1,7 @@
+id: tm-cpp-suppression
+language: cpp
+message: "a suppression written in the code: a NOLINT comment silences clang-tidy here"
+severity: warning
+rule:
+  kind: comment
+  regex: \bNOLINT(NEXTLINE|BEGIN)?\b

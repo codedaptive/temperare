@@ -1,8 +1,8 @@
-//! Counted rule runs across adapters with a fake host and a real temporary rule folder.
+//! Counted rule runs across adapters, including clippy without a Cargo project, with a fake host and temporary folders.
 
 use crate::host::Host;
 use crate::run_rules_counted_with::run_rules_counted_with;
-use crate::RuleRun;
+use crate::{NotAvailableCause, RuleRun};
 use procio::{Cmd, Output, ProcError};
 use rules::{Engine, Finding, Kind, RelPath, RuleFile, RuleOutcome, Severity};
 use std::cell::Cell;
@@ -69,7 +69,7 @@ fn counted_runs_keep_order_outcomes_and_distinguish_empty_from_not_run() {
         }
     };
     let raw_chars = Cell::new(None);
-    let host = Host { run: &run, on_path: &|program| program == "ruff", raw_chars: &raw_chars };
+    let host = Host { run: &run, on_path: &|program| program == "ruff", raw_chars: &raw_chars, base: None };
     let got = run_rules_counted_with(&file, &repo, &[], &host, &[]);
     fs::remove_dir_all(&repo).unwrap();
 
@@ -77,37 +77,80 @@ fn counted_runs_keep_order_outcomes_and_distinguish_empty_from_not_run() {
     let mut found = Finding::new("found", quality_warning, RelPath::new("a.py"), 1, Some(2), "é", "f");
     found.owner = Some("repo".into());
     assert_eq!(got, vec![
-        RuleRun {
-            rule: "found".into(), engine: Engine::Ruff,
-            outcome: RuleOutcome::Findings(vec![found]),
-            raw_chars: Some(81),
-        },
-        RuleRun {
-            rule: "bad-output".into(), engine: Engine::Ruff,
-            outcome: RuleOutcome::Failed { rule: "bad-output".into(), engine: Engine::Ruff, code: Some(2), stderr: "oops".into() },
-            raw_chars: Some(8),
-        },
-        RuleRun {
-            rule: "empty-output".into(), engine: Engine::Ruff,
-            outcome: RuleOutcome::Failed { rule: "empty-output".into(), engine: Engine::Ruff, code: Some(0), stderr: "ruff printed no JSON findings: ".into() },
-            raw_chars: Some(0),
-        },
-        RuleRun {
-            rule: "refused".into(), engine: Engine::Ruff,
-            outcome: RuleOutcome::Failed { rule: "refused".into(), engine: Engine::Ruff, code: None, stderr: "ruff check `flake8-bugbear`: `flake8-bugbear` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects".into() },
-            raw_chars: None,
-        },
-        RuleRun {
-            rule: "slop".into(), engine: Engine::Tessera,
-            outcome: RuleOutcome::NotAvailable { rule: "slop".into(), engine: Engine::Tessera, why: "Tessera's slop records are not defined yet".into() },
-            raw_chars: None,
-        },
-        RuleRun {
-            rule: "absent".into(), engine: Engine::SwiftLint,
-            outcome: RuleOutcome::NotAvailable { rule: "absent".into(), engine: Engine::SwiftLint, why: "swiftlint not found on PATH".into() },
-            raw_chars: None,
-        },
+        RuleRun::new(
+            "found".into(),
+            Engine::Ruff,
+            RuleOutcome::Findings(vec![found]),
+            Some(81),
+        ),
+        RuleRun::new(
+            "bad-output".into(),
+            Engine::Ruff,
+            RuleOutcome::Failed { rule: "bad-output".into(), engine: Engine::Ruff, code: Some(2), stderr: "oops".into() },
+            Some(8),
+        ),
+        RuleRun::new(
+            "empty-output".into(),
+            Engine::Ruff,
+            RuleOutcome::Failed { rule: "empty-output".into(), engine: Engine::Ruff, code: Some(0), stderr: "ruff printed no JSON findings: ".into() },
+            Some(0),
+        ),
+        RuleRun::new(
+            "refused".into(),
+            Engine::Ruff,
+            RuleOutcome::Failed { rule: "refused".into(), engine: Engine::Ruff, code: None, stderr: "ruff check `flake8-bugbear`: `flake8-bugbear` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects".into() },
+            None,
+        ),
+        RuleRun::new(
+            "slop".into(),
+            Engine::Tessera,
+            RuleOutcome::NotAvailable { rule: "slop".into(), engine: Engine::Tessera, why: "Tessera's slop records are not defined yet".into() },
+            None,
+        )
+        .with_cause(NotAvailableCause::Other),
+        RuleRun::new(
+            "absent".into(),
+            Engine::SwiftLint,
+            RuleOutcome::NotAvailable { rule: "absent".into(), engine: Engine::SwiftLint, why: "swiftlint not found on PATH".into() },
+            None,
+        )
+        .with_cause(NotAvailableCause::EngineNotOnPath),
     ]);
     assert_eq!(got.iter().filter_map(|run| run.raw_chars).sum::<usize>(), 89);
     assert_eq!(got.iter().filter(|run| run.raw_chars.is_some()).count(), 3);
+}
+
+#[test]
+fn counted_clippy_without_cargo_project_is_not_available_without_running() {
+    let root = std::env::temp_dir().join(format!("engines-zit-{}-no-cargo-project", std::process::id()));
+    fs::create_dir(&root).unwrap();
+    let repo = fs::canonicalize(root).unwrap();
+    assert!(repo.ancestors().all(|dir| !dir.join("Cargo.toml").is_file()));
+    let file = RuleFile::parse(r#"version = 1
+owner = "repo"
+[[rule]]
+id = "no-cargo"
+engine = "clippy"
+check = "clippy::bool_comparison"
+fix = "f"
+"#, Path::new(".")).unwrap();
+    let raw_chars = Cell::new(None);
+    let host = Host {
+        run: &|cmd| panic!("unexpected command: {cmd:?}"),
+        on_path: &|program| matches!(program, "cargo-clippy" | "clippy-driver" | "cargo"),
+        raw_chars: &raw_chars,
+        base: None,
+    };
+    let got = run_rules_counted_with(&file, &repo, &[], &host, &[]);
+    fs::remove_dir_all(&repo).unwrap();
+    assert_eq!(got, vec![RuleRun::new(
+        "no-cargo".into(),
+        Engine::Clippy,
+        RuleOutcome::NotAvailable {
+            rule: "no-cargo".into(),
+            engine: Engine::Clippy,
+            why: "no Cargo.toml at or above the rule file's folder".into(),
+        },
+        None,
+    ).with_cause(NotAvailableCause::NoCargoProject)]);
 }

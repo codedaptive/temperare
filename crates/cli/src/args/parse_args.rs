@@ -1,5 +1,6 @@
 //! `parse_args`: tm's arguments to a `Command`, by hand on std, with no argument-parsing crate.
 
+use super::parse_baseline_args::parse_baseline_args;
 use super::parse_check_args::parse_check_args;
 use super::parse_install_args::parse_install_args;
 use super::parse_rules_args::parse_rules_args;
@@ -7,7 +8,7 @@ use super::{Command, UsageError};
 
 /// The command `args` asks for; `args` excludes the program name. Pure: no I/O, no environment.
 /// No arguments, `help`, `--help` or `-h` is Help; `--version` is Version; `uninstall` is Uninstall; none of them
-/// takes anything after it.
+/// takes anything after it. `baseline` takes its subcommand `test` and that subcommand's flags.
 /// Flags come after the command. A flag the command takes but given twice is reported once the rest parses.
 pub fn parse_args(args: &[String]) -> Result<Command, UsageError> {
     let Some(first) = args.first() else {
@@ -19,6 +20,7 @@ pub fn parse_args(args: &[String]) -> Result<Command, UsageError> {
         "--version" => alone(first, Command::Version, rest)?,
         "rules" => Command::Rules(parse_rules_args(rest)?),
         "check" => Command::Check(parse_check_args(rest)?),
+        "baseline" => Command::Baseline(parse_baseline_args(rest)?),
         "install" => Command::Install(parse_install_args(rest)?),
         "uninstall" => alone(first, Command::Uninstall, rest)?,
         other => {

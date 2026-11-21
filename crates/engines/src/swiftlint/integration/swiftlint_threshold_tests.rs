@@ -32,7 +32,7 @@ fn run_threshold(folder: &Path, check: &str, extra: &str) -> (Vec<String>, PathB
         *seen.borrow_mut() = Some((args, path, during));
         Ok(Output { code: Some(0), stdout: b"[]".to_vec(), stderr: Vec::new() })
     };
-    let host = Host { run: &run, on_path: &|_| true, raw_chars: &Cell::new(None) };
+    let host = Host { run: &run, on_path: &|_| true, raw_chars: &Cell::new(None), base: None };
     assert_eq!(run_plain(&SWIFTLINT, &file.rules[0], folder, &host), Ok(Vec::new()));
     seen.into_inner().unwrap()
 }

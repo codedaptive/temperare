@@ -6,7 +6,9 @@ use super::check_duplicate_case_file::check_duplicate_case_file;
 use super::check_failing_line::check_failing_line;
 use super::check_failing_path::check_failing_path;
 use super::check_keys::check_keys;
+use super::param_type::ParamType;
 use super::problem_at::problem_at;
+use super::read_case_params::read_case_params;
 use super::required_string::required_string;
 use super::string_list::string_list;
 use super::wrong_type::wrong_type;
@@ -14,18 +16,20 @@ use crate::{CaseFile, Problem};
 use toml::Spanned;
 use toml::de::{DeTable, DeValue};
 
-const FAILING_KEYS: [&str; 3] = ["files", "path", "line"];
-const PASSING_KEYS: [&str; 1] = ["files"];
+const FAILING_KEYS: [&str; 4] = ["files", "path", "line", "params"];
+const PASSING_KEYS: [&str; 2] = ["files", "params"];
 
 /// The case `kind` ("failing" or "passing") of the set rule `id`, whose value in the set's `text` is `value`: its
 /// files in the order `files` lists them, each with the text `set` carries at `cases/<id>/<kind>/<file>`; and for a
 /// failing case the `path` and `line` of the finding it must give (None for a passing case), where `path` must be one
-/// of the case's listed files and `line` a line of it. Every Problem goes to `out`, and any Problem gives None.
+/// of the case's listed files and `line` a line of it. The case's `params` are checked by read_case_params against
+/// `types`, the rule's typed required params. Every Problem goes to `out`, and any Problem gives None.
 pub(crate) fn read_case(
     text: &str,
     value: &Spanned<DeValue>,
     id: &str,
     kind: &str,
+    types: &[(String, Option<ParamType>)],
     set: &BaselineSet,
     out: &mut Vec<Problem>,
 ) -> Option<(Vec<CaseFile>, Option<(String, usize)>)> {
@@ -39,6 +43,7 @@ pub(crate) fn read_case(
     let at = value.span().start;
     let (files, listed) = case_files(text, table, at, id, kind, set, out);
     let finding = if failing { finding(text, table, at, id, &listed, &files, out) } else { None };
+    read_case_params(text, table, id, types, out);
     (out.len() == before).then_some((files, finding))
 }
 
@@ -82,7 +87,7 @@ fn case_files(
                 format!("case file \"{file}\" of baseline rule \"{id}\" is not carried by baseline set {name}@{version}"),
                 &format!(
                     "Put it at crates/rules/baseline/{name}/{version}/cases/{id}/{kind}/{file} and list it in the \
-                     set's cases in EMBEDDED_SETS, or correct files."
+                     set's cases in crates/rules/src/rule_file/{name}_{version}.rs, or correct files."
                 ),
             ));
             continue;

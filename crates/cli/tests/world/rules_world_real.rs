@@ -62,7 +62,7 @@ impl Drop for TempFolder {
     }
 }
 
-/// Zone integration test: the seam is `Path::is_file`, std only (crates/cli/src/app/rules_world_real.rs:13).
+/// Zone integration test: the seam is `Path::is_file`, std only (crates/cli/src/app/rules_world_real.rs:15).
 #[test]
 fn exists_is_true_for_a_file_only() {
     let world = RulesWorld::real();
