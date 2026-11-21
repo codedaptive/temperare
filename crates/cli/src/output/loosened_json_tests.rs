@@ -1,5 +1,7 @@
 //! ZUT for loosened_json.rs: the object for literal loosenings of all fourteen kinds, absent before and after left
-//! out. RuleNotApplicable and SetOlder are covered only here and in loosened_text_tests.rs.
+//! out. RuleNotApplicable also comes from a real rule file and is covered by the RIT
+//! `rules_loosened_rule_not_applicable`. SetOlder is covered only by ZUTs (these, and rules' own
+//! set_loosenings_tests.rs), because only version 1 of each set exists.
 
 use super::loosened_json;
 use super::loosened_text_tests::every_kind;
