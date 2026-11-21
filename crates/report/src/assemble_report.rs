@@ -5,10 +5,7 @@ use crate::{
     Report, Silenced,
 };
 use procio::Oid;
-use rules::{Date, Finding, RuleFile, RuleOutcome};
-
-/// The why of a rule that reports only what a change adds, on a check with no base commit.
-const NEEDS_BASE: &str = "reports only what a change adds; run with --base";
+use rules::{Date, Finding, RuleFile, RuleOutcome, ONLY_WITH_BASE_WHY};
 
 /// The why of a not-applicable rule whose reason is None; the rule is still listed, since it does not run.
 const NO_REASON: &str = "no reason given";
@@ -108,7 +105,7 @@ fn out_of_play<'a>(
                 not_applicable.push(listed(rule.not_applicable.as_deref().unwrap_or(NO_REASON)));
                 continue;
             }
-            (_, true, _) => not_applicable.push(listed(NEEDS_BASE)),
+            (_, true, _) => not_applicable.push(listed(ONLY_WITH_BASE_WHY)),
             (_, _, Some(why)) if rule.id.starts_with(BASELINE_PREFIX) => not_applicable.push(listed(why)),
             (_, _, Some(_)) => covers_nothing.push(CoversNothing { rule: rule.id.clone(), engine: rule.engine }),
             (_, _, None) => continue,

@@ -7,9 +7,9 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// The report of `outcomes` under `rules`, its exceptions looked up with `RuleFile::exception_on` given today's UTC day
-/// (read once from the clock); exception_on does not judge expiry yet and ignores the day. The report's `date` is that
-/// day's "YYYY-MM-DD" text. With no base every finding is new, except that an `only_with_base` rule's outcomes are
-/// dropped (see `assemble_report`), and nothing else is run or read. With a base,
+/// (read once from the clock); an exception past its `expires` day silences nothing. The report's `date` is that day's
+/// "YYYY-MM-DD" text. With no base every finding is new, except that an `only_with_base` rule's outcomes are dropped
+/// (see `assemble_report`), and nothing else is run or read. With a base,
 /// `(repository, resolved base id)`, only findings on lines added since the base are new: lines git adds against it in
 /// the work tree, untracked files whole, and every path under an untracked nested repository. Finding paths are
 /// relative to the rule file's folder, so the folder is canonicalized (a relative one against the current directory)
