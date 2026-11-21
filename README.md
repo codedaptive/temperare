@@ -315,7 +315,7 @@ available or not applicable.
 | `ruff` | `ruff check` in the rule file's folder | Python |
 | `ast-grep` | `ast-grep scan` with your rule file, its `params` filled in | Any language ast-grep reads; rules about the shape of code |
 | `shellcheck` | Nothing in this build: a rule's code is looked up in a list of ShellCheck codes built into `tm`, and that list holds no code | Shell scripts (sh, bash, dash, ksh). Not available today |
-| `git` | Nothing in this build: it counts what a change adds against a base commit, and `tm check` does not hand it the base | How much test a change adds for its code (`test_ratio`). Not available today |
+| `git` | Its own count of the lines a change adds against the `--base` commit, from git's added-line diff and the untracked files git does not ignore (counted whole) | How much test a change adds for its code (`test_ratio`). Needs `--base` |
 | `tessera` | Nothing | Not available today |
 | `golangci-lint`, `pylint`, `clang-tidy`, `oclint` | Nothing yet | Accepted in the rule file; not available until each adapter lands |
 
@@ -327,11 +327,14 @@ ast-grep rule with `params`. A ShellCheck rule and a git rule always run alone. 
 its findings only from what the engine prints. The report shows the rule's own `severity` and `fix`; the engine's
 own severity for a finding is not read.
 
-**ShellCheck and git rules are not available in this build.** Both engines have adapters. A ShellCheck rule with a
+**ShellCheck rules are not available in this build.** ShellCheck has an adapter, but a ShellCheck rule with a
 well-formed code and a script to check is reported "not available" even with ShellCheck installed: its code is not
-on the list built into `tm`, which holds no code. A git rule, and an ast-grep rule in count mode (`params.count`),
-that gets as far as its run is reported "not available" with the reason
-`reports only what a change adds; run with --base`, with or without `--base`.
+on the list built into `tm`, which holds no code.
+
+**git rules and ast-grep count mode need `--base`.** A git rule counts the lines a change
+adds against the commit `--base` names. An ast-grep rule in count mode (`params.count`) counts each file's setup and
+test lines whole, and reports a file the change adds lines to, at its first added line, against that commit. Without `--base`, one that gets as
+far as its run is reported "not available" with the reason `reports only what a change adds; run with --base`.
 
 **Tessera rules are not available today.** A rule with `engine = "tessera"` is accepted in the rule file and, when
 it covers a file and has no `params`, is reported "not available", whether or not Tessera is installed: `tm` neither
@@ -426,8 +429,8 @@ Temperare runs other programs with your privileges, and the rule file decides wh
   passing cases. `house@1` is not ready and is not run.
 - **Platforms:** built and accepted on macOS. The code is written for Unix systems; Linux and Windows are untested.
 - **Not available today:** rules with `engine = "tessera"`; rules naming `golangci-lint`, `pylint`, `clang-tidy` or
-  `oclint`, which the rule file accepts before their adapters land; and, in this build, ShellCheck rules, git rules
-  and ast-grep rules in count mode (see [Engines](#engines)).
+  `oclint`, which the rule file accepts before their adapters land; and, in this build, ShellCheck rules (see
+  [Engines](#engines)).
 - **License:** MIT. See [`LICENSE`](LICENSE).
 
 ---

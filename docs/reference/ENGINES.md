@@ -61,7 +61,7 @@ Neither is ever "clean".
 | `no Cargo.toml at or above the rule file's folder` | A clippy rule in a folder that is not inside a Cargo package |
 | ``<engine> <version> does not know the check `<check>`: <what it said>`` | The installed clippy, SwiftLint or ruff does not know the rule's `check`: a name it does not have, often because it is older than the rule. `<version>` is `(version unknown)` when the version could not be read |
 | `shellcheck <version>: <check> is not in temperare's list of shellcheck codes (taken from shellcheck <list version>)` | A ShellCheck rule whose code is not on the list built into `tm`. In this build the list holds no code and its version reads `pending`, so this is every ShellCheck rule that has a script to check and finds ShellCheck ([below](#shellcheck)) |
-| `reports only what a change adds; run with --base` | A git rule, and an ast-grep rule in count mode, with or without `--base` in this build ([git](#git), [ast-grep](#ast-grep)) |
+| `reports only what a change adds; run with --base` | A git rule, and an ast-grep rule in count mode, run without `--base` ([git](#git), [ast-grep](#ast-grep)) |
 | `Tessera's slop records are not defined yet` | A rule with `engine = "tessera"` ([below](#tessera)) |
 | `no adapter for <engine> in this build` | A rule whose engine the rule file accepts and this `tm` cannot run yet: `golangci-lint`, `pylint`, `clang-tidy` and `oclint` ([below](#engines-with-no-adapter-yet)) |
 
@@ -324,10 +324,10 @@ ast-grep is for rules about the shape of code that no stock linter states: a hou
   them: one finding per file, at its first added line, with no column and the message
   `<n> lines of setup, <m> lines of tests`. A file with no test function is not reported.
 
-  Count mode needs the base commit, and in this build `tm check` does not hand the base to the engines. So a
-  count-mode rule that gets as far as its run is not available, with the why
-  `reports only what a change adds; run with --base`, with or without `--base`, and ast-grep is not run for it.
-  With `only_with_base = true` and no `--base` the rule is listed as not applicable instead, as any such rule is.
+  Count mode needs the base commit, which `tm check --base <rev>` hands it. Without `--base`, a count-mode rule
+  that gets as far as its run is not available, with the why `reports only what a change adds; run with --base`,
+  and ast-grep is not run for it. With `only_with_base = true` and no `--base` the rule is listed as not applicable
+  instead, as any such rule is.
 - **A YAML that ast-grep rejects** fails the rule. ast-grep has no "not available" case for an unknown `check`: the
   check is your own YAML, which ast-grep either reads or rejects.
 - **`config`:** not used.
@@ -472,11 +472,10 @@ rule:
 which needs no rule.
 
 - **Available when** `git` is on `PATH`.
-- **In this build a git rule never comes to an answer.** It counts a change against a base commit, and `tm check`
-  does not hand the base to the engines, with or without `--base`. A git rule that is not refused, covers a file
-  and finds git is therefore not available, with the why `reports only what a change adds; run with --base`, and
-  passing `--base` does not change that. With `only_with_base = true` and no `--base` the rule is listed as not
-  applicable instead, as any such rule is.
+- **It needs `--base`.** It counts a change against the base commit `tm check --base <rev>` names. Without
+  `--base`, a git rule that is not refused, covers a file and finds git is not available, with the why
+  `reports only what a change adds; run with --base`, and nothing is counted. With `only_with_base = true` and no
+  `--base` the rule is listed as not applicable instead, as any such rule is.
 - **`check`:** `test_ratio`, the only one. Any other fails the rule before anything runs, with the reason
   ``git check `<check>` is not one git counts: the git entry checks only `test_ratio` ``.
 - **`params`,** all three required:
@@ -487,7 +486,7 @@ which needs no rule.
 
   A missing param, a value out of range, a glob that does not compile, and any other param, fail the rule before
   anything runs.
-- **What it counts, given a base:** the lines the change adds in the files the rule covers. For a tracked file
+- **What it counts:** the lines the change adds in the files the rule covers. For a tracked file
   those are the lines git shows as added against the base; an untracked file git does not ignore counts whole,
   unless it is binary, a symlink or not a regular file. A change that adds at least `floor` lines of test, and more
   than `max_ratio` lines of test for each line of code, gets one finding: at the first added line of the test file

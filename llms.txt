@@ -119,9 +119,10 @@ sources.
   ShellCheck codes built into tm, and that list holds no code: a rule with a well-formed code and a shell script to
   check is "not available" even with ShellCheck installed (<check> is not in temperare's list of shellcheck codes),
   and ShellCheck is not run. A rule that covers no shell script runs nothing, and the report does not say so.
-- Rules with engine = "git" (check test_ratio), and ast-grep rules with params.count, count what a change adds
-  against a base commit. In this build tm check does not hand the base to the engines, so such a rule is "not
-  available" ("reports only what a change adds; run with --base"), with or without --base.
+- Rules with engine = "git" (check test_ratio) count the lines a change adds against the commit tm check --base
+  names; ast-grep rules with params.count count each file's setup and test lines whole, reporting the files the
+  change adds lines to. Without --base such a rule is "not available" ("reports only what a change adds; run with
+  --base") when its engine is on PATH.
 - Any of these with only_with_base = true, run without --base, is listed under not_applicable instead, as any such
   rule is.
 
