@@ -3,10 +3,9 @@
 use super::{count_change, ratio_hit, read_test_ratio};
 use crate::entry::{param_why, Entry};
 use crate::host::Host;
-use crate::only_with_base_why::ONLY_WITH_BASE_WHY;
 use crate::types::{Hit, Stop};
 use crate::ParamError;
-use rules::{RelPath, Rule};
+use rules::{RelPath, Rule, ONLY_WITH_BASE_WHY};
 use serde_json::{Map, Value};
 use std::ops::Range;
 use std::path::Path;
@@ -16,7 +15,7 @@ use std::path::Path;
 /// Each step can stop the rule, in this order:
 /// 1. the params, the rule's table turned into one JSON object, are read with `read_test_ratio`: a param it cannot
 ///    read, or a value with no JSON form, is `Failed` with no exit code and `param_why`'s text;
-/// 2. no `host.base` is `NotAvailable` with `ONLY_WITH_BASE_WHY`: the rule judges only what a change adds, and
+/// 2. no `host.base` is `NotAvailable` with `rules::ONLY_WITH_BASE_WHY`: the rule judges only what a change adds, and
 ///    nothing is read;
 /// 3. `change(folder, base, keep)`, or its `Stop`, with `keep` the rule's scope (`rule.applies`), so the reader drops
 ///    a file outside the rule's paths before reading it; its files are counted by `count_change` and judged by

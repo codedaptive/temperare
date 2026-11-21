@@ -14,8 +14,8 @@ use rules::Engine;
 ///
 /// The params, read by `read_test_ratio` and refused before anything runs when missing, out of range or unknown:
 /// `max_ratio` (a number from 0.1 to 100), `floor` (a whole number from 0 to 100000) and `test_paths` (a non-empty
-/// list of globs). With no base the rule is not available with `ONLY_WITH_BASE_WHY`, never clean. A git rule runs
-/// alone (`shares_with`). No check run is counted, so its `raw_chars` is `None`: the counts come from git's own
+/// list of globs). With no base the rule is not available with `rules::ONLY_WITH_BASE_WHY`, never clean. A git rule
+/// runs alone (`shares_with`). No check run is counted, so its `raw_chars` is `None`: the counts come from git's own
 /// listings, which are not output a reader would otherwise read, and counting the diff text would inflate the
 /// savings. The flow never reads engine output, so `read` only says so; `entry_cmd` and `args`, `after` and
 /// `config` are not used. git never says it does not know a check, so `unknown` gives `None`. The version is the

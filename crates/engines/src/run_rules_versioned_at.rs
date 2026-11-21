@@ -14,8 +14,8 @@ use std::path::Path;
 /// run over the folder). A rule tm refuses (its check or params, ast-grep's `{{name}}` params apart) is `Failed`
 /// first, whatever its engine; a ShellCheck rule with no script in its paths is no findings with the `no_files` flag,
 /// even if ShellCheck is absent; any other rule with `only_with_base` and no `base`, whose paths match a listed file
-/// or where no listing is made, is `NotAvailable` with `ONLY_WITH_BASE_WHY`, whatever its engine, and its check never
-/// runs; an absent engine is `NotAvailable` with `availability`'s why; a check the engine does not know is
+/// or where no listing is made, is `NotAvailable` with `rules::ONLY_WITH_BASE_WHY`, whatever its engine, and its check
+/// never runs; an absent engine is `NotAvailable` with `availability`'s why; a check the engine does not know is
 /// `NotAvailable` with a why naming the engine, its version
 /// and the check; an engine that ran but gave no answer is `Failed`; otherwise `Findings`, empty when clean. A run's
 /// `raw_chars` is what its check run printed, `None` when no run was counted for it; its `Some` values count the check
@@ -28,7 +28,7 @@ use std::path::Path;
 /// the check's host (`check_host`), and every rule's run is given it there (`Host::base`), a rule of a shared group
 /// too. Without one, a rule with `only_with_base` is settled as above (its engine is still probed for `engines`). The
 /// git entry and ast-grep's count mode read it, marked or not: without one, such a rule is `NotAvailable` with
-/// `ONLY_WITH_BASE_WHY`; with one, it counts the change against it. For every rule that is neither marked
+/// `rules::ONLY_WITH_BASE_WHY`; with one, it counts the change against it. For every rule that is neither marked
 /// `only_with_base` nor read by the git entry or ast-grep's count mode, the outcome is the same for any `base`.
 pub fn run_rules_versioned_at(file: &RuleFile, repo: &Path, only: &[RelPath], base: Option<&str>) -> CheckedRules {
     run_rules_versioned_with(file, repo, only, &check_host(base, &Cell::new(None)))

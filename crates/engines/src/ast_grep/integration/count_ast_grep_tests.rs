@@ -7,9 +7,8 @@
 use super::super::{hits_ast_grep, AST_GREP};
 use crate::host::Host;
 use crate::types::{Hit, Stop};
-use crate::ONLY_WITH_BASE_WHY;
 use procio::{Cmd, Output, ProcError};
-use rules::RuleFile;
+use rules::{RuleFile, ONLY_WITH_BASE_WHY};
 use std::cell::{Cell, RefCell};
 use std::fs;
 use std::path::PathBuf;
