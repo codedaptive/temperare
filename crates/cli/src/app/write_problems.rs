@@ -10,7 +10,7 @@ use std::path::Path;
 /// on one line. Returns 2. Write errors are ignored: a closed pipe is not tm's failure.
 pub(crate) fn write_problems(path: &Path, problems: &[rules::Problem], json: bool, out: &mut dyn Write) -> u8 {
     let fix = format!("fix each problem listed for {}", path.display());
-    let next = next_step(2, Some(&fix), path, &[]);
+    let next = next_step(2, Some(&fix), path, &[], json);
     if json {
         let mut value = problems_json(path, problems);
         if let Some(object) = value.as_object_mut() {

@@ -139,6 +139,65 @@ fn real_sets_house_runs() {
     assert!(counts.contains(": 0 hold, 0 broken,"), "{counts}");
 }
 
+/// RIT: a required-param house rule runs both real cases with their own params.
+#[test]
+fn real_house_required_params_run_both_cases() {
+    let target = "tm-house-unit-test-fakes-own-kit-python";
+    let rule = rules::baseline_rules("house@1").unwrap().into_iter().find(|rule| rule.id == target).unwrap();
+    let expected = &rule.cases().unwrap().expected;
+    let line = u32::try_from(expected.line).unwrap();
+    let seen = RefCell::new(Vec::new());
+    let run_rules = |rf: &rules::RuleFile, _: &std::path::Path, _: &[RelPath], _: Option<&str>| {
+        let rule = &rf.rules[0];
+        let outcome = if rule.id != target {
+            RuleOutcome::NotAvailable {
+                rule: rule.id.clone(), engine: rule.engine, why: "engine unavailable".to_string(),
+            }
+        } else {
+            let mut seen = seen.borrow_mut();
+            seen.push(rule.params.clone());
+            let findings = if seen.len() == 1
+                && rule.params.get("own_package") == Some(&toml::Value::Array(vec!["ledger".into()]))
+            {
+                vec![Finding::new(
+                    &expected.rule_id, (rule.engine, rule.kind, rule.severity), RelPath::new(&expected.path),
+                    line, None, "fake finding", "fix it",
+                )]
+            } else {
+                Vec::new()
+            };
+            RuleOutcome::Findings(findings)
+        };
+        CheckedRules { runs: vec![RuleRun::new(rule.id.clone(), rule.engine, outcome, None)], engines: vec![] }
+    };
+    let added_since = |_: &std::path::Path, _: &str| {
+        if seen.borrow().len() == 1 {
+            Ok([(PathBuf::from(&expected.path), vec![line..line + 1])].into())
+        } else {
+            Ok(Default::default())
+        }
+    };
+    let world = BaselineWorld {
+        make_folder: &|| Ok(PathBuf::from("/nonexistent-tm-baseline-case")),
+        write_file: &|_, _| Ok(()),
+        commit_all: &|_| Ok("base".to_string()),
+        added_since: &added_since,
+        remove_folder: &|_| Ok(()),
+        run_rules: &run_rules,
+        ..BaselineWorld::real()
+    };
+    let args = BaselineArgs { set: Some("house@1".into()), json: false };
+    let mut out = Vec::new();
+    run_baseline_test(&args, &world, &mut out, &mut Vec::new());
+    let out = String::from_utf8(out).unwrap();
+    assert!(out.lines().any(|line| line == "house@1 tm-house-unit-test-fakes-own-kit-python (ast-grep): holds"), "{out}");
+    let seen = seen.borrow();
+    assert_eq!(seen.len(), 2);
+    for params in seen.iter() {
+        assert_eq!(params.get("own_package"), Some(&toml::Value::Array(vec!["ledger".into()])));
+    }
+}
+
 /// RIT: without a named set, the real world reads only the ready built-in set.
 #[test]
 fn real_sets_default_reads_ready_only() {

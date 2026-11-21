@@ -24,7 +24,7 @@ fn run_check_kind_not_applicable_filters_printed_list_and_count() {
     let runs = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| {
         checked(vec![run("security-run", Engine::AstGrep, None)])
     };
-    let w = CheckWorld { read: &read, run_rules: &runs, build_report: &report::build_report, ..world() };
+    let w = CheckWorld { read: &read, run_rules: &runs, build_report: &report::build_report_with_no_files, ..world() };
 
     let (code, out, err) = check(&CheckArgs { json: true, ..CheckArgs::default() }, &w);
     assert_eq!((code, err.as_str()), (0, ""));

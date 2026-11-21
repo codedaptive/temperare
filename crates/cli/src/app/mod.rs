@@ -6,6 +6,7 @@ mod baseline_world;
 mod baseline_world_real;
 mod case_path;
 mod case_rel_path;
+mod case_rule;
 mod check_world;
 mod check_world_real;
 mod discover_rule_file;
@@ -36,6 +37,8 @@ mod write_usage_error;
 mod case_path_tests;
 #[cfg(test)]
 mod case_rel_path_tests;
+#[cfg(test)]
+mod case_rule_tests;
 #[cfg(test)]
 mod check_world_tests;
 #[cfg(test)]

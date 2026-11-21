@@ -16,12 +16,16 @@ const NO_CARGO_PROJECT: &str = "no Cargo.toml at or above the rule file's folder
 /// What the user does next for each exit code: 0 has nothing to do; 1 fixes the findings or adds an exception to
 /// `rule_file`; 2 gives the error's fix ("see the error above" when there is none); 3 says what to do about each
 /// entry of `not_available`, each paired with its rule run's cause (see `not_available_step`); 4 raises the
-/// security findings; 5 reads the engine output; any other code points at the output above. Each argument is read only for the code that uses it.
+/// security findings; 5 reads the engine output; 6 fixes the paths of each rule that covers nothing, or removes it
+/// from `rule_file`: as text it points at those rules above, and when `json` (the text is the --json `next`, which
+/// has no output above) it names the `covers_nothing` field instead; any other code points at the output above. Each
+/// argument is read only for the code that uses it: `json` only for 6.
 pub fn next_step(
     exit: u8,
     fix: Option<&str>,
     rule_file: &Path,
     not_available: &[(&NotAvailable, Option<NotAvailableCause>)],
+    json: bool,
 ) -> String {
     match exit {
         0 => "nothing to do".to_string(),
@@ -30,6 +34,14 @@ pub fn next_step(
         3 => not_available_step(not_available),
         4 => "raise the security findings with their owner; work goes on".to_string(),
         5 => "see the engine output above".to_string(),
+        6 if json => format!(
+            "fix the paths of each rule in covers_nothing, or remove it from {}",
+            rule_file.display()
+        ),
+        6 => format!(
+            "fix the paths of each rule that covers nothing above, or remove it from {}",
+            rule_file.display()
+        ),
         _ => "see the output above".to_string(),
     }
 }

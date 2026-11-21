@@ -29,7 +29,7 @@ fn says_tm_is_the_short_name_only_where_install_made_the_link() {
 
 #[test]
 fn gives_every_exit_code() {
-    for code in ["- 0: ", "- 1: ", "- 2: ", "- 3: ", "- 4: ", "- 5: "] {
+    for code in ["- 0: ", "- 1: ", "- 2: ", "- 3: ", "- 4: ", "- 5: ", "- 6: "] {
         assert!(SKILL_TEXT.contains(code), "{code}");
     }
     assert!(SKILL_TEXT.contains("1: a quality error finding refuses"));
@@ -37,6 +37,7 @@ fn gives_every_exit_code() {
     assert!(SKILL_TEXT.contains("put the rule file inside the Cargo project it checks"));
     assert!(SKILL_TEXT.contains("4: security error findings only"));
     assert!(SKILL_TEXT.contains("5: an engine failed"));
+    assert!(SKILL_TEXT.contains("6: a rule of the repository's own covers nothing"));
 }
 
 #[test]

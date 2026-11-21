@@ -1,4 +1,4 @@
-//! ZUT for usage.rs: command, rule-file, short-name and savings help as whole lines.
+//! ZUT for usage.rs: command, rule-file, short-name, savings and exit-code help as whole lines.
 
 use super::USAGE;
 
@@ -68,6 +68,12 @@ fn savings_contract_explains_the_switch_and_json() {
 #[test]
 fn savings_contract_names_the_savings_log() {
     assert!(has_line("Each check that ran an engine appends a line to ~/.local/state/temperare/savings.jsonl."));
+}
+
+#[test]
+fn lists_exit_6_and_the_exit_precedence() {
+    assert!(has_line("6  a rule of the repository's own covers nothing"));
+    assert!(has_line("The first that applies wins, in this order: 2, 1, 5, 3, 4, 6, 0."));
 }
 
 #[test]

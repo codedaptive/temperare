@@ -37,7 +37,7 @@ fn check(entries: Vec<(NotAvailable, NotAvailableCause)>, json: bool) -> (u8, St
             .collect();
         CheckedRules { runs, engines: vec![] }
     };
-    let build_report = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>| {
+    let build_report = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>, _: Vec<(String, String)>| {
         Ok(Report { not_available: entries.iter().map(|(na, _)| na.clone()).collect(), ..Default::default() })
     };
     let world = CheckWorld {

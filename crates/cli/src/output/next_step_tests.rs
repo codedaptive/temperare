@@ -19,7 +19,7 @@ fn file() -> &'static Path {
 /// `next_step` given `entries`, each entry paired with its cause as run_check pairs them.
 fn step(exit: u8, fix: Option<&str>, entries: &[Entry]) -> String {
     let pairs: Vec<_> = entries.iter().map(|(entry, cause)| (entry, *cause)).collect();
-    next_step(exit, fix, file(), &pairs)
+    next_step(exit, fix, file(), &pairs, false)
 }
 
 fn entry(engine: Engine, why: &str, cause: Option<NotAvailableCause>) -> Entry {
@@ -187,4 +187,22 @@ fn exit_5_and_unknown_codes_point_at_the_output() {
     assert_eq!(step(5, Some("Write it."), &[absent(Engine::Ruff)]), "see the engine output above");
     assert_eq!(step(7, Some("Write it."), &[absent(Engine::Ruff)]), "see the output above");
     assert_eq!(step(255, None, &[]), "see the output above");
+}
+
+#[test]
+fn next_step_exit_6_names_the_rule_file() {
+    let (entry, cause) = absent(Engine::Ruff);
+    assert_eq!(
+        next_step(6, Some("Write it."), Path::new("team/rules/temperare.toml"), &[(&entry, cause)], false),
+        "fix the paths of each rule that covers nothing above, or remove it from team/rules/temperare.toml"
+    );
+}
+
+#[test]
+fn next_step_exit_6_under_json_names_covers_nothing_and_the_rule_file() {
+    let (entry, cause) = absent(Engine::Ruff);
+    assert_eq!(
+        next_step(6, Some("Write it."), Path::new("team/rules/temperare.toml"), &[(&entry, cause)], true),
+        "fix the paths of each rule in covers_nothing, or remove it from team/rules/temperare.toml"
+    );
 }

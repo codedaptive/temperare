@@ -1,5 +1,6 @@
 //! `run_baseline_test`: `tm baseline test`, every rule of the sets run on its own failing and passing cases.
 
+use super::case_rule::case_rule;
 use super::run_case::run_case;
 use super::run_change_case::run_change_case;
 use super::write_failure::write_failure;
@@ -14,9 +15,9 @@ use std::io::Write;
 /// their order: every set's rules are read before any case runs, and a set that cannot be read is a usage error from
 /// its first problem's what and fix (exit 2: on `err`, and under `--json` also the `{"error", "exit", "next"}` object
 /// on `out`). Each rule, in its set's order, runs on its failing case and then its passing case (`run_case`; an
-/// only_with_base rule's cases run as a change, `run_change_case`); a rule its set carries no cases for is broken on
-/// both, and a rule rules set aside (`rule.not_applicable`) is not applicable on both with rules' why and is not run:
-/// no case folder is made for it.
+/// only_with_base rule's cases run as a change, `run_change_case`), each case with the params it gives over the rule's
+/// (`case_rule`); a rule its set carries no cases for is broken on both, and a case whose own params lack a required
+/// param is not applicable with that why and is not run: no case folder is made for it.
 /// Prints the results as text with a `next:` line, or as one JSON line carrying `exit` and `next`, and returns the
 /// exit code: 1 when a rule is broken, else 3 when one is not applicable or not available, else 0. Write errors are
 /// ignored: a closed pipe is not tm's failure.
@@ -60,23 +61,22 @@ pub fn run_baseline_test(args: &BaselineArgs, world: &BaselineWorld, out: &mut d
     exit
 }
 
-/// The verdicts of `rule`'s failing and passing cases: not applicable on both when rules set it aside, without
-/// running it; else broken on both when its set carries no cases for it; else each case run.
+/// The verdicts of `rule`'s failing and passing cases: broken on both when its set carries no cases for it; else
+/// each case run with its own params (`case_rule`), or not applicable with `case_rule`'s why, unrun, when the case
+/// lacks a required param.
 fn case_verdicts(rule: &Rule, world: &BaselineWorld, err: &mut dyn Write) -> (CaseVerdict, CaseVerdict) {
-    if let Some(why) = &rule.not_applicable {
-        let aside = CaseVerdict::NotApplicable { why: why.clone() };
-        return (aside.clone(), aside);
-    }
-    match rule.cases() {
-        Some(c) if rule.only_with_base => {
-            (run_change_case(rule, true, c, world, err), run_change_case(rule, false, c, world, err))
+    let Some(c) = rule.cases() else {
+        return (no_cases(), no_cases());
+    };
+    let mut verdict = |failing: bool| match case_rule(rule, failing) {
+        Err(why) => CaseVerdict::NotApplicable { why },
+        Ok(r) if r.only_with_base => run_change_case(&r, failing, c, world, err),
+        Ok(r) => {
+            let files = if failing { &c.failing } else { &c.passing };
+            run_case(&r, failing, files, &c.expected, world, err)
         }
-        Some(c) => (
-            run_case(rule, true, &c.failing, &c.expected, world, err),
-            run_case(rule, false, &c.passing, &c.expected, world, err),
-        ),
-        None => (no_cases(), no_cases()),
-    }
+    };
+    (verdict(true), verdict(false))
 }
 
 /// The verdict of each case of a rule its set carries no cases for.

@@ -1,7 +1,9 @@
-//! ZUT for exit_code.rs: every S-15 row alone, and the precedence between them (WO-cli-1b2 contract).
+//! ZUT for exit_code.rs: every S-15 row alone, and the precedence between them (WO-cli-1b2 contract); exit 6 for a
+//! rule that covers nothing, below 1, 5, 3 and 4 (SPEC-baseline "Which rules apply", "Not chosen" and "The work
+//! orders").
 
 use super::exit_code::exit_code;
-use report::{Failed, NotAvailable, Report};
+use report::{CoversNothing, Failed, NotAvailable, Report};
 use rules::{Engine, Finding, Kind, RelPath, Severity};
 
 fn finding(kind: Kind, severity: Severity) -> Finding {
@@ -80,4 +82,22 @@ fn a_security_warning_alone_is_0() {
 #[test]
 fn a_quality_warning_alone_is_0() {
     assert_eq!(exit_code(&report(vec![finding(Kind::Quality, Severity::Warning)], vec![], vec![])), 0);
+}
+
+#[test]
+fn covers_nothing_is_6_below_1_5_3_and_4() {
+    let covers = || vec![CoversNothing { rule: "r4".to_string(), engine: Engine::Ruff }];
+    let warnings = vec![finding(Kind::Quality, Severity::Warning), finding(Kind::Security, Severity::Warning)];
+    let rows: [(&str, Vec<Finding>, Vec<Failed>, Vec<NotAvailable>, u8); 6] = [
+        ("covers nothing alone", vec![], vec![], vec![], 6),
+        ("quality error", vec![finding(Kind::Quality, Severity::Error)], vec![], vec![], 1),
+        ("failed engine", vec![], vec![failed()], vec![], 5),
+        ("not available rule", vec![], vec![], vec![not_available()], 3),
+        ("security error", vec![finding(Kind::Security, Severity::Error)], vec![], vec![], 4),
+        ("only warnings", warnings, vec![], vec![], 6),
+    ];
+    for (name, findings, failed, not_available, want) in rows {
+        let r = Report { covers_nothing: covers(), ..report(findings, failed, not_available) };
+        assert_eq!(exit_code(&r), want, "covers nothing with {name}");
+    }
 }

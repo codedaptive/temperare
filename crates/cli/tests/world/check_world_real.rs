@@ -4,10 +4,10 @@
 //! clock. The file mixes kinds, each case marked: RITs (cli→procio/rules/engines/report, kept beside their caller)
 //! and a std disk seam. `exists` and `read` are told from stubs on
 //! a file the tests write in a throwaway folder under the system temp folder, removed on drop; `run_rules` (wired to
-//! `engines::run_rules_versioned_at`) and `build_report` on a rule file with no rules in such a folder; `toplevel` and
-//! `rev_parse` are told by a folder that does not exist, where git fails. Nothing here needs a real repository or an
-//! engine: `run_rules` and `build_report` get rule files with no rules, so no engine is looked up, and the report has
-//! no base, so no git diff is run.
+//! `engines::run_rules_versioned_at`) and `build_report` (wired to `report::build_report_with_no_files`) on a rule file
+//! with no rules in such a folder; `toplevel` and `rev_parse` are told by a folder that does not exist, where git
+//! fails. Nothing here needs a real repository or an engine: `run_rules` and `build_report` get rule files with no
+//! rules, so no engine is looked up, and the report has no base, so no git diff is run.
 
 use cli::CheckWorld;
 use rules::{Exception, RuleFile};
@@ -105,13 +105,14 @@ fn run_rules_of_a_rule_file_with_no_rules_is_empty() {
     assert!(checked.engines.is_empty());
 }
 
-/// RIT: with no base, report's `build_report` returns pure `assemble_report`; the setup touches disk.
+/// RIT: with no base and no rule flagged as having no file, report's `build_report_with_no_files` returns pure
+/// `assemble_report`; the setup touches disk.
 #[test]
 fn build_report_with_no_base_counts_the_exception_in_force() {
     let world = CheckWorld::real();
     let dir = TempFolder::new("report");
     let exception = Exception::new("lint-all", "old.rs", "legacy", "Bob, 2026-11-17");
-    let report = (world.build_report)(&empty_rules(dir.0.clone(), vec![exception]), Vec::new(), None).unwrap();
+    let report = (world.build_report)(&empty_rules(dir.0.clone(), vec![exception]), Vec::new(), None, Vec::new()).unwrap();
     assert!(report.findings.is_empty());
     assert_eq!(report.exceptions_in_force, 1);
 }
