@@ -2,9 +2,9 @@
 # A rule file takes it with `baseline = ["house@1"]` once the set is marked ready (refused until then).
 # Once released, this version is frozen; a change is version 2.
 # Rules for the code come first, grouped by practice; then nine rules for four warnings that keep tests lean.
-# A rule with required_params carries no value for them here: the repository gives them in an [[override]]. Its
-# failing and passing cases carry the params a run will need; tm baseline test does not apply them yet, so such a
-# rule reads not applicable there, as it does when loaded through baseline_rules. own_package and entity_types are
+# A rule with required_params carries no value for them here: the repository gives them in an [[override]], and a
+# rule file that takes the set without them reads that rule not applicable. Its failing and passing cases carry the
+# params a run needs, and tm baseline test runs each case with them over the rule's. own_package and entity_types are
 # lists of strings (type "strings"), each item matched as written, since engines escapes it.
 # The nine test-economy rules (tm-house-test-ratio and tm-house-test-setup-heavier-*, for example) report only against
 # a base, so tm baseline test runs their cases as a change against a base commit it makes.
@@ -684,7 +684,7 @@ A test marked by another attribute (#[test_case], #[rstest]), a comment between 
 #[cfg(test)] module of a source file are outside the paths."""
 fix = """\
 move the setup to the folder's shared setup file, or fold the cases into one table test."""
-failing = { files = ["tests/parse.rs"], path = "tests/parse.rs", line = 1 }
+failing = { files = ["tests/parse.rs"], path = "tests/parse.rs", line = 3 }
 passing = { files = ["tests/parse.rs"] }
 
 [[rule]]
@@ -730,5 +730,5 @@ A test func test... at the top level, outside a type, setup shared through a fil
 name, and setUp methods, which count as setup."""
 fix = """\
 move the setup to the folder's shared setup file, or fold the cases into one table test."""
-failing = { files = ["ParseTests.swift"], path = "ParseTests.swift", line = 1 }
+failing = { files = ["ParseTests.swift"], path = "ParseTests.swift", line = 4 }
 passing = { files = ["ParseTests.swift"] }
