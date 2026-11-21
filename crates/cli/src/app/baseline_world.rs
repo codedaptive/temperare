@@ -1,9 +1,8 @@
 //! `BaselineWorld`: what `tm baseline test` needs from the built-in sets, the disk, git and the engines, as eight
 //! seams.
 
-use crate::UsageError;
 use engines::CheckedRules;
-use rules::{RelPath, Rule, RuleFile};
+use rules::{Problem, RelPath, Rule, RuleFile};
 use std::collections::BTreeMap;
 use std::ops::Range;
 use std::path::{Path, PathBuf};
@@ -12,11 +11,12 @@ use std::path::{Path, PathBuf};
 /// git through procio and `engines::run_rules_versioned_at` (given the case's base commit, `None` without one); a unit
 /// test passes closures, so `tm baseline test` is tested without touching the disk or running git or an engine.
 pub struct BaselineWorld<'a> {
-    /// The sets tested when `--set` is not given, as "name@version", in the order they are tested (tm's own: the ready
-    /// sets only).
-    pub default_sets: &'a [&'a str],
-    /// The rules of the set "name@version", in the set's order; a set tm does not carry is a usage error.
-    pub rules_of: &'a dyn Fn(&str) -> Result<Vec<Rule>, UsageError>,
+    /// Every set tm carries, as ("name@version", ready), in tm's order: without `--set`, the ready ones are tested in
+    /// this order.
+    pub default_sets: &'a [(String, bool)],
+    /// The rules of the set "name@version", in the set's order, whatever its ready mark; a set that cannot be read is
+    /// its problems (rules' `Problem`s: their line and column index rules' own text, not the user's).
+    pub rules_of: &'a dyn Fn(&str) -> Result<Vec<Rule>, Vec<Problem>>,
     /// A new empty folder for one case.
     pub make_folder: &'a dyn Fn() -> std::io::Result<PathBuf>,
     /// Writes text at a path, making its parent folders.

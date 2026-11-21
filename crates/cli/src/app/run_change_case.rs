@@ -5,6 +5,7 @@ use super::judge_case::judge_case;
 use super::write_case_files::write_case_files;
 use super::BaselineWorld;
 use crate::output::CaseVerdict;
+use engines::NotAvailableCause;
 use rules::{Rule, RuleCases, RuleFile, RuleOutcome};
 use std::io::Write;
 use std::path::Path;
@@ -30,7 +31,7 @@ pub(crate) fn run_change_case(
         Err(e) => return CaseVerdict::Broken { why: format!("cannot make the case folder: {e}") },
     };
     let verdict = match change_outcome(rule, failing, cases, &folder, world) {
-        Ok(outcome) => judge_case(failing, &outcome, &cases.expected),
+        Ok((outcome, cause)) => judge_case(failing, &outcome, cause, &cases.expected),
         Err(why) => CaseVerdict::Broken { why },
     };
     if let Err(e) = (world.remove_folder)(&folder) {
@@ -40,14 +41,15 @@ pub(crate) fn run_change_case(
 }
 
 /// The case's base committed and its change written in `folder`, then `rule`'s outcome there run with that base, its
-/// findings cut to the lines added since the base; or the why of the first step that failed.
+/// findings cut to the lines added since the base, with the run's not-available cause; or the why of the first step
+/// that failed.
 fn change_outcome(
     rule: &Rule,
     failing: bool,
     cases: &RuleCases,
     folder: &Path,
     world: &BaselineWorld,
-) -> Result<RuleOutcome, String> {
+) -> Result<(RuleOutcome, Option<NotAvailableCause>), String> {
     let commit = || (world.commit_all)(folder).map_err(|e| format!("cannot commit the case's base: {e}"));
     let base = if failing {
         write_case_files(folder, &cases.passing, world)?;
@@ -68,8 +70,9 @@ fn change_outcome(
         RuleOutcome::Findings(findings) => {
             let added = (world.added_since)(folder, &base)
                 .map_err(|e| format!("cannot read the lines the case adds: {e}"))?;
-            Ok(RuleOutcome::Findings(report::keep_added(findings, &added, &[], Path::new(""))))
+            let kept = report::keep_added(findings, &added, &[], Path::new(""));
+            Ok((RuleOutcome::Findings(kept), run.not_available_cause))
         }
-        other => Ok(other),
+        other => Ok((other, run.not_available_cause)),
     }
 }

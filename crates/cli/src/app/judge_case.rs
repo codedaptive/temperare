@@ -2,17 +2,23 @@
 
 use crate::output::CaseVerdict;
 use super::case_rel_path::case_rel_path;
+use engines::NotAvailableCause;
 use rules::{ExpectedFinding, Finding, RuleOutcome};
 
 /// The verdict of a failing case (`failing` true: the rule must give exactly `expected`) or of a passing case (the
-/// rule must give no finding) from `outcome`. An engine not available is not available, with its why; a failed run
+/// rule must give no finding) from `outcome`. An engine not available is not available, with its why and `cause`; a failed run
 /// is broken, naming its exit code (or that it had none) and the last non-blank line of its stderr when there is
 /// one. The expected path is read by `case_rel_path`, the rule the case file was written by, so `./a.py`,
 /// `src//./a.py` and `src/a.py` name the files `a.py` and `src/a.py`; an expected path `case_rel_path` refuses never
 /// matches, and is printed as written.
-pub(crate) fn judge_case(failing: bool, outcome: &RuleOutcome, expected: &ExpectedFinding) -> CaseVerdict {
+pub(crate) fn judge_case(
+    failing: bool,
+    outcome: &RuleOutcome,
+    cause: Option<NotAvailableCause>,
+    expected: &ExpectedFinding,
+) -> CaseVerdict {
     let findings = match outcome {
-        RuleOutcome::NotAvailable { why, .. } => return CaseVerdict::NotAvailable { why: why.clone() },
+        RuleOutcome::NotAvailable { why, .. } => return CaseVerdict::NotAvailable { why: why.clone(), cause },
         RuleOutcome::Failed { code, stderr, .. } => return CaseVerdict::Broken { why: failed_why(*code, stderr) },
         RuleOutcome::Findings(findings) => findings,
     };

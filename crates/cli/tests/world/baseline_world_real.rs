@@ -1,7 +1,6 @@
-//! ZITs (disk write and remove) and RITs (real git case folders, rules lookup, case execution) for
-//! `BaselineWorld::real()` and `run_baseline_test`: real case folders, writes, cleanup, and case execution.
-//! The rules lookup is also checked against the built-in sets. No engine is run; case outcomes are supplied by the
-//! recording runner. All disk work is in throwaway folders under the system temp folder, removed on drop.
+//! ZITs and RITs for `BaselineWorld::real()` and `run_baseline_test`: real case folders, writes, cleanup, and case
+//! execution, plus built-in set lookup with effect seams replaced. No engine is run; case outcomes are supplied by
+//! test runners. All disk work is in throwaway folders under the system temp folder, removed on drop.
 
 use cli::{run_baseline_test, BaselineArgs, BaselineWorld};
 use engines::{CheckedRules, RuleRun};
@@ -88,7 +87,63 @@ fn remove_folder_removes_everything() {
 fn rules_of_resolves_and_rejects_sets() {
     let world = BaselineWorld::real();
     assert!((world.rules_of)("standard@1").is_ok());
-    assert_eq!((world.rules_of)("nosuch@1").unwrap_err().what, "unknown baseline set \"nosuch\"");
+    assert_eq!((world.rules_of)("nosuch@1").unwrap_err()[0].what, "unknown baseline set \"nosuch\"");
+}
+
+fn run_with_real_sets(set: Option<&str>) -> (u8, String, String, Vec<String>) {
+    let real = BaselineWorld::real();
+    let read = RefCell::new(Vec::new());
+    let rules_of = |set: &str| {
+        read.borrow_mut().push(set.to_string());
+        (real.rules_of)(set)
+    };
+    let run_rules = |rf: &rules::RuleFile, _: &std::path::Path, _: &[RelPath], _: Option<&str>| {
+        let rule = &rf.rules[0];
+        let outcome = RuleOutcome::NotAvailable {
+            rule: rule.id.clone(), engine: rule.engine, why: "engine unavailable".to_string(),
+        };
+        CheckedRules { runs: vec![RuleRun::new(rule.id.clone(), rule.engine, outcome, None)], engines: vec![] }
+    };
+    let world = BaselineWorld {
+        rules_of: &rules_of,
+        make_folder: &|| Ok(PathBuf::from("/nonexistent-tm-baseline-case")),
+        write_file: &|_, _| Ok(()),
+        commit_all: &|_| Ok("base".to_string()),
+        added_since: &|_, _| Ok(Default::default()),
+        remove_folder: &|_| Ok(()),
+        run_rules: &run_rules,
+        ..real
+    };
+    let args = BaselineArgs { set: set.map(str::to_string), json: false };
+    let (mut out, mut err) = (Vec::new(), Vec::new());
+    let exit = run_baseline_test(&args, &world, &mut out, &mut err);
+    (exit, String::from_utf8(out).unwrap(), String::from_utf8(err).unwrap(), read.into_inner())
+}
+
+/// RIT: the house set prints every real rule in order, with the total and no held or broken rules.
+#[test]
+fn real_sets_house_runs() {
+    let (exit, out, err, _) = run_with_real_sets(Some("house@1"));
+    assert_eq!(exit, 3, "stderr: {err}");
+    assert_eq!(err, "");
+    let expected: Vec<_> = rules::baseline_rules("house@1").unwrap().into_iter().map(|rule| rule.id).collect();
+    let printed: Vec<_> = out.lines().filter(|line| !line.starts_with(' ') && line.contains(" ("))
+        .map(|line| {
+            let (set, rest) = line.split_once(' ').unwrap();
+            assert_eq!(set, "house@1");
+            rest.split_once(" (").unwrap().0
+        }).collect();
+    assert_eq!(printed, expected);
+    let counts = out.lines().find(|line| line.contains(" rules: ")).unwrap();
+    assert!(counts.starts_with(&format!("{} rules:", expected.len())), "{counts}");
+    assert!(counts.contains(": 0 hold, 0 broken,"), "{counts}");
+}
+
+/// RIT: without a named set, the real world reads only the ready built-in set.
+#[test]
+fn real_sets_default_reads_ready_only() {
+    let (_, _, _, read) = run_with_real_sets(None);
+    assert_eq!(read, ["standard@1"]);
 }
 
 /// RIT: real case files exist when the runner reads them, then both case folders are removed.

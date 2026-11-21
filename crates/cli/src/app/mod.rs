@@ -51,8 +51,6 @@ mod report_engines_tests;
 #[cfg(test)]
 mod resolve_base_tests;
 #[cfg(test)]
-mod rules_world_real_tests;
-#[cfg(test)]
 mod rules_world_tests;
 #[cfg(test)]
 mod integration;
@@ -64,8 +62,6 @@ mod run_baseline_test_tests;
 mod run_case_tests;
 #[cfg(test)]
 mod run_change_case_tests;
-#[cfg(test)]
-mod run_check_engines_tests;
 #[cfg(test)]
 mod run_check_savings_tests;
 #[cfg(test)]

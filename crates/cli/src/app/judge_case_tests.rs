@@ -1,7 +1,9 @@
-//! ZUT for judge_case.rs: each outcome of a failing and of a passing case, the whys written out by hand.
+//! ZUT for judge_case.rs: each outcome of a failing and of a passing case, the whys written out by hand. Every row is
+//! given the cause `EngineNotOnPath`; only the not-available verdict carries it.
 
 use super::judge_case::judge_case;
 use crate::output::CaseVerdict;
+use engines::NotAvailableCause::EngineNotOnPath;
 use rules::{Engine, ExpectedFinding, Finding, Kind, RelPath, RuleOutcome, Severity};
 
 fn finding(rule: &str, path: &str, line: u32) -> Finding {
@@ -64,7 +66,7 @@ fn judge_case_rows() {
                 engine: Engine::Ruff,
                 why: "ruff not found on PATH".to_string(),
             },
-            CaseVerdict::NotAvailable { why: "ruff not found on PATH".to_string() },
+            CaseVerdict::NotAvailable { why: "ruff not found on PATH".to_string(), cause: Some(EngineNotOnPath) },
         ),
         (
             "failed with a code, stderr's last non-blank line",
@@ -81,6 +83,6 @@ fn judge_case_rows() {
         .map(|(name, failing, outcome, want)| (name, failing, outcome, want, &expected))
         .chain(std::iter::once(normalized_row))
     {
-        assert_eq!(judge_case(failing, &outcome, expected), want, "{name}");
+        assert_eq!(judge_case(failing, &outcome, Some(EngineNotOnPath), expected), want, "{name}");
     }
 }

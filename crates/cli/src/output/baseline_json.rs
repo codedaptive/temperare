@@ -50,7 +50,7 @@ fn case_json(case: &CaseVerdict) -> Value {
     match case {
         CaseVerdict::Holds => json!({"result": "holds", "why": null}),
         CaseVerdict::Broken { why } => json!({"result": "broken", "why": why}),
-        CaseVerdict::NotAvailable { why } => json!({"result": "not_available", "why": why}),
+        CaseVerdict::NotAvailable { why, .. } => json!({"result": "not_available", "why": why}),
         CaseVerdict::NotApplicable { why } => json!({"result": "not_applicable", "why": why}),
     }
 }

@@ -2,12 +2,12 @@
 
 use super::baseline_rule_result::BaselineRuleResult;
 use super::case_verdict::CaseVerdict;
-use super::engine_program_missing::engine_program_missing;
+use engines::NotAvailableCause;
 
 /// What the user does next for `exit`: 0 has nothing to do; 1 fixes the broken rules or their cases; 3 gives the
-/// parts that apply, joined by `; `: install the engine of each not-available rule whose case says one of the engine's
-/// own programs is missing (`engine_program_missing`), then each other not-available case's why once (a missing
-/// helper such as cargo included), then read why each not-applicable rule was not run.
+/// parts that apply, joined by `; `: install the engine of each not-available rule with a case whose cause is
+/// `EngineNotOnPath`, then each other not-available case's why once (a missing helper such as cargo, or a case with
+/// no cause, included), then read why each not-applicable rule was not run.
 /// `baseline_exit` gives no other code; any other points at the output above.
 pub(crate) fn baseline_next(exit: u8, results: &[BaselineRuleResult]) -> String {
     match exit {
@@ -33,19 +33,18 @@ fn not_run_parts(results: &[BaselineRuleResult]) -> Vec<String> {
     parts
 }
 
-/// From the not-available rules' not-available cases, failing case then passing case: the engine names whose why
-/// says one of the engine's own programs is missing, and every other why; each list holds each entry once, in
-/// first-seen order.
+/// From the not-available rules' not-available cases, failing case then passing case: the engine names of the cases
+/// whose cause is `EngineNotOnPath`, and every other case's why; each list holds each entry once, in first-seen order.
 fn installs_and_whys(results: &[BaselineRuleResult]) -> (Vec<&'static str>, Vec<&str>) {
     let mut engines = Vec::new();
     let mut whys = Vec::new();
     for r in results.iter().filter(|r| r.verdict() == "not available") {
         for case in [&r.failing, &r.passing] {
             match case {
-                CaseVerdict::NotAvailable { why } if engine_program_missing(r.engine, why) => {
+                CaseVerdict::NotAvailable { cause: Some(NotAvailableCause::EngineNotOnPath), .. } => {
                     push_once(&mut engines, r.engine.name())
                 }
-                CaseVerdict::NotAvailable { why } => push_once(&mut whys, why.as_str()),
+                CaseVerdict::NotAvailable { why, .. } => push_once(&mut whys, why.as_str()),
                 _ => {}
             }
         }

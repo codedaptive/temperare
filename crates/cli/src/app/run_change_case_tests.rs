@@ -5,7 +5,7 @@
 use super::run_change_case::run_change_case;
 use super::BaselineWorld;
 use crate::output::CaseVerdict;
-use engines::{CheckedRules, RuleRun};
+use engines::{CheckedRules, NotAvailableCause, RuleRun};
 use rules::{
     CaseFile, Engine, ExpectedFinding, Finding, Kind, RelPath, Rule, RuleCases, RuleFile, RuleOutcome, Severity,
 };
@@ -14,13 +14,15 @@ use std::collections::BTreeMap;
 use std::io;
 use std::path::{Path, PathBuf};
 
-/// How the world answers: whether make_folder, commit_all and added_since fail, and the outcome of the rule's run.
+/// How the world answers: whether make_folder, commit_all and added_since fail, and the outcome of the rule's run and
+/// its not-available cause.
 /// Line 2 of a.py is the one line added since the base.
 struct Setup {
     make_fails: bool,
     commit_fails: bool,
     added_fails: bool,
     outcome: RuleOutcome,
+    cause: Option<NotAvailableCause>,
 }
 
 fn found(lines: &[u32]) -> RuleOutcome {
@@ -31,7 +33,7 @@ fn found(lines: &[u32]) -> RuleOutcome {
 }
 
 fn ok(outcome: RuleOutcome) -> Setup {
-    Setup { make_fails: false, commit_fails: false, added_fails: false, outcome }
+    Setup { make_fails: false, commit_fails: false, added_fails: false, outcome, cause: None }
 }
 
 /// Runs the failing (`failing`) or passing case of tm-sleep (passing a.py `x = 1`, failing a.py `x = 1` then
@@ -67,10 +69,12 @@ fn run(setup: Setup, failing: bool) -> (CaseVerdict, Vec<String>, String) {
     let run_rules = |rf: &RuleFile, repo: &Path, only: &[RelPath], base: Option<&str>| {
         let ids: Vec<&str> = rf.rules.iter().map(|rule| rule.id.as_str()).collect();
         step(format!("run {} {} {ids:?} {} {base:?}", rf.folder.display(), repo.display(), only.len()));
-        CheckedRules {
-            runs: vec![RuleRun::new("tm-sleep".to_string(), Engine::AstGrep, setup.outcome.clone(), None)],
-            engines: vec![],
-        }
+        let run = RuleRun::new("tm-sleep".to_string(), Engine::AstGrep, setup.outcome.clone(), None);
+        let run = match setup.cause {
+            Some(cause) => run.with_cause(cause),
+            None => run,
+        };
+        CheckedRules { runs: vec![run], engines: vec![] }
     };
     let world = BaselineWorld {
         default_sets: &[],
@@ -149,14 +153,20 @@ fn run_change_case_rows() {
             ran(&["make", base, "commit /case", change, ruled, "added /case b45e", "remove /case"]),
         ),
         (
-            "an outcome with no findings is judged as it is",
-            ok(RuleOutcome::NotAvailable {
-                rule: "tm-sleep".to_string(),
-                engine: Engine::AstGrep,
-                why: "ast-grep not found on PATH".to_string(),
-            }),
+            "an outcome with no findings is judged as it is, with the run's cause",
+            Setup {
+                cause: Some(NotAvailableCause::EngineNotOnPath),
+                ..ok(RuleOutcome::NotAvailable {
+                    rule: "tm-sleep".to_string(),
+                    engine: Engine::AstGrep,
+                    why: "ast-grep not found on PATH".to_string(),
+                })
+            },
             true,
-            CaseVerdict::NotAvailable { why: "ast-grep not found on PATH".to_string() },
+            CaseVerdict::NotAvailable {
+                why: "ast-grep not found on PATH".to_string(),
+                cause: Some(NotAvailableCause::EngineNotOnPath),
+            },
             ran(&["make", base, "commit /case", change, ruled, "remove /case"]),
         ),
         (

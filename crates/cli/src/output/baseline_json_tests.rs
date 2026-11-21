@@ -26,7 +26,10 @@ fn baseline_json_object() {
             "tm-mid",
             Engine::SwiftLint,
             CaseVerdict::Holds,
-            CaseVerdict::NotAvailable { why: "swiftlint not found on PATH".to_string() },
+            CaseVerdict::NotAvailable {
+                why: "swiftlint not found on PATH".to_string(),
+                cause: Some(engines::NotAvailableCause::EngineNotOnPath),
+            },
         ),
         result(
             "house@1",

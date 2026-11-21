@@ -14,7 +14,7 @@ fn broken(why: &str) -> CaseVerdict {
 }
 
 fn not_available(why: &str) -> CaseVerdict {
-    CaseVerdict::NotAvailable { why: why.to_string() }
+    CaseVerdict::NotAvailable { why: why.to_string(), cause: Some(engines::NotAvailableCause::EngineNotOnPath) }
 }
 
 fn not_applicable(why: &str) -> CaseVerdict {
