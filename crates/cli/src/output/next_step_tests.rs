@@ -161,6 +161,27 @@ fn exit_3_puts_install_then_causes_then_tessera() {
 }
 
 #[test]
+fn exit_3_installs_only_for_the_engines_own_programs() {
+    let rows = [
+        (Engine::Clippy, "cargo not found on PATH", "clippy: cargo not found on PATH (or run without those rules)"),
+        (
+            Engine::ShellCheck,
+            "git not found on PATH",
+            "shellcheck: git not found on PATH (or run without those rules)",
+        ),
+        (Engine::Clippy, "clippy-driver not found on PATH", "install clippy (or run without those rules)"),
+    ];
+    let wrong: Vec<String> = rows
+        .into_iter()
+        .filter_map(|(engine, why, want)| {
+            let got = next_step(3, None, file(), &[entry(engine, why)]);
+            (got != want).then(|| format!("{engine:?} {why}:\n  got:  {got}\n  want: {want}"))
+        })
+        .collect();
+    assert!(wrong.is_empty(), "rows wrong:\n{}", wrong.join("\n"));
+}
+
+#[test]
 fn exit_4_raises_the_security_findings() {
     assert_eq!(
         next_step(4, Some("Write it."), file(), &[absent(Engine::Ruff)]),

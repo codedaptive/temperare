@@ -76,12 +76,12 @@ fn make_folder() -> io::Result<PathBuf> {
 }
 
 /// Stages every file in `folder` and commits it as `base` (an empty commit when there is none), with tm's own name
-/// and no signing so no user setting is needed, and `--no-verify` so no hook runs in a case repository; the commit's
-/// id from `git rev-parse`.
+/// and no signing so no user setting is needed; no hook of any kind runs, as `git()` passes `-c core.hooksPath=/dev/null`
+/// on each of its calls (`git rev-parse` runs no hook). The commit's id from `git rev-parse`.
 fn commit_all(folder: &Path) -> io::Result<String> {
     git(folder, "add", &["add", "-A"])?;
     let config = ["-c", "user.name=tm", "-c", "user.email=tm@localhost", "-c", "commit.gpgsign=false"];
-    git(folder, "commit", &[&config[..], &["commit", "-q", "--no-verify", "--allow-empty", "-m", "base"]].concat())?;
+    git(folder, "commit", &[&config[..], &["commit", "-q", "--allow-empty", "-m", "base"]].concat())?;
     match procio::rev_parse(folder, "HEAD") {
         Ok(Some(oid)) => Ok(oid.as_str().to_string()),
         Ok(None) => Err(io::Error::other("git rev-parse HEAD names no commit")),
@@ -96,11 +96,16 @@ fn added_since(folder: &Path, base: &str) -> io::Result<BTreeMap<PathBuf, Vec<Ra
     procio::added_lines(folder, base, &[]).map_err(|e| io::Error::other(format!("git diff: {e}")))
 }
 
-/// Runs git with `args` on `folder` through `procio::git_cmd` (`-C <folder>`, and no inherited variable such as
-/// `GIT_DIR` points it at another repository); a git that cannot run, or exits non-zero, is an error naming `step`
-/// (and the exit code and stderr).
+/// Turns every git hook off in a case repository, the user's global `core.hooksPath` and the repository's own
+/// `.git/hooks` alike: git reads `core.hooksPath` as the folder its hooks live in, `/dev/null` holds none, and a `-c`
+/// setting outranks every config file. `--no-verify` would skip only pre-commit and commit-msg.
+const NO_HOOKS: [&str; 2] = ["-c", "core.hooksPath=/dev/null"];
+
+/// Runs git with `NO_HOOKS` then `args` on `folder` through `procio::git_cmd` (`-C <folder>`, and no inherited
+/// variable such as `GIT_DIR` points it at another repository), so no hook runs; a git that cannot run, or exits
+/// non-zero, is an error naming `step` (and the exit code and stderr).
 fn git(folder: &Path, step: &str, args: &[&str]) -> io::Result<()> {
-    match procio::run(&procio::git_cmd(folder, args.iter().map(Into::into).collect())) {
+    match procio::run(&procio::git_cmd(folder, NO_HOOKS.iter().chain(args).map(Into::into).collect())) {
         Ok(output) if output.code == Some(0) => Ok(()),
         Ok(output) => Err(io::Error::other(format!(
             "git {step} exited {:?}: {}",

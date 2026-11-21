@@ -464,7 +464,7 @@ The exit codes of `tm baseline test`:
 | 0 | Every rule holds. A set with no rules ends here too | `nothing to do` |
 | 1 | At least one rule is broken | `fix each broken rule or its cases above` |
 | 2 | Used wrongly, or `--set` names a set or version `tm` does not carry. Nothing was tested | The fix for the error |
-| 3 | No rule is broken, and at least one is not available or not applicable | `install <engine>, <engine>, then run tm baseline test again` when a rule is not available, naming each engine once as a rule file names it; `each not-applicable rule above says why it was not run` when one is not applicable; both, joined by `; ` |
+| 3 | No rule is broken, and at least one is not available or not applicable | `install <engine>, <engine>, then run tm baseline test again` when a rule's own program is missing from PATH (a helper program such as cargo gives its why instead), naming each engine once as a rule file names it; the why of any other not-available case, once; `each not-applicable rule above says why it was not run` when one is not applicable; the parts joined by `; ` |
 
 The first that applies wins: 2, 1, 3, 0. Exit 3 is never "holds": a rule that was not run was not tested.
 
