@@ -30,9 +30,9 @@ fix = "f"
 "#;
 
 #[test]
-fn run_rules_versioned_reports_engines() {
+fn run_rules_versioned_at_reports_engines() {
     let root = std::env::temp_dir().join(format!(
-        "engines-zit-{}-run_rules_versioned_reports_engines",
+        "engines-zit-{}-run_rules_versioned_at_reports_engines",
         std::process::id()
     ));
     fs::create_dir(&root).unwrap();
@@ -48,7 +48,7 @@ fn run_rules_versioned_reports_engines() {
     };
     let ruff_output = probe("ruff", "--version");
     let swiftlint_output = probe("swiftlint", "version");
-    let got: crate::CheckedRules = crate::run_rules_versioned(&file, &repo, &[]);
+    let got: crate::CheckedRules = crate::run_rules_versioned_at(&file, &repo, &[], None);
     fs::remove_dir_all(&repo).unwrap();
 
     let version = |output: Option<Output>, word: usize| -> Option<String> {

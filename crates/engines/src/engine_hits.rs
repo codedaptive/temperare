@@ -9,9 +9,10 @@ use std::path::Path;
 
 /// `engine_hits_with` listing ShellCheck's scripts with `shell_files` (git): a ShellCheck rule's scripts are listed
 /// before availability, so an absent ShellCheck with no script in the rule's paths is `NoFiles`, not `NotAvailable`
-/// (Orc #1476: no file before not available). Any other engine is looked up first (no entry is `NotAvailable`), then one whose
-/// program is missing is `NotOnPath`, and its flow never runs; an available engine with an unresolved folder gets that folder's `Stop`;
-/// otherwise its entry's flow runs the rule through `host`.
+/// (Orc #1476: no file before not available). Then a rule with `only_with_base` and no base is `NotAvailable` with
+/// `ONLY_WITH_BASE_WHY` before any lookup. Otherwise the engine is looked up (no entry is `NotAvailable`), then one
+/// whose program is missing is `NotOnPath`, and its flow never runs; an available engine with an unresolved folder
+/// gets that folder's `Stop`; otherwise its entry's flow runs the rule through `host`.
 pub(crate) fn engine_hits(rule: &Rule, folder: Result<&Path, &Stop>, host: &Host) -> Result<Vec<Hit>, Stop> {
     engine_hits_with(rule, folder, host, &shell_files)
 }

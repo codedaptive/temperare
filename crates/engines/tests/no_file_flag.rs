@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use engines::{availability, run_rules_versioned, Availability};
+use engines::{availability, run_rules_versioned_at, Availability};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
 #[path = "support/git.rs"]
@@ -72,7 +72,7 @@ fix = "Use is None."
 "#).unwrap();
 
     let file = RuleFile::read(&repo.0.join("temperare.toml")).unwrap();
-    let runs = run_rules_versioned(&file, &repo.0, &[]).runs;
+    let runs = run_rules_versioned_at(&file, &repo.0, &[], None).runs;
     assert_eq!(runs.len(), 4);
     assert_eq!(runs[0].rule, "untracked");
     assert_eq!(runs[0].no_files, None);

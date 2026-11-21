@@ -2,12 +2,12 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use engines::{availability, run_rules_versioned, Availability};
+use engines::{availability, run_rules_versioned_at, Availability};
 use rules::{Engine, Kind, RelPath, RuleFile, RuleOutcome, Severity};
 
-/// Each of `run_rules_versioned`'s `runs` read as (rule, outcome).
+/// Each of `run_rules_versioned_at`'s `runs` with no base, read as (rule, outcome).
 fn outcomes_of(file: &RuleFile, repo: &Path, only: &[RelPath]) -> Vec<(String, RuleOutcome)> {
-    run_rules_versioned(file, repo, only).runs.into_iter().map(|run| (run.rule, run.outcome)).collect()
+    run_rules_versioned_at(file, repo, only, None).runs.into_iter().map(|run| (run.rule, run.outcome)).collect()
 }
 
 static NEXT_FOLDER: AtomicUsize = AtomicUsize::new(0);

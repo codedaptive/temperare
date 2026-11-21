@@ -1,9 +1,10 @@
 //! `engine_hits_with`: one rule's hits from its engine's entry, with ShellCheck's no-file outcome settled before
-//! availability through a given lister of scripts.
+//! availability through a given lister of scripts, and a rule that needs a base settled without one.
 
 use crate::entry_for::entry_for;
 use crate::host::Host;
 use crate::no_adapter_why::no_adapter_why;
+use crate::only_with_base_why::ONLY_WITH_BASE_WHY;
 use crate::shellcheck::no_script;
 use crate::types::{Hit, Stop};
 use crate::unavailable::unavailable;
@@ -15,6 +16,8 @@ use std::path::{Path, PathBuf};
 /// 1. a ShellCheck rule with a resolved folder lists its scripts with `scripts`; when `no_script` finds none the rule
 ///    applies to, it is `NoFiles`, nothing is looked up on PATH and the flow never runs. A listing error falls
 ///    through to the steps below (an available ShellCheck's flow lists again and stops with it);
+/// 1b. a rule with `only_with_base` and no `host.base` is `NotAvailable` with `ONLY_WITH_BASE_WHY`, whatever its
+///    engine and whatever `folder` is: nothing is looked up on PATH and the flow never runs;
 /// 2. an engine with no entry in this build (`entry_for`) is `NotAvailable` with `no_adapter_why`; an engine that
 ///    `unavailable` says cannot be run here gets that stop: `NotOnPath` for a program it needs not on PATH,
 ///    `NotAvailable` for one never available. Either way, whatever `folder` is, its flow never runs;
@@ -30,6 +33,9 @@ pub(crate) fn engine_hits_with(
         if let Some(stop) = scripts(folder).ok().and_then(|listed| no_script(rule, &listed)) {
             return Err(stop);
         }
+    }
+    if rule.only_with_base && host.base.is_none() {
+        return Err(Stop::NotAvailable { why: ONLY_WITH_BASE_WHY.to_string() });
     }
     let Some(entry) = entry_for(rule.engine) else {
         return Err(Stop::NotAvailable { why: no_adapter_why(rule.engine) });

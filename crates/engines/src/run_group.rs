@@ -22,7 +22,8 @@ type Seen = RefCell<Vec<(Cmd, Result<Output, ProcError>)>>;
 type Flowed = (Result<Vec<Hit>, Stop>, Option<usize>);
 
 /// One `RuleRun` per rule of `rules`, in the order given, for rules that pairwise share a run (`shares_with`, which
-/// is not checked here), none of them refused (`run_rules_listed` settles those first). Every rule goes through its
+/// is not checked here), none of them refused (`run_rules_listed` settles those first); a rule with `only_with_base`
+/// and no base stops in its flow (`engine_hits`) before its check run, so step 1 keeps it. Every rule goes through its
 /// flow (`hits`, `engine_hits` in production) with a host of its own, made by `rule_host` in both passes, so it keeps
 /// the check's `on_path` and `base`, and its unknown-check test and reader (which keeps only its own check's hits)
 /// apply as when it runs alone; only its `run` is shared. Any other command (clippy's `clippy-driver -W help`,

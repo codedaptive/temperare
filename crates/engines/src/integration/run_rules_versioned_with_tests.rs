@@ -1,9 +1,10 @@
 //! ZIT for run_rules_versioned_with.rs: the engines' versions probed once each before the rules run, the probes not
-//! counted in any run, and a too-old rule's why naming the version read. The two ruff rules share a run that ruff
-//! fails on the unknown selector, so `too-old` counts that run and `clean` the rerun without it. The host is fake, so
+//! counted in any run, and a too-old rule's why naming the version read. The two ruff rules of `RULES` share a run
+//! that ruff fails on the unknown selector, so `too-old` counts that run and `clean` the rerun without it. The host is fake, so
 //! no engine runs; the rule file's folder is `/`, which always resolves. A ShellCheck code absent from the pending
 //! list also uses the single version probe, in a throwaway git repository the test makes and removes, holding one
-//! script, since its scripts are listed before the code is looked up in the list.
+//! script, since its scripts are listed before the code is looked up in the list. A rule marked `only_with_base` with
+//! no base still has its engine probed, and no other host command or check runs.
 
 use crate::host::Host;
 use crate::run_rules_versioned_with::run_rules_versioned_with;
@@ -151,4 +152,33 @@ fix = "f"
         }, None).with_cause(NotAvailableCause::Other)],
         engines: vec![EngineVersion { engine: Engine::ShellCheck, version: Some("0.11.0".into()) }],
     });
+}
+
+#[test]
+fn a_marked_rule_with_no_base_still_probes_its_engine_and_runs_nothing_else() {
+    let file = RuleFile::parse(r#"version = 1
+[[rule]]
+id = "base-only"
+engine = "ruff"
+check = "E711"
+only_with_base = true
+fix = "f"
+"#, Path::new(".")).unwrap();
+    let commands = RefCell::new(Vec::new());
+    let run = |cmd: &Cmd| {
+        let args: Vec<String> = cmd.args.iter().map(|arg| arg.to_string_lossy().into_owned()).collect();
+        commands.borrow_mut().push(format!("{} {}", cmd.program.to_string_lossy(), args.join(" ")));
+        output(0, "ruff 0.17.4\n", "")
+    };
+    let host = Host { run: &run, on_path: &|program| program == "ruff", raw_chars: &Cell::new(None), base: None };
+    let got = run_rules_versioned_with(&file, Path::new("/"), &[], &host);
+    assert_eq!(got, CheckedRules {
+        runs: vec![RuleRun::new("base-only".into(), Engine::Ruff, RuleOutcome::NotAvailable {
+            rule: "base-only".into(),
+            engine: Engine::Ruff,
+            why: "reports only what a change adds; run with --base".into(),
+        }, None).with_cause(NotAvailableCause::Other)],
+        engines: vec![EngineVersion { engine: Engine::Ruff, version: Some("0.17.4".into()) }],
+    });
+    assert_eq!(commands.into_inner(), ["ruff --version"]);
 }

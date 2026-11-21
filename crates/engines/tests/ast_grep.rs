@@ -1,6 +1,6 @@
 use std::fs;
 
-use engines::{availability, ast_grep::{fill_params, parse_ast_grep, AST_GREP}, entry_cmd, run_rules_versioned, Availability, TempFile};
+use engines::{availability, ast_grep::{fill_params, parse_ast_grep, AST_GREP}, entry_cmd, run_rules_versioned_at, Availability, TempFile};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
 #[test]
@@ -38,7 +38,7 @@ fn run_rules_rejects_ast_grep_yaml_outside_the_rule_folder() {
     fs::write(root.join("outside.yml"), "id: names\nlanguage: JavaScript\nmessage: matched name\nseverity: warning\nrule:\n  kind: identifier\n").unwrap();
     fs::write(folder.join("temperare.toml"), "version = 1\n[[rule]]\nid = \"outside\"\nengine = \"ast-grep\"\ncheck = \"../outside.yml\"\nfix = \"f\"\n").unwrap();
     let file = RuleFile::read(&folder.join("temperare.toml")).unwrap();
-    let outcomes = run_rules_versioned(&file, &root, &[]).runs.into_iter().map(|run| (run.rule, run.outcome)).collect::<Vec<_>>();
+    let outcomes = run_rules_versioned_at(&file, &root, &[], None).runs.into_iter().map(|run| (run.rule, run.outcome)).collect::<Vec<_>>();
     fs::remove_dir_all(&root).unwrap();
     assert_eq!(outcomes, vec![("outside".to_string(), RuleOutcome::Failed {
         rule: "outside".to_string(),
@@ -64,7 +64,7 @@ fn embedded_outcomes(tag: &str, rule: &str, yaml: &'static str, repository_yaml:
     }
     let mut file = RuleFile::parse(rule, &folder).unwrap();
     file.rules[0].embedded_text = Some(yaml);
-    let outcomes = run_rules_versioned(&file, &folder, &[]).runs.into_iter().map(|run| run.outcome).collect();
+    let outcomes = run_rules_versioned_at(&file, &folder, &[], None).runs.into_iter().map(|run| run.outcome).collect();
     fs::remove_dir_all(&folder).unwrap();
     outcomes
 }

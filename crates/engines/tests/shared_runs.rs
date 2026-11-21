@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use engines::{availability, run_rules_versioned, Availability};
+use engines::{availability, run_rules_versioned_at, Availability};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
 struct TempFolder(PathBuf);
@@ -36,11 +36,11 @@ fn sorted_outcome(outcome: &RuleOutcome) -> RuleOutcome {
 
 fn assert_shared(repo: &Path, rules: &[String; 3], kept: &str, excluded: &str) {
     let file = RuleFile::parse(&format!("version = 1\n{}", rules.concat()), repo).unwrap();
-    let grouped = run_rules_versioned(&file, repo, &[]).runs;
+    let grouped = run_rules_versioned_at(&file, repo, &[], None).runs;
     assert_eq!(grouped.len(), 3);
     for (index, rule) in rules.iter().enumerate() {
         let file = RuleFile::parse(&format!("version = 1\n{rule}"), repo).unwrap();
-        let alone = run_rules_versioned(&file, repo, &[]).runs;
+        let alone = run_rules_versioned_at(&file, repo, &[], None).runs;
         assert_eq!(alone.len(), 1);
         assert_eq!(grouped[index].rule, file.rules[0].id);
         assert_eq!(grouped[index].rule, alone[0].rule);
@@ -61,11 +61,11 @@ fn assert_shared(repo: &Path, rules: &[String; 3], kept: &str, excluded: &str) {
 
 fn assert_incompatible_ruff_runs(repo: &Path, rules: &[String; 2]) {
     let file = RuleFile::parse(&format!("version = 1\n{}", rules.concat()), repo).unwrap();
-    let grouped = run_rules_versioned(&file, repo, &[]).runs;
+    let grouped = run_rules_versioned_at(&file, repo, &[], None).runs;
     assert_eq!(grouped.len(), 2);
     for (index, rule) in rules.iter().enumerate() {
         let file = RuleFile::parse(&format!("version = 1\n{rule}"), repo).unwrap();
-        let alone = run_rules_versioned(&file, repo, &[]).runs;
+        let alone = run_rules_versioned_at(&file, repo, &[], None).runs;
         assert_eq!(alone.len(), 1);
         assert_eq!(grouped[index].rule, file.rules[0].id);
         assert_eq!(grouped[index].rule, alone[0].rule);

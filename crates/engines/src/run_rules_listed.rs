@@ -22,11 +22,15 @@ const NO_FILE_MATCH_WHY: &str = "its paths match no file in the rule file's fold
 /// 2. with a listing, a rule that `no_file_match` says matches none of the files: no findings, no count, `no_files`
 ///    set to `NO_FILE_MATCH_WHY`; with no listing no rule is settled so. Inside `hits`, `engine_hits` then settles
 ///    a ShellCheck rule with no script in its paths as `Stop::NoFiles`, listing the scripts before availability;
+/// 2b. inside `hits`, a rule with `only_with_base` and no `host.base`: `engine_hits` gives it `Stop::NotAvailable`
+///    with `ONLY_WITH_BASE_WHY`, so its run is `NotAvailable` with cause `Other` and no count;
 /// 3. an engine that is not available, inside `hits`;
 /// 4. the run, inside `hits`.
 ///
 /// Nothing runs or is looked up for a rule settled by 1 or by `no_file_match`, not even its engine's availability,
-/// and it joins no shared group, so no shared run's union holds its check. The other rules are split into groups that
+/// and it joins no shared group, so no shared run's union holds its check. A rule settled inside `hits` before
+/// its check runs (ShellCheck's no script, 2b, 3) never runs its check, and its check is never put in a shared run:
+/// `run_group`'s probe pass stops it before its check run. The other rules are split into groups that
 /// can share one engine run (`shared_groups`): a group of one runs alone through `hits` with `host`, its count read
 /// from `host.raw_chars`, cleared before it runs; a larger group runs through `run_group`, which gives `hits` each
 /// rule's own host. Each rule's flow result becomes its run through `rule_run_of`.

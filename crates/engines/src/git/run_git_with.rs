@@ -40,6 +40,8 @@ pub(crate) fn run_git_with(
             param_failed(ParamError::Bad { name: "params".to_string(), why: "not a table of named params".to_string() })
         })?;
     let ratio = read_test_ratio(&params).map_err(param_failed)?;
+    // No base: the only stop for a rule without the only_with_base mark, since engine_hits_with settles a marked
+    // rule with no base before this flow.
     let Some(base) = host.base else {
         return Err(Stop::NotAvailable { why: ONLY_WITH_BASE_WHY.to_string() });
     };

@@ -1,4 +1,5 @@
-//! ZUT for run_group.rs: ruff rules of one group sharing one fake check run. The host is fake, so no engine runs,
+//! ZUT for run_group.rs: ruff rules of one group sharing one fake check run, a rule marked `only_with_base` with no
+//! base kept out of it. The host is fake, so no engine runs,
 //! and the ruff flow reads no file, so the rule file's folder is a path that need not exist.
 
 use crate::host::Host;
@@ -36,6 +37,12 @@ id = "newer"
 engine = "ruff"
 check = "ZZZ999"
 fix = "n"
+[[rule]]
+id = "base-only"
+engine = "ruff"
+check = "E711"
+only_with_base = true
+fix = "b"
 "#;
 
 /// 262 characters: an E711 hit in a.py, F401 hits in a.py and src/b.py.
@@ -191,4 +198,23 @@ fn an_engine_not_available_runs_nothing() {
         rule_run("none-compare", absent("none-compare"), None).with_cause(NotAvailableCause::EngineNotOnPath),
         rule_run("unused", absent("unused"), None).with_cause(NotAvailableCause::EngineNotOnPath),
     ]);
+}
+
+/// `shares_with` ignores `only_with_base`, so the marked E711 rule shares a group with the unmarked F401 rule; with no
+/// base it stops before its check run, which then selects F401 alone.
+#[test]
+fn a_rule_marked_only_with_base_with_no_base_stays_out_of_the_shared_run() {
+    let ran = RefCell::new(Vec::new());
+    let run = |cmd: &Cmd| {
+        ran.borrow_mut().push(cmd.args.iter().map(|arg| arg.to_string_lossy().into_owned()).collect::<Vec<_>>());
+        ok(1, BOTH, "")
+    };
+    let got = grouped(&["base-only", "unused"], &run, true);
+    let why = "reports only what a change adds; run with --base";
+    assert_eq!(got, vec![
+        rule_run("base-only", RuleOutcome::NotAvailable { rule: "base-only".into(), engine: Engine::Ruff, why: why.into() }, None)
+            .with_cause(NotAvailableCause::Other),
+        rule_run("unused", RuleOutcome::Findings(vec![finding("unused", "src/b.py", (3, 8), "unused b", "g")]), Some(262)),
+    ]);
+    assert_eq!(ran.into_inner(), vec![vec!["check", "--no-cache", "--output-format", "json", "--select=F401", "."]]);
 }

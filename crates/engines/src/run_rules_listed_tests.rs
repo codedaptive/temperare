@@ -276,6 +276,32 @@ fn each_not_available_cause_and_no_cause_on_another_outcome() {
 }
 
 #[test]
+fn base_contract_run_rules_listed() {
+    let text = "version = 1\n[[rule]]\nid = \"r\"\nengine = \"ruff\"\ncheck = \"E711\"\nfix = \"f\"\nonly_with_base = true\n";
+    let file = RuleFile::parse(text, Path::new(".")).unwrap();
+    let seen = RefCell::new(Vec::new());
+    let on_path = |program: &str| {
+        seen.borrow_mut().push(format!("lookup {program}"));
+        true
+    };
+    let run = |cmd: &Cmd| {
+        seen.borrow_mut().push(format!("run {}", cmd.program.to_string_lossy()));
+        ok(0, "[]")
+    };
+    let host = Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None), base: None };
+    let got = run_rules_listed(&file, Ok(Path::new(FOLDER)), &[], &host, &[], None, &crate::engine_hits::engine_hits);
+    let expected = RuleRun::new(
+        "r".into(), Engine::Ruff,
+        RuleOutcome::NotAvailable {
+            rule: "r".into(), engine: Engine::Ruff,
+            why: "reports only what a change adds; run with --base".into(),
+        }, None,
+    ).with_cause(NotAvailableCause::Other);
+    assert_eq!(got, vec![expected]);
+    assert_eq!(*seen.borrow(), Vec::<String>::new());
+}
+
+#[test]
 fn a_bad_count_param_with_ast_grep_absent_is_failed_not_not_available() {
     let text = "version = 1\n[[rule]]\nid = \"r\"\nengine = \"ast-grep\"\ncheck = \"names.yml\"\npaths = [\"src/**\"]\nparams = { count = \"wrong\" }\nfix = \"f\"\n";
     let file = RuleFile::parse(text, Path::new(".")).unwrap();
