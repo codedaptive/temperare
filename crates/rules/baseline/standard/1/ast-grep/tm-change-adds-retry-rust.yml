@@ -1,0 +1,38 @@
+id: tm-change-adds-retry-rust
+language: rust
+message: this change adds a retry
+severity: warning
+utils:
+  retry-name:
+    any:
+      - kind: identifier
+      - kind: field_identifier
+    regex: (?i)retr(y|ies|ying)|attempt
+  counts-retries:
+    kind: compound_assignment_expr
+    regex: (?i)^[\w.]*(retr(y|ies|ying)|attempt)\w*\s*\+=\s*1$
+rule:
+  any:
+    - kind: call_expression
+      has:
+        field: function
+        regex: ^((backoff|retry)(::future)?::)?retry(_notify)?$
+    - kind: attribute_item
+      regex: ^#\[\s*(\w+::)*retry\b
+    - kind: for_expression
+      any:
+        - has: { kind: label, regex: (?i)retr(y|ies|ying)|attempt }
+        - has: { field: pattern, regex: (?i)retr(y|ies|ying)|attempt }
+    - kind: while_expression
+      any:
+        - has: { kind: label, regex: (?i)retr(y|ies|ying)|attempt }
+        - has:
+            field: condition
+            any:
+              - matches: retry-name
+              - has: { matches: retry-name, stopBy: end }
+        - has: { field: body, has: { matches: counts-retries, stopBy: end } }
+    - kind: loop_expression
+      any:
+        - has: { kind: label, regex: (?i)retr(y|ies|ying)|attempt }
+        - has: { field: body, has: { matches: counts-retries, stopBy: end } }

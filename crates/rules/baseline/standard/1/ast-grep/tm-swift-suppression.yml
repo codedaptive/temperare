@@ -1,0 +1,9 @@
+id: tm-swift-suppression
+language: swift
+message: "a suppression written in the code: swiftlint:disable silences a SwiftLint rule here"
+severity: warning
+rule:
+  any:
+    - kind: comment
+    - kind: multiline_comment
+  regex: \bswiftlint:disable\b

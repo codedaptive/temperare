@@ -18,6 +18,7 @@ const TEXT: &str = "version = 1\n\
 const NAMED: BaselineSet = BaselineSet {
     name: "house",
     version: 2,
+    ready: true,
     text: TEXT,
     yaml: &[("a.yml", "rule: a\n")],
     cases: &[
@@ -41,8 +42,8 @@ fn unnamed(what: &str, list: &str) -> Problem {
         col: 1,
         what: what.to_string(),
         fix: format!(
-            "Remove it from the set's {list} in EMBEDDED_SETS and from crates/rules/baseline/house/2/, or name it in a \
-             rule."
+            "Remove it from the set's {list} in crates/rules/src/rule_file/house_2.rs and from \
+             crates/rules/baseline/house/2/, or name it in a rule."
         ),
     }
 }

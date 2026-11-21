@@ -1,0 +1,23 @@
+id: tm-house-test-setup-heavier-rust
+language: rust
+message: this test file holds more lines of setup than of tests
+severity: warning
+utils:
+  test-attribute:
+    kind: attribute_item
+    regex: '^#\[(\w+::)*test\b'
+  # Attributes and comments: what may stand between a function and the attributes in front of it.
+  attached:
+    any: [{ kind: attribute_item }, { kind: line_comment }, { kind: block_comment }]
+  # A function marked #[test] or #[<runtime>::test]: its attributes are siblings before it.
+  test-function:
+    kind: function_item
+    follows: { matches: test-attribute, stopBy: { not: { matches: attached } } }
+rule:
+  # The file's root node, so the count reads the file's last line from its range; then the test functions,
+  # with the attributes in front of each, so those lines count as test. Every other line is setup.
+  any:
+    - kind: source_file
+    - matches: test-function
+    - kind: attribute_item
+      precedes: { matches: test-function, stopBy: { not: { matches: attached } } }

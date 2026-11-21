@@ -7,8 +7,8 @@ use crate::Problem;
 use toml::de::DeTable;
 
 /// The sets of `sets` that `baseline = ["name@version", ...]` takes, in file order, each with the byte offset of its
-/// entry string; absent is none. An entry that is malformed, names no set or version in `sets`, or names a set an
-/// earlier entry already took is a Problem at the entry and is left out.
+/// entry string; absent is none. An entry that is malformed, names no set or version in `sets`, names a set an
+/// earlier entry already took, or names a set that is not ready is a Problem at the entry and is left out.
 pub(crate) fn read_baseline<'a>(
     text: &str,
     root: &DeTable,
@@ -26,7 +26,7 @@ pub(crate) fn read_baseline<'a>(
 }
 
 /// The set `entry` names, or the Problem's what and fix. The checks run in a fixed order (malformed, unknown set,
-/// unknown version, taken twice) so an entry gets the first thing wrong with it.
+/// unknown version, taken twice, not ready) so an entry gets the first thing wrong with it.
 fn take<'a>(
     entry: &str,
     sets: &'a [BaselineSet],
@@ -55,6 +55,13 @@ fn take<'a>(
     };
     if taken.iter().any(|(earlier, _)| earlier.name == name) {
         return Err((format!("baseline set \"{name}\" is taken twice"), "Take each set once, at one version.".to_string()));
+    }
+    if !set.ready {
+        let id = format!("{}@{}", set.name, set.version);
+        return Err((
+            format!("{id} is not ready in this build: its rules are not yet proven"),
+            format!("remove {id} from baseline"),
+        ));
     }
     Ok(set)
 }

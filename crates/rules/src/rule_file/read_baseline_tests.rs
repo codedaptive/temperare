@@ -7,9 +7,10 @@ use toml::de::DeTable;
 
 /// Out of name and version order on purpose, so the sorted lists in the fixes are the code's doing.
 const SETS: &[BaselineSet] = &[
-    BaselineSet { name: "standard", version: 2, text: "version = 1\n# s2\n", yaml: &[], cases: &[] },
-    BaselineSet { name: "standard", version: 1, text: "version = 1\n# s1\n", yaml: &[], cases: &[] },
-    BaselineSet { name: "house", version: 1, text: "version = 1\n# h1\n", yaml: &[], cases: &[] },
+    BaselineSet { name: "standard", version: 2, ready: true, text: "version = 1\n# s2\n", yaml: &[], cases: &[] },
+    BaselineSet { name: "standard", version: 1, ready: true, text: "version = 1\n# s1\n", yaml: &[], cases: &[] },
+    BaselineSet { name: "house", version: 1, ready: true, text: "version = 1\n# h1\n", yaml: &[], cases: &[] },
+    BaselineSet { name: "house", version: 2, ready: false, text: "version = 1\n# h2\n", yaml: &[], cases: &[] },
 ];
 const STANDARD_2: &BaselineSet = &SETS[0];
 const STANDARD_1: &BaselineSet = &SETS[1];
@@ -116,5 +117,21 @@ fn a_set_taken_twice_is_a_problem_at_the_second_entry() {
     assert_eq!(
         out,
         vec![problem(1, 27, "baseline set \"standard\" is taken twice", "Take each set once, at one version.")]
+    );
+}
+
+#[test]
+fn a_set_not_ready_is_a_problem_naming_it_and_keeps_the_others() {
+    // `baseline = [` is 12 bytes; `"house@2", ` is 11 more, so "standard@1" starts at 23.
+    let (taken, out) = read("baseline = [\"house@2\", \"standard@1\"]\n");
+    assert_eq!(taken, vec![(STANDARD_1, 23)]);
+    assert_eq!(
+        out,
+        vec![problem(
+            1,
+            13,
+            "house@2 is not ready in this build: its rules are not yet proven",
+            "remove house@2 from baseline"
+        )]
     );
 }

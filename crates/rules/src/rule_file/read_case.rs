@@ -82,7 +82,7 @@ fn case_files(
                 format!("case file \"{file}\" of baseline rule \"{id}\" is not carried by baseline set {name}@{version}"),
                 &format!(
                     "Put it at crates/rules/baseline/{name}/{version}/cases/{id}/{kind}/{file} and list it in the \
-                     set's cases in EMBEDDED_SETS, or correct files."
+                     set's cases in crates/rules/src/rule_file/{name}_{version}.rs, or correct files."
                 ),
             ));
             continue;

@@ -1,0 +1,9 @@
+id: tm-change-adds-wider-catch-javascript
+language: javascript
+message: this change adds a wider catch
+severity: warning
+rule:
+  kind: catch_clause
+  has:
+    field: body
+    regex: ^\{(\s|//[^\n]*|/\*[^*]*\*+(?:[^/*][^*]*\*+)*/)*\}(\s|//[^\n]*|/\*[^*]*\*+(?:[^/*][^*]*\*+)*/)*$

@@ -1,0 +1,9 @@
+id: tm-change-adds-sleep-swift
+language: swift
+message: this change adds a sleep
+severity: warning
+rule:
+  kind: call_expression
+  has:
+    kind: navigation_expression
+    regex: ^(Thread|Task)\.sleep$

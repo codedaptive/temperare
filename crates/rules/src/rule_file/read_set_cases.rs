@@ -60,7 +60,7 @@ fn case(
             format!("baseline rule \"{id}\" has no {kind} case"),
             &format!(
                 "Add {shape} to the rule, and put its files in crates/rules/baseline/{name}/{version}/cases/{id}/{kind}/, \
-                 listed in the set's cases in EMBEDDED_SETS."
+                 listed in the set's cases in crates/rules/src/rule_file/{name}_{version}.rs."
             ),
         ));
         return None;

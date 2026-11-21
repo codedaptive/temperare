@@ -1,0 +1,50 @@
+id: tm-house-test-asserts-sentence-swift
+language: swift
+message: this test asserts a sentence of five words or more
+severity: warning
+utils:
+  # A string literal whose text splits on whitespace into five or more words (a closing quote alone is no word).
+  sentence:
+    any: [{ kind: line_string_literal }, { kind: multi_line_string_literal }, { kind: raw_string_literal }]
+    regex: '^#*"+\s*\S*[^\s"#]\S*(\s+\S*[^\s"#]\S*){4}'
+  # What is asserted: the sentence itself, or an == / != comparison with the sentence as an operand. With a
+  # literal on its left, tree-sitter-swift reads != as an infix_expression with a custom_operator.
+  asserted:
+    any:
+      - matches: sentence
+      - kind: equality_expression
+        has: { matches: sentence }
+      - kind: infix_expression
+        all:
+          - has: { field: op, regex: ^(==|!=)$ }
+          - has: { matches: sentence }
+  first-asserted:
+    kind: value_argument
+    nthChild: 1
+    has: { field: value, matches: asserted }
+rule:
+  any:
+    # #expect(<condition>, <comment>): only the condition.
+    - kind: macro_invocation
+      all:
+        - has: { kind: simple_identifier, regex: ^expect$ }
+        - has: { kind: call_suffix, has: { kind: value_arguments, has: { matches: first-asserted } } }
+    # XCTAssert*(first, second, message): the first argument, and the second only for the assertions that compare
+    # two values (Equal, Identical, GreaterThan, LessThan and their negations or OrEqual forms). Every other
+    # XCTAssert* except EqualWithAccuracy and NotEqualWithAccuracy takes one value (XCTAssert, True, False, Nil,
+    # NotNil, NoThrow, ThrowsError), so its second argument is the message; the WithAccuracy forms' second argument
+    # is a number, never a sentence, so it is not judged.
+    - kind: call_expression
+      all:
+        - has: { kind: simple_identifier, regex: '^XCTAssert\w*$' }
+        - any:
+            - has: { kind: call_suffix, has: { kind: value_arguments, has: { matches: first-asserted } } }
+            - all:
+                - has:
+                    kind: simple_identifier
+                    regex: '^XCTAssert(Equal|NotEqual|Identical|NotIdentical|GreaterThan|GreaterThanOrEqual|LessThan|LessThanOrEqual)$'
+                - has:
+                    kind: call_suffix
+                    has:
+                      kind: value_arguments
+                      has: { kind: value_argument, nthChild: 2, has: { field: value, matches: sentence } }

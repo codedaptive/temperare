@@ -187,9 +187,10 @@ fn broken_file_reports_every_problem_with_its_line() {
 fn baseline_sets_keep_own_rule_and_exception() {
     let tmp = TempFolder::new("baseline-own");
     let path = tmp.0.join("temperare.toml");
-    fs::write(&path, "version = 1\nbaseline = [\"standard@1\", \"house@1\"]\n\n[[rule]]\nid = \"own-rule\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"Fix it.\"\n\n[[exception]]\nrule = \"own-rule\"\npath = \"a.rs\"\nreason = \"legacy\"\napproved = \"reviewer\"\n").unwrap();
-    let file = RuleFile::read(&path).expect("known empty baseline sets and an own rule should read");
-    assert_eq!(file.rules.iter().map(|rule| rule.id.as_str()).collect::<Vec<_>>(), vec!["own-rule"]);
+    fs::write(&path, "version = 1\nbaseline = [\"standard@1\"]\n\n[[rule]]\nid = \"own-rule\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"Fix it.\"\n\n[[exception]]\nrule = \"own-rule\"\npath = \"a.rs\"\nreason = \"legacy\"\napproved = \"reviewer\"\n").unwrap();
+    let file = RuleFile::read(&path).expect("standard@1 and an own rule should read");
+    let ids: Vec<&str> = file.rules.iter().map(|rule| rule.id.as_str()).collect();
+    assert_eq!((ids.len(), ids.first(), ids.last()), (54, Some(&"tm-rust-dead-code"), Some(&"own-rule")));
     assert_eq!(file.exceptions.iter().map(|exception| exception.rule.as_str()).collect::<Vec<_>>(), vec!["own-rule"]);
 }
 

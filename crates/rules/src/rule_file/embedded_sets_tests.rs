@@ -3,9 +3,9 @@
 use super::embedded_sets::EMBEDDED_SETS;
 
 #[test]
-fn the_released_sets_are_house_1_and_standard_1() {
-    let ids: Vec<(&str, u32)> = EMBEDDED_SETS.iter().map(|set| (set.name, set.version)).collect();
-    assert_eq!(ids, vec![("house", 1), ("standard", 1)]);
+fn the_released_sets_are_house_1_not_ready_and_standard_1_ready() {
+    let ids: Vec<(&str, u32, bool)> = EMBEDDED_SETS.iter().map(|set| (set.name, set.version, set.ready)).collect();
+    assert_eq!(ids, vec![("house", 1, false), ("standard", 1, true)]);
 }
 
 #[test]

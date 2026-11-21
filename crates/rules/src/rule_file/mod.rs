@@ -1,7 +1,13 @@
 //! The rule file: reading and checking it, the baseline sets it takes with its overrides of them, and the exceptions it grants.
+//!
+//! Past 150 lines on purpose: as a bridge file (small-files rule 4) it holds one `mod` line for each file in the
+//! folder (`#[cfg(test)]` on the tests files) and the `pub use` lines, and splitting it would mean sub-folders, churn
+//! with no gain.
 
 mod apply_override;
+mod baseline_rules;
 mod baseline_set;
+mod baseline_sets;
 mod baseline_set_case_for;
 mod baseline_set_yaml_for;
 mod bool_value;
@@ -19,6 +25,7 @@ mod check_version;
 mod date_value;
 mod embedded_sets;
 mod engine_value;
+mod house_1;
 mod kind_value;
 mod kit;
 mod kit_holds;
@@ -51,6 +58,7 @@ mod rule_file_rules_in_order;
 mod rule_file_rules_of_kind;
 mod scope_or_problem;
 mod severity_value;
+mod standard_1;
 mod string_list;
 mod string_value;
 mod syntax_problem;
@@ -59,7 +67,11 @@ mod wrong_type;
 #[cfg(test)]
 mod apply_override_tests;
 #[cfg(test)]
+mod baseline_rules_tests;
+#[cfg(test)]
 mod baseline_set_tests;
+#[cfg(test)]
+mod baseline_sets_tests;
 #[cfg(test)]
 mod baseline_set_case_for_tests;
 #[cfg(test)]
@@ -94,6 +106,8 @@ mod date_value_tests;
 mod embedded_sets_tests;
 #[cfg(test)]
 mod engine_value_tests;
+#[cfg(test)]
+mod house_1_tests;
 #[cfg(test)]
 mod kind_value_tests;
 #[cfg(test)]
@@ -137,6 +151,8 @@ mod scope_or_problem_tests;
 #[cfg(test)]
 mod severity_value_tests;
 #[cfg(test)]
+mod standard_1_tests;
+#[cfg(test)]
 mod string_list_tests;
 #[cfg(test)]
 mod string_value_tests;
@@ -171,5 +187,7 @@ mod rule_file_rules_of_kind_tests;
 #[cfg(test)]
 mod rule_file_tests;
 
+pub use baseline_rules::baseline_rules;
+pub use baseline_sets::baseline_sets;
 pub use kit::Kit;
 pub use rule_file::RuleFile;

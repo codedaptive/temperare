@@ -1,0 +1,7 @@
+id: tm-change-adds-weaker-assertion-python
+language: python
+message: this change adds a weaker assertion
+severity: warning
+rule:
+  kind: assert_statement
+  has: { kind: "true", nthChild: 1 }

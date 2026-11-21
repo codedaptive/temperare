@@ -4,6 +4,6 @@ mod rule_file;
 mod scope;
 mod types;
 
-pub use rule_file::{Kit, RuleFile};
+pub use rule_file::{Kit, RuleFile, baseline_rules, baseline_sets};
 pub use scope::{Date, Exception, Rule, Scope};
 pub use types::{CaseFile, Engine, ExpectedFinding, Finding, Kind, Problem, RelPath, RuleCases, RuleOutcome, Severity};

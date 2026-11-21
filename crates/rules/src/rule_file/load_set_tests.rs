@@ -16,7 +16,7 @@ const CASES_A: &[(&str, &str)] = &[("cases/tm-a/failing/a.rs", "x\n"), ("cases/t
 
 /// The set `test@1` with `text`, carrying `cases` and no YAML.
 fn set(text: &'static str, cases: &'static [(&'static str, &'static str)]) -> BaselineSet {
-    BaselineSet { name: "test", version: 1, text, yaml: &[], cases }
+    BaselineSet { name: "test", version: 1, ready: true, text, yaml: &[], cases }
 }
 
 fn problem(line: usize, col: usize, what: &str, fix: &str) -> Problem {
@@ -35,13 +35,13 @@ fn problems_carrying(text: &'static str, cases: &'static [(&'static str, &'stati
 const RETIRED_FIX: &str = "Take the rule out of the set, or out of retired: an id is never reused.";
 const PREFIX_FIX: &str = "Start every baseline rule's id with \"tm-\".";
 
+/// Each set's rules are its own tests' to check (house_1_tests, standard_1_tests).
 #[test]
-fn every_embedded_set_loads_with_no_rules_and_no_retired_ids() {
+fn every_embedded_set_loads_clean_with_no_retired_ids() {
     for embedded in EMBEDDED_SETS {
         let name = format!("{}@{}", embedded.name, embedded.version);
-        let (rules, retired) = load_set(embedded).unwrap_or_else(|p| panic!("{name} has problems: {p:?}"));
-        let ids: Vec<String> = rules.into_iter().map(|rule| rule.id).collect();
-        assert_eq!((ids, retired), (Vec::<String>::new(), Vec::<String>::new()), "{name}");
+        let (_, retired) = load_set(embedded).unwrap_or_else(|p| panic!("{name} has problems: {p:?}"));
+        assert_eq!(retired, Vec::<String>::new(), "{name}");
     }
 }
 
@@ -128,7 +128,8 @@ fn an_ast_grep_rule_whose_yaml_the_set_does_not_carry_is_a_problem_sorted_with_t
             7,
             9,
             "check \"a.yml\" names a YAML file that baseline set test@1 does not carry",
-            "Put a.yml in crates/rules/baseline/test/1/ and list it in the set's yaml in EMBEDDED_SETS, or correct check.",
+            "Put a.yml in crates/rules/baseline/test/1/ and list it in the set's yaml in \
+             crates/rules/src/rule_file/test_1.rs, or correct check.",
         ),
     ];
     assert_eq!(problems_carrying(text, CASES_A), expected);
@@ -138,6 +139,7 @@ fn an_ast_grep_rule_whose_yaml_the_set_does_not_carry_is_a_problem_sorted_with_t
 const CARRIED: BaselineSet = BaselineSet {
     name: "test",
     version: 1,
+    ready: true,
     text: "version = 1\n[[rule]]\nid = \"tm-a\"\nengine = \"ast-grep\"\ncheck = \"rust/a.yml\"\nfix = \"f\"\n\
            failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n\
            [[rule]]\nid = \"tm-c\"\nengine = \"clippy\"\ncheck = \"rust/a.yml\"\nfix = \"f\"\n\
@@ -166,6 +168,7 @@ fn an_ast_grep_rule_comes_back_with_the_carried_yaml_and_a_clippy_rule_with_none
 const CASED: BaselineSet = BaselineSet {
     name: "test",
     version: 1,
+    ready: true,
     text: "version = 1\n[[rule]]\nid = \"tm-a\"\nengine = \"ruff\"\ncheck = \"E1\"\nfix = \"f\"\n\
            failing = { files = [\"src/lib.rs\", \"Cargo.toml\"], path = \"src/lib.rs\", line = 3 }\n\
            passing = { files = [\"src/lib.rs\"] }\n\
@@ -219,14 +222,14 @@ fn case_problems_come_back_sorted_with_the_others() {
             1,
             "baseline rule \"tm-a\" has no passing case",
             "Add passing = { files = [...] } to the rule, and put its files in crates/rules/baseline/test/1/cases/tm-a/\
-             passing/, listed in the set's cases in EMBEDDED_SETS.",
+             passing/, listed in the set's cases in crates/rules/src/rule_file/test_1.rs.",
         ),
         problem(
             8,
             22,
             "case file \"gone.rs\" of baseline rule \"tm-a\" is not carried by baseline set test@1",
             "Put it at crates/rules/baseline/test/1/cases/tm-a/failing/gone.rs and list it in the set's cases in \
-             EMBEDDED_SETS, or correct files.",
+             crates/rules/src/rule_file/test_1.rs, or correct files.",
         ),
     ];
     assert_eq!(problems(text), expected);
@@ -245,6 +248,7 @@ fn a_syntax_error_is_one_problem_at_its_position() {
 const SPARE: BaselineSet = BaselineSet {
     name: "test",
     version: 1,
+    ready: true,
     text: "version = 1\ncolour = 1\n[[rule]]\nid = \"tm-a\"\nengine = \"ruff\"\ncheck = \"E1\"\nfix = \"f\"\n\
            failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
     yaml: &[("spare.yml", "rule: spare\n")],
@@ -262,13 +266,15 @@ fn every_carried_file_no_rule_names_is_a_problem_at_1_1_sorted_first() {
             1,
             1,
             "baseline set test@1 carries case file \"cases/tm-a/failing/spare.rs\" that no rule names",
-            "Remove it from the set's cases in EMBEDDED_SETS and from crates/rules/baseline/test/1/, or name it in a rule.",
+            "Remove it from the set's cases in crates/rules/src/rule_file/test_1.rs and from \
+             crates/rules/baseline/test/1/, or name it in a rule.",
         ),
         problem(
             1,
             1,
             "baseline set test@1 carries YAML file \"spare.yml\" that no rule names",
-            "Remove it from the set's yaml in EMBEDDED_SETS and from crates/rules/baseline/test/1/, or name it in a rule.",
+            "Remove it from the set's yaml in crates/rules/src/rule_file/test_1.rs and from \
+             crates/rules/baseline/test/1/, or name it in a rule.",
         ),
         problem(2, 1, "unknown key `colour` in the top level", "Remove it, or use one of: version, rule, retired."),
     ];

@@ -10,6 +10,7 @@ use toml::de::DeTable;
 const SET: BaselineSet = BaselineSet {
     name: "house",
     version: 2,
+    ready: true,
     text: "",
     yaml: &[],
     cases: &[
@@ -102,13 +103,13 @@ fn every_file_the_set_does_not_carry_is_a_problem_at_its_entry() {
             36,
             "case file \"gone.rs\" of baseline rule \"tm-a\" is not carried by baseline set house@2",
             "Put it at crates/rules/baseline/house/2/cases/tm-a/failing/gone.rs and list it in the set's cases in \
-             EMBEDDED_SETS, or correct files.",
+             crates/rules/src/rule_file/house_2.rs, or correct files.",
         ),
         problem(
             47,
             "case file \"src/main.rs\" of baseline rule \"tm-a\" is not carried by baseline set house@2",
             "Put it at crates/rules/baseline/house/2/cases/tm-a/failing/src/main.rs and list it in the set's cases in \
-             EMBEDDED_SETS, or correct files.",
+             crates/rules/src/rule_file/house_2.rs, or correct files.",
         ),
     ];
     assert_eq!(read(text, "failing"), (None, expected));
@@ -120,7 +121,7 @@ fn a_passing_file_carried_only_under_failing_is_not_carried() {
         22,
         "case file \"Cargo.toml\" of baseline rule \"tm-a\" is not carried by baseline set house@2",
         "Put it at crates/rules/baseline/house/2/cases/tm-a/passing/Cargo.toml and list it in the set's cases in \
-         EMBEDDED_SETS, or correct files.",
+         crates/rules/src/rule_file/house_2.rs, or correct files.",
     );
     assert_eq!(read("passing = { files = [\"Cargo.toml\"] }", "passing"), (None, vec![expected]));
 }
@@ -165,7 +166,7 @@ fn every_problem_of_a_case_is_reported() {
             22,
             "case file \"gone.rs\" of baseline rule \"tm-a\" is not carried by baseline set house@2",
             "Put it at crates/rules/baseline/house/2/cases/tm-a/failing/gone.rs and list it in the set's cases in \
-             EMBEDDED_SETS, or correct files.",
+             crates/rules/src/rule_file/house_2.rs, or correct files.",
         ),
         problem(11, "failing is missing `path`", "Add `path = \"...\"` to this failing."),
         problem(
@@ -231,7 +232,7 @@ fn a_failing_path_listed_but_not_carried_is_only_the_not_carried_problem() {
         36,
         "case file \"gone.rs\" of baseline rule \"tm-a\" is not carried by baseline set house@2",
         "Put it at crates/rules/baseline/house/2/cases/tm-a/failing/gone.rs and list it in the set's cases in \
-         EMBEDDED_SETS, or correct files.",
+         crates/rules/src/rule_file/house_2.rs, or correct files.",
     );
     assert_eq!(read(text, "failing"), (None, vec![expected]));
 }
@@ -258,7 +259,7 @@ fn every_repeated_file_is_a_problem_at_the_repeat_and_only_the_first_is_looked_u
             36,
             "case file \"gone.rs\" of baseline rule \"tm-a\" is not carried by baseline set house@2",
             "Put it at crates/rules/baseline/house/2/cases/tm-a/passing/gone.rs and list it in the set's cases in \
-             EMBEDDED_SETS, or correct files.",
+             crates/rules/src/rule_file/house_2.rs, or correct files.",
         ),
         problem(
             47,

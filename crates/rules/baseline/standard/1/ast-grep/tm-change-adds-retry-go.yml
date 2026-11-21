@@ -1,0 +1,38 @@
+id: tm-change-adds-retry-go
+language: go
+message: this change adds a retry
+severity: warning
+utils:
+  retry-name:
+    any:
+      - kind: identifier
+      - kind: field_identifier
+    regex: (?i)retr(y|ies|ying)|attempt
+rule:
+  any:
+    - kind: call_expression
+      has:
+        field: function
+        regex: ^(retry\.(Do\w*|RetryOnConflict|OnError)|backoff\.Retry\w*)$
+    - kind: for_statement
+      any:
+        - inside: { kind: labeled_statement, has: { field: label, regex: (?i)retr(y|ies|ying)|attempt } }
+        - has: { kind: range_clause, has: { field: left, has: { matches: retry-name, stopBy: end } } }
+        - has:
+            all:
+              - not: { kind: block }
+              - not: { kind: range_clause }
+            any:
+              - matches: retry-name
+              - has: { matches: retry-name, stopBy: end }
+        - all:
+            - not: { has: { kind: range_clause } }
+            - has:
+                field: body
+                has:
+                  any:
+                    - kind: inc_statement
+                      regex: (?i)^[\w.]*(retr(y|ies|ying)|attempt)\w*\s*\+\+$
+                    - kind: assignment_statement
+                      regex: (?i)^[\w.]*(retr(y|ies|ying)|attempt)\w*\s*\+=\s*1$
+                  stopBy: end

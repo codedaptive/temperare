@@ -1,0 +1,17 @@
+id: tm-house-test-setup-heavier-python
+language: python
+message: this test file holds more lines of setup than of tests
+severity: warning
+utils:
+  test-function:
+    kind: function_definition
+    has: { field: name, regex: ^test }
+rule:
+  # The file's root node, so the count reads the file's last line from its range; then the test functions
+  # and methods (def test…), with their decorators, so those lines count as test. Every other line is setup.
+  any:
+    - kind: module
+    - kind: decorated_definition
+      has: { field: definition, matches: test-function }
+    - matches: test-function
+      not: { inside: { kind: decorated_definition } }

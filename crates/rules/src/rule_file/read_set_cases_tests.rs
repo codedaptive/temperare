@@ -8,6 +8,7 @@ use toml::de::DeTable;
 const SET: BaselineSet = BaselineSet {
     name: "house",
     version: 2,
+    ready: true,
     text: "",
     yaml: &[],
     cases: &[
@@ -56,7 +57,8 @@ fn missing_failing(line: usize) -> Problem {
         col: 1,
         what: "baseline rule \"tm-b\" has no failing case".to_string(),
         fix: "Add failing = { files = [...], path = \"...\", line = N } to the rule, and put its files in \
-              crates/rules/baseline/house/2/cases/tm-b/failing/, listed in the set's cases in EMBEDDED_SETS."
+              crates/rules/baseline/house/2/cases/tm-b/failing/, listed in the set's cases in \
+              crates/rules/src/rule_file/house_2.rs."
             .to_string(),
     }
 }
@@ -68,7 +70,7 @@ fn missing_passing(line: usize, id: &str) -> Problem {
         what: format!("baseline rule \"{id}\" has no passing case"),
         fix: format!(
             "Add passing = {{ files = [...] }} to the rule, and put its files in crates/rules/baseline/house/2/cases/\
-             {id}/passing/, listed in the set's cases in EMBEDDED_SETS."
+             {id}/passing/, listed in the set's cases in crates/rules/src/rule_file/house_2.rs."
         ),
     }
 }
@@ -119,7 +121,7 @@ fn a_problem_in_a_case_leaves_its_rule_out() {
         col: 22,
         what: "case file \"gone.rs\" of baseline rule \"tm-b\" is not carried by baseline set house@2".to_string(),
         fix: "Put it at crates/rules/baseline/house/2/cases/tm-b/passing/gone.rs and list it in the set's cases in \
-              EMBEDDED_SETS, or correct files."
+              crates/rules/src/rule_file/house_2.rs, or correct files."
             .to_string(),
     };
     assert_eq!(read(&text), (vec![cases_a()], vec![expected]));

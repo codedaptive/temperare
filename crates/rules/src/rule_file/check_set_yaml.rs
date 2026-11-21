@@ -29,8 +29,8 @@ pub(crate) fn check_set_yaml(text: &str, root: &DeTable, set: &BaselineSet, out:
             check.span().start,
             format!("check \"{path}\" names a YAML file that baseline set {name}@{version} does not carry"),
             &format!(
-                "Put {path} in crates/rules/baseline/{name}/{version}/ and list it in the set's yaml in EMBEDDED_SETS, \
-                 or correct check."
+                "Put {path} in crates/rules/baseline/{name}/{version}/ and list it in the set's yaml in \
+                 crates/rules/src/rule_file/{name}_{version}.rs, or correct check."
             ),
         ));
     }

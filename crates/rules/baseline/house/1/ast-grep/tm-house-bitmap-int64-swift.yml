@@ -1,0 +1,41 @@
+# A bitmap stored on a listed entity type as anything but Int64 (entity-style: "ALWAYS `Int64`, never `Int` or
+# `Int32`"; bitmap-patterns-core: "ALWAYS use `Int64` — never `Int`, never `Int32`."). {{entity_types}} comes from the rule's entity_types param. A bitmap is a stored
+# property whose name ends in Bitmap or Flags after at least one more character (operationalBitmap, entityFlags).
+# Int64? is reported too: a bitmap's column is NOT NULL with a default, so the field is never optional. static and
+# class members and computed properties are not stored. Each match is anchored to the type's own body, as in
+# tm-house-no-stored-bool-swift. $FOUND is the annotated type, without its colon.
+id: tm-house-bitmap-int64-swift
+language: swift
+message: bitmap $TYPE.$FIELD on a persisted entity is $FOUND, not Int64
+severity: error
+rule:
+  kind: property_declaration
+  has:
+    kind: type_annotation
+    has:
+      field: name
+      pattern: $FOUND
+      not:
+        regex: ^(Swift\.)?Int64$
+  all:
+    - has:
+        field: name
+        regex: '[A-Za-z0-9](Bitmap|Flags)$'
+        pattern: $FIELD
+  not:
+    any:
+      - has:
+          kind: computed_property
+      - has:
+          kind: modifiers
+          has:
+            kind: property_modifier
+            regex: ^(static|class)$
+  inside:
+    kind: class_body
+    inside:
+      kind: class_declaration
+      has:
+        field: name
+        regex: ^({{entity_types}})$
+        pattern: $TYPE

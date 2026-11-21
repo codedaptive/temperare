@@ -1,0 +1,7 @@
+id: tm-go-suppression
+language: go
+message: "a suppression written in the code: a nolint comment silences a linter here"
+severity: warning
+rule:
+  kind: comment
+  regex: \bnolint\b
