@@ -4,7 +4,7 @@
 use super::Engine;
 use serde::Serialize;
 
-const ALL: [Engine; 10] = [
+const ALL: [Engine; 11] = [
     Engine::Clippy,
     Engine::SwiftLint,
     Engine::Ruff,
@@ -15,6 +15,7 @@ const ALL: [Engine; 10] = [
     Engine::ClangTidy,
     Engine::Oclint,
     Engine::ShellCheck,
+    Engine::Git,
 ];
 
 #[test]
@@ -65,6 +66,11 @@ fn oclint() {
 #[test]
 fn shellcheck() {
     assert_eq!(Engine::ShellCheck.name(), "shellcheck");
+}
+
+#[test]
+fn git() {
+    assert_eq!(Engine::Git.name(), "git");
 }
 
 #[test]

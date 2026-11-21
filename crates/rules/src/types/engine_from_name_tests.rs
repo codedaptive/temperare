@@ -1,4 +1,4 @@
-//! ZUT for engine_from_name.rs: the ten rule-file names, and None for anything else.
+//! ZUT for engine_from_name.rs: the eleven rule-file names, and None for anything else.
 
 use super::Engine;
 
@@ -53,6 +53,11 @@ fn shellcheck() {
 }
 
 #[test]
+fn git() {
+    assert_eq!(Engine::from_name("git"), Some(Engine::Git));
+}
+
+#[test]
 fn unknown_names_are_none() {
     for name in [
         "eslint",
@@ -69,6 +74,9 @@ fn unknown_names_are_none() {
         "shell-check",
         "PyLint",
         "OCLint",
+        "Git",
+        "GIT",
+        "git ",
     ] {
         assert_eq!(Engine::from_name(name), None, "{name:?}");
     }
