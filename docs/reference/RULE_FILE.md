@@ -303,7 +303,7 @@ In a repository's rule file each of these is an unknown key, which is a problem.
 | Problem | When |
 |---|---|
 | `malformed baseline entry "<entry>"` | The entry is not a name, `@` and a whole number |
-| `unknown baseline set "<name>"` | `tm` carries no set of that name. The fix names the sets with a ready version: `Use one of: standard.` |
+| `unknown baseline set "<name>"` | `tm` carries no set of that name. The fix names every ready version of each set: `Use one of: standard@1.` |
 | `unknown version <n> of baseline set "<name>"` | `tm` carries the set, and not at that version. The fix names its ready versions, such as `Use one of: standard@1.`, or, when it has none, reads `No version of baseline set "<name>" is ready in this build; remove the entry.` |
 | `baseline set "<name>" is taken twice` | A second entry for a set an earlier entry took, at any version |
 | `<name>@<version> is not ready in this build: its rules are not yet proven` | The set is built in and not ready: `house@1`. The fix is `remove <name>@<version> from baseline` |

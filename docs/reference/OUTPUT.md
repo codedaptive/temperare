@@ -500,7 +500,7 @@ The exit codes of `tm baseline test`:
 The first that applies wins: 2, 1, 3, 0. Exit 3 is never "holds": a rule that was not run was not tested.
 
 A set `tm` does not carry is the two usage-error lines on stderr, for example `tm baseline test --set standrd@1` prints
-`tm: unknown baseline set "standrd"` and `next: Use one of: house, standard.`, and with `--json` also the object on
+`tm: unknown baseline set "standrd"` and `next: Use one of: house@1, standard@1.`, and with `--json` also the object on
 stdout, as for `tm check`
 ([Errors that stop a run, as JSON](#errors-that-stop-a-run-as-json)). Every set `tm` carries is named, ready or not,
 since this command can test each one; a rule file's fix for the same mistake names only the ready ones
