@@ -25,6 +25,8 @@ The rules come from `temperare.toml` at the top of the git repository.
 - `temperare check [--base <rev>] [--json] [<path>...]`: check the repository, or only the paths given. With
   `--base`, only violations new since that commit are reported. `--json` prints the report as JSON.
 - `temperare rules`: list the rules in force and whether each one's engine is available.
+- `temperare rules --loosened --base <rev>`: list what the rule file loosened since that commit; exit 0 nothing, 1
+  something loosened, 2 a bad --base or rule file.
 
 ## Tokens saved
 

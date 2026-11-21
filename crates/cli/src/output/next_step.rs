@@ -9,9 +9,6 @@ use std::path::Path;
 /// Tessera's checks never run yet (S-20): every tessera entry is not available whatever its why, so exit 3 never
 /// tells the user to install it.
 const TESSERA_NOT_YET: &str = "Tessera's checks are not available yet";
-/// Engines' why for a clippy rule with no Cargo project, the text engines' `hits_clippy` gives. If that text drifts,
-/// the entry still gets the generic `<name>: <why>` form.
-const NO_CARGO_PROJECT: &str = "no Cargo.toml at or above the rule file's folder";
 
 /// What the user does next for each exit code: 0 has nothing to do; 1 fixes the findings or adds an exception to
 /// `rule_file`; 2 gives the error's fix ("see the error above" when there is none); 3 says what to do about each
@@ -63,7 +60,8 @@ fn not_available_step(not_available: &[(&NotAvailable, Option<NotAvailableCause>
 
 /// Groups the entries, keeping their order: the install part (each engine name once, for the entries whose cause is
 /// `EngineNotOnPath`) followed by the other entries' cause texts (each once, a missing helper such as cargo or an entry
-/// with no cause included), and whether any entry is Tessera's, whatever its cause.
+/// with no cause included; an entry whose cause is `NoCargoProject` gets the Cargo text), and whether any entry is
+/// Tessera's, whatever its cause.
 fn parts(not_available: &[(&NotAvailable, Option<NotAvailableCause>)]) -> (Vec<String>, bool) {
     let (mut install, mut causes, mut tessera) = (Vec::new(), Vec::new(), false);
     for &(entry, entry_cause) in not_available {
@@ -73,7 +71,7 @@ fn parts(not_available: &[(&NotAvailable, Option<NotAvailableCause>)]) -> (Vec<S
         } else if entry_cause == Some(NotAvailableCause::EngineNotOnPath) {
             push_once(&mut install, name);
         } else {
-            push_once(&mut causes, cause(&name, &entry.why));
+            push_once(&mut causes, cause(&name, &entry.why, entry_cause));
         }
     }
     if !install.is_empty() {
@@ -82,9 +80,10 @@ fn parts(not_available: &[(&NotAvailable, Option<NotAvailableCause>)]) -> (Vec<S
     (causes, tessera)
 }
 
-/// The cause text for an engine `name` and its `why`; the missing Cargo project also says where the rule file goes.
-fn cause(name: &str, why: &str) -> String {
-    if why == NO_CARGO_PROJECT {
+/// The cause text for an engine `name` and its `why`; when `entry_cause` is `NoCargoProject` it also says where the
+/// rule file goes.
+fn cause(name: &str, why: &str, entry_cause: Option<NotAvailableCause>) -> String {
+    if entry_cause == Some(NotAvailableCause::NoCargoProject) {
         return format!("{name}: {why}, so put the rule file inside the Cargo project it checks");
     }
     format!("{name}: {why}")

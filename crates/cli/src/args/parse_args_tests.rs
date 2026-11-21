@@ -55,7 +55,7 @@ fn an_argument_after_version_is_refused() {
 fn rules_command() {
     assert_eq!(
         parse(&["rules", "--rules", "t.toml", "--json"]),
-        Ok(Command::Rules(RulesArgs { rules: Some(PathBuf::from("t.toml")), json: true }))
+        Ok(Command::Rules(RulesArgs { rules: Some(PathBuf::from("t.toml")), json: true, ..RulesArgs::default() }))
     );
 }
 
@@ -88,7 +88,7 @@ fn baseline_command() {
 fn sub_parser_errors_come_through() {
     assert_eq!(
         parse(&["rules", "--base", "main"]),
-        Err(error("unknown flag '--base' for tm rules", "Run tm help to see the flags of tm rules."))
+        Err(error("--base is only for tm rules --loosened", "Add --loosened, or leave --base out."))
     );
 }
 
@@ -97,6 +97,10 @@ fn a_flag_given_twice() {
     assert_eq!(
         parse(&["rules", "--rules", "a.toml", "--rules", "b.toml"]),
         Err(error("--rules given twice", "Give --rules once."))
+    );
+    assert_eq!(
+        parse(&["rules", "--loosened", "--base", "a", "--base", "b"]),
+        Err(error("--base given twice", "Give --base once."))
     );
     assert_eq!(
         parse(&["check", "--json", "src", "--json"]),

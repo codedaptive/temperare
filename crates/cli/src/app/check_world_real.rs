@@ -1,5 +1,6 @@
 //! `CheckWorld::real`: the world wired to the real git, disk, engines, report, HOME and clock.
 
+use super::now_secs::now_secs;
 use super::CheckWorld;
 use rules::RuleFile;
 use std::path::{Path, PathBuf};
@@ -7,7 +8,7 @@ use std::path::{Path, PathBuf};
 impl CheckWorld<'static> {
     /// The real world: `procio::toplevel`, `Path::is_file`, `RuleFile::read`, `procio::rev_parse`,
     /// `engines::run_rules_versioned_at`, `engines::availability`, `report::build_report_with_no_files`, HOME (`home`)
-    /// and the clock (`now`). Tests pass closures.
+    /// and the clock (`now_secs`). Tests pass closures.
     pub fn real() -> CheckWorld<'static> {
         CheckWorld {
             toplevel: &procio::toplevel,
@@ -18,7 +19,7 @@ impl CheckWorld<'static> {
             availability: &engines::availability,
             build_report: &report::build_report_with_no_files,
             home: &home,
-            now: &now,
+            now: &now_secs,
         }
     }
 }
@@ -26,9 +27,4 @@ impl CheckWorld<'static> {
 /// HOME from the environment; None when it is unset or empty.
 fn home() -> Option<PathBuf> {
     std::env::var_os("HOME").filter(|home| !home.is_empty()).map(PathBuf::from)
-}
-
-/// Whole seconds since the Unix epoch; 0 for a clock set before it.
-fn now() -> u64 {
-    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |since| since.as_secs())
 }

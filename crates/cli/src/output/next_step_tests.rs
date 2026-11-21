@@ -1,7 +1,7 @@
 //! ZUT for next_step.rs: the next-step text for every exit code, each expected line a literal.
 
 use super::next_step;
-use engines::NotAvailableCause::{self, EngineNotOnPath, HelperNotOnPath, Other, UnknownCheck};
+use engines::NotAvailableCause::{self, EngineNotOnPath, HelperNotOnPath, NoCargoProject, Other, UnknownCheck};
 use report::NotAvailable;
 use rules::Engine;
 use std::path::Path;
@@ -122,7 +122,7 @@ fn next_step_missing_engine_and_unknown_check_combine_into_one_next_step() {
 #[test]
 fn exit_3_names_the_same_cause_once() {
     assert_eq!(
-        step(3, None, &[entry(Engine::Clippy, CARGO_WHY, Some(Other)), entry(Engine::Clippy, CARGO_WHY, Some(Other))]),
+        step(3, None, &[entry(Engine::Clippy, CARGO_WHY, Some(NoCargoProject)), entry(Engine::Clippy, CARGO_WHY, Some(NoCargoProject))]),
         "clippy: no Cargo.toml at or above the rule file's folder, so put the rule file inside the Cargo project it checks (or run without those rules)"
     );
 }
@@ -159,8 +159,14 @@ fn exit_3_installs_only_for_an_engine_not_on_path() {
         (
             Engine::Clippy,
             CARGO_WHY,
-            Some(Other),
+            Some(NoCargoProject),
             "clippy: no Cargo.toml at or above the rule file's folder, so put the rule file inside the Cargo project it checks (or run without those rules)",
+        ),
+        (
+            Engine::Clippy,
+            "no Cargo.toml in /work/app or any folder above it",
+            Some(NoCargoProject),
+            "clippy: no Cargo.toml in /work/app or any folder above it, so put the rule file inside the Cargo project it checks (or run without those rules)",
         ),
         (Engine::Clippy, "boom", Some(Other), "clippy: boom (or run without those rules)"),
     ];

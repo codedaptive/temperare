@@ -5,11 +5,13 @@
 /// savings paragraph: the tokens-saved estimate that opens check's text output when an engine ran (characters / 4, an
 /// upper bound), the `savings_line` switch in ~/.config/temperare/config.toml, and the log at
 /// ~/.local/state/temperare/savings.jsonl. Last, tm check's exit codes, one line each, worded from OUTPUT.md's "Exit
-/// codes" table plus 6 (SPEC-baseline "Which rules apply"), and the order in which the first that applies wins.
+/// codes" table plus 6 (SPEC-baseline "Which rules apply"), and the order in which the first that applies wins; then
+/// one line for the exit codes of `tm rules --loosened`.
 pub const USAGE: &str = "\
 usage:
 tm check [--rules <path>] [--base <rev>] [--kind quality|security] [--json] [<path>...]
 tm rules [--rules <path>] [--json]
+tm rules --loosened --base <rev> [--rules <path>] [--json]
 tm baseline test [--set <name@version>] [--json]
 tm install [--no-place] [--short-name] [--target claude,codex,cursor] [--mode skill] [--location local] [-y]
 tm uninstall
@@ -34,4 +36,5 @@ tm check exits with:
 5  a rule failed: its engine gave no answer that can be read, or the rule was refused
 6  a rule of the repository's own covers nothing
 The first that applies wins, in this order: 2, 1, 5, 3, 4, 6, 0.
+tm rules --loosened exits 0 when nothing loosened, 1 when something did, 2 for a bad --base or rule file.
 ";

@@ -22,6 +22,17 @@ fn teaches_both_commands_as_temperare() {
 }
 
 #[test]
+fn teaches_rules_loosened_and_its_three_exits() {
+    let start = SKILL_TEXT.find("- `temperare rules --loosened --base <rev>`: ");
+    let rest = start.map_or("", |i| &SKILL_TEXT[i + 2..]);
+    let end = rest.find("\n- ").into_iter().chain(rest.find("\n\n")).min().unwrap_or(rest.len());
+    let bullet = rest[..end].split_whitespace().collect::<Vec<_>>().join(" ");
+    for token in ["exit 0 nothing", "1 something loosened", "2 a bad --base or rule file"] {
+        assert!(bullet.contains(token), "{token}: {bullet}");
+    }
+}
+
+#[test]
 fn says_tm_is_the_short_name_only_where_install_made_the_link() {
     assert!(SKILL_TEXT.lines().any(|line| line == "`tm` is its short name where `temperare install` made the link."));
     assert!(!SKILL_TEXT.contains("answer every command"));

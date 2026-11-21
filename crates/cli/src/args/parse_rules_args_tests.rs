@@ -1,4 +1,5 @@
-//! ZUT for parse_rules_args.rs: `--rules <path>` and `--json`; anything else is a usage error.
+//! ZUT for parse_rules_args.rs: `--rules <path>`, `--json`, `--loosened` with `--base <rev>`; anything else is a
+//! usage error.
 
 use std::path::PathBuf;
 
@@ -15,14 +16,14 @@ fn rules_error(what: &str) -> UsageError {
 
 #[test]
 fn nothing_is_the_default() {
-    assert_eq!(parse(&[]), Ok(RulesArgs { rules: None, json: false }));
+    assert_eq!(parse(&[]), Ok(RulesArgs::default()));
 }
 
 #[test]
 fn rules_and_json() {
     assert_eq!(
         parse(&["--json", "--rules", "conf/t.toml"]),
-        Ok(RulesArgs { rules: Some(PathBuf::from("conf/t.toml")), json: true })
+        Ok(RulesArgs { rules: Some(PathBuf::from("conf/t.toml")), json: true, ..RulesArgs::default() })
     );
 }
 
@@ -40,7 +41,6 @@ fn a_positional_argument_is_refused() {
 
 #[test]
 fn check_flags_are_unknown_here() {
-    assert_eq!(parse(&["--base", "main"]), Err(rules_error("unknown flag '--base' for tm rules")));
     assert_eq!(parse(&["--kind", "security"]), Err(rules_error("unknown flag '--kind' for tm rules")));
 }
 
@@ -52,4 +52,43 @@ fn an_unknown_flag_is_refused() {
 #[test]
 fn flag_equals_value_is_an_unknown_flag() {
     assert_eq!(parse(&["--rules=t.toml"]), Err(rules_error("unknown flag '--rules=t.toml' for tm rules")));
+}
+
+#[test]
+fn loosened_with_base_in_either_order() {
+    let want = |json| RulesArgs { base: Some("main".to_string()), loosened: true, json, ..RulesArgs::default() };
+    let rows: [(&[&str], RulesArgs); 4] = [
+        (&["--loosened", "--base", "main"], want(false)),
+        (&["--base", "main", "--loosened"], want(false)),
+        (&["--json", "--base", "main", "--loosened"], want(true)),
+        (&["--loosened", "--json", "--base", "main"], want(true)),
+    ];
+    for (args, expected) in rows {
+        assert_eq!(parse(args), Ok(expected), "{args:?}");
+    }
+}
+
+#[test]
+fn loosened_and_base_each_need_the_other() {
+    let no_base = UsageError {
+        what: "tm rules --loosened needs --base <rev>".to_string(),
+        fix: "Pass --base <rev>, the commit to compare with.".to_string(),
+    };
+    let no_loosened = UsageError {
+        what: "--base is only for tm rules --loosened".to_string(),
+        fix: "Add --loosened, or leave --base out.".to_string(),
+    };
+    let base_needs_a_value =
+        UsageError { what: "--base needs a value".to_string(), fix: "Write --base <rev>.".to_string() };
+    let rows: [(&[&str], UsageError); 6] = [
+        (&["--loosened"], no_base.clone()),
+        (&["--json", "--loosened", "--rules", "t.toml"], no_base),
+        (&["--base", "main"], no_loosened.clone()),
+        (&["--base", "main", "--json"], no_loosened),
+        (&["--loosened", "--base"], base_needs_a_value.clone()),
+        (&["--base", "--loosened"], base_needs_a_value),
+    ];
+    for (args, expected) in rows {
+        assert_eq!(parse(args), Err(expected), "{args:?}");
+    }
 }

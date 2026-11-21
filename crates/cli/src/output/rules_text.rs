@@ -1,16 +1,20 @@
 //! `rules_text`: the `tm rules` listing as text.
 
 use super::serde_name::serde_name;
+use super::split_exceptions::split_exceptions;
 use std::fmt::Write;
 use std::path::Path;
 
 /// The rule file's path, each rule with its engine, kind, severity, scope and whether `availability` says its engine
-/// can be run here (`available`, or `not available: <why>`), then the exceptions in force, every line ending in a
-/// newline. Both header lines print with their count, (0) included.
+/// can be run here (`available`, or `not available: <why>`), then the exceptions in force on `day`, then those
+/// expired by `day` with their `expires` date, each list in file order and every line ending in a newline.
+/// `rf.exceptions_expired(day)` alone decides which are expired. All three header lines print with their count, (0)
+/// included.
 pub fn rules_text(
     file: &Path,
     rf: &rules::RuleFile,
     availability: &dyn Fn(rules::Engine) -> engines::Availability,
+    day: rules::Date,
 ) -> String {
     let mut text = format!("rule file: {}\nrules ({}):\n", file.display(), rf.rules.len());
     for r in &rf.rules {
@@ -24,14 +28,23 @@ pub fn rules_text(
         };
         let _ = writeln!(text, "  {}  {engine}  {kind}  {severity}  paths: {}  {available}", r.id, scope(r));
     }
-    let in_force = rf.exceptions_in_force();
+    let (in_force, expired) = split_exceptions(rf, day);
     let _ = writeln!(text, "exceptions in force ({}):", in_force.len());
     for e in in_force {
-        let what = e.what.as_ref().map(|w| format!("what: {w}  ")).unwrap_or_default();
-        let _ =
-            writeln!(text, "  {}  {}  {what}approved: {}  reason: {}", e.rule, e.path.as_str(), e.approved, e.reason);
+        let _ = writeln!(text, "{}approved: {}  reason: {}", head(e), e.approved, e.reason);
+    }
+    let _ = writeln!(text, "exceptions expired ({}):", expired.len());
+    // An exception with no `expires` is never expired, so every one here has a date.
+    for (e, expires) in expired.into_iter().filter_map(|e| e.expires.map(|d| (e, d))) {
+        let _ = writeln!(text, "{}expires: {expires}  approved: {}  reason: {}", head(e), e.approved, e.reason);
     }
     text
+}
+
+/// An exception line's start: `  <rule>  <path>  `, then `what: <what>  ` when the exception names one.
+fn head(e: &rules::Exception) -> String {
+    let what = e.what.as_ref().map(|w| format!("what: {w}  ")).unwrap_or_default();
+    format!("  {}  {}  {what}", e.rule, e.path.as_str())
 }
 
 /// The paths joined ", " (`all files` when none), then `  exclude: ...`, `  kits: ...` and `  outside kits: ...`, each

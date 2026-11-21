@@ -198,11 +198,15 @@ fn real_house_required_params_run_both_cases() {
     }
 }
 
-/// RIT: without a named set, the real world reads only the ready built-in set.
+/// RIT: without a named set, the real world reads exactly the sets `rules::baseline_sets` marks ready, in its order.
+/// Which sets are ready is rules' data, so the expected list comes from there, and it must not be empty.
 #[test]
 fn real_sets_default_reads_ready_only() {
+    let ready: Vec<String> =
+        rules::baseline_sets().into_iter().filter(|(_, ready)| *ready).map(|(set, _)| set).collect();
+    assert!(!ready.is_empty(), "rules marks no baseline set ready");
     let (_, _, _, read) = run_with_real_sets(None);
-    assert_eq!(read, ["standard@1"]);
+    assert_eq!(read, ready);
 }
 
 /// RIT: real case files exist when the runner reads them, then both case folders are removed.

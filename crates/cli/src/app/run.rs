@@ -13,10 +13,10 @@ use std::io::Write;
 use std::path::Path;
 
 /// Runs the command `args` names (the program name left out) in `cwd`, printing on `out` and `err`, and returns the
-/// exit code: a usage error is 2, help and version are 0, `tm rules` is `run_rules` and `tm check` is `run_check`,
-/// both against the real git, disk and PATH (`tm check` also reads HOME and the clock). `tm baseline test` is
-/// `run_baseline_test` on the sets built into tm, its cases in folders under the system temp folder run by the real
-/// engines (`BaselineWorld::real`). `install` and `uninstall`
+/// exit code: a usage error is 2, help and version are 0, `tm rules` (also `tm rules --loosened`) is `run_rules` and
+/// `tm check` is `run_check`, both against the real git, disk, PATH and clock (`tm check` also reads HOME).
+/// `tm baseline test` is `run_baseline_test` on the sets built into tm, its cases in folders under the system temp
+/// folder run by the real engines (`BaselineWorld::real`). `install` and `uninstall`
 /// are `run_install` and `run_uninstall` on the real host (`InstallHost::real`), the harness picker reading stdin
 /// and asking on stderr; a host that cannot be read (HOME not set or not absolute, the running binary not found) is
 /// 2. Write errors are ignored: a closed pipe is not tm's failure.
