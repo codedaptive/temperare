@@ -106,7 +106,9 @@ sources.
   engine gives one), what (the engine's message), fix (the rule's fix text).
 - An exception is an [[exception]] table in the rule file with rule, path, reason and approved. It records a
   person's approval. An agent does not add one on its own. An optional expires = "YYYY-MM-DD" is its last day (UTC):
-  from the day after, it silences nothing. The count of exceptions in force still includes an expired one.
+  from the day after, it silences nothing and tm check lists it as expired: an "expired: <rule> <path> (expired
+  <YYYY-MM-DD>)" line, expired in JSON ({rule, path, what|null, expires, reason, approved}) and counts.expired.
+  tm check's exceptions in force counts only the exceptions not expired; tm rules still counts every one.
 
 ## What it does not do
 
