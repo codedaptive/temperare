@@ -107,7 +107,7 @@ the owner of the findings in its files.
 | Key | Required | Meaning |
 |---|---|---|
 | `id` | yes | The rule's name in every report. One or more of `a-z`, `0-9` and `-`. No two rules share an id |
-| `engine` | yes | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `tessera`, `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `shellcheck` or `git`, exactly as written here. The last six are accepted, and their rules are "not available" until Temperare has an adapter for each ([`ENGINES.md`](ENGINES.md#engines-with-no-adapter-yet)) |
+| `engine` | yes | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`, `git`, `tessera`, `golangci-lint`, `pylint`, `clang-tidy` or `oclint`, exactly as written here. The last four are accepted, and their rules are "not available" until Temperare has an adapter for each ([`ENGINES.md`](ENGINES.md#engines-with-no-adapter-yet)). `shellcheck` and `git` have adapters, and their rules are not available in this build for other reasons ([`ENGINES.md`](ENGINES.md#shellcheck)) |
 | `check` | yes | What the engine is asked. See below |
 | `fix` | yes | The text shown with each finding of this rule |
 | `severity` | no | `error` (the default) or `warning` |
@@ -116,7 +116,7 @@ the owner of the findings in its files.
 | `exclude` | no | Globs. The rule never covers a file that matches one |
 | `kits` | no | Kit names. The rule covers only files held by one of these kits |
 | `outside_kits` | no | Kit names. The rule never covers a file held by one of these kits |
-| `config` | no | The engine's own config file. Passed to `swiftlint` and `ruff` as written; the other engines do not take one |
+| `config` | no | The engine's own config file. Passed to `swiftlint` and `ruff` as written, and it is a ShellCheck rule's `--rcfile` ([`ENGINES.md`](ENGINES.md#shellcheck)); the other engines do not take one |
 | `params` | no | A table of values for the engine. See below |
 | `only_with_base` | no | `true` or `false` (the default). With `true` the rule reports only what a change adds, so it needs `--base`. Without `--base` the rule reports nothing, not even a failure, and is listed under `not_applicable` ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)) |
 
@@ -130,14 +130,17 @@ Any other key is a problem.
 | `swiftlint` | One SwiftLint rule identifier, such as `force_cast`. For a custom rule, its own identifier, not `custom_rules` |
 | `ruff` | A rule code (`E711`), a code prefix (`E7`, `F`), `ALL`, or several of these joined by commas with no spaces (`E711,F401`). Not a rule name |
 | `ast-grep` | The path of an ast-grep rule file (YAML) inside the rule file's folder. Every match of that file is a finding |
+| `shellcheck` | One ShellCheck code, `SC` then digits, such as `SC2086`. Not a list of codes |
+| `git` | `test_ratio`, the only check git has |
 | `tessera` | Required like any other, and not used today: nothing is run |
-| `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `shellcheck`, `git` | Required like any other, and not used yet: nothing is run |
+| `golangci-lint`, `pylint`, `clang-tidy`, `oclint` | Required like any other, and not used yet: nothing is run |
 
 A finding is kept only when it can be matched back to `check`: for clippy and SwiftLint the engine reports exactly
 that lint or identifier, and for ruff the diagnostic's code starts with one of the parts of `check`.
 
 These are checked when the rule runs, not when the rule file is read. A `check` that cannot be matched (a clippy
-lint group, `custom_rules`, a ruff rule name, an ast-grep file outside the rule file's folder) makes the rule
+lint group, `custom_rules`, a ruff rule name, an ast-grep file outside the rule file's folder, a ShellCheck `check`
+that is not one code, a git `check` other than `test_ratio`) makes the rule
 "failed", exit 5, with the reason in the report. A `check` the installed clippy, SwiftLint or ruff does not know
 (a misspelt name, or one newer than that engine) makes the rule "not available", exit 3, with a reason naming the
 engine, its version and the check. Neither reads as clean, and `tm rules` reports neither, since it runs no
@@ -152,13 +155,20 @@ engine. [`ENGINES.md`](ENGINES.md) has each case.
   name before ast-grep runs. A string goes in as written. A list of strings goes in as its items joined by `|`, each
   escaped so it matches literally, which drops into a `regex:` line as "any of these". A `{{name}}` with no param of
   that name makes the rule fail, and so does a param the YAML never names as `{{name}}`, so a misspelt param name
-  cannot pass unnoticed.
+  cannot pass unnoticed. Two names are not placeholders: `count`, whose only value is `"setup-vs-tests"`, and
+  `shared_setup`, a list of globs that needs `count`. They turn on count mode, which is not available in this build
+  ([`ENGINES.md`](ENGINES.md#ast-grep)); a bad value for either fails the rule.
 - **swiftlint:** `max_complexity`, a whole number from 1 to 1000, read only with check `cyclomatic_complexity`; and
   `max_lines`, a whole number from 1 to 100000, read only with check `file_length`. At most one threshold per rule;
   any other param fails the rule.
 - **ruff:** `max_complexity`, a whole number from 1 to 1000, read only with check `C901`; any other param fails the
   rule.
-- **tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck, git:** not read.
+- **shellcheck:** none; any param fails the rule.
+- **git:** `max_ratio`, a number from 0.1 to 100; `floor`, a whole number from 0 to 100000; and `test_paths`, a list
+  of globs with at least one item. All three are required; a missing one, a value out of range and any other param
+  fail the rule ([`ENGINES.md`](ENGINES.md#git)).
+- **tessera:** none; any param fails the rule.
+- **golangci-lint, pylint, clang-tidy, oclint:** not read.
 
 ### Which files a rule covers
 
@@ -171,6 +181,10 @@ A rule covers a file when all of these hold:
 
 An engine runs over the rule file's whole folder. Findings in files the rule does not cover are dropped, and so are
 findings outside the rule file's folder.
+
+A rule that covers none of the files git lists in the rule file's folder (the tracked files in the work tree and
+the untracked files git does not ignore) runs nothing, and the report does not say so: the exit code is what it
+would be without that rule ([`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)).
 
 ### Globs
 

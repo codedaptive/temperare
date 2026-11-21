@@ -43,23 +43,35 @@ sources.
 - Exit codes of tm check: 0 nothing to refuse; 1 a quality error was found; 2 used wrongly or the rule file has a
   problem, nothing checked; 3 a rule was not available; 4 the only errors are security findings, which never
   refuse; 5 a rule failed. The first of 2, 1, 5, 3, 4 that applies wins.
-- Exit 0 and exit 4 mean every rule ran or is listed under not_applicable. Exit 1 does not: read
+- Exit 0 and exit 4 mean every rule ran, covered no file, or is listed under not_applicable. Exit 1 does not: read
   counts.not_available and counts.failed.
+- A rule that covers none of the files git lists in the rule file's folder (tracked files in the work tree, and
+  untracked files git does not ignore) runs nothing, and its engine is not looked for. The report does not say so:
+  no line, no list entry and no count says it, and the exit code is what it would be without that rule, whether or
+  not its engine is installed. So exit 0 does not say every rule had a file to check.
 - --base <rev> keeps only findings on lines added since that commit. A rule with only_with_base = true reports only
   what a change adds: without --base it reports nothing and is listed under not_applicable ("reports only what a
   change adds; run with --base"). not_applicable is never a finding and never "not available".
 - Exit 3 and exit 5 are never clean: the code was not fully checked.
 - A rule fails (exit 5) when its engine gives no answer that can be read, or when its check cannot be matched back
   to findings: a clippy lint group, SwiftLint's custom_rules, a ruff rule name in place of a code, an ast-grep rule
-  file outside the rule file's folder. It fails too on a param its engine does not take, or a bad value: clippy
+  file outside the rule file's folder, a shellcheck check that is not one code, a git check other than test_ratio.
+  It fails too on a param its engine does not take, or a bad value: clippy
   takes allow, and max_nesting (1-1000) with check clippy::excessive_nesting; swiftlint takes max_complexity
   (1-1000) with check cyclomatic_complexity, or max_lines (1-100000) with check file_length; ruff takes
-  max_complexity (1-1000) with check C901; ast-grep takes only the names its YAML has as {{name}}. A threshold wins
+  max_complexity (1-1000) with check C901; ast-grep takes the names its YAML has as {{name}}, and count
+  ("setup-vs-tests") with shared_setup (a list of globs); git takes max_ratio (0.1-100), floor (0-100000) and
+  test_paths (a list of globs), all three required; shellcheck and tessera take none. A threshold wins
   over the rule's config, and no config file of the repository is changed. The reason is in failed[].stderr_tail.
+- A rule tm can refuse from the rule file alone fails whether or not its engine is installed: every check and param
+  above, except the clippy lint group, an ast-grep rule file that is missing or outside the folder, and ast-grep's
+  {{name}} params, which are refused only in the run. The order a rule settles in: refused, then covers no file,
+  then not available, then the run (docs/reference/ENGINES.md).
 - A check the installed clippy, swiftlint or ruff does not know (a misspelt name, or one newer than the engine) is
   not available (exit 3), with a why naming the engine, its version and the check.
 - check, by engine: clippy, one lint or warnings; swiftlint, one rule identifier; ruff, a rule code, a code prefix,
-  ALL, or several joined by commas; ast-grep, the path of a rule file inside the rule file's folder.
+  ALL, or several joined by commas; ast-grep, the path of a rule file inside the rule file's folder; shellcheck, one
+  code such as SC2086; git, test_ratio.
 - A clippy rule needs cargo-clippy and clippy-driver on PATH.
 - Every finding's path is relative to the rule file's folder.
 - A finding has: rule, engine, kind, severity, owner (when the rule file names one), path, line, col (when the
@@ -78,12 +90,19 @@ sources.
 - When an engine ran, tm check's text output opens with an estimate of the tokens saved against the engines' raw
   output, ending in an ask to the agent to tell the user the turn's total; --json carries it as "saved", and
   savings_line = false in ~/.config/temperare/config.toml turns the line off.
-- Rules with engine = "tessera" are accepted and are always reported "not available" today, whether or not Tessera
-  is installed.
-- Rules with engine = "golangci-lint", "pylint", "clang-tidy", "oclint", "shellcheck" or "git" are accepted and
+- Rules with engine = "tessera" are accepted and, when they cover a file and have no params, are reported "not
+  available" today, whether or not Tessera is installed. A Tessera rule with a param fails (exit 5).
+- Rules with engine = "golangci-lint", "pylint", "clang-tidy" or "oclint" are accepted and, when they cover a file,
   reported "not available" (no adapter for <engine> in this build) until each adapter lands, whether or not the
   engine is installed.
-- Either kind with only_with_base = true, run without --base, is listed under not_applicable instead, as any such
+- Rules with engine = "shellcheck" are not available in this build. A rule's code is looked up in a list of
+  ShellCheck codes built into tm, and that list holds no code: a rule with a well-formed code and a shell script to
+  check is "not available" even with ShellCheck installed (<check> is not in temperare's list of shellcheck codes),
+  and ShellCheck is not run. A rule that covers no shell script runs nothing, and the report does not say so.
+- Rules with engine = "git" (check test_ratio), and ast-grep rules with params.count, count what a change adds
+  against a base commit. In this build tm check does not hand the base to the engines, so such a rule is "not
+  available" ("reports only what a change adds; run with --base"), with or without --base.
+- Any of these with only_with_base = true, run without --base, is listed under not_applicable instead, as any such
   rule is.
 
 ## Version note

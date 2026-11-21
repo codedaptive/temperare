@@ -52,9 +52,10 @@ In order:
    as in `--json`.
 5. **The engines line:** `engines: <engine> <version>, ...`, one entry per engine that ran, in the order the rule
    file first names each. An engine that ran is one `tm` found and asked its version, whatever its rules came to: a
-   rule refused before its engine ran, or a check the installed engine does not know, still counts. An engine that
-   is absent (not on `PATH`, or with no adapter in this build) is left out, and its rules appear only on their
-   `not available:` or `not applicable:` lines. A rule with `only_with_base` run with no `--base` is on a
+   rule refused before its engine ran, a rule that covered no file, or a check the installed engine does not know,
+   still counts. An engine that is absent (not on `PATH`, or with no adapter in this build) is left out, and its
+   rules appear only on their `not available:` or `not applicable:` lines, or on a `failed:` line when the rule was
+   refused. A rule with `only_with_base` run with no `--base` is on a
    `not applicable:` line whatever its engine's state. Tessera is never listed today, since `tm` does not look for it.
    `<engine> (version unknown)` when a found engine gave no version. No line when no engine ran.
 6. **The counts line,** ending with the number of not-applicable rules, `0` included.
@@ -66,6 +67,9 @@ In order:
 Findings are sorted by path, line, column and rule id; not-available and failed rules by rule id; not-applicable
 rules in rule-file order. The same results from the
 engines give the same output. A silenced finding is counted on the counts line and not listed.
+
+A rule that ran nothing because it covers no file git lists in the rule file's folder has no line here and is in no
+count, unless it is not applicable for want of `--base` ([`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)).
 
 ## `tm check --json`
 
@@ -149,13 +153,17 @@ The run above, as `--json` prints it (on one line; wrapped here to read):
 | `failed` | Each rule that failed: `rule`, `engine`, `code` (the engine's exit code, or `null` when it had none or was not run), `stderr_tail` (the last 20 lines of what explains the failure: the engine's stderr, or Temperare's own reason when the engine printed none or was not run) |
 | `base` | The full id of the commit `--base` named. Present only with `--base` |
 | `date` | The day of the check in UTC, as `YYYY-MM-DD`. Always present |
-| `engines` | Always present: one `{ "engine", "version" }` entry per engine that ran (as for the text line: found and asked its version, whatever its rules came to), in the order the rule file first names each; `engine` is the rule-file name, `version` a string, or `null` when the found engine gave none. An absent engine is left out and appears only under `not_available`. `[]` when no engine ran |
+| `engines` | Always present: one `{ "engine", "version" }` entry per engine that ran (as for the text line: found and asked its version, whatever its rules came to), in the order the rule file first names each; `engine` is the rule-file name, `version` a string, or `null` when the found engine gave none. An absent engine is left out; its rules are under `not_available`, or under `failed` when refused. `[]` when no engine ran |
 | `saved` | The tokens-saved estimate and what it counted. Always present on a report, whatever the user configuration says; shown in full under [Tokens saved](#tokens-saved) |
 | `counts` | The numbers below |
 | `exit` | The exit code of this run |
 | `next` | The text of the `next:` line |
 
 Read fields by name, not by position.
+
+A rule that ran nothing because it covers no file git lists in the rule file's folder is in none of these lists and
+in no count, unless it is under `not_applicable` for want of `--base`; `saved.counted` names it, with `chars` 0
+([`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)).
 
 ### A finding
 
@@ -272,18 +280,20 @@ The exit codes of `tm check`:
 
 | Code | Meaning |
 |---|---|
-| 0 | Nothing to refuse: no finding of severity `error`, every rule ran or is under `not_applicable`. Warnings alone end here |
+| 0 | Nothing to refuse: no finding of severity `error`, every rule ran, covered no file, or is under `not_applicable`. Warnings alone end here |
 | 1 | At least one kept finding of kind `quality` and severity `error` |
 | 2 | Nothing was checked: the command was used wrongly, there is no rule file, the rule file has a problem, a path is outside the rule file's folder, or `--base` does not name a commit |
 | 3 | At least one rule was not available |
-| 4 | The only kept findings of severity `error` are of kind `security`, and every rule ran or is under `not_applicable` |
+| 4 | The only kept findings of severity `error` are of kind `security`, and every rule ran, covered no file, or is under `not_applicable` |
 | 5 | At least one rule failed: its engine gave no answer that can be read, or the rule was refused before its engine ran (see [`ENGINES.md`](ENGINES.md#not-available-and-failed)) |
 
 The first that applies wins, in this order: 2, 1, 5, 3, 4, 0.
 
 What that order means for a caller:
 
-- **0 and 4** mean every rule ran or is listed under `not_applicable`. Nothing was unavailable and no engine failed.
+- **0 and 4** mean every rule ran, covered no file, or is listed under `not_applicable`. Nothing was unavailable and
+  no engine failed. A rule that covered no file ran nothing and is not listed
+  ([`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)), so neither code says every rule had a file to check.
 - **1** says a quality error was found. It does not say every rule ran: a run with a quality error and a missing
   engine ends with 1. Read `counts.not_available` and `counts.failed`, or the counts line.
 - **3 and 5** mean the code was not fully checked. They are never "clean".
@@ -316,7 +326,8 @@ The last line of text, and `next` in JSON, says what to do, by exit code:
 | 4 | `raise the security findings with their owner; work goes on` |
 | 5 | `see the engine output above` |
 
-For exit 3 the engines are named as a rule file names them (`clippy`, `swiftlint`, `ruff`, `ast-grep`), each once.
+For exit 3 the engines are named as a rule file names them (`clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`,
+`git`), each once.
 Tessera is never among the engines to install, because installing it changes nothing today:
 
 - only Tessera rules were not available: `Tessera's checks are not available yet (run without those rules)`;
@@ -327,7 +338,11 @@ A clippy rule in a folder with no `Cargo.toml` at or above it gives `clippy: no 
 file's folder, so put the rule file inside the Cargo project it checks (or run without those rules)`; the
 `not available:` line of that rule keeps the reason. A `check` the installed engine does not know gives
 ``ruff: ruff 0.17.4 does not know the check `ZZZ999`: <ruff's own line> (or run without those rules)``. The fix is a
-newer engine or a check it knows.
+newer engine or a check it knows. A ShellCheck code that is not on `tm`'s list gives
+`shellcheck: shellcheck 0.11.0: SC2086 is not in temperare's list of shellcheck codes (taken from shellcheck pending) (or run without those rules)`,
+and a git rule or an ast-grep rule in count mode gives
+`git: reports only what a change adds; run with --base (or run without those rules)` (`ast-grep:` for ast-grep),
+with or without `--base` in this build ([`ENGINES.md`](ENGINES.md#git)).
 
 For exit 5 the output meant is the `stderr of <rule> (<engine>):` lines of the text form, which are
 `failed[].stderr_tail` in the JSON.
@@ -346,6 +361,11 @@ counted. A `--base` that names no commit is exit 2, never an empty result.
 A rule with `only_with_base = true` reports only what a change adds. Without `--base` it reports nothing and is
 listed as not applicable (a `not applicable:` line in text, `not_applicable` in JSON), with the why
 `reports only what a change adds; run with --base`.
+
+Two kinds of rule count the change themselves and need the base for it: a rule with `engine = "git"`, and an
+ast-grep rule in count mode. In this build `tm check` does not hand the base to the engines, so such a rule is
+listed as not available, with that same why, even when `--base` is given
+([`ENGINES.md`](ENGINES.md#git)). With `only_with_base = true` and no `--base` it is not applicable, as above.
 
 ## Errors that stop a run, as JSON
 
@@ -464,7 +484,7 @@ The exit codes of `tm baseline test`:
 | 0 | Every rule holds. A set with no rules ends here too | `nothing to do` |
 | 1 | At least one rule is broken | `fix each broken rule or its cases above` |
 | 2 | Used wrongly, or `--set` names a set or version `tm` does not carry. Nothing was tested | The fix for the error |
-| 3 | No rule is broken, and at least one is not available or not applicable | `install <engine>, <engine>, then run tm baseline test again` when a rule's own program is missing from PATH (a helper program such as cargo gives its why instead), naming each engine once as a rule file names it; the why of any other not-available case, once; `each not-applicable rule above says why it was not run` when one is not applicable; the parts joined by `; ` |
+| 3 | No rule is broken, and at least one is not available or not applicable | Parts, in this order, joined by `; `: First `install <engine>, <engine>, then run tm baseline test again`, naming once, as a rule file names it, each engine of a not-available rule with a case whose why is `<program> not found on PATH` for one of the engine's own programs. Then the why of every other not-available case of those rules, as it is and once each: a missing helper program (`cargo not found on PATH` for clippy, `git not found on PATH` for ShellCheck) and a check the engine does not know are whys, not installs. Last `each not-applicable rule above says why it was not run`, when a rule is not applicable |
 
 The first that applies wins: 2, 1, 3, 0. Exit 3 is never "holds": a rule that was not run was not tested.
 
