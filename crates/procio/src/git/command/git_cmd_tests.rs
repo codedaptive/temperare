@@ -1,7 +1,7 @@
 use std::ffi::OsString;
 use std::path::Path;
 
-use super::git_cmd;
+use crate::git_cmd;
 
 fn os(list: &[&str]) -> Vec<OsString> {
     list.iter().map(OsString::from).collect()
