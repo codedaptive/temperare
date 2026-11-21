@@ -1,5 +1,6 @@
 //! `next_step`: the text after `next: ` for an exit code.
 
+use super::engine_program_missing::engine_program_missing;
 use super::serde_name::serde_name;
 use report::NotAvailable;
 use rules::Engine;
@@ -8,9 +9,6 @@ use std::path::Path;
 /// Tessera's checks never run yet (S-20): every tessera entry is not available whatever its why, so exit 3 never
 /// tells the user to install it.
 const TESSERA_NOT_YET: &str = "Tessera's checks are not available yet";
-/// The end of the why engines' `availability_from` and `ran` give when a program is missing: installing the engine is
-/// the fix.
-const NOT_ON_PATH: &str = " not found on PATH";
 /// Engines' why for a clippy rule with no Cargo project, the text engines' `hits_clippy` gives. If that text drifts,
 /// the entry still gets the generic `<name>: <why>` form.
 const NO_CARGO_PROJECT: &str = "no Cargo.toml at or above the rule file's folder";
@@ -31,8 +29,8 @@ pub fn next_step(exit: u8, fix: Option<&str>, rule_file: &Path, not_available: &
     }
 }
 
-/// Exit 3's text: the engines missing from PATH to install, then each other cause once, then Tessera's checks not
-/// being available yet, joined with "; ". Only Tessera, or no entries at all, keep their own wording.
+/// Exit 3's text: the engines whose own programs are missing, to install, then each other cause once, then Tessera's
+/// checks not being available yet, joined with "; ". Only Tessera, or no entries at all, keep their own wording.
 fn not_available_step(not_available: &[NotAvailable]) -> String {
     if not_available.is_empty() {
         return "install the engines that are not available (or run without those rules)".to_string();
@@ -45,15 +43,16 @@ fn not_available_step(not_available: &[NotAvailable]) -> String {
     format!("{} (or run without those rules)", [parts, tail].concat().join("; "))
 }
 
-/// Groups the entries, keeping their order: the install part (each engine name once) followed by the causes (each
-/// once), and whether any entry is Tessera's.
+/// Groups the entries, keeping their order: the install part (each engine name once, for the entries whose why says
+/// one of the engine's own programs is missing) followed by the causes (each once, a missing helper such as cargo
+/// included), and whether any entry is Tessera's.
 fn parts(not_available: &[NotAvailable]) -> (Vec<String>, bool) {
     let (mut install, mut causes, mut tessera) = (Vec::new(), Vec::new(), false);
     for entry in not_available {
         let name = serde_name(serde_json::to_value(entry.engine));
         if entry.engine == Engine::Tessera {
             tessera = true;
-        } else if entry.why.ends_with(NOT_ON_PATH) {
+        } else if engine_program_missing(entry.engine, &entry.why) {
             push_once(&mut install, name);
         } else {
             push_once(&mut causes, cause(&name, &entry.why));

@@ -1,4 +1,4 @@
-//! ZITs: case repositories do not inherit another repository or a global commit hook.
+//! ZITs: case repositories do not inherit another repository or any global hook.
 
 use cli::BaselineWorld;
 use std::ffi::OsString;
@@ -99,29 +99,48 @@ fn case_git_steps_leave_an_inherited_git_dir_alone() {
 }
 
 #[test]
-fn a_failing_global_pre_commit_hook_does_not_stop_the_case_commit() {
+fn global_hooks_never_run_in_case_repositories() {
     if std::env::var_os(CHILD).is_some() {
         let world = BaselineWorld::real();
         let folder = (world.make_folder)().expect("make case folder");
-        (world.write_file)(&folder.join("a.py"), "x = 1\n").expect("write case file");
+        let file = folder.join("a.py");
+        (world.write_file)(&file, "x = 1\n").expect("write base file");
         let result = (world.commit_all)(&folder);
         assert!(result.is_ok(), "commit case base: {result:?}");
         let id = result.unwrap();
         assert_eq!(id.len(), 40, "commit id: {id}");
         assert!(id.bytes().all(|b| b.is_ascii_hexdigit()), "commit id: {id}");
+        (world.write_file)(&file, "x = 1\ny = 2\n").expect("write changed file");
+        let added = (world.added_since)(&folder, &id).expect("read added lines");
+        assert_eq!(added.get(Path::new("a.py")), Some(&vec![2..3]));
         (world.remove_folder)(&folder).expect("remove case folder");
         return;
     }
 
-    let root = TempFolder::new();
-    let hooks = root.0.join("hooks");
-    fs::create_dir(&hooks).unwrap();
-    let hook = hooks.join("pre-commit");
-    fs::write(&hook, "#!/bin/sh\necho baseline-hook-marker >&2\nexit 1\n").unwrap();
-    fs::set_permissions(&hook, fs::Permissions::from_mode(0o755)).unwrap();
-    let config = root.0.join("gitconfig");
-    fs::write(&config, format!("[core]\n\thooksPath = {}\n", hooks.display())).unwrap();
-    child(&root.0, "a_failing_global_pre_commit_hook_does_not_stop_the_case_commit", vec![
-        ("GIT_CONFIG_GLOBAL".into(), config.into_os_string()),
-    ]);
+    let mut failures = Vec::new();
+    for name in ["pre-commit", "prepare-commit-msg", "commit-msg", "post-commit", "reference-transaction", "post-index-change"] {
+        let root = TempFolder::new();
+        let hooks = root.0.join("hooks");
+        fs::create_dir(&hooks).unwrap();
+        let hook = hooks.join(name);
+        fs::write(&hook, format!("#!/bin/sh\necho {name} >> \"$HOME/marker\"\nexit 1\n")).unwrap();
+        fs::set_permissions(&hook, fs::Permissions::from_mode(0o755)).unwrap();
+        let config = root.0.join("gitconfig");
+        fs::write(&config, format!("[core]\n\thooksPath = {}\n", hooks.display())).unwrap();
+        let mut cmd = clean_command(std::env::current_exe().unwrap(), &root.0);
+        cmd.args = vec!["--exact".into(), "baseline_git_env::global_hooks_never_run_in_case_repositories".into(), "--nocapture".into()];
+        cmd.env.push((CHILD.into(), "1".into()));
+        cmd.env.push(("GIT_CONFIG_GLOBAL".into(), config.into_os_string()));
+        let output = procio::run(&cmd).unwrap();
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let marker = root.0.join("marker");
+        if output.code == Some(0) && stdout.contains("1 passed") && !marker.exists() {
+            println!("{name}: passed");
+        } else {
+            let tail = stderr.lines().rev().take(5).collect::<Vec<_>>().into_iter().rev().collect::<Vec<_>>().join(" | ");
+            failures.push(format!("{name}: child={:?}, stderr tail={tail:?}, marker={:?}, stdout={stdout:?}", output.code, fs::read_to_string(&marker).ok()));
+        }
+    }
+    assert!(failures.is_empty(), "hook rows failed:\n{}", failures.join("\n"));
 }

@@ -15,8 +15,30 @@ fn result(rule: &str, engine: Engine, failing: CaseVerdict) -> BaselineRuleResul
     }
 }
 
+/// A rule whose engine is absent: the why engines give when its program is not on PATH (`<program> not found on
+/// PATH`); the program is `Engine::name` except for Clippy (`cargo-clippy`).
 fn not_available(rule: &str, engine: Engine) -> BaselineRuleResult {
-    result(rule, engine, CaseVerdict::NotAvailable { why: "not found on PATH".to_string() })
+    let program = match engine {
+        Engine::Clippy => "cargo-clippy",
+        other => other.name(),
+    };
+    not_available_why(rule, engine, &format!("{program} not found on PATH"))
+}
+
+/// A rule whose failing case is not available with `why`.
+fn not_available_why(rule: &str, engine: Engine, why: &str) -> BaselineRuleResult {
+    result(rule, engine, CaseVerdict::NotAvailable { why: why.to_string() })
+}
+
+const UNKNOWN_CHECK: &str =
+    "ruff 0.4.1 does not know the check `XYZ123`: error: invalid value 'XYZ123' for '--select'";
+
+/// A ruff rule whose installed ruff does not know its check: both cases carry an unknown-check why of the shape `too_old_why` gives.
+fn unknown_check(rule: &str) -> BaselineRuleResult {
+    BaselineRuleResult {
+        passing: CaseVerdict::NotAvailable { why: UNKNOWN_CHECK.to_string() },
+        ..result(rule, Engine::Ruff, CaseVerdict::NotAvailable { why: UNKNOWN_CHECK.to_string() })
+    }
 }
 
 fn not_applicable(rule: &str) -> BaselineRuleResult {
@@ -57,8 +79,45 @@ fn baseline_next_text() {
             vec![not_applicable("tm-zeta"), not_available("tm-alpha", Engine::Clippy)],
             "install clippy, then run tm baseline test again; each not-applicable rule above says why it was not run",
         ),
+        (
+            "unknown check only: the why itself, no install",
+            3,
+            vec![unknown_check("tm-alpha")],
+            "ruff 0.4.1 does not know the check `XYZ123`: error: invalid value 'XYZ123' for '--select'",
+        ),
+        (
+            "absent, unknown check and not applicable: install, then the why, then the pointer",
+            3,
+            vec![not_applicable("tm-gamma"), unknown_check("tm-alpha"), not_available("tm-zeta", Engine::SwiftLint)],
+            "install swiftlint, then run tm baseline test again; \
+             ruff 0.4.1 does not know the check `XYZ123`: error: invalid value 'XYZ123' for '--select'; \
+             each not-applicable rule above says why it was not run",
+        ),
+        (
+            "clippy's helper cargo missing: the why itself, no install",
+            3,
+            vec![not_available_why("tm-alpha", Engine::Clippy, "cargo not found on PATH")],
+            "cargo not found on PATH",
+        ),
+        (
+            "an engine with no entry missing git: the why itself, no install",
+            3,
+            vec![not_available_why("tm-alpha", Engine::ShellCheck, "git not found on PATH")],
+            "git not found on PATH",
+        ),
+        (
+            "clippy's own clippy-driver missing: install clippy",
+            3,
+            vec![not_available_why("tm-alpha", Engine::Clippy, "clippy-driver not found on PATH")],
+            "install clippy, then run tm baseline test again",
+        ),
     ];
-    for (name, exit, results, expected) in rows {
-        assert_eq!(baseline_next(exit, &results), expected, "{name}");
-    }
+    let wrong: Vec<String> = rows
+        .into_iter()
+        .filter_map(|(name, exit, results, want)| {
+            let got = baseline_next(exit, &results);
+            (got != want).then(|| format!("{name}:\n  got:  {got}\n  want: {want}"))
+        })
+        .collect();
+    assert!(wrong.is_empty(), "rows wrong:\n{}", wrong.join("\n"));
 }
