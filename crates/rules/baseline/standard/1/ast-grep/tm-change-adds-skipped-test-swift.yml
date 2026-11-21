@@ -1,0 +1,14 @@
+id: tm-change-adds-skipped-test-swift
+language: swift
+message: this change adds a skipped test
+severity: warning
+rule:
+  any:
+    - kind: prefix_expression
+      has: { field: target, regex: ^disabled$ }
+      inside:
+        kind: attribute
+        has: { kind: user_type, regex: ^(Test|Suite)$ }
+        stopBy: end
+    - kind: call_expression
+      has: { kind: simple_identifier, regex: ^XCTSkip(If|Unless)?$ }

@@ -1,5 +1,757 @@
 # The baseline set "house", version 1: our own preferences and house rules, not every team's.
-# A rule file takes it with `baseline = ["house@1"]`. Once released, this version is frozen; a change is version 2.
-# No rules yet.
+# A rule file takes it with `baseline = ["house@1"]` once the set is marked ready (refused until then).
+# Once released, this version is frozen; a change is version 2.
+# Rules in note 17's order for its house rows, as SPEC-baseline lists them; then the four test-economy warnings of S-58.
+# A rule with required_params carries no value for them: the repository gives it. Loaded through baseline_rules,
+# such a rule is not applicable, so its cases cannot run until cases carry their own params.
+# tm-house-test-ratio and tm-house-test-setup-heavier-* need engines work not yet on develop (ast-grep's count mode):
+# in this build they are not available or refused.
 
 version = 1
+
+[[rule]]
+id = "tm-house-no-unwrap-rust"
+engine = "clippy"
+kind = "quality"
+check = "clippy::unwrap_used"
+paths = ["**/*.rs"]
+exclude = ["**/tests/**", "**/*_tests.rs"]
+severity = "warning"
+enforces = """\
+No `unwrap()` outside tests (rust-cargo: "No `unwrap()` or `expect()` outside tests. Return a typed error."; note \
+17, the unwrap and expect row; SPEC-baseline house@1): clippy's stock unwrap_used, tests left out by the rule's \
+exclude."""
+leaves = """\
+Tests have to be left out by the rule's scope (note 17), and its exclude names only test files: a #[cfg(test)] module \
+inside a source file is linted under --all-targets and its unwrap is reported. A panic made another way: \
+`expect()` (tm-house-no-expect-rust), indexing, `panic!`, `unreachable!`."""
+fix = "Return the error to the caller as a typed `Result`, with `?`, instead of panicking."
+failing = { files = ["Cargo.toml", "src/lib.rs"], path = "src/lib.rs", line = 5 }
+passing = { files = ["Cargo.toml", "src/lib.rs"] }
+
+[[rule]]
+id = "tm-house-no-expect-rust"
+engine = "clippy"
+kind = "quality"
+check = "clippy::expect_used"
+paths = ["**/*.rs"]
+exclude = ["**/tests/**", "**/*_tests.rs"]
+severity = "warning"
+enforces = """\
+No `expect()` outside tests (rust-cargo: "No `unwrap()` or `expect()` outside tests. Return a typed error."; note \
+17, the unwrap and expect row; SPEC-baseline house@1): clippy's stock expect_used, tests left out by the rule's \
+exclude."""
+leaves = """\
+Tests have to be left out by the rule's scope (note 17), and its exclude names only test files: a #[cfg(test)] module \
+inside a source file is linted under --all-targets and its expect is reported. A panic made another way: \
+`unwrap()` (tm-house-no-unwrap-rust), indexing, `panic!`, `unreachable!`."""
+fix = "Return the error to the caller as a typed `Result`, with `?`, instead of panicking."
+failing = { files = ["Cargo.toml", "src/lib.rs"], path = "src/lib.rs", line = 7 }
+passing = { files = ["Cargo.toml", "src/lib.rs"] }
+
+[[rule]]
+id = "tm-house-no-unsafe-rust"
+engine = "clippy"
+kind = "quality"
+check = "unsafe_code"
+paths = ["**/*.rs"]
+severity = "warning"
+enforces = """\
+No `unsafe` unless allowed (rust-cargo: "No `unsafe` unless the brief allows it and the file's header comment says \
+why."; note 17, the unsafe row; SPEC-baseline house@1): rustc's stock unsafe_code lint, run through clippy."""
+leaves = """\
+The allowance is an exception in the rule file (note 17): the check cannot read a brief, and does not look for the \
+header comment that says why. Unsafe code in a dependency, and in code under a cfg that is off in this build."""
+fix = """\
+Use the safe API instead; if the unsafe code must stay, record it as an [[exception]] in the rule file with its \
+reason, and say why in the file's header comment."""
+failing = { files = ["Cargo.toml", "src/lib.rs"], path = "src/lib.rs", line = 8 }
+passing = { files = ["Cargo.toml", "src/lib.rs"] }
+
+[[rule]]
+id = "tm-house-no-print-stdout-rust"
+engine = "clippy"
+kind = "quality"
+check = "clippy::print_stdout"
+paths = ["**/*.rs"]
+exclude = ["**/src/main.rs", "**/src/bin/**", "**/tests/**", "**/*_tests.rs", "**/examples/**", "**/benches/**", "**/build.rs"]
+severity = "warning"
+enforces = """\
+No `println!` for diagnostics in library code (rust-cargo: "No `println!` for diagnostics in library code."; note \
+17, the println row; SPEC-baseline house@1): clippy's stock print_stdout, programs, tests, examples, benches and \
+build scripts left out by the rule's exclude."""
+leaves = """\
+A program's real output is also a print, so the rule's scope must name library code (note 17): a binary whose \
+source lies outside src/main.rs and src/bin/ is still reported. A diagnostic sent another way: `eprintln!` \
+(clippy's print_stderr), `dbg!` (tm-rust-dbg), a `write!` to `std::io::stdout()`."""
+fix = "Return the value and let the program print it; a diagnostic goes through the program's logging, not stdout."
+failing = { files = ["Cargo.toml", "src/lib.rs"], path = "src/lib.rs", line = 6 }
+passing = { files = ["Cargo.toml", "src/lib.rs"] }
+
+[[rule]]
+id = "tm-house-no-todo-python"
+engine = "ruff"
+kind = "quality"
+check = "FIX002"
+paths = ["**/*.py"]
+severity = "warning"
+enforces = """\
+No TODO left promising later (coding-rules: "never leave a TODO promising compliance later"; note 17, the TODO row; \
+SPEC-baseline house@1): ruff's stock FIX002, a comment that contains TODO."""
+leaves = """\
+The other markers of later work, each its own ruff code: FIXME (FIX001), XXX (FIX003), HACK (FIX004). A promise \
+written without the word, such as "for now" or "later"."""
+fix = "Do the work now, or record it where the team tracks work, and remove the comment."
+failing = { files = ["shipping.py"], path = "shipping.py", line = 5 }
+passing = { files = ["shipping.py"] }
+
+[[rule]]
+id = "tm-house-no-todo-swift"
+engine = "swiftlint"
+kind = "quality"
+check = "todo"
+paths = ["**/*.swift"]
+severity = "warning"
+enforces = """\
+No TODO left promising later (coding-rules: "never leave a TODO promising compliance later"; note 17, the TODO row; \
+SPEC-baseline house@1): SwiftLint's stock todo, a comment that contains TODO or FIXME."""
+leaves = """\
+Other markers, such as XXX and HACK. A promise written without the word, such as "for now" or "later"."""
+fix = "Do the work now, or record it where the team tracks work, and remove the comment."
+failing = { files = ["DeliveryFee.swift"], path = "DeliveryFee.swift", line = 3 }
+passing = { files = ["DeliveryFee.swift"] }
+
+[[rule]]
+id = "tm-house-no-todo-rust"
+engine = "ast-grep"
+kind = "quality"
+check = "ast-grep/tm-house-no-todo-rust.yml"
+paths = ["**/*.rs"]
+severity = "warning"
+enforces = """\
+No TODO left promising later (coding-rules: "never leave a TODO promising compliance later"; note 17's row "No TODO \
+left promising later"; SPEC-baseline house@1, ast-grep for Rust comments): the word TODO in a Rust line or block \
+comment, doc comments included, found by ast-grep."""
+leaves = """\
+clippy's todo lint finds only the todo! macro, so a Rust comment needs this rule (note 17); the macro itself is not \
+reported here. FIXME, XXX, HACK and a lower-case todo; a TODO inside a string literal, which is not a comment."""
+fix = """\
+Do the work now, or remove the comment and record the work where the team tracks it."""
+failing = { files = ["worker.rs"], path = "worker.rs", line = 5 }
+passing = { files = ["worker.rs"] }
+
+[[rule]]
+id = "tm-house-no-force-cast-swift"
+engine = "swiftlint"
+kind = "quality"
+check = "force_cast"
+paths = ["**/*.swift"]
+severity = "warning"
+enforces = """\
+No cast to get past the type checker (coding-rules: "No casts, `as`, `unsafe`, `!` or `Any` to get past the type \
+checker."; note 17, the casts row; SPEC-baseline house@1): SwiftLint's stock force_cast, an `as!`."""
+leaves = """\
+A conditional `as?` whose nil is then forced, which tm-house-no-force-unwrapping-swift reports. A value typed `Any` \
+in the first place, and `unsafeBitCast` and `unsafeDowncast`."""
+fix = "Cast with `as?` and handle the nil case, or decode into a typed value."
+failing = { files = ["UserName.swift"], path = "UserName.swift", line = 3 }
+passing = { files = ["UserName.swift"] }
+
+[[rule]]
+id = "tm-house-no-force-try-swift"
+engine = "swiftlint"
+kind = "quality"
+check = "force_try"
+paths = ["**/*.swift"]
+severity = "warning"
+enforces = """\
+No `!` to get past the type checker (coding-rules: "No casts, `as`, `unsafe`, `!` or `Any` to get past the type \
+checker."; note 17, the casts row; SPEC-baseline house@1): SwiftLint's stock force_try, a `try!`."""
+leaves = """\
+A `try?` that drops the error, which is the standard set's wider-catch question (tm-change-adds-wider-catch-swift), \
+not this rule's."""
+fix = "Mark the function `throws` and use `try`, or catch the error and handle it."
+failing = { files = ["SettingsText.swift"], path = "SettingsText.swift", line = 5 }
+passing = { files = ["SettingsText.swift"] }
+
+[[rule]]
+id = "tm-house-no-force-unwrapping-swift"
+engine = "swiftlint"
+kind = "quality"
+check = "force_unwrapping"
+paths = ["**/*.swift"]
+severity = "warning"
+enforces = """\
+No `!` to get past the type checker (coding-rules: "No casts, `as`, `unsafe`, `!` or `Any` to get past the type \
+checker."; note 17, the casts row; SPEC-baseline house@1): SwiftLint's force_unwrapping, an opt-in rule that \
+--only-rule runs."""
+leaves = """\
+An implicitly unwrapped optional declared with `!` (`let port: Int!`), which force_unwrapping does not report \
+(SwiftLint's implicitly_unwrapped_optional does). `unsafelyUnwrapped`."""
+fix = "Unwrap with `if let`, `guard let` or `??`, or return the optional to the caller."
+failing = { files = ["HealthURL.swift"], path = "HealthURL.swift", line = 5 }
+passing = { files = ["HealthURL.swift"] }
+
+[[rule]]
+id = "tm-house-no-as-conversions-rust"
+engine = "clippy"
+kind = "quality"
+check = "clippy::as_conversions"
+paths = ["**/*.rs"]
+severity = "warning"
+enforces = """\
+No `as` to get past the type checker (coding-rules: "No casts, `as`, `unsafe`, `!` or `Any` to get past the type \
+checker."; note 17, the casts row; SPEC-baseline house@1): clippy's stock as_conversions."""
+leaves = """\
+as_conversions reports every `as`, safe or not (note 17), so a lossless widening is reported too. A conversion past \
+the type checker made another way: `std::mem::transmute`, a `dyn Any` downcast; `unsafe` is tm-house-no-unsafe-rust."""
+fix = "Convert with `From` or `into()` where it cannot fail, and with `try_from` where it can, handling the error."
+failing = { files = ["Cargo.toml", "src/lib.rs"], path = "src/lib.rs", line = 5 }
+passing = { files = ["Cargo.toml", "src/lib.rs"] }
+
+[[rule]]
+id = "tm-house-no-assign-then-return-python"
+engine = "ruff"
+kind = "quality"
+check = "RET504"
+paths = ["**/*.py"]
+severity = "warning"
+enforces = """\
+No variable used once after its declaration (coding-rules: "No variable used once after its declaration: use the \
+expression."; note 17, the single-use variable row; SPEC-baseline house@1): ruff's stock RET504, a value assigned \
+and then returned."""
+leaves = """\
+It finds only a value returned on the next line (note 17): a variable used once in any other way, such as passed \
+to one call, is not reported."""
+fix = "Return the expression directly."
+failing = { files = ["names.py"], path = "names.py", line = 6 }
+passing = { files = ["names.py"] }
+
+[[rule]]
+id = "tm-house-no-let-and-return-rust"
+engine = "clippy"
+kind = "quality"
+check = "clippy::let_and_return"
+paths = ["**/*.rs"]
+severity = "warning"
+enforces = """\
+No variable used once after its declaration (coding-rules: "No variable used once after its declaration: use the \
+expression."; note 17, the single-use variable row; SPEC-baseline house@1): clippy's stock let_and_return, a `let` \
+binding returned as the block's value."""
+leaves = """\
+It finds only a value returned on the next line (note 17): a variable used once in any other way is not reported. \
+Clippy also passes over some bindings: `let text = format!("Hello, {name}")` and \
+`let stored = code.trim().to_uppercase()`, each then returned, are not reported by clippy 0.1.95, while \
+`let total = quantity * unit_cents` is."""
+fix = "Return the expression directly."
+failing = { files = ["Cargo.toml", "src/lib.rs"], path = "src/lib.rs", line = 6 }
+passing = { files = ["Cargo.toml", "src/lib.rs"] }
+
+[[rule]]
+id = "tm-house-arg-type-hints-python"
+engine = "ruff"
+kind = "quality"
+check = "ANN001"
+paths = ["**/*.py"]
+severity = "warning"
+enforces = """\
+Type hints on public functions, their arguments (python: "Type hints on public functions."; note 17, the type hints \
+row; SPEC-baseline house@1): ruff's stock ANN001, an argument with no type annotation."""
+leaves = """\
+The ANN family also has rules for private functions; name the codes (note 17): `*args` and `**kwargs` are ANN002 \
+and ANN003, not checked here. ANN001 reports a private function's arguments too, which the house rule does not ask."""
+fix = "Annotate the argument's type."
+failing = { files = ["ports.py"], path = "ports.py", line = 4 }
+passing = { files = ["ports.py"] }
+
+[[rule]]
+id = "tm-house-return-type-hints-python"
+engine = "ruff"
+kind = "quality"
+check = "ANN201"
+paths = ["**/*.py"]
+severity = "warning"
+enforces = """\
+Type hints on public functions, their return type (python: "Type hints on public functions."; note 17, the type \
+hints row; SPEC-baseline house@1): ruff's stock ANN201, a public function or method with no return annotation."""
+leaves = """\
+The ANN family also has rules for private functions; name the codes (note 17): a special method such as `__init__` \
+(ANN204), a static method (ANN205) and a class method (ANN206) are not checked here, nor a private function \
+(ANN202), which the house rule does not ask."""
+fix = "Annotate the function's return type."
+failing = { files = ["ports.py"], path = "ports.py", line = 4 }
+passing = { files = ["ports.py"] }
+
+[[rule]]
+id = "tm-house-pathlib-python"
+engine = "ruff"
+kind = "quality"
+check = "PTH"
+paths = ["**/*.py"]
+severity = "warning"
+enforces = """\
+Paths with pathlib (python: "Paths with `pathlib`, never string concatenation."; note 17, the pathlib row; \
+SPEC-baseline house@1): ruff's stock PTH family, selected by its prefix; each finding carries its own code, such as \
+PTH118 for `os.path.join`."""
+leaves = """\
+It finds `os.path` calls and their kin; it does not find a path built from strings (note 17), such as \
+`home + "/.config"` or an f-string."""
+fix = "Build the path with `pathlib.Path`, its `/` operator and its methods, instead of `os.path`."
+failing = { files = ["config.py"], path = "config.py", line = 7 }
+passing = { files = ["config.py"] }
+
+[[rule]]
+id = "tm-house-one-public-symbol-rust"
+engine = "ast-grep"
+kind = "quality"
+check = "ast-grep/tm-house-one-public-symbol-rust.yml"
+paths = ["**/*.rs"]
+exclude = ["**/tests/**", "**/*_tests.rs"]
+severity = "warning"
+enforces = """\
+One public symbol per file (small-files rule 1: "one public function, type or trait, plus private helpers nothing \
+else uses"; note 17's row "One public symbol per file"; SPEC-baseline house@1, Rust by ast-grep from Mortar's rule): \
+Mortar's rules/rust/one-public-symbol-per-file.yml with its logic kept, reporting each public function, struct, \
+enum, union, trait or type alias that comes after a different one in the file, at the top level or in inline \
+modules; any visibility but pub(self) is public, and cfg twins of one name count once."""
+leaves = """\
+Mortar's rule leaves some constructs out (note 17): mod, use, const, static and macro_rules! are not counted, nor \
+an item inside a function body. The charter's second line, a type's methods each in their own file: methods in impl \
+and trait blocks are not counted. Swift, which has its own rule. The first symbol of a file is never reported; each \
+later one is."""
+fix = """\
+Move each further public symbol into its own file named after it, and re-export it from the folder's mod.rs."""
+failing = { files = ["report.rs"], path = "report.rs", line = 7 }
+passing = { files = ["render.rs"] }
+
+[[rule]]
+id = "tm-house-one-declaration-swift"
+engine = "swiftlint"
+kind = "quality"
+check = "one_declaration_per_file"
+paths = ["**/*.swift"]
+severity = "warning"
+enforces = """\
+One public symbol per file (small-files: "One public symbol per file: one public function, type or trait, plus \
+private helpers nothing else uses."; note 17, the one public symbol row; SPEC-baseline house@1): SwiftLint's \
+one_declaration_per_file, each type declared after a file's first."""
+leaves = """\
+SwiftLint counts every declaration, public or not (note 17), so a private helper type is reported too. It does not \
+count extensions or free functions, so a second public function is not reported. Rust is \
+tm-house-one-public-symbol-rust."""
+fix = "Move each further declaration to a file of its own, named after it."
+failing = { files = ["Circle.swift"], path = "Circle.swift", line = 7 }
+passing = { files = ["Circle.swift"] }
+
+[[rule]]
+id = "tm-house-file-name-swift"
+engine = "swiftlint"
+kind = "quality"
+check = "file_name"
+paths = ["**/*.swift"]
+severity = "warning"
+enforces = """\
+A file named after its symbol (small-files: "Named after the symbol"; note 17, the file named after its symbol row; \
+SPEC-baseline house@1): SwiftLint's file_name, a file whose name matches no type or extension it declares."""
+leaves = """\
+Types and extensions only, Swift only (note 17): a file that declares only free functions is not checked. No engine \
+checks a file's name in Rust or Python."""
+fix = "Rename the file after the type or extension it declares, or move the type into a file named after it."
+failing = { files = ["Orders.swift"], path = "Orders.swift", line = 1 }
+passing = { files = ["OrderLine.swift"] }
+
+[[rule]]
+id = "tm-house-file-length-swift"
+engine = "swiftlint"
+kind = "quality"
+check = "file_length"
+paths = ["**/*.swift"]
+exclude = ["**/*Tests/**", "**/*Tests.swift", "**/vendor/**", "**/Vendor/**"]
+severity = "warning"
+params = { max_lines = 150 }
+enforces = """\
+At most 150 lines (small-files: "At most 150 lines, comments included; test files don't count."; note 17, the 150 \
+lines row; SPEC-baseline house@1): SwiftLint's file_length at the max_lines param, tests and vendored code left out \
+by the rule's exclude."""
+leaves = """\
+Swift only (note 17): no engine counts a Rust or Python file's lines. A file allowed past the limit says why in its \
+header comment; the check cannot read that, so the allowance is an exception in the rule file."""
+fix = "Split the file: move one whole responsibility into a file of its own."
+failing = { files = ["ShippingZone.swift"], path = "ShippingZone.swift", line = 151 }
+passing = { files = ["ShippingZone.swift"] }
+
+[[rule]]
+id = "tm-house-no-stored-bool-swift"
+engine = "ast-grep"
+kind = "quality"
+check = "ast-grep/tm-house-no-stored-bool-swift.yml"
+paths = ["**/*.swift"]
+severity = "error"
+required_params = ["entity_types"]
+enforces = """\
+No Bool stored on a persisted entity; boolean state lives in an Int64 bitmap field (entity-style: "No `Bool` stored \
+property on a persisted entity. Ever."; "violations are blocking findings"; note 17's row "No stored `Bool` on a \
+persisted entity"; SPEC-baseline house@1, entity types from the repository's override, from moot's rule file v1): \
+the Swift document of moot's tools/temperare/rules/no-stored-bool.yml, a stored property typed Bool or Bool? in \
+the body of a struct, class or actor named in entity_types."""
+leaves = """\
+Which types are persisted entities: the repository names them in entity_types, and a type it leaves out is not \
+checked. A Bool spelt another way (Swift.Bool, a typealias, an inferred `var isOpen = false` with no annotation); a \
+Bool on a type nested inside an entity; static and class members and computed \
+properties, which are not stored."""
+fix = "Store the flag as a bit in the entity's Int64 bitmap field; expose the Bool as a computed accessor."
+failing = { files = ["Drawer.swift"], path = "Drawer.swift", line = 4 }
+passing = { files = ["Drawer.swift"] }
+
+[[rule]]
+id = "tm-house-no-stored-bool-rust"
+engine = "ast-grep"
+kind = "quality"
+check = "ast-grep/tm-house-no-stored-bool-rust.yml"
+paths = ["**/*.rs"]
+severity = "error"
+required_params = ["entity_types"]
+enforces = """\
+No Bool stored on a persisted entity; boolean state lives in an Int64 bitmap field (entity-style: "No `Bool` stored \
+property on a persisted entity. Ever."; "violations are blocking findings"; note 17's row "No stored `Bool` on a \
+persisted entity"; SPEC-baseline house@1, entity types from the repository's override, from moot's rule file v1): \
+the Rust document of moot's tools/temperare/rules/no-stored-bool.yml, a named field typed bool or Option<bool> in a \
+struct named in entity_types."""
+leaves = """\
+Which types are persisted entities: the repository names them in entity_types, and a type it leaves out is not \
+checked. A bool in a tuple struct or an enum variant, a bool spelt another way (std::primitive::bool, a type \
+alias), and a bool inside another type such as Vec<bool>."""
+fix = "Store the flag as a bit in the entity's Int64 bitmap field; expose the Bool as a computed accessor."
+failing = { files = ["drawer.rs"], path = "drawer.rs", line = 4 }
+passing = { files = ["drawer.rs"] }
+
+[[rule]]
+id = "tm-house-bitmap-int64-swift"
+engine = "ast-grep"
+kind = "quality"
+check = "ast-grep/tm-house-bitmap-int64-swift.yml"
+paths = ["**/*.swift"]
+severity = "error"
+required_params = ["entity_types"]
+enforces = """\
+Bitmaps are Int64 (entity-style: "ALWAYS `Int64`, never `Int` or `Int32`"; "violations are blocking findings"; \
+bitmap-patterns-core: "Read and write it as `Int64` — never a narrower integer type."; note 17's row "Bitmaps are \
+`Int64`"; SPEC-baseline house@1, Orc #1591): a stored property of a struct, class or actor named in entity_types \
+whose name ends in Bitmap or Flags (operationalBitmap, entityFlags) and whose annotated type is not Int64, Int64? \
+included, since a bitmap's column is NOT NULL with a default, found by ast-grep."""
+leaves = """\
+Which types are persisted entities: the repository names them in entity_types, and a type it leaves out is not \
+checked. A bitmap on a type not listed, on a type nested inside an entity, or named any other way (bitmap, flags, \
+stateBits); a bitmap with no type annotation (var entityFlags = 0, which Swift infers as Int); bit constants such \
+as `static let flagArchived: Int`, and static, class and computed members, which are not stored; a column read or \
+bound as a narrower integer (row.int32(at:), bindInt32). An Int64 written through a typealias is reported, since \
+the form cannot see through it."""
+fix = "Store the flags in an Int64 bitmap field: declare it `Int64`, not optional, with a default of 0."
+failing = { files = ["Drawer.swift"], path = "Drawer.swift", line = 4 }
+passing = { files = ["Drawer.swift"] }
+
+[[rule]]
+id = "tm-house-bitmap-int64-rust"
+engine = "ast-grep"
+kind = "quality"
+check = "ast-grep/tm-house-bitmap-int64-rust.yml"
+paths = ["**/*.rs"]
+severity = "error"
+required_params = ["entity_types"]
+enforces = """\
+Bitmaps are Int64 (entity-style: "ALWAYS `Int64`, never `Int` or `Int32`"; "violations are blocking findings"; \
+bitmap-patterns-core: "Read and write it as `Int64` — never a narrower integer type."; note 17's row "Bitmaps are \
+`Int64`"; SPEC-baseline house@1, Orc #1591): a named field of a struct named in entity_types whose name ends in \
+_bitmap or _flags (operational_bitmap, entity_flags) and whose type is not i64, Option<i64> included, since a \
+bitmap's column is NOT NULL with a default, found by ast-grep."""
+leaves = """\
+Which types are persisted entities: the repository names them in entity_types, and a type it leaves out is not \
+checked. A bitmap on a type not listed, in a tuple struct or an enum variant, or named any other way (bitmap, \
+flags, state_bits); bit constants such as `const FLAG_ARCHIVED: u32`; a column read or bound as a narrower integer \
+(row.get::<_, i32>). An i64 written through a type alias is reported, since the form cannot see through it."""
+fix = "Store the flags in an Int64 bitmap field: declare it `i64`, not `Option<i64>`, and start it at 0."
+failing = { files = ["drawer.rs"], path = "drawer.rs", line = 4 }
+passing = { files = ["drawer.rs"] }
+
+[[rule]]
+id = "tm-house-leading-trailing-swift"
+engine = "ast-grep"
+kind = "quality"
+check = "ast-grep/tm-house-leading-trailing-swift.yml"
+paths = ["**/*.swift"]
+severity = "error"
+enforces = """\
+Semantic layout directions (localization rule 4: "All layout uses `.leading` / `.trailing`, never `.left` / \
+`.right`."; "Violations are CRITICAL blocking findings"; note 17's row "`.leading` and `.trailing`"; SPEC-baseline \
+house@1): `.left` or `.right` written as an implicit member, as in `.padding(.left, 16)` or `alignment: .right`, \
+found by ast-grep."""
+leaves = """\
+A direction named through its type (NSTextAlignment.left, HorizontalAlignment.right), and `case .left:` in a switch, which is a \
+pattern. An implicit .left or .right of the code's own enum is reported too, since the form cannot tell the types \
+apart."""
+fix = """\
+Use .leading for .left and .trailing for .right, so the layout follows the reading direction."""
+failing = { files = ["SettingsRow.swift"], path = "SettingsRow.swift", line = 8 }
+passing = { files = ["SettingsRow.swift"] }
+
+[[rule]]
+id = "tm-house-display-text-literal-swift"
+engine = "ast-grep"
+kind = "quality"
+check = "ast-grep/tm-house-display-text-literal-swift.yml"
+paths = ["**/*.swift"]
+severity = "error"
+enforces = """\
+Zero string literals in display text (localization rule 1: "No hardcoded strings in any View or ViewModel that \
+produces text the user sees. Use String(localized:) or LocalizedStringKey."; its WRONG form `Text("Appearance")`; \
+"Violations are CRITICAL blocking findings"; note 17's row "no string literal in display text"; SPEC-baseline \
+house@1): a call of Text whose first argument is unlabelled and a string literal, interpolated or not."""
+leaves = """\
+Text(verbatim: "..."), which says on purpose the text is not localized. A literal given to any other view or \
+modifier: Button, Label, Toggle, navigationTitle, alert and the like. A literal held in a variable or a ViewModel \
+property and passed to Text, and Text written SwiftUI.Text."""
+fix = """\
+Give Text a localized string: Text(String(localized: "<key>")) or Text(LocalizedStringKey("<key>")), with the key \
+in the string catalog."""
+failing = { files = ["SettingsView.swift"], path = "SettingsView.swift", line = 6 }
+passing = { files = ["SettingsView.swift"] }
+
+[[rule]]
+id = "tm-house-swift-testing-swift"
+engine = "ast-grep"
+kind = "quality"
+check = "ast-grep/tm-house-swift-testing-swift.yml"
+paths = ["**/*.swift"]
+severity = "warning"
+enforces = """\
+Swift Testing, not XCTest (swift: "Swift Testing, not XCTest."; bitmap-patterns-core: "XCTest is retired — do not \
+write new XCTest suites."; note 17's row "Swift Testing, not XCTest"; SPEC-baseline house@1): an import of XCTest \
+or one of its submodules, found by ast-grep."""
+leaves = """\
+A test that uses XCTest's names through another module that re-exports it, and a GUI test that needs XCTest \
+(the swift skill allows xcodebuild for GUI work SwiftPM cannot drive; such a file needs an exception)."""
+fix = """\
+Write the test with Swift Testing: import Testing, @Test functions and #expect."""
+failing = { files = ["ParserTests.swift"], path = "ParserTests.swift", line = 1 }
+passing = { files = ["ParserTests.swift"] }
+
+[[rule]]
+id = "tm-house-test-ratio"
+engine = "git"
+kind = "quality"
+check = "test_ratio"
+paths = ["**/*.rs", "**/*.py", "**/*.swift"]
+severity = "warning"
+params = { max_ratio = 1.5, floor = 40, test_paths = ["**/tests/**", "**/*_tests.rs", "**/test_*.py", "**/*_test.py", "**/*Tests/**", "**/*Tests.swift"] }
+only_with_base = true
+enforces = """\
+Tests no larger than the code (SPEC-baseline house@1, tests no larger than the code, rule 1; S-58; Bob #1414; the \
+zone-tests skill: "More than one and a half lines of test per line of code needs a reason"): git's own diff against \
+the base counts the lines the change adds, a file matching test_paths as test and every other file in the rule's \
+paths as code, and once the change adds at least floor lines of test, more than max_ratio lines of test per line of \
+code is reported, at the first added line of the test file with the most added lines: "this change adds T lines of \
+test for C lines of code (R to 1; the rule's limit is M past F lines)"."""
+leaves = """\
+Rust tests inline in a #[cfg(test)] module count as code. A test file the test_paths globs do not name counts as \
+code, and a file outside the rule's paths (a JSON or text fixture, another language) counts as neither."""
+fix = """\
+Keep the tests to what the change's done list names, with one table test per function, or say in the change why \
+its tests must be this large."""
+failing = { files = ["src/lib.rs", "tests/parse.rs", "tests/format.rs"], path = "tests/parse.rs", line = 1 }
+passing = { files = ["src/lib.rs", "tests/parse.rs", "tests/format.rs"] }
+
+[[rule]]
+id = "tm-house-test-asserts-sentence-rust"
+engine = "ast-grep"
+kind = "quality"
+check = "ast-grep/tm-house-test-asserts-sentence-rust.yml"
+paths = ["**/tests/**/*.rs", "**/*_tests.rs"]
+severity = "warning"
+only_with_base = true
+enforces = """\
+A test asserts what the code decides, not its wording (SPEC-baseline house@1, tests no larger than the code, rule 2; \
+S-58; Bob #1414; the study F10: 17% of Python tests assert a string of five words or more; the zone-tests skill: \
+"Never assert a sentence"): an added assert_eq! or assert_ne! with a string literal of five or more words \
+(split on whitespace) as one of its two values, or an assert! around .contains(...) of such a literal, found by \
+ast-grep."""
+leaves = """\
+A sentence built at run time or read from a fixture file, and an assertion made through a helper. An assertion's \
+message (after the second comma of assert_eq! and assert_ne!, after the first argument of assert!) is not asserted \
+and not reported. A sentence compared inside assert! (==, \
+starts_with), debug_assert_eq!, and a macro called by its path (std::assert_eq!). Escapes are read as written, so \
+\\n does not split two words."""
+fix = """\
+Assert what the code decides (a field, a code, a count), not its wording: a pinned sentence turns every rewording \
+into a test change."""
+failing = { files = ["describe_tests.rs"], path = "describe_tests.rs", line = 7 }
+passing = { files = ["describe_tests.rs"] }
+
+[[rule]]
+id = "tm-house-test-asserts-sentence-python"
+engine = "ast-grep"
+kind = "quality"
+check = "ast-grep/tm-house-test-asserts-sentence-python.yml"
+paths = ["**/tests/**/*.py", "**/test_*.py", "**/*_test.py"]
+severity = "warning"
+only_with_base = true
+enforces = """\
+A test asserts what the code decides, not its wording (SPEC-baseline house@1, tests no larger than the code, rule 2; \
+S-58; Bob #1414; the study F10: 17% of Python tests assert a string of five words or more; the zone-tests skill: \
+"Never assert a sentence"): an added assert, or self.assert*(...), whose asserted value is a string literal of five \
+or more words (split on whitespace) or a comparison (any operator: ==, !=, in, <, is) with one as an operand, found by \
+ast-grep."""
+leaves = """\
+A sentence built at run time or read from a fixture file, and an assertion made through a helper. An assertion's \
+message (after assert's comma, assertTrue's second argument, msg=) is not asserted and not reported. A sentence \
+passed to a call inside the assertion (text.startswith(...)), pytest.raises(match=...), and string literals joined \
+by juxtaposition."""
+fix = """\
+Assert what the code decides (a field, a code, a count), not its wording: a pinned sentence turns every rewording \
+into a test change."""
+failing = { files = ["tests/test_describe.py"], path = "tests/test_describe.py", line = 5 }
+passing = { files = ["tests/test_describe.py"] }
+
+[[rule]]
+id = "tm-house-test-asserts-sentence-swift"
+engine = "ast-grep"
+kind = "quality"
+check = "ast-grep/tm-house-test-asserts-sentence-swift.yml"
+paths = ["**/*Tests/**/*.swift", "**/*Tests.swift"]
+severity = "warning"
+only_with_base = true
+enforces = """\
+A test asserts what the code decides, not its wording (SPEC-baseline house@1, tests no larger than the code, rule 2; \
+S-58; Bob #1414; the study F10: 17% of Python tests assert a string of five words or more; the zone-tests skill: \
+"Never assert a sentence"): an added #expect or XCTAssert* whose asserted value is a string literal of five or more \
+words (split on whitespace) or an == / != comparison with one as an operand, found by ast-grep."""
+leaves = """\
+A sentence built at run time or read from a fixture file, and an assertion made through a helper. An assertion's \
+message (#expect's comment; the second argument of XCTAssert, XCTAssertTrue, XCTAssertFalse, XCTAssertNil, \
+XCTAssertNotNil, XCTAssertNoThrow and XCTAssertThrowsError; the third of the two-value XCTAssertEqual and the like) \
+is not asserted and not reported. A sentence passed to \
+a call inside the assertion, #expect(text.contains("...")) among them, and #require."""
+fix = """\
+Assert what the code decides (a field, a code, a count), not its wording: a pinned sentence turns every rewording \
+into a test change."""
+failing = { files = ["DescribeTests.swift"], path = "DescribeTests.swift", line = 8 }
+passing = { files = ["DescribeTests.swift"] }
+
+[[rule]]
+id = "tm-house-unit-test-fakes-own-kit-rust"
+engine = "ast-grep"
+kind = "quality"
+check = "ast-grep/tm-house-unit-test-fakes-own-kit-rust.yml"
+paths = ["**/src/**/*_tests.rs"]
+severity = "warning"
+only_with_base = true
+enforces = """\
+A unit test does not fake its own kit's code (SPEC-baseline house@1, tests no larger than the code, rule 3; S-58; \
+Bob #1414; the study F5: 43% of Python unit tests use a fake, and Bob's decision of 11-17 that a test reaching code \
+of the kit that is not pure is a ZIT; the zone-tests skill: "Never fake the zone's own code: a test that would need \
+to is a ZIT, run for real"): in a sibling *_tests.rs under src/, an added #[automock] or mock! (mockall), or an impl \
+of a crate::... or super::... trait for a struct or enum the test file defines, found by ast-grep."""
+leaves = """\
+A fake through a trait imported by name, a closure seam, and Swift, where a protocol's home cannot be told from the \
+test file (Tessera's graph can, later). An impl for a generic or path type (impl<T> crate::Store for Wrapper<T>), \
+a fake in a helper file that is not a *_tests.rs, #[cfg_attr(test, automock)] on the trait in the code itself, and \
+tests inline in a #[cfg(test)] module of a source file."""
+fix = """\
+file it as a ZIT and use the kit's own code for real; do not fake it, and do not split the test."""
+failing = { files = ["src/store_tests.rs"], path = "src/store_tests.rs", line = 7 }
+passing = { files = ["src/store_tests.rs"] }
+
+[[rule]]
+id = "tm-house-unit-test-fakes-own-kit-python"
+engine = "ast-grep"
+kind = "quality"
+check = "ast-grep/tm-house-unit-test-fakes-own-kit-python.yml"
+paths = ["**/tests/unit/**/*.py"]
+severity = "warning"
+required_params = ["own_package"]
+only_with_base = true
+enforces = """\
+A unit test does not fake its own kit's code (SPEC-baseline house@1, tests no larger than the code, rule 3; S-58; \
+Bob #1414; the study F5: 43% of Python unit tests use a fake, and Bob's decision of 11-17 that a test reaching code \
+of the kit that is not pure is a ZIT; the zone-tests skill: "Never fake the zone's own code: a test that would need \
+to is a ZIT, run for real"): under tests/unit/, an added patch("<own>..."), mock.patch("<own>...") or \
+mocker.patch("<own>..."), or a patch.object on a module or class of <own>, named through the package or imported \
+from it by name, with <own> the kit's top-level package, one name, from the required param own_package, found by \
+ast-grep."""
+leaves = """\
+A fake through a trait imported by name, a closure seam, and Swift, where a protocol's home cannot be told from the \
+test file (Tessera's graph can, later). patch.dict, monkeypatch.setattr, a fake passed in by hand, a target built at \
+run time, and a module imported relatively (from . import store)."""
+fix = """\
+file it as a ZIT and use the kit's own code for real; do not fake it, and do not split the test."""
+failing = { files = ["tests/unit/test_store.py"], path = "tests/unit/test_store.py", line = 7 }
+passing = { files = ["tests/unit/test_store.py"] }
+
+[[rule]]
+id = "tm-house-test-setup-heavier-rust"
+engine = "ast-grep"
+kind = "quality"
+check = "ast-grep/tm-house-test-setup-heavier-rust.yml"
+paths = ["**/tests/**/*.rs", "**/*_tests.rs"]
+severity = "warning"
+params = { count = "setup-vs-tests", shared_setup = ["**/tests/common/**"] }
+only_with_base = true
+enforces = """\
+A test file holds no more setup than tests (SPEC-baseline house@1, tests no larger than the code, rule 4; S-58; \
+Bob #1414; the study F9: 133 setup lines repeat word for word across ten or more test files): ast-grep's count mode \
+runs a rule matching the file's root node and each test function (a fn marked #[test] or #[<runtime>::test], with its attributes) and reports a file the \
+change adds lines to whose non-blank lines outside a test function exceed those inside one, at the file's first \
+added line; the shared setup files are exempt."""
+leaves = """\
+A test marked by another attribute (#[test_case], #[rstest]), a comment between a test's attributes and its fn \
+(counted as setup), and setup shared through a file the shared_setup globs do not name. Tests inline in a \
+#[cfg(test)] module of a source file are outside the paths."""
+fix = """\
+move the setup to the folder's shared setup file, or fold the cases into one table test."""
+failing = { files = ["tests/parse.rs"], path = "tests/parse.rs", line = 1 }
+passing = { files = ["tests/parse.rs"] }
+
+[[rule]]
+id = "tm-house-test-setup-heavier-python"
+engine = "ast-grep"
+kind = "quality"
+check = "ast-grep/tm-house-test-setup-heavier-python.yml"
+paths = ["**/tests/**/*.py", "**/test_*.py", "**/*_test.py"]
+severity = "warning"
+params = { count = "setup-vs-tests", shared_setup = ["**/conftest.py", "**/tests/**/helpers.py"] }
+only_with_base = true
+enforces = """\
+A test file holds no more setup than tests (SPEC-baseline house@1, tests no larger than the code, rule 4; S-58; \
+Bob #1414; the study F9: 133 setup lines repeat word for word across ten or more test files): ast-grep's count mode \
+runs a rule matching the file's root node and each test function (a def test... function or method, with its decorators) and reports a file the change \
+adds lines to whose non-blank lines outside a test function exceed those inside one, at the file's first added \
+line; the shared setup files are exempt."""
+leaves = """\
+Tests named by another prefix (pytest's python_functions changed), fixtures and helpers in a file the shared_setup \
+globs do not name, and a test class's setup methods, which count as setup."""
+fix = """\
+move the setup to the folder's shared setup file, or fold the cases into one table test."""
+failing = { files = ["tests/test_parse.py"], path = "tests/test_parse.py", line = 1 }
+passing = { files = ["tests/test_parse.py"] }
+
+[[rule]]
+id = "tm-house-test-setup-heavier-swift"
+engine = "ast-grep"
+kind = "quality"
+check = "ast-grep/tm-house-test-setup-heavier-swift.yml"
+paths = ["**/*Tests/**/*.swift", "**/*Tests.swift"]
+severity = "warning"
+params = { count = "setup-vs-tests", shared_setup = ["**/*Tests/Support/**"] }
+only_with_base = true
+enforces = """\
+A test file holds no more setup than tests (SPEC-baseline house@1, tests no larger than the code, rule 4; S-58; \
+Bob #1414; the study F9: 133 setup lines repeat word for word across ten or more test files): ast-grep's count mode \
+runs a rule matching the file's root node and each test function (a func marked @Test, or a func test... method of a type) and reports a file the change \
+adds lines to whose non-blank lines outside a test function exceed those inside one, at the file's first added \
+line; the shared setup files are exempt."""
+leaves = """\
+A test func test... at the top level, outside a type, setup shared through a file the shared_setup globs do not \
+name, and setUp methods, which count as setup."""
+fix = """\
+move the setup to the folder's shared setup file, or fold the cases into one table test."""
+failing = { files = ["ParseTests.swift"], path = "ParseTests.swift", line = 1 }
+passing = { files = ["ParseTests.swift"] }

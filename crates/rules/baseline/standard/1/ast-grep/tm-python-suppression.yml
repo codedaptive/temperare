@@ -1,0 +1,7 @@
+id: tm-python-suppression
+language: python
+message: "a suppression written in the code: a noqa, type: ignore or pylint: disable comment silences a check here"
+severity: warning
+rule:
+  kind: comment
+  regex: '(?:^|\s)#\s*(?:(?:(?:ruff|flake8)\s*:\s*)?(?i:noqa)\b|type:\s*ignore\b|pylint:\s*disable\b)'

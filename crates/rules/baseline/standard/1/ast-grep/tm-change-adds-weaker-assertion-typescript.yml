@@ -1,0 +1,15 @@
+id: tm-change-adds-weaker-assertion-typescript
+language: typescript
+message: this change adds a weaker assertion
+severity: warning
+rule:
+  kind: call_expression
+  has:
+    field: function
+    kind: member_expression
+    all:
+      - has: { field: property, regex: ^(toBeTruthy|toBeDefined)$ }
+      - has:
+          field: object
+          kind: call_expression
+          has: { field: function, regex: ^expect$ }

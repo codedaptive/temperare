@@ -1,0 +1,13 @@
+id: tm-rust-suppression
+language: rust
+message: "a suppression written in the code: #[allow(...)] or #![allow(...)] silences a lint here"
+severity: warning
+rule:
+  any:
+    - kind: attribute_item
+    - kind: inner_attribute_item
+  has:
+    kind: attribute
+    has:
+      kind: identifier
+      regex: ^allow$

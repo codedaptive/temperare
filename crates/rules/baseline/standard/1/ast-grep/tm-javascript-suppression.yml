@@ -1,0 +1,7 @@
+id: tm-javascript-suppression
+language: javascript
+message: "a suppression written in the code: eslint-disable, @ts-ignore or @ts-expect-error silences a check here"
+severity: warning
+rule:
+  kind: comment
+  regex: \beslint-disable|@ts-ignore\b|@ts-expect-error\b

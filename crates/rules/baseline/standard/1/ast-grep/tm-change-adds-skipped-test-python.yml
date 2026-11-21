@@ -1,0 +1,7 @@
+id: tm-change-adds-skipped-test-python
+language: python
+message: this change adds a skipped test
+severity: warning
+rule:
+  kind: attribute
+  regex: ^(pytest\.mark\.(skip|skipif|xfail)|pytest\.skip|unittest\.(skip|skipIf|skipUnless)|self\.skipTest)$

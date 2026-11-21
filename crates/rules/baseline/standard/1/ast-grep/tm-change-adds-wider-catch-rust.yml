@@ -1,0 +1,9 @@
+id: tm-change-adds-wider-catch-rust
+language: rust
+message: this change adds a wider catch
+severity: warning
+rule:
+  kind: call_expression
+  has:
+    field: function
+    regex: (^|::|\.\s*)catch_unwind$

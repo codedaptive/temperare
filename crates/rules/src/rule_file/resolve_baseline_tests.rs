@@ -10,6 +10,7 @@ use std::collections::BTreeSet;
 const ALPHA: BaselineSet = BaselineSet {
     name: "alpha",
     version: 1,
+    ready: true,
     text: "version = 1\nretired = [\"tm-old-a\"]\n[[rule]]\nid = \"tm-a1\"\nengine = \"ruff\"\ncheck = \"a1\"\nfix = \"f\"\n\
            failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n\
            [[rule]]\nid = \"tm-a2\"\nengine = \"ruff\"\ncheck = \"a2\"\nfix = \"f\"\nrequired_params = [\"types\"]\n\
@@ -25,6 +26,7 @@ const ALPHA: BaselineSet = BaselineSet {
 const BETA: BaselineSet = BaselineSet {
     name: "beta",
     version: 1,
+    ready: true,
     text: "version = 1\nretired = [\"tm-old-b\"]\n[[rule]]\nid = \"tm-b1\"\nengine = \"clippy\"\ncheck = \"b1\"\nfix = \"f\"\n\
            failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
     yaml: &[],
@@ -34,6 +36,7 @@ const BETA: BaselineSet = BaselineSet {
 const DUP: BaselineSet = BaselineSet {
     name: "dup",
     version: 1,
+    ready: true,
     text: "version = 1\n[[rule]]\nid = \"tm-d1\"\nengine = \"ruff\"\ncheck = \"d1\"\nfix = \"f\"\n\
            failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n\
            [[rule]]\nid = \"tm-a1\"\nengine = \"ruff\"\ncheck = \"from-dup\"\nfix = \"f\"\n\
@@ -47,7 +50,7 @@ const DUP: BaselineSet = BaselineSet {
     ],
 };
 const BROKEN: BaselineSet =
-    BaselineSet { name: "broken", version: 2, text: "version = 1\ncolour = 1\n", yaml: &[], cases: &[] };
+    BaselineSet { name: "broken", version: 2, ready: true, text: "version = 1\ncolour = 1\n", yaml: &[], cases: &[] };
 
 /// Two entries: the first string starts at byte 12 (column 13), the second at byte 23 (column 24); the override's
 /// rule string at byte 55 (line 3, column 8).
@@ -151,6 +154,7 @@ fn a_set_with_its_own_problem_is_a_problem_at_its_entry_and_gives_nothing() {
 const SEC: BaselineSet = BaselineSet {
     name: "sec",
     version: 1,
+    ready: true,
     text: "version = 1\n[[rule]]\nid = \"tm-x1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"x1\"\nfix = \"f\"\n\
            failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
     yaml: &[],
@@ -160,6 +164,7 @@ const SEC: BaselineSet = BaselineSet {
 const SEC2: BaselineSet = BaselineSet {
     name: "sec2",
     version: 1,
+    ready: true,
     text: "version = 1\n[[rule]]\nid = \"tm-y1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"y1\"\nfix = \"f\"\n\
            failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
     yaml: &[],
@@ -169,6 +174,7 @@ const SEC2: BaselineSet = BaselineSet {
 const SEC_NEEDS: BaselineSet = BaselineSet {
     name: "secneeds",
     version: 1,
+    ready: true,
     text: "version = 1\n[[rule]]\nid = \"tm-n1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"n1\"\nfix = \"f\"\n\
            required_params = [\"types\"]\n\
            failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
@@ -224,6 +230,7 @@ fn two_sets_with_security_rules_give_the_first_entry() {
 const DEFAULTED: BaselineSet = BaselineSet {
     name: "defaulted",
     version: 1,
+    ready: true,
     text: "version = 1\n[[rule]]\nid = \"tm-t1\"\nengine = \"ast-grep\"\ncheck = \"t1\"\nfix = \"f\"\n\
            params = { types = [\"X\"] }\nrequired_params = [\"types\"]\n\
            failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
@@ -232,7 +239,7 @@ const DEFAULTED: BaselineSet = BaselineSet {
 };
 /// Retires `tm-b1`, which BETA gives.
 const RETIRES_B1: BaselineSet =
-    BaselineSet { name: "ret", version: 1, text: "version = 1\nretired = [\"tm-b1\"]\n", yaml: &[], cases: &[] };
+    BaselineSet { name: "ret", version: 1, ready: true, text: "version = 1\nretired = [\"tm-b1\"]\n", yaml: &[], cases: &[] };
 
 #[test]
 fn a_set_default_does_not_give_a_required_param() {
@@ -272,6 +279,7 @@ fn an_id_given_by_the_first_set_and_retired_by_the_second_is_a_problem_at_the_se
 const QZ: BaselineSet = BaselineSet {
     name: "qz",
     version: 1,
+    ready: true,
     text: "version = 1\n[[rule]]\nid = \"tm-z1\"\nengine = \"ruff\"\ncheck = \"z1\"\nfix = \"f\"\n\
            failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
     yaml: &[],
@@ -281,6 +289,7 @@ const QZ: BaselineSet = BaselineSet {
 const SZ: BaselineSet = BaselineSet {
     name: "sz",
     version: 1,
+    ready: true,
     text: "version = 1\n[[rule]]\nid = \"tm-z1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"z1\"\nfix = \"f\"\n\
            failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
     yaml: &[],

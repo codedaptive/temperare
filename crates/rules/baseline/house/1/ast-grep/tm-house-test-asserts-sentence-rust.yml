@@ -1,0 +1,38 @@
+id: tm-house-test-asserts-sentence-rust
+language: rust
+message: this test asserts a sentence of five words or more
+severity: warning
+utils:
+  # A string literal whose text splits on whitespace into five or more words (a closing quote alone is no word).
+  sentence:
+    any: [{ kind: string_literal }, { kind: raw_string_literal }]
+    regex: '^r?#*"\s*\S*[^\s"#]\S*(\s+\S*[^\s"#]\S*){4}'
+  # The argument list of a .contains call that holds a sentence.
+  contains-sentence:
+    kind: token_tree
+    follows: { kind: identifier, regex: ^contains$ }
+    has: { matches: sentence }
+rule:
+  kind: macro_invocation
+  any:
+    # assert_eq! / assert_ne!: a sentence as one of the two compared values; the message, after the second
+    # top-level comma, is not asserted.
+    - all:
+        - has: { field: macro, regex: ^assert_(eq|ne)$ }
+        - has:
+            kind: token_tree
+            has:
+              matches: sentence
+              not:
+                follows: { regex: '^,$', stopBy: end, follows: { regex: '^,$', stopBy: end } }
+    # assert!(… .contains("…")): the sentence is the argument of contains, in the condition; the message, after
+    # the first top-level comma, is not asserted.
+    - all:
+        - has: { field: macro, regex: ^assert$ }
+        - has:
+            kind: token_tree
+            has:
+              not: { follows: { regex: '^,$', stopBy: end } }
+              any:
+                - matches: contains-sentence
+                - has: { matches: contains-sentence, stopBy: end }

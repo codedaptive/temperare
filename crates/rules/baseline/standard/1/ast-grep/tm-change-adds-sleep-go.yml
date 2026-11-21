@@ -1,0 +1,9 @@
+id: tm-change-adds-sleep-go
+language: go
+message: this change adds a sleep
+severity: warning
+rule:
+  kind: call_expression
+  has:
+    field: function
+    regex: ^time\.Sleep$

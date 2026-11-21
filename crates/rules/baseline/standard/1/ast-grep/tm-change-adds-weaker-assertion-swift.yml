@@ -1,0 +1,24 @@
+id: tm-change-adds-weaker-assertion-swift
+language: swift
+message: this change adds a weaker assertion
+severity: warning
+rule:
+  any:
+    - kind: macro_invocation
+      all:
+        - has: { kind: simple_identifier, regex: ^expect$ }
+        - has:
+            kind: call_suffix
+            has:
+              kind: value_arguments
+              has:
+                kind: value_argument
+                nthChild: 1
+                has:
+                  field: value
+                  kind: infix_expression
+                  all:
+                    - has: { field: op, regex: ^!=$ }
+                    - has: { field: rhs, kind: nil_literal }
+    - kind: call_expression
+      has: { kind: simple_identifier, regex: ^XCTAssertNotNil$ }

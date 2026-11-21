@@ -1,0 +1,9 @@
+id: tm-change-adds-sleep-python
+language: python
+message: this change adds a sleep
+severity: warning
+rule:
+  kind: call
+  has:
+    field: function
+    regex: ^(time|asyncio)\.sleep$

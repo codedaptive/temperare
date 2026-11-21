@@ -1,0 +1,9 @@
+id: tm-change-adds-sleep-typescript
+language: typescript
+message: this change adds a sleep
+severity: warning
+rule:
+  kind: call_expression
+  has:
+    field: function
+    regex: ^((window|globalThis|global)\.)?setTimeout$

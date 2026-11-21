@@ -5,6 +5,7 @@ use super::baseline_set::BaselineSet;
 const SET: BaselineSet = BaselineSet {
     name: "test",
     version: 1,
+    ready: true,
     text: "version = 1\n",
     yaml: &[("no-unwrap.yml", "rule: first\n"), ("swift/no-force.yml", "rule: second\n")],
     cases: &[],

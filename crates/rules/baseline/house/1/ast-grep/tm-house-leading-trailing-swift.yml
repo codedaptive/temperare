@@ -1,0 +1,14 @@
+# Layout written with .left or .right (localization rule 4: .leading and .trailing, never .left and .right): the
+# implicit member expression `.left` or `.right` anywhere it is a value, as in `.padding(.left, 16)` or
+# `alignment: .right`. A member read through a value or a type (`node.left`, `NSTextAlignment.left`) is a
+# navigation expression, not an implicit member, and a `case .left:` in a switch is a pattern: neither is matched.
+id: tm-house-leading-trailing-swift
+language: swift
+message: layout direction .$SIDE where .leading or .trailing is meant
+severity: error
+rule:
+  kind: prefix_expression
+  regex: ^\.(left|right)$
+  has:
+    field: target
+    pattern: $SIDE

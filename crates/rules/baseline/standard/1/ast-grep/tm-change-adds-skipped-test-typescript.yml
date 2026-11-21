@@ -1,0 +1,9 @@
+id: tm-change-adds-skipped-test-typescript
+language: typescript
+message: this change adds a skipped test
+severity: warning
+rule:
+  kind: call_expression
+  has:
+    field: function
+    regex: ^((it|test|describe)\.skip|xit|xtest|xdescribe)$

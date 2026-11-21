@@ -11,6 +11,7 @@ const SETS: &[BaselineSet] = &[
     BaselineSet {
         name: "kit",
         version: 1,
+        ready: true,
         text: "version = 1\n[[rule]]\nid = \"tm-y1\"\nengine = \"ast-grep\"\ncheck = \"no-unwrap.yml\"\nfix = \"f\"\n\
                failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
         yaml: &[("no-unwrap.yml", "id: no-unwrap\nlanguage: rust\nrule:\n  pattern: $X.unwrap()\n")],
@@ -19,6 +20,7 @@ const SETS: &[BaselineSet] = &[
     BaselineSet {
         name: "gap",
         version: 3,
+        ready: true,
         text: "version = 1\n[[rule]]\nid = \"tm-g1\"\nengine = \"ast-grep\"\ncheck = \"gone.yml\"\nfix = \"f\"\n\
                failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
         yaml: &[],

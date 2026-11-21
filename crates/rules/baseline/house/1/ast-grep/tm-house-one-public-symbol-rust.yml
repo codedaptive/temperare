@@ -1,0 +1,230 @@
+# One public symbol per file (small-files rule 1, its first line), adapted from Mortar's
+# rules/rust/one-public-symbol-per-file.yml with its logic kept: a public function, struct, enum, union, trait or
+# type alias, at the top level or at any depth of inline modules, counts as a symbol (methods in impl and trait
+# blocks do not; nor do mod, use, const and static). Public is any visibility but pub(self). One name declared twice
+# as the same kind (cfg twins) counts once. A file is reported exactly when Mortar's rule reports it. Mortar's rule
+# reports every symbol of such a file; this one reports each symbol that comes after a different symbol in the
+# file (an earlier sibling, an earlier sibling's contents, or the same for an enclosing inline module), so the
+# first symbol is the one the file keeps and each later one is a finding.
+id: tm-house-one-public-symbol-rust
+language: rust
+message: "`$NAME` is a public function, type or trait after another one in this file"
+severity: warning
+utils:
+  public:
+    has:
+      kind: visibility_modifier
+      not:
+        regex: '^pub\(\s*(in\s+)?self\s*\)$'
+  placed:
+    any:
+      - inside:
+          kind: source_file
+      - inside:
+          kind: declaration_list
+          inside:
+            kind: mod_item
+  symbol:
+    all:
+      - any:
+          - kind: function_item
+          - kind: struct_item
+          - kind: enum_item
+          - kind: union_item
+          - kind: trait_item
+          - kind: type_item
+      - matches: placed
+      - matches: public
+  other-fn:
+    all:
+      - matches: symbol
+      - not:
+          all:
+            - kind: function_item
+            - has:
+                field: name
+                pattern: $NAME
+  after-other-fn:
+    any:
+      - follows:
+          stopBy: end
+          any:
+            - matches: other-fn
+            - has:
+                stopBy: end
+                matches: other-fn
+      - inside:
+          stopBy: end
+          kind: mod_item
+          follows:
+            stopBy: end
+            any:
+              - matches: other-fn
+              - has:
+                  stopBy: end
+                  matches: other-fn
+  other-struct:
+    all:
+      - matches: symbol
+      - not:
+          all:
+            - kind: struct_item
+            - has:
+                field: name
+                pattern: $NAME
+  after-other-struct:
+    any:
+      - follows:
+          stopBy: end
+          any:
+            - matches: other-struct
+            - has:
+                stopBy: end
+                matches: other-struct
+      - inside:
+          stopBy: end
+          kind: mod_item
+          follows:
+            stopBy: end
+            any:
+              - matches: other-struct
+              - has:
+                  stopBy: end
+                  matches: other-struct
+  other-enum:
+    all:
+      - matches: symbol
+      - not:
+          all:
+            - kind: enum_item
+            - has:
+                field: name
+                pattern: $NAME
+  after-other-enum:
+    any:
+      - follows:
+          stopBy: end
+          any:
+            - matches: other-enum
+            - has:
+                stopBy: end
+                matches: other-enum
+      - inside:
+          stopBy: end
+          kind: mod_item
+          follows:
+            stopBy: end
+            any:
+              - matches: other-enum
+              - has:
+                  stopBy: end
+                  matches: other-enum
+  other-union:
+    all:
+      - matches: symbol
+      - not:
+          all:
+            - kind: union_item
+            - has:
+                field: name
+                pattern: $NAME
+  after-other-union:
+    any:
+      - follows:
+          stopBy: end
+          any:
+            - matches: other-union
+            - has:
+                stopBy: end
+                matches: other-union
+      - inside:
+          stopBy: end
+          kind: mod_item
+          follows:
+            stopBy: end
+            any:
+              - matches: other-union
+              - has:
+                  stopBy: end
+                  matches: other-union
+  other-trait:
+    all:
+      - matches: symbol
+      - not:
+          all:
+            - kind: trait_item
+            - has:
+                field: name
+                pattern: $NAME
+  after-other-trait:
+    any:
+      - follows:
+          stopBy: end
+          any:
+            - matches: other-trait
+            - has:
+                stopBy: end
+                matches: other-trait
+      - inside:
+          stopBy: end
+          kind: mod_item
+          follows:
+            stopBy: end
+            any:
+              - matches: other-trait
+              - has:
+                  stopBy: end
+                  matches: other-trait
+  other-type:
+    all:
+      - matches: symbol
+      - not:
+          all:
+            - kind: type_item
+            - has:
+                field: name
+                pattern: $NAME
+  after-other-type:
+    any:
+      - follows:
+          stopBy: end
+          any:
+            - matches: other-type
+            - has:
+                stopBy: end
+                matches: other-type
+      - inside:
+          stopBy: end
+          kind: mod_item
+          follows:
+            stopBy: end
+            any:
+              - matches: other-type
+              - has:
+                  stopBy: end
+                  matches: other-type
+rule:
+  all:
+    - matches: symbol
+    - has:
+        field: name
+        pattern: $NAME
+    - any:
+        - all:
+            - kind: function_item
+            - matches: after-other-fn
+        - all:
+            - kind: struct_item
+            - matches: after-other-struct
+        - all:
+            - kind: enum_item
+            - matches: after-other-enum
+        - all:
+            - kind: union_item
+            - matches: after-other-union
+        - all:
+            - kind: trait_item
+            - matches: after-other-trait
+        - all:
+            - kind: type_item
+            - matches: after-other-type

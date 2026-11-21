@@ -11,6 +11,7 @@ const SETS: &[BaselineSet] = &[
     BaselineSet {
         name: "kit",
         version: 1,
+        ready: true,
         text: "version = 1\n[[rule]]\nid = \"tm-k1\"\nengine = \"ruff\"\ncheck = \"E1\"\nfix = \"f\"\n\
                failing = { files = [\"src/lib.rs\", \"Cargo.toml\"], path = \"src/lib.rs\", line = 3 }\n\
                passing = { files = [\"src/lib.rs\"] }\n",
@@ -24,6 +25,7 @@ const SETS: &[BaselineSet] = &[
     BaselineSet {
         name: "nocase",
         version: 1,
+        ready: true,
         text: "version = 1\n[[rule]]\nid = \"tm-m1\"\nengine = \"ruff\"\ncheck = \"E1\"\nfix = \"f\"\n\
                passing = { files = [\"a.rs\"] }\n",
         yaml: &[],
@@ -32,6 +34,7 @@ const SETS: &[BaselineSet] = &[
     BaselineSet {
         name: "nofile",
         version: 1,
+        ready: true,
         text: "version = 1\n[[rule]]\nid = \"tm-f1\"\nengine = \"ruff\"\ncheck = \"E1\"\nfix = \"f\"\n\
                failing = { files = [\"gone.rs\"], path = \"gone.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
         yaml: &[],
@@ -40,6 +43,7 @@ const SETS: &[BaselineSet] = &[
     BaselineSet {
         name: "two",
         version: 1,
+        ready: true,
         text: "version = 1\n[[rule]]\nid = \"tm-t1\"\nengine = \"ruff\"\ncheck = \"E1\"\nfix = \"f\"\n\
                failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\n\
                [[rule]]\nid = \"tm-t2\"\nengine = \"ruff\"\ncheck = \"E2\"\nfix = \"f\"\n\

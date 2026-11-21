@@ -1,0 +1,27 @@
+id: tm-change-adds-retry-python
+language: python
+message: this change adds a retry
+severity: warning
+utils:
+  retry-name:
+    kind: identifier
+    regex: (?i)retr(y|ies|ying)|attempt
+rule:
+  any:
+    - kind: decorator
+      regex: ^@\s*((tenacity|retrying)\.)?retry\b|^@\s*backoff\.on_(exception|predicate)\b|^@\s*pytest\.mark\.flaky\b
+    - kind: for_statement
+      has: { field: left, regex: (?i)retr(y|ies|ying)|attempt }
+    - kind: while_statement
+      any:
+        - has:
+            field: condition
+            any:
+              - matches: retry-name
+              - has: { matches: retry-name, stopBy: end }
+        - has:
+            field: body
+            has:
+              kind: augmented_assignment
+              regex: (?i)^[\w.]*(retr(y|ies|ying)|attempt)\w*\s*\+=\s*1$
+              stopBy: end

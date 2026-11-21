@@ -25,8 +25,8 @@ pub(crate) fn check_set_carried(text: &str, root: &DeTable, set: &BaselineSet, o
             0,
             format!("baseline set {name}@{version} carries {what} file \"{path}\" that no rule names"),
             &format!(
-                "Remove it from the set's {list} in EMBEDDED_SETS and from crates/rules/baseline/{name}/{version}/, \
-                 or name it in a rule."
+                "Remove it from the set's {list} in crates/rules/src/rule_file/{name}_{version}.rs and from \
+                 crates/rules/baseline/{name}/{version}/, or name it in a rule."
             ),
         ));
     }

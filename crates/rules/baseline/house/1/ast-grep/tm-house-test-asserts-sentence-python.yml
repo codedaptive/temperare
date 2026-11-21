@@ -1,0 +1,35 @@
+id: tm-house-test-asserts-sentence-python
+language: python
+message: this test asserts a sentence of five words or more
+severity: warning
+utils:
+  # A string literal whose text splits on whitespace into five or more words (a closing quote alone is no word).
+  sentence:
+    kind: string
+    regex: '^[A-Za-z]*["'']+\s*\S*[^\s"'']\S*(\s+\S*[^\s"'']\S*){4}'
+  # What is asserted: the sentence itself, or a comparison (any operator: ==, !=, in, <, is) with the sentence as an operand.
+  asserted:
+    any:
+      - matches: sentence
+      - kind: comparison_operator
+        has: { matches: sentence }
+rule:
+  any:
+    # assert <test>, <message>: only the test, never the message.
+    - kind: assert_statement
+      has: { nthChild: 1, matches: asserted }
+    # self.assert*(first, second, msg): the first argument, or the second unless the method takes one value
+    # (assertTrue and the like, whose second argument is the message).
+    - kind: call
+      has:
+        field: function
+        kind: attribute
+        all:
+          - has: { field: object, regex: ^self$ }
+          - has: { field: attribute, regex: '^assert[A-Z]\w*$' }
+      any:
+        - has: { field: arguments, has: { nthChild: 1, matches: asserted } }
+        - all:
+            - has: { field: arguments, has: { nthChild: 2, matches: sentence } }
+            - not:
+                has: { field: function, has: { field: attribute, regex: '^assert(True|False|IsNone|IsNotNone)$' } }

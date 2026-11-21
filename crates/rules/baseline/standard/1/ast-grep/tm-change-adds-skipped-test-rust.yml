@@ -1,0 +1,11 @@
+id: tm-change-adds-skipped-test-rust
+language: rust
+message: this change adds a skipped test
+severity: warning
+rule:
+  kind: attribute_item
+  has:
+    kind: attribute
+    has:
+      kind: identifier
+      regex: ^ignore$

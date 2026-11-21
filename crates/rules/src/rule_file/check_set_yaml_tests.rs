@@ -7,13 +7,13 @@ use toml::de::DeTable;
 
 /// A set that carries `a.yml` only.
 const CARRIES_A: BaselineSet =
-    BaselineSet { name: "house", version: 2, text: "", yaml: &[("a.yml", "rule: a\n")], cases: &[] };
+    BaselineSet { name: "house", version: 2, ready: true, text: "", yaml: &[("a.yml", "rule: a\n")], cases: &[] };
 /// The same set carrying nothing.
 const CARRIES_NONE: BaselineSet = BaselineSet { yaml: &[], ..CARRIES_A };
 
 const MISSING_A_WHAT: &str = "check \"a.yml\" names a YAML file that baseline set house@2 does not carry";
-const MISSING_A_FIX: &str =
-    "Put a.yml in crates/rules/baseline/house/2/ and list it in the set's yaml in EMBEDDED_SETS, or correct check.";
+const MISSING_A_FIX: &str = "Put a.yml in crates/rules/baseline/house/2/ and list it in the set's yaml in \
+                             crates/rules/src/rule_file/house_2.rs, or correct check.";
 
 fn check(text: &str, set: &BaselineSet) -> Vec<Problem> {
     let doc = DeTable::parse(text).expect("valid TOML");
@@ -42,8 +42,8 @@ fn every_missing_file_is_its_own_problem() {
         line: 10,
         col: 11,
         what: "check \"rs/b.yml\" names a YAML file that baseline set house@2 does not carry".to_string(),
-        fix: "Put rs/b.yml in crates/rules/baseline/house/2/ and list it in the set's yaml in EMBEDDED_SETS, or correct \
-              check."
+        fix: "Put rs/b.yml in crates/rules/baseline/house/2/ and list it in the set's yaml in \
+              crates/rules/src/rule_file/house_2.rs, or correct check."
             .to_string(),
     };
     let first = Problem { line: 5, col: 9, what: MISSING_A_WHAT.to_string(), fix: MISSING_A_FIX.to_string() };
@@ -65,8 +65,8 @@ fn only_the_rule_naming_an_uncarried_file_is_a_problem() {
         line: 10,
         col: 9,
         what: "check \"c.yml\" names a YAML file that baseline set house@2 does not carry".to_string(),
-        fix: "Put c.yml in crates/rules/baseline/house/2/ and list it in the set's yaml in EMBEDDED_SETS, or correct \
-              check."
+        fix: "Put c.yml in crates/rules/baseline/house/2/ and list it in the set's yaml in \
+              crates/rules/src/rule_file/house_2.rs, or correct check."
             .to_string(),
     };
     assert_eq!(check(&text, &CARRIES_A), vec![expected]);
