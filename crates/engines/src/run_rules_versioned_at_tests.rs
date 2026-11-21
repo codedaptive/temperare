@@ -1,11 +1,12 @@
 //! ZUT for run_rules_versioned_at.rs, a compatibility check only: on rules that run nothing and read no base (a tessera
-//! rule, never available, and a pylint rule, with no adapter) in a folder that does not exist, any base gives
-//! `run_rules_versioned`'s check. No unit test can see the base arrive through `run_rules_versioned_at`: a rule that
-//! reads it needs a resolved folder, and that runs git. The ZIT crates/engines/tests/change_counts.rs reads it both
+//! rule, never available, and a pylint rule, with no adapter) in a folder that does not exist, no base and a base give
+//! the same check. The base reaches a rule's run at the `only_with_base` gate (before the folder is read, proved
+//! without git by engine_hits_with_tests.rs) or in the git entry and ast-grep's count mode (after the folder resolves,
+//! which needs git and so the ZIT). The ZIT crates/engines/tests/change_counts.rs reads it both
 //! ways, through `check_change` with and without the base, so no copy is written here. The pieces are proved by
 //! check_host_tests.rs (the base goes into the check's host) and git/run_git_with_tests.rs (the git entry reads it).
 
-use crate::{run_rules_versioned, run_rules_versioned_at, CheckedRules, EngineVersion, NotAvailableCause, RuleRun};
+use crate::{run_rules_versioned_at, CheckedRules, EngineVersion, NotAvailableCause, RuleRun};
 use rules::{Engine, RuleFile, RuleOutcome};
 use std::path::Path;
 
@@ -24,7 +25,7 @@ fix = "g"
 "#;
 
 #[test]
-fn any_base_gives_run_rules_versioneds_check_on_rules_that_do_not_read_the_base() {
+fn no_base_and_a_base_give_the_same_check_on_rules_that_do_not_read_the_base() {
     let file = RuleFile::parse(RULES, Path::new("engines-zut-no-such-folder")).unwrap();
     let repo = Path::new("/engines-zut-run-rules-versioned-at");
     let not_available = |rule: &str, engine, why: &str| RuleRun {
@@ -45,7 +46,6 @@ fn any_base_gives_run_rules_versioneds_check_on_rules_that_do_not_read_the_base(
             EngineVersion { engine: Engine::Pylint, version: None },
         ],
     };
-    assert_eq!(run_rules_versioned(&file, repo, &[]), want);
     for base in [None, Some("abc123")] {
         assert_eq!(run_rules_versioned_at(&file, repo, &[], base), want, "base {base:?}");
     }

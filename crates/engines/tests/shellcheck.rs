@@ -5,7 +5,7 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
-use engines::{availability, entry_for, run_rules_versioned, Availability};
+use engines::{availability, entry_for, run_rules_versioned_at, Availability};
 use rules::{Engine, RuleFile, RuleOutcome};
 
 #[path = "support/git.rs"]
@@ -61,7 +61,7 @@ fix = "Quote the variable."
 "#).unwrap();
     git(&repo.0, &["add", "quote.sh", "temperare.toml"]);
     let file = RuleFile::read(&repo.0.join("temperare.toml")).unwrap();
-    let runs = run_rules_versioned(&file, &repo.0, &[]).runs;
+    let runs = run_rules_versioned_at(&file, &repo.0, &[], None).runs;
     assert_eq!(runs.len(), 1);
     assert_eq!(runs[0].rule, "quote");
     assert_eq!(runs[0].engine, Engine::ShellCheck);
@@ -96,7 +96,7 @@ fix = "Quote the variable."
         !dir.join("shellcheck").metadata().is_ok_and(|m| m.is_file() && m.permissions().mode() & 0o111 != 0)
     })).unwrap();
     std::env::set_var("PATH", without_shellcheck);
-    let runs = run_rules_versioned(&file, &repo.0, &[]).runs;
+    let runs = run_rules_versioned_at(&file, &repo.0, &[], None).runs;
     assert_eq!(runs.len(), 1);
     assert_eq!(runs[0].rule, "quote");
     assert_eq!(runs[0].engine, Engine::ShellCheck);

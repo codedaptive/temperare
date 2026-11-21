@@ -42,7 +42,6 @@ mod rule_run_of;
 mod run_group;
 mod run_rules_counted_with;
 mod run_rules_listed;
-mod run_rules_versioned;
 mod run_rules_versioned_at;
 mod run_rules_versioned_with;
 mod shared_cmd;
@@ -56,7 +55,6 @@ pub use availability::availability;
 pub use entry::{entry_cmd, Entry, ParamArg, Params, Pick, ReadFn, TempFile, VersionProbe};
 pub use entry_for::entry_for;
 pub(crate) use only_with_base_why::ONLY_WITH_BASE_WHY;
-pub use run_rules_versioned::run_rules_versioned;
 pub use run_rules_versioned_at::run_rules_versioned_at;
 pub use types::{Availability, CheckedRules, EngineVersion, Hit, NotAvailableCause, ParamError, ParseError, RuleRun};
 
