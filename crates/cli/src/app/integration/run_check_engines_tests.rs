@@ -79,6 +79,7 @@ fn swiftlint_not_available(
     _: &RuleFile,
     _: Vec<(String, RuleOutcome)>,
     _: Option<(&Path, &Oid)>,
+    _: Vec<(String, String)>,
 ) -> Result<Report, ReportError> {
     let why = "swiftlint not found on PATH".to_string();
     let not_available = vec![NotAvailable { rule: "s".to_string(), engine: Engine::SwiftLint, why }];
@@ -164,6 +165,7 @@ fn ruff_check_not_available(
     _: &RuleFile,
     _: Vec<(String, RuleOutcome)>,
     _: Option<(&Path, &Oid)>,
+    _: Vec<(String, String)>,
 ) -> Result<Report, ReportError> {
     let why = UNKNOWN_CHECK.to_string();
     let not_available = vec![NotAvailable { rule: "q".to_string(), engine: Engine::Ruff, why }];

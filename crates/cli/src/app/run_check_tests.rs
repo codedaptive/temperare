@@ -1,7 +1,7 @@
 //! ZUT for run_check.rs, with closure worlds: no git, no disk, no PATH. Every run is in /repo with the rule file
 //! /repo/temperare.toml parsed from literal TOML; a seam a test must not reach panics.
 
-use super::run_check_savings_tests::without_covers_nothing;
+use super::run_check_savings_tests::{assert_counts_tail, without_counts_tail};
 use super::{run_check, CheckWorld};
 use crate::CheckArgs;
 use engines::{CheckedRules, NotAvailableCause, RuleRun};
@@ -30,6 +30,7 @@ fix = \"Do not eval.\"
 const HEX: &str = "0123456789abcdef0123456789abcdef01234567";
 
 type Outcomes = Vec<(String, RuleOutcome)>;
+type NoFiles = Vec<(String, String)>;
 
 fn top(_: &Path) -> Result<PathBuf, GitError> {
     Ok(PathBuf::from("/repo"))
@@ -48,7 +49,7 @@ fn no_runs(_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>) -> CheckedRul
     CheckedRules { runs: vec![], engines: vec![] }
 }
 
-fn clean(_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>) -> Result<Report, ReportError> {
+fn clean(_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>, _: NoFiles) -> Result<Report, ReportError> {
     Ok(report(vec![], vec![]))
 }
 
@@ -187,7 +188,7 @@ fn a_base_naming_no_commit_is_a_usage_error_before_any_engine_runs() {
 
 #[test]
 fn a_report_that_cannot_be_built_is_a_usage_error() {
-    let fails = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>| {
+    let fails = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>, _: NoFiles| {
         Err(ReportError::Folder { folder: PathBuf::from("/repo"), why: "not inside /top".to_string() })
     };
     let w = CheckWorld { build_report: &fails, ..world() };
@@ -225,7 +226,7 @@ fn paths_reach_run_rules_as_paths_under_the_folder_and_outcomes_reach_the_report
         let outcome = RuleOutcome::Findings(vec![]);
         CheckedRules { runs: vec![RuleRun::new("q".to_string(), Engine::Ruff, outcome, None)], engines: vec![] }
     };
-    let build_report = |_: &RuleFile, outcomes: Outcomes, _: Option<(&Path, &Oid)>| {
+    let build_report = |_: &RuleFile, outcomes: Outcomes, _: Option<(&Path, &Oid)>, _: NoFiles| {
         assert_eq!(outcomes, vec![("q".to_string(), RuleOutcome::Findings(vec![]))]);
         Ok(report(vec![], vec![]))
     };
@@ -236,6 +237,24 @@ fn paths_reach_run_rules_as_paths_under_the_folder_and_outcomes_reach_the_report
         *seen.borrow(),
         Some((PathBuf::from("/repo"), vec![RelPath::new("src/a.py"), RelPath::new("b.py")]))
     );
+}
+
+#[test]
+fn the_rules_with_no_files_reach_the_report_as_rule_and_why_in_run_order() {
+    let run_rules = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| {
+        let run = |id: &str| RuleRun::new(id.to_string(), Engine::ShellCheck, RuleOutcome::Findings(vec![]), None);
+        let runs = vec![run("a").with_no_files("why-a"), run("b"), run("c").with_no_files("why-c")];
+        CheckedRules { runs, engines: vec![] }
+    };
+    let seen = RefCell::new(None);
+    let build_report = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>, no_files: NoFiles| {
+        *seen.borrow_mut() = Some(no_files);
+        Ok(report(vec![], vec![]))
+    };
+    let w = CheckWorld { run_rules: &run_rules, build_report: &build_report, ..world() };
+    assert_eq!(check(&CheckArgs::default(), &w).0, 0);
+    let expected = vec![("a".to_string(), "why-a".to_string()), ("c".to_string(), "why-c".to_string())];
+    assert_eq!(*seen.borrow(), Some(expected));
 }
 
 #[test]
@@ -251,7 +270,7 @@ fn no_base_asks_git_only_for_the_rule_file_and_runs_and_reports_without_a_base()
         CheckedRules { runs: vec![], engines: vec![] }
     };
     let bases = RefCell::new(Vec::new());
-    let build_report = |_: &RuleFile, _: Outcomes, base: Option<(&Path, &Oid)>| {
+    let build_report = |_: &RuleFile, _: Outcomes, base: Option<(&Path, &Oid)>, _: NoFiles| {
         bases.borrow_mut().push(base.map(|(top, oid)| (top.to_path_buf(), oid.clone())));
         Ok(report(vec![], vec![]))
     };
@@ -274,7 +293,7 @@ fn a_resolved_base_reaches_the_rules_as_the_commit_and_the_report_as_the_top_and
         CheckedRules { runs: vec![], engines: vec![] }
     };
     let bases = RefCell::new(Vec::new());
-    let build_report = |_: &RuleFile, _: Outcomes, base: Option<(&Path, &Oid)>| {
+    let build_report = |_: &RuleFile, _: Outcomes, base: Option<(&Path, &Oid)>, _: NoFiles| {
         bases.borrow_mut().push(base.map(|(top, oid)| (top.to_path_buf(), oid.as_str().to_string())));
         Ok(report(vec![], vec![]))
     };
@@ -289,16 +308,16 @@ fn a_clean_report_is_the_counts_then_nothing_to_do() {
     let (code, out, err) = check(&CheckArgs::default(), &world());
     assert_eq!((code, err.as_str()), (0, ""));
     assert_eq!(
-        without_covers_nothing(&out),
-        "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, \
-         0 not applicable\n\
+        without_counts_tail(&out),
+        "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed\n\
          next: nothing to do\n"
     );
+    assert_counts_tail(&out, 0, 0);
 }
 
 #[test]
 fn a_quality_error_exits_1_and_names_the_rule_file() {
-    let found = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>| Ok(report(vec![quality_error()], vec![]));
+    let found = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>, _: NoFiles| Ok(report(vec![quality_error()], vec![]));
     let (code, out, err) = check(&CheckArgs::default(), &CheckWorld { build_report: &found, ..world() });
     assert_eq!((code, err.as_str()), (1, ""));
     assert!(out.starts_with("a.py:7:3  error quality q  owner core\n"), "{out}");
@@ -318,7 +337,7 @@ fn an_absent_engine_exits_3_and_names_it() {
         };
         CheckedRules { runs: vec![run("s1"), run("s2")], engines: vec![] }
     };
-    let absent = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>| {
+    let absent = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>, _: NoFiles| {
         let rule = |id: &str| NotAvailable { rule: id.to_string(), engine: Engine::SwiftLint, why: why() };
         Ok(report(vec![], vec![rule("s1"), rule("s2")]))
     };
@@ -330,7 +349,7 @@ fn an_absent_engine_exits_3_and_names_it() {
 
 #[test]
 fn a_failed_engine_exits_5_with_its_stderr_tail_between_the_counts_and_next() {
-    let failed = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>| {
+    let failed = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>, _: NoFiles| {
         let mut r = report(vec![], vec![]);
         r.failed = vec![Failed {
             rule: "q".to_string(),
@@ -344,19 +363,19 @@ fn a_failed_engine_exits_5_with_its_stderr_tail_between_the_counts_and_next() {
     let (code, out, err) = check(&CheckArgs::default(), &CheckWorld { build_report: &failed, ..world() });
     assert_eq!((code, err.as_str()), (5, ""));
     assert_eq!(
-        without_covers_nothing(&out),
+        without_counts_tail(&out),
         "failed: q (ruff), exit 2\n\
-         0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 1 failed, \
-         0 not applicable\n\
+         0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 1 failed\n\
          stderr of q (ruff):\n\
          \x20 ruff: Failed to parse /repo/pyproject.toml\n\
          next: see the engine output above\n"
     );
+    assert_counts_tail(&out, 0, 0);
 }
 
 #[test]
 fn json_is_one_line_with_the_report_exit_and_next_at_the_top() {
-    let found = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>| Ok(report(vec![quality_error()], vec![]));
+    let found = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>, _: NoFiles| Ok(report(vec![quality_error()], vec![]));
     let w = CheckWorld { build_report: &found, ..world() };
     let (code, out, err) = check(&CheckArgs { json: true, ..CheckArgs::default() }, &w);
     assert_eq!((code, err.as_str()), (1, ""));

@@ -152,7 +152,7 @@ fn failed_report_after_counted_runs_has_no_savings_in_either_format() {
         calls.set(calls.get() + 1);
         checked(vec![run("q", Engine::Ruff, Some(400))])
     };
-    let fail = |_: &RuleFile, _: Vec<(String, rules::RuleOutcome)>, _: Option<(&Path, &procio::Oid)>| {
+    let fail = |_: &RuleFile, _: Vec<(String, rules::RuleOutcome)>, _: Option<(&Path, &procio::Oid)>, _: Vec<(String, String)>| {
         Err(report::ReportError::Git(procio::GitError::NotARepository { repo: cwd.0.clone() }))
     };
     let w = CheckWorld { home: &home_path, now: &|| 1795680000, run_rules: &runs, build_report: &fail, ..world() };

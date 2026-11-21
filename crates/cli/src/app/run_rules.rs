@@ -34,7 +34,7 @@ pub fn run_rules(
 
 /// `text`, then the `next:` line for `exit` and the rule file at `rule_file`; returns `exit`.
 fn write_text(out: &mut dyn Write, text: &str, exit: u8, fix: Option<&str>, rule_file: &Path) -> u8 {
-    let _ = writeln!(out, "{text}next: {}", next_step(exit, fix, rule_file, &[]));
+    let _ = writeln!(out, "{text}next: {}", next_step(exit, fix, rule_file, &[], false));
     exit
 }
 
@@ -42,7 +42,7 @@ fn write_text(out: &mut dyn Write, text: &str, exit: u8, fix: Option<&str>, rule
 fn write_json(out: &mut dyn Write, mut value: Value, exit: u8, fix: Option<&str>, rule_file: &Path) -> u8 {
     if let Some(object) = value.as_object_mut() {
         object.insert("exit".to_string(), json!(exit));
-        object.insert("next".to_string(), json!(next_step(exit, fix, rule_file, &[])));
+        object.insert("next".to_string(), json!(next_step(exit, fix, rule_file, &[], true)));
     }
     let _ = writeln!(out, "{value}");
     exit

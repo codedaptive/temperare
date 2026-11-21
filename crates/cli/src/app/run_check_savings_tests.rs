@@ -9,7 +9,7 @@ use rules::{Engine, Problem, RelPath, RuleFile, RuleOutcome};
 use serde_json::json;
 use std::path::{Path, PathBuf};
 
-const CLEAN_BODY: &str = "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable\nnext: nothing to do\n";
+const CLEAN_BODY: &str = "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed\nnext: nothing to do\n";
 const TEXT: &str = "version = 1\n[[rule]]\nid = \"q\"\nengine = \"ruff\"\ncheck = \"F401\"\nfix = \"Remove import.\"\n";
 
 pub(super) fn output_tokens(chars: usize) -> usize { (chars + 2) / 4 }
@@ -18,17 +18,36 @@ pub(super) fn percent(saved: usize, baseline: usize) -> usize {
     (0..=100).rev().find(|p| p * baseline <= saved * 100).unwrap()
 }
 
-/// `out` with one `, 0 covers nothing` taken out where it ends a counts line right after `0 not applicable`; any
-/// other text is left as it is, so a whole-text compare after it still pins every other character.
-pub(super) fn without_covers_nothing(out: &str) -> String {
-    out.replacen("0 not applicable, 0 covers nothing\n", "0 not applicable\n", 1)
+/// `out` with its counts line (the line starting "<n> findings (") cut from ", 0 not applicable" to that line's end,
+/// its newline kept: a whole-text compare after it pins every character but the counts that follow the failed count,
+/// which `assert_counts_tail` checks, so a count report adds at the end changes no whole-text pin. Every other line,
+/// and a counts line with no ", 0 not applicable", is left as it is.
+pub(super) fn without_counts_tail(out: &str) -> String {
+    out.split_inclusive('\n')
+        .map(|line| match line.find(", 0 not applicable").filter(|_| is_counts_line(line)) {
+            Some(at) => format!("{}{}", &line[..at], if line.ends_with('\n') { "\n" } else { "" }),
+            None => line.to_string(),
+        })
+        .collect()
 }
 
-/// Asserts `body` is a clean report, whole: the counts line, all zero and ending `0 not applicable` (a `, 0 covers
-/// nothing` clause after it is accepted, though `report`'s text renderer does not print one), then
-/// `next: nothing to do`, each ending in a newline.
+/// Asserts `out`'s counts line carries, right after its failed count, `not_applicable` not applicable and then
+/// `covers_nothing` covers nothing.
+pub(super) fn assert_counts_tail(out: &str, not_applicable: usize, covers_nothing: usize) {
+    let tail = format!(" failed, {not_applicable} not applicable, {covers_nothing} covers nothing");
+    assert!(out.lines().any(|line| is_counts_line(line) && line.contains(&tail)), "{tail:?} in {out}");
+}
+
+/// Whether `line` is report's counts line: a number, then " findings (".
+fn is_counts_line(line: &str) -> bool {
+    line.split_once(" findings (").is_some_and(|(n, _)| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()))
+}
+
+/// Asserts `body` is a clean report, whole: the counts line, all zero, then `next: nothing to do`, each ending in a
+/// newline; the counts line's not-applicable and covers-nothing counts are both 0.
 pub(super) fn assert_clean_body(body: &str) {
-    assert_eq!(without_covers_nothing(body), CLEAN_BODY);
+    assert_eq!(without_counts_tail(body), CLEAN_BODY);
+    assert_counts_tail(body, 0, 0);
 }
 
 /// The savings line of a clean text check, and the output tokens of the body printed after it.
@@ -49,7 +68,12 @@ pub(super) fn checked(runs: Vec<RuleRun>) -> CheckedRules {
 
 fn top(_: &Path) -> Result<PathBuf, GitError> { Ok(PathBuf::from("/repo")) }
 fn read(_: &Path) -> Result<RuleFile, Vec<Problem>> { Ok(RuleFile::parse(TEXT, Path::new("/repo")).unwrap()) }
-fn clean(_: &RuleFile, _: Vec<(String, RuleOutcome)>, _: Option<(&Path, &Oid)>) -> Result<Report, ReportError> {
+fn clean(
+    _: &RuleFile,
+    _: Vec<(String, RuleOutcome)>,
+    _: Option<(&Path, &Oid)>,
+    _: Vec<(String, String)>,
+) -> Result<Report, ReportError> {
     Ok(Report::default())
 }
 
@@ -148,7 +172,7 @@ fn rule_file_problems_exit_without_a_savings_line() {
 #[test]
 fn text_counts_unicode_report_characters_not_bytes() {
     let runs = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| checked(vec![run("q", Engine::Ruff, Some(400))]);
-    let report = |_: &RuleFile, _: Vec<(String, RuleOutcome)>, _: Option<(&Path, &Oid)>| {
+    let report = |_: &RuleFile, _: Vec<(String, RuleOutcome)>, _: Option<(&Path, &Oid)>, _: Vec<(String, String)>| {
         Ok(Report {
             failed: vec![report::Failed { rule: "q".into(), engine: Engine::Ruff, code: Some(1), stderr_tail: "é≈日本".into() }],
             ..Report::default()
@@ -167,7 +191,7 @@ fn text_counts_unicode_report_characters_not_bytes() {
 #[test]
 fn json_counts_unicode_report_characters_not_bytes() {
     let runs = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| checked(vec![run("q", Engine::Ruff, Some(400))]);
-    let report = |_: &RuleFile, _: Vec<(String, RuleOutcome)>, _: Option<(&Path, &Oid)>| {
+    let report = |_: &RuleFile, _: Vec<(String, RuleOutcome)>, _: Option<(&Path, &Oid)>, _: Vec<(String, String)>| {
         Ok(Report {
             failed: vec![report::Failed { rule: "q".into(), engine: Engine::Ruff, code: Some(1), stderr_tail: "é≈日本".into() }],
             ..Report::default()
@@ -207,28 +231,23 @@ fn json_has_exact_saved_object_and_one_report_without_the_text_line() {
 }
 
 #[test]
-fn without_covers_nothing_strips_only_a_zero_clause_after_not_applicable() {
+fn without_counts_tail_cuts_the_counts_line_from_not_applicable_to_its_end() {
     let rows = [
         (
-            "zero clause is stripped",
-            "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable, 0 covers nothing\nnext: nothing to do\n",
-            "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable\nnext: nothing to do\n",
+            "the whole tail is cut, the next line kept",
+            "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable, 0 covers nothing, 2 expired\nnext: nothing to do\n",
+            "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed\nnext: nothing to do\n",
         ),
         (
-            "non-zero clause is kept",
-            "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable, 1 covers nothing\nnext: nothing to do\n",
-            "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable, 1 covers nothing\nnext: nothing to do\n",
-        ),
-        (
-            "text without the clause is unchanged",
-            "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable\nnext: nothing to do\n",
-            "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable\nnext: nothing to do\n",
+            "text with no not-applicable clause is unchanged",
+            "failed: q (ruff), exit 2\nnext: see the engine output above\n",
+            "failed: q (ruff), exit 2\nnext: see the engine output above\n",
         ),
     ];
     let failures: Vec<String> = rows
         .iter()
         .filter_map(|(name, input, expected)| {
-            let got = without_covers_nothing(input);
+            let got = without_counts_tail(input);
             (got != *expected).then(|| format!("{name}: got {got:?}, expected {expected:?}"))
         })
         .collect();

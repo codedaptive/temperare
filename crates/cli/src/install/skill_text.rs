@@ -44,6 +44,7 @@ of each such line across your temperare calls. With `--json` there is no line: t
   Tessera's checks are not available yet, so installing Tessera changes nothing.
 - 4: security error findings only. Raise them with their owner; work goes on.
 - 5: an engine failed. Read its output.
+- 6: a rule of the repository's own covers nothing: its paths match no file, or no file its engine checks.
 
 \"Not available\" is never \"clean\": exit 3 means some rules did not run, so the code was not fully checked.
 ";

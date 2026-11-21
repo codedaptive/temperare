@@ -18,10 +18,6 @@ use std::path::{Path, PathBuf};
 
 const FAILING_TEXT: &str = "bad\n";
 
-/// rules' reason for tm-x, set aside because its required params are not given.
-const ASIDE_WHY: &str =
-    "required params not given: entity_types; give them in the params of an [[override]] for \"tm-x\"";
-
 /// A rule whose failing case is `a.py` holding FAILING_TEXT, expected at a.py:1, and whose passing case is `a.py`
 /// holding `good\n`.
 fn with_cases(id: &str, engine: Engine) -> Rule {
@@ -34,15 +30,27 @@ fn with_cases(id: &str, engine: Engine) -> Rule {
     rule
 }
 
-/// The test sets: standard@1 (tm-zeta, tm-alpha), house@1 (tm-mid), bare@1 (tm-bare, which carries no cases),
-/// change@1 (tm-change, only_with_base, expected at a.py:2), aside@1 (tm-zeta, then tm-x, which carries cases but rules
-/// set aside with ASIDE_WHY); empty@1 cannot be read and carries no problem; any other set is unknown, its
-/// first problem at line 2, column 12 of rules' own text, which tm must not print, then a second one.
+/// A params table from its TOML text.
+fn table(text: &str) -> toml::Table {
+    toml::from_str(text).unwrap()
+}
+
+/// The test sets: standard@1 (tm-zeta, tm-alpha), house@1 (tm-mid), bare@1 (tm-bare, which carries no cases and
+/// requires entity_types, so it is broken, not not applicable), change@1 (tm-change, only_with_base, expected at
+/// a.py:2), aside@1 (tm-zeta, then tm-x, which carries cases and requires entity_types, a param neither case gives, so
+/// each case is not applicable and not run), params@1 (tm-p, requiring kit: its params kit = "set-default" and
+/// other = "kept", its failing case's kit = "failing-kit", its passing case's kit = "passing-kit"); empty@1 cannot be
+/// read and carries no problem; any other set is unknown, its first problem at line 2, column 12 of rules' own text,
+/// which tm must not print, then a second one.
 fn test_set(set: &str) -> Result<Vec<Rule>, Vec<Problem>> {
     match set {
         "standard@1" => Ok(vec![with_cases("tm-zeta", Engine::Ruff), with_cases("tm-alpha", Engine::AstGrep)]),
         "house@1" => Ok(vec![with_cases("tm-mid", Engine::SwiftLint)]),
-        "bare@1" => Ok(vec![Rule::new("tm-bare", Engine::Ruff, "F401")]),
+        "bare@1" => {
+            let mut rule = Rule::new("tm-bare", Engine::Ruff, "F401");
+            rule.required_params = vec!["entity_types".to_string()];
+            Ok(vec![rule])
+        }
         "change@1" => {
             let mut rule = with_cases("tm-change", Engine::Ruff);
             rule.only_with_base = true;
@@ -53,8 +61,16 @@ fn test_set(set: &str) -> Result<Vec<Rule>, Vec<Problem>> {
         }
         "aside@1" => {
             let mut rule = with_cases("tm-x", Engine::Ruff);
-            rule.not_applicable = Some(ASIDE_WHY.to_string());
+            rule.required_params = vec!["entity_types".to_string()];
             Ok(vec![with_cases("tm-zeta", Engine::Ruff), rule])
+        }
+        "params@1" => {
+            let mut rule = with_cases("tm-p", Engine::Ruff);
+            rule.required_params = vec!["kit".to_string()];
+            rule.params = table("kit = \"set-default\"\nother = \"kept\"");
+            rule.failing_params = table("kit = \"failing-kit\"");
+            rule.passing_params = table("kit = \"passing-kit\"");
+            Ok(vec![rule])
         }
         "empty@1" => Err(Vec::new()),
         _ => Err(vec![
@@ -70,10 +86,10 @@ fn test_set(set: &str) -> Result<Vec<Rule>, Vec<Problem>> {
 }
 
 /// Every rule holds: the failing case gives its expected finding, the passing case none.
-fn all_hold(rule: &str, text: &str) -> RuleOutcome {
+fn all_hold(rule: &Rule, text: &str) -> RuleOutcome {
     let findings = if text == FAILING_TEXT {
         let place = (Engine::Ruff, Kind::Quality, Severity::Error);
-        vec![Finding::new(rule, place, RelPath::new("a.py"), 1, None, "w", "f")]
+        vec![Finding::new(&rule.id, place, RelPath::new("a.py"), 1, None, "w", "f")]
     } else {
         Vec::new()
     };
@@ -82,34 +98,52 @@ fn all_hold(rule: &str, text: &str) -> RuleOutcome {
 
 /// The failing case gives a finding on line 1 and one on line 2; the passing case none. Only line 2 is added since
 /// the base (the world's `added_since`), so a change rule holds only when line 1 is dropped.
-fn on_lines_1_and_2(rule: &str, text: &str) -> RuleOutcome {
+fn on_lines_1_and_2(rule: &Rule, text: &str) -> RuleOutcome {
     let place = (Engine::Ruff, Kind::Quality, Severity::Error);
     let lines: &[u32] = if text == FAILING_TEXT { &[1, 2] } else { &[] };
     RuleOutcome::Findings(
-        lines.iter().map(|line| Finding::new(rule, place, RelPath::new("a.py"), *line, None, "w", "f")).collect(),
+        lines.iter().map(|line| Finding::new(&rule.id, place, RelPath::new("a.py"), *line, None, "w", "f")).collect(),
     )
 }
 
 /// tm-mid's engine is not available; the others hold.
-fn mid_not_available(rule: &str, text: &str) -> RuleOutcome {
-    if rule != "tm-mid" {
+fn mid_not_available(rule: &Rule, text: &str) -> RuleOutcome {
+    if rule.id != "tm-mid" {
         return all_hold(rule, text);
     }
     let why = "swiftlint not found on PATH".to_string();
-    RuleOutcome::NotAvailable { rule: rule.to_string(), engine: Engine::SwiftLint, why }
+    RuleOutcome::NotAvailable { rule: rule.id.clone(), engine: Engine::SwiftLint, why }
 }
 
 /// tm-alpha gives no finding on its failing case; tm-mid's engine is not available; tm-zeta holds.
-fn alpha_broken_mid_not_available(rule: &str, text: &str) -> RuleOutcome {
-    if rule == "tm-alpha" {
+fn alpha_broken_mid_not_available(rule: &Rule, text: &str) -> RuleOutcome {
+    if rule.id == "tm-alpha" {
         return RuleOutcome::Findings(Vec::new());
     }
     mid_not_available(rule, text)
 }
 
+/// Holds only when the run's params are exactly the case's own over the rule's: kit = "failing-kit" on the failing
+/// case, kit = "passing-kit" on the passing one, other = "kept" on both. Any other params give a finding at
+/// `<kit>.py`, so the printed why names the kit the run got.
+fn by_case_params(rule: &Rule, text: &str) -> RuleOutcome {
+    let want = if text == FAILING_TEXT {
+        "kit = \"failing-kit\"\nother = \"kept\""
+    } else {
+        "kit = \"passing-kit\"\nother = \"kept\""
+    };
+    if rule.params == table(want) {
+        return all_hold(rule, text);
+    }
+    let kit = rule.params.get("kit").and_then(toml::Value::as_str).unwrap_or("no-kit");
+    let place = (Engine::Ruff, Kind::Quality, Severity::Error);
+    let path = RelPath::new(&format!("{kit}.py"));
+    RuleOutcome::Findings(vec![Finding::new(&rule.id, place, path, 1, None, "w", "f")])
+}
+
 /// Runs `tm baseline test` with `args` on the test sets, `default_sets` the world's (name@version, ready), each case
-/// run giving what `outcome` says for its rule and its file's text; (exit, out, err, the sets read, (the case folders
-/// made, the rules run)).
+/// run giving what `outcome` says for the rule it runs and its file's text; (exit, out, err, the sets read, (the case
+/// folders made, the rules run)).
 fn run(
     args: BaselineArgs,
     default_sets: &[(&str, bool)],
@@ -133,7 +167,7 @@ fn run(
     let run_rules = |rf: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| {
         *ran.borrow_mut() += 1;
         let rule = &rf.rules[0];
-        let outcome = outcome(&rule.id, &written.borrow());
+        let outcome = outcome(rule, &written.borrow());
         let absent = matches!(outcome, RuleOutcome::NotAvailable { .. });
         let run = RuleRun::new(rule.id.clone(), rule.engine, outcome, None);
         // The only not-available outcome these rows give is an absent swiftlint: engines gives it EngineNotOnPath.
@@ -156,8 +190,8 @@ fn run(
     (exit, String::from_utf8(out).unwrap(), String::from_utf8(err).unwrap(), read, calls)
 }
 
-/// What a case run gives for its rule and its file's text.
-type Outcome = fn(&str, &str) -> RuleOutcome;
+/// What a case run gives for the rule it runs (its params included) and its file's text.
+type Outcome = fn(&Rule, &str) -> RuleOutcome;
 
 /// (name, args, default sets, outcome, exit, out, err, sets read, (case folders made, rules run))
 type Row = (&'static str, BaselineArgs, Defaults, Outcome, u8, &'static str, &'static str, Sets, (usize, usize));
@@ -178,7 +212,7 @@ fn run_baseline_test_rows() {
     let defaults: Defaults = &[("standard@1", true), ("house@1", true)];
     let house_not_ready: Defaults = &[("standard@1", true), ("house@1", false)];
     let unknown = "tm: unknown baseline set \"nosuch\"\nnext: the test world's fix for nosuch\n";
-    let rows: [Row; 16] = [
+    let rows: [Row; 17] = [
         (
             "all hold",
             text.clone(),
@@ -328,6 +362,19 @@ fn run_baseline_test_rows() {
             (2, 2),
         ),
         (
+            "each case runs with its own params over the rule's",
+            set("params@1"),
+            defaults,
+            by_case_params,
+            0,
+            "params@1 tm-p (ruff): holds\n\
+             1 rules: 1 hold, 0 broken, 0 not available, 0 not applicable\n\
+             next: nothing to do\n",
+            "",
+            &["params@1"],
+            (2, 2),
+        ),
+        (
             "--set tests only that set",
             set("house@1"),
             defaults,
@@ -341,17 +388,15 @@ fn run_baseline_test_rows() {
             (2, 2),
         ),
         (
-            "a set-aside rule is not applicable and is not run",
+            "a rule whose cases lack a required param is not applicable and is not run",
             set("aside@1"),
             defaults,
             all_hold,
             3,
             "aside@1 tm-zeta (ruff): holds\n\
              aside@1 tm-x (ruff): not applicable\n  \
-             failing: not applicable: required params not given: entity_types; \
-             give them in the params of an [[override]] for \"tm-x\"\n  \
-             passing: not applicable: required params not given: entity_types; \
-             give them in the params of an [[override]] for \"tm-x\"\n\
+             failing: not applicable: the case gives no value for required params: entity_types\n  \
+             passing: not applicable: the case gives no value for required params: entity_types\n\
              2 rules: 1 hold, 0 broken, 0 not available, 1 not applicable\n\
              next: each not-applicable rule above says why it was not run\n",
             "",
@@ -359,7 +404,7 @@ fn run_baseline_test_rows() {
             (2, 2),
         ),
         (
-            "a set-aside rule, as JSON",
+            "a rule whose cases lack a required param, as JSON",
             BaselineArgs { set: Some("aside@1".to_string()), json: true },
             defaults,
             all_hold,
@@ -370,11 +415,9 @@ fn run_baseline_test_rows() {
                 r#"{"engine":"ruff","failing":{"result":"holds","why":null},"#,
                 r#""passing":{"result":"holds","why":null},"result":"holds","rule":"tm-zeta","set":"aside@1"},"#,
                 r#"{"engine":"ruff","failing":{"result":"not_applicable","#,
-                r#""why":"required params not given: entity_types; "#,
-                r#"give them in the params of an [[override]] for \"tm-x\""},"#,
+                r#""why":"the case gives no value for required params: entity_types"},"#,
                 r#""passing":{"result":"not_applicable","#,
-                r#""why":"required params not given: entity_types; "#,
-                r#"give them in the params of an [[override]] for \"tm-x\""},"#,
+                r#""why":"the case gives no value for required params: entity_types"},"#,
                 r#""result":"not_applicable","rule":"tm-x","set":"aside@1"}]}"#,
                 "\n"
             ),
@@ -383,7 +426,7 @@ fn run_baseline_test_rows() {
             (2, 2),
         ),
         (
-            "broken beside a set-aside rule: broken wins",
+            "broken beside a not-applicable rule: broken wins",
             text.clone(),
             &[("standard@1", true), ("aside@1", true)],
             alpha_broken_mid_not_available,
@@ -393,10 +436,8 @@ fn run_baseline_test_rows() {
              failing: broken: gave no finding; expected tm-alpha at a.py:1\n\
              aside@1 tm-zeta (ruff): holds\n\
              aside@1 tm-x (ruff): not applicable\n  \
-             failing: not applicable: required params not given: entity_types; \
-             give them in the params of an [[override]] for \"tm-x\"\n  \
-             passing: not applicable: required params not given: entity_types; \
-             give them in the params of an [[override]] for \"tm-x\"\n\
+             failing: not applicable: the case gives no value for required params: entity_types\n  \
+             passing: not applicable: the case gives no value for required params: entity_types\n\
              4 rules: 2 hold, 1 broken, 0 not available, 1 not applicable\n\
              next: fix each broken rule or its cases above\n",
             "",
@@ -404,7 +445,7 @@ fn run_baseline_test_rows() {
             (6, 6),
         ),
         (
-            "not available beside a set-aside rule: exit 3 with both next parts",
+            "not available beside a not-applicable rule: exit 3 with both next parts",
             text.clone(),
             &[("house@1", true), ("aside@1", true)],
             mid_not_available,
@@ -414,10 +455,8 @@ fn run_baseline_test_rows() {
              passing: not available: swiftlint not found on PATH\n\
              aside@1 tm-zeta (ruff): holds\n\
              aside@1 tm-x (ruff): not applicable\n  \
-             failing: not applicable: required params not given: entity_types; \
-             give them in the params of an [[override]] for \"tm-x\"\n  \
-             passing: not applicable: required params not given: entity_types; \
-             give them in the params of an [[override]] for \"tm-x\"\n\
+             failing: not applicable: the case gives no value for required params: entity_types\n  \
+             passing: not applicable: the case gives no value for required params: entity_types\n\
              3 rules: 1 hold, 0 broken, 1 not available, 1 not applicable\n\
              next: install swiftlint, then run tm baseline test again; \
              each not-applicable rule above says why it was not run\n",
