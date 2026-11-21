@@ -17,6 +17,11 @@ fn has_the_rules_line() {
 }
 
 #[test]
+fn has_the_baseline_line() {
+    assert!(has_line("tm baseline test [--set <name@version>] [--json]"));
+}
+
+#[test]
 fn has_the_help_and_version_lines() {
     assert!(has_line("tm help"));
     assert!(has_line("tm --version"));
