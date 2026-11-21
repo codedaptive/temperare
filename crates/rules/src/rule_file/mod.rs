@@ -79,6 +79,10 @@ mod baseline_sets_tests;
 #[cfg(test)]
 mod baseline_set_case_for_tests;
 #[cfg(test)]
+mod baseline_set_digest;
+#[cfg(test)]
+mod baseline_set_digest_tests;
+#[cfg(test)]
 mod baseline_set_yaml_for_tests;
 #[cfg(test)]
 mod bool_value_tests;

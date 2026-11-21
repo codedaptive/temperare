@@ -1,5 +1,6 @@
 //! ZUT for standard_1.rs.
 
+use super::baseline_set_digest::baseline_set_digest;
 use super::load_set::load_set;
 use super::standard_1::STANDARD_1;
 use crate::{Engine, Kind, Rule, Severity};
@@ -127,4 +128,14 @@ fn every_standard_1_ast_grep_rule_and_only_those_carry_yaml() {
     let found: Vec<_> = rules.iter().map(|rule| (rule.id.as_str(), rule.embedded_yaml().is_some())).collect();
     let expected: Vec<_> = rules.iter().map(|rule| (rule.id.as_str(), rule.engine == Engine::AstGrep)).collect();
     assert_eq!(found, expected);
+}
+
+#[test]
+fn standard_1_is_frozen_as_released() {
+    assert_eq!(
+        baseline_set_digest(&STANDARD_1),
+        // The digest of standard@1 as released in v0.3.0.
+        0x4932_fec8_0895_543a,
+        "standard@1 is released and frozen: its set.toml, YAML or case files differ from the released ones. Put the change in standard@2 instead."
+    );
 }
