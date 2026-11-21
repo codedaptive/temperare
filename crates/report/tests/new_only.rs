@@ -7,7 +7,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use report::{build_report, build_report_with_no_files, CoversNothing};
+use report::{build_report_with_no_files, CoversNothing};
 use rules::{Engine, Exception, Finding, Kind, RelPath, Rule, RuleFile, RuleOutcome, Severity};
 
 struct Scratch {
@@ -106,7 +106,13 @@ fn new_lines_untracked_files_and_nested_repositories_are_kept() {
         finding("test-rule", "a.rs", 2),
     ];
     let before = SystemTime::now();
-    let report = build_report(&rule_file(&repo.dir, vec![]), outcomes(findings), Some((&repo.dir, &base))).unwrap();
+    let report = build_report_with_no_files(
+        &rule_file(&repo.dir, vec![]),
+        outcomes(findings),
+        Some((&repo.dir, &base)),
+        Vec::new(),
+    )
+    .unwrap();
     let after = SystemTime::now();
     assert!(report.date == common::utc_date(before) || report.date == common::utc_date(after), "{}", report.date);
     let locations: Vec<_> = report.findings.iter().map(|f| (f.path.as_str(), f.line())).collect();
@@ -121,10 +127,11 @@ fn base_filter_precedes_exception_matching() {
     let (repo, base) = repo("filter_before_exceptions", "a.rs");
     write(&repo.dir, "a.rs", b"base\nadded\n");
     let rules = rule_file(&repo.dir, vec![exception("old-rule", "a.rs", "old"), exception("new-rule", "a.rs", "new")]);
-    let old_only = build_report(
+    let old_only = build_report_with_no_files(
         &rules,
         outcomes(vec![finding("old-rule", "a.rs", 1)]),
         Some((&repo.dir, &base)),
+        Vec::new(),
     )
     .unwrap();
     assert!(old_only.findings.is_empty());
@@ -132,10 +139,11 @@ fn base_filter_precedes_exception_matching() {
     assert!(old_only.silenced_by_rule.is_empty());
     assert_eq!(old_only.counts.silenced, 0);
 
-    let report = build_report(
+    let report = build_report_with_no_files(
         &rules,
         outcomes(vec![finding("old-rule", "a.rs", 1), finding("new-rule", "a.rs", 2)]),
         Some((&repo.dir, &base)),
+        Vec::new(),
     )
     .unwrap();
     assert!(report.findings.is_empty());
@@ -153,10 +161,11 @@ fn base_filter_precedes_exception_matching() {
 fn subfolder_findings_are_rerooted_for_filtering_but_keep_their_paths() {
     let (repo, base) = repo("subfolder_reroot", "sub/x.rs");
     write(&repo.dir, "sub/x.rs", b"base\nadded\n");
-    let report = build_report(
+    let report = build_report_with_no_files(
         &rule_file(&repo.dir.join("sub"), vec![]),
         outcomes(vec![finding("test-rule", "x.rs", 1), finding("test-rule", "x.rs", 2)]),
         Some((&repo.dir, &base)),
+        Vec::new(),
     )
     .unwrap();
     let locations: Vec<_> = report.findings.iter().map(|f| (f.path.as_str(), f.line())).collect();

@@ -1,19 +1,20 @@
 //! `Report`: what a check came to, the `--json` body.
 
-use crate::{Counts, CoversNothing, EngineVersion, Failed, NotApplicable, NotAvailable, RuleCount, Silenced};
+use crate::{Counts, CoversNothing, EngineVersion, Expired, Failed, NotApplicable, NotAvailable, RuleCount, Silenced};
 use procio::Oid;
 use rules::Finding;
 use serde::{Serialize, Serializer};
 
-/// The report of one check. `exceptions_in_force`, `covers_nothing`, `not_applicable`, `date`, `silenced_by_rule` and
-/// `engines` are always serialized, 0, "" and `[]` included; `base` is left out when the check had no base commit and otherwise is
-/// the commit id's hex text.
+/// The report of one check. `exceptions_in_force`, `covers_nothing`, `not_applicable`, `expired`, `date`,
+/// `silenced_by_rule` and `engines` are always serialized, 0, "" and `[]` included; `base` is left out when the check
+/// had no base commit and otherwise is the commit id's hex text.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct Report {
     /// The kept findings: on new lines when there is a base, and covered by no exception.
     pub findings: Vec<Finding>,
     pub silenced: Vec<Silenced>,
-    /// How many exceptions the rule file grants, whether or not any finding used one.
+    /// How many of the rule file's exceptions hold on the report's day (none of `expired`), whether or not any finding
+    /// used one.
     pub exceptions_in_force: usize,
     pub not_available: Vec<NotAvailable>,
     pub failed: Vec<Failed>,
@@ -23,6 +24,8 @@ pub struct Report {
     pub covers_nothing: Vec<CoversNothing>,
     /// The rules the check does not apply, in rule-file order, each with why: none is a finding or "not available".
     pub not_applicable: Vec<NotApplicable>,
+    /// The exceptions past their `expires` day on the report's day, in rule-file order.
+    pub expired: Vec<Expired>,
     /// The UTC day the exceptions were looked up on (`RuleFile::exception_on`), as "YYYY-MM-DD".
     pub date: String,
     /// The silenced findings counted by rule: rule-file order, then rules the file lacks; only rules with any.
@@ -30,7 +33,7 @@ pub struct Report {
     /// One per engine that ran (found and probed for its version), in the order of each one's first applicable rule in
     /// the rule file; its version is `None` when it could not be read. An absent engine is left out of this list; its
     /// rules show under `not_available`, `not_applicable` or `covers_nothing`.
-    /// Filled by the caller: `build_report` and `build_report_with_no_files` leave it empty.
+    /// Filled by the caller: `build_report_with_no_files` leaves it empty.
     pub engines: Vec<EngineVersion>,
     pub counts: Counts,
 }

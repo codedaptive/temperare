@@ -1,13 +1,12 @@
 //! report: the report and its counts; new violations only, against a base commit.
 
 mod assemble_report;
-mod build_report;
 mod build_report_with_no_files;
 mod counts;
 mod counts_of;
 mod covers_nothing;
-mod date_text;
 mod engine_version;
+mod expired;
 mod failed;
 mod fold_untracked;
 mod folder_from_top;
@@ -24,6 +23,7 @@ mod silenced;
 mod silenced_by_rule;
 mod split_by_exceptions;
 mod stderr_tail;
+mod utc_date;
 mod utc_day;
 
 #[cfg(test)]
@@ -35,9 +35,9 @@ mod counts_tests;
 #[cfg(test)]
 mod covers_nothing_tests;
 #[cfg(test)]
-mod date_text_tests;
-#[cfg(test)]
 mod engine_version_tests;
+#[cfg(test)]
+mod expired_tests;
 #[cfg(test)]
 mod failed_tests;
 #[cfg(test)]
@@ -73,21 +73,22 @@ mod stderr_tail_tests;
 #[cfg(test)]
 mod test_json;
 #[cfg(test)]
+mod utc_date_tests;
+#[cfg(test)]
 mod utc_day_tests;
 
 use assemble_report::assemble_report;
-use date_text::date_text;
 use fold_untracked::fold_untracked;
 use folder_from_top::folder_from_top;
 use silenced_by_rule::silenced_by_rule;
 use stderr_tail::stderr_tail;
 use utc_day::utc_day;
 
-pub use build_report::build_report;
 pub use build_report_with_no_files::build_report_with_no_files;
 pub use counts::Counts;
 pub use covers_nothing::CoversNothing;
 pub use engine_version::EngineVersion;
+pub use expired::Expired;
 pub use failed::Failed;
 pub use keep_added::keep_added;
 pub use not_applicable::NotApplicable;
@@ -98,3 +99,4 @@ pub use report_error::ReportError;
 pub use rule_count::RuleCount;
 pub use silenced::Silenced;
 pub use split_by_exceptions::split_by_exceptions;
+pub use utc_date::utc_date;

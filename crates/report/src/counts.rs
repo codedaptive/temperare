@@ -16,4 +16,5 @@ pub struct Counts {
     pub failed: usize,
     pub not_applicable: usize,
     pub covers_nothing: usize,
+    pub expired: usize,
 }
