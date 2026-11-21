@@ -1,12 +1,13 @@
-//! Unit tests for report.rs: the exact JSON text of an empty report, with and without a base, and of the not-applicable
-//! rules, date, per-rule silenced counts and engines; the default is the empty report with no base and no engines.
+//! Unit tests for report.rs: the exact JSON text of an empty report, with and without a base, and of the rules that
+//! cover nothing, the not-applicable rules, date, per-rule silenced counts and engines; the default is the empty
+//! report with no base and no engines.
 
 use crate::test_json::to_json;
-use crate::{Counts, EngineVersion, NotApplicable, Report, RuleCount};
+use crate::{Counts, CoversNothing, EngineVersion, NotApplicable, Report, RuleCount};
 use procio::Oid;
 use rules::Engine;
 
-const COUNTS: &str = r#"{"findings":0,"errors":0,"warnings":0,"quality":0,"security":0,"silenced":0,"not_available":0,"failed":0,"not_applicable":0}"#;
+const COUNTS: &str = r#"{"findings":0,"errors":0,"warnings":0,"quality":0,"security":0,"silenced":0,"not_available":0,"failed":0,"not_applicable":0,"covers_nothing":0}"#;
 const HEX: &str = "0123456789abcdef0123456789abcdef01234567";
 
 fn empty(base: Option<Oid>) -> Report {
@@ -17,6 +18,7 @@ fn empty(base: Option<Oid>) -> Report {
         not_available: Vec::new(),
         failed: Vec::new(),
         base,
+        covers_nothing: Vec::new(),
         not_applicable: Vec::new(),
         date: String::new(),
         silenced_by_rule: Vec::new(),
@@ -31,6 +33,7 @@ fn empty(base: Option<Oid>) -> Report {
             not_available: 0,
             failed: 0,
             not_applicable: 0,
+            covers_nothing: 0,
         },
     }
 }
@@ -38,7 +41,7 @@ fn empty(base: Option<Oid>) -> Report {
 #[test]
 fn no_base_leaves_base_out_and_keeps_exceptions_in_force_at_zero() {
     let expected = format!(
-        r#"{{"findings":[],"silenced":[],"exceptions_in_force":0,"not_available":[],"failed":[],"not_applicable":[],"date":"","silenced_by_rule":[],"engines":[],"counts":{COUNTS}}}"#
+        r#"{{"findings":[],"silenced":[],"exceptions_in_force":0,"not_available":[],"failed":[],"covers_nothing":[],"not_applicable":[],"date":"","silenced_by_rule":[],"engines":[],"counts":{COUNTS}}}"#
     );
     assert_eq!(to_json(&empty(None)), expected);
 }
@@ -46,7 +49,7 @@ fn no_base_leaves_base_out_and_keeps_exceptions_in_force_at_zero() {
 #[test]
 fn a_base_serializes_as_its_hex_text() {
     let expected = format!(
-        r#"{{"findings":[],"silenced":[],"exceptions_in_force":0,"not_available":[],"failed":[],"base":"{HEX}","not_applicable":[],"date":"","silenced_by_rule":[],"engines":[],"counts":{COUNTS}}}"#
+        r#"{{"findings":[],"silenced":[],"exceptions_in_force":0,"not_available":[],"failed":[],"base":"{HEX}","covers_nothing":[],"not_applicable":[],"date":"","silenced_by_rule":[],"engines":[],"counts":{COUNTS}}}"#
     );
     assert_eq!(to_json(&empty(Oid::parse(HEX))), expected);
 }
@@ -68,7 +71,7 @@ fn the_date_and_silenced_by_rule_serialize_in_their_order_before_counts() {
         ..empty(None)
     };
     let expected = format!(
-        r#"{{"findings":[],"silenced":[],"exceptions_in_force":0,"not_available":[],"failed":[],"not_applicable":[],"date":"2026-11-20","silenced_by_rule":[{{"rule":"b","count":2}},{{"rule":"a","count":1}}],"engines":[],"counts":{COUNTS}}}"#
+        r#"{{"findings":[],"silenced":[],"exceptions_in_force":0,"not_available":[],"failed":[],"covers_nothing":[],"not_applicable":[],"date":"2026-11-20","silenced_by_rule":[{{"rule":"b","count":2}},{{"rule":"a","count":1}}],"engines":[],"counts":{COUNTS}}}"#
     );
     assert_eq!(to_json(&report), expected);
 }
@@ -77,7 +80,7 @@ fn the_date_and_silenced_by_rule_serialize_in_their_order_before_counts() {
 fn default_is_the_empty_report_with_no_base() {
     assert_eq!(Report::default(), empty(None));
     let expected = format!(
-        r#"{{"findings":[],"silenced":[],"exceptions_in_force":0,"not_available":[],"failed":[],"not_applicable":[],"date":"","silenced_by_rule":[],"engines":[],"counts":{COUNTS}}}"#
+        r#"{{"findings":[],"silenced":[],"exceptions_in_force":0,"not_available":[],"failed":[],"covers_nothing":[],"not_applicable":[],"date":"","silenced_by_rule":[],"engines":[],"counts":{COUNTS}}}"#
     );
     assert_eq!(to_json(&Report::default()), expected);
 }
@@ -99,7 +102,7 @@ fn engines_serialize_in_the_order_given_with_a_missing_version_as_null() {
         ..empty(None)
     };
     let expected = format!(
-        r#"{{"findings":[],"silenced":[],"exceptions_in_force":0,"not_available":[],"failed":[],"not_applicable":[],"date":"","silenced_by_rule":[],"engines":[{{"engine":"ruff","version":"0.6.0"}},{{"engine":"clippy","version":null}}],"counts":{COUNTS}}}"#
+        r#"{{"findings":[],"silenced":[],"exceptions_in_force":0,"not_available":[],"failed":[],"covers_nothing":[],"not_applicable":[],"date":"","silenced_by_rule":[],"engines":[{{"engine":"ruff","version":"0.6.0"}},{{"engine":"clippy","version":null}}],"counts":{COUNTS}}}"#
     );
     assert_eq!(to_json(&report), expected);
 }
@@ -116,7 +119,24 @@ fn not_applicable_serializes_after_base_and_before_the_date() {
         ..empty(Oid::parse(HEX))
     };
     let expected = format!(
-        r#"{{"findings":[],"silenced":[],"exceptions_in_force":0,"not_available":[],"failed":[],"base":"{HEX}","not_applicable":[{{"rule":"swift-x","engine":"swiftlint","why":"no reason given"}}],"date":"2026-11-20","silenced_by_rule":[],"engines":[],"counts":{COUNTS}}}"#
+        r#"{{"findings":[],"silenced":[],"exceptions_in_force":0,"not_available":[],"failed":[],"base":"{HEX}","covers_nothing":[],"not_applicable":[{{"rule":"swift-x","engine":"swiftlint","why":"no reason given"}}],"date":"2026-11-20","silenced_by_rule":[],"engines":[],"counts":{COUNTS}}}"#
+    );
+    assert_eq!(to_json(&report), expected);
+}
+
+#[test]
+fn covers_nothing_serializes_after_base_and_before_not_applicable() {
+    let report = Report {
+        covers_nothing: vec![CoversNothing { rule: "own-x".to_string(), engine: Engine::SwiftLint }],
+        not_applicable: vec![NotApplicable {
+            rule: "tm-y".to_string(),
+            engine: Engine::Ruff,
+            why: "no file its engine checks".to_string(),
+        }],
+        ..empty(Oid::parse(HEX))
+    };
+    let expected = format!(
+        r#"{{"findings":[],"silenced":[],"exceptions_in_force":0,"not_available":[],"failed":[],"base":"{HEX}","covers_nothing":[{{"rule":"own-x","engine":"swiftlint"}}],"not_applicable":[{{"rule":"tm-y","engine":"ruff","why":"no file its engine checks"}}],"date":"","silenced_by_rule":[],"engines":[],"counts":{COUNTS}}}"#
     );
     assert_eq!(to_json(&report), expected);
 }

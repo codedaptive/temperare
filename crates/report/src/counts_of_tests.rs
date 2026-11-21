@@ -25,8 +25,9 @@ fn findings_are_counted_by_severity_and_by_kind() {
         not_available: 6,
         failed: 7,
         not_applicable: 8,
+        covers_nothing: 9,
     };
-    assert_eq!(Counts::of(&findings, 5, 6, 7, 8), expected);
+    assert_eq!(Counts::of(&findings, 5, 6, 7, 8, 9), expected);
 }
 
 #[test]
@@ -41,6 +42,7 @@ fn no_findings_count_zero() {
         not_available: 0,
         failed: 2,
         not_applicable: 3,
+        covers_nothing: 0,
     };
-    assert_eq!(Counts::of(&[], 1, 0, 2, 3), expected);
+    assert_eq!(Counts::of(&[], 1, 0, 2, 3, 0), expected);
 }

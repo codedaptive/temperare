@@ -2,8 +2,10 @@
 
 mod assemble_report;
 mod build_report;
+mod build_report_with_no_files;
 mod counts;
 mod counts_of;
+mod covers_nothing;
 mod date_text;
 mod engine_version;
 mod failed;
@@ -27,9 +29,13 @@ mod utc_day;
 #[cfg(test)]
 mod assemble_report_tests;
 #[cfg(test)]
+mod build_report_with_no_files_tests;
+#[cfg(test)]
 mod counts_of_tests;
 #[cfg(test)]
 mod counts_tests;
+#[cfg(test)]
+mod covers_nothing_tests;
 #[cfg(test)]
 mod date_text_tests;
 #[cfg(test)]
@@ -80,7 +86,9 @@ use stderr_tail::stderr_tail;
 use utc_day::utc_day;
 
 pub use build_report::build_report;
+pub use build_report_with_no_files::build_report_with_no_files;
 pub use counts::Counts;
+pub use covers_nothing::CoversNothing;
 pub use engine_version::EngineVersion;
 pub use failed::Failed;
 pub use keep_added::keep_added;

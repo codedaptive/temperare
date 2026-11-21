@@ -1,4 +1,4 @@
-//! The report's new-only filter against repositories made for these tests.
+//! The report's new-only filter, and a flagged rule's place with a base, against repositories made for these tests.
 
 mod common;
 
@@ -7,8 +7,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use report::build_report;
-use rules::{Engine, Exception, Finding, Kind, RelPath, RuleFile, RuleOutcome, Severity};
+use report::{build_report, build_report_with_no_files, CoversNothing};
+use rules::{Engine, Exception, Finding, Kind, RelPath, Rule, RuleFile, RuleOutcome, Severity};
 
 struct Scratch {
     dir: PathBuf,
@@ -163,4 +163,25 @@ fn subfolder_findings_are_rerooted_for_filtering_but_keep_their_paths() {
     assert_eq!(locations, vec![("x.rs", Some(2))]);
     assert_eq!(report.counts.findings, 1);
     assert!(report.silenced.is_empty());
+}
+
+#[test]
+fn a_flagged_own_rule_with_a_base_covers_nothing_and_its_finding_is_dropped() {
+    let (repo, base) = repo("flagged_own_rule_with_base", "a.rs");
+    write(&repo.dir, "a.rs", b"base\nadded\n");
+    let mut rules = rule_file(&repo.dir, vec![]);
+    rules.rules = vec![Rule::new("own-x", Engine::Clippy, "lint")];
+    let report = build_report_with_no_files(
+        &rules,
+        outcomes(vec![finding("own-x", "a.rs", 2), finding("test-rule", "a.rs", 2)]),
+        Some((&repo.dir, &base)),
+        vec![("own-x".to_string(), "its paths match no file in the rule file's folder".to_string())],
+    )
+    .unwrap();
+    assert_eq!(report.covers_nothing, vec![CoversNothing { rule: "own-x".into(), engine: Engine::Clippy }]);
+    let kept: Vec<_> = report.findings.iter().map(|f| (f.path.as_str(), f.line(), f.rule.as_str())).collect();
+    assert_eq!(kept, vec![("a.rs", Some(2), "test-rule")]);
+    assert_eq!(report.counts.covers_nothing, 1);
+    assert_eq!(report.counts.findings, 1);
+    assert!(report.not_applicable.is_empty());
 }

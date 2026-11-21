@@ -1,11 +1,12 @@
 //! `render_text`: the report as the text a person reads.
 
-use crate::{EngineVersion, Failed, NotApplicable, NotAvailable, Report};
+use crate::{CoversNothing, EngineVersion, Failed, NotApplicable, NotAvailable, Report};
 use rules::{Finding, Kind, Severity};
 
 /// The report as text: a three-line block and a blank line per kept finding, one line per not-available rule, one
-/// line per failed rule, one line per not-applicable rule in the report's order, one line of the engines that ran and
-/// their versions (none when the list is empty), then the counts line, ending with the not-applicable count.
+/// line per failed rule, one line per covers-nothing rule, one line per not-applicable rule (each list in the report's
+/// order), one line of the engines that ran and their versions (none when the list is empty), then the counts line,
+/// ending with the not-applicable and then the covers-nothing count, both printed even when 0.
 /// Silenced findings are counted, not listed; a failed rule's stderr tail is printed by the caller (cli's
 /// `failed_tails`), and `--json` carries it. Every line ends with '\n'.
 pub fn render_text(report: &Report) -> String {
@@ -13,11 +14,12 @@ pub fn render_text(report: &Report) -> String {
     report.findings.iter().for_each(|finding| text.push_str(&finding_block(finding)));
     report.not_available.iter().for_each(|rule| text.push_str(&not_available_line(rule)));
     report.failed.iter().for_each(|rule| text.push_str(&failed_line(rule)));
+    report.covers_nothing.iter().for_each(|rule| text.push_str(&covers_nothing_line(rule)));
     report.not_applicable.iter().for_each(|rule| text.push_str(&not_applicable_line(rule)));
     text.push_str(&engines_line(&report.engines));
     let counts = &report.counts;
     text.push_str(&format!(
-        "{} findings ({} error, {} warning; {} security), {} silenced, {} exceptions in force, {} not available, {} failed, {} not applicable\n",
+        "{} findings ({} error, {} warning; {} security), {} silenced, {} exceptions in force, {} not available, {} failed, {} not applicable, {} covers nothing\n",
         counts.findings,
         counts.errors,
         counts.warnings,
@@ -27,6 +29,7 @@ pub fn render_text(report: &Report) -> String {
         counts.not_available,
         counts.failed,
         counts.not_applicable,
+        counts.covers_nothing,
     ));
     text
 }
@@ -53,6 +56,10 @@ fn not_available_line(rule: &NotAvailable) -> String {
 
 fn not_applicable_line(rule: &NotApplicable) -> String {
     format!("not applicable: {} ({}): {}\n", rule.rule, rule.engine.name(), rule.why)
+}
+
+fn covers_nothing_line(rule: &CoversNothing) -> String {
+    format!("covers nothing: {} ({})\n", rule.rule, rule.engine.name())
 }
 
 fn failed_line(rule: &Failed) -> String {

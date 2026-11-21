@@ -15,4 +15,5 @@ pub struct Counts {
     pub not_available: usize,
     pub failed: usize,
     pub not_applicable: usize,
+    pub covers_nothing: usize,
 }
