@@ -32,7 +32,8 @@ sources.
 - tm baseline test [--set <name@version>] [--json]: tests each rule of the baseline sets built into tm (with no
   --set the ready ones, standard@1; --set names one set, ready or not, such as house@1) on its failing case
   (exactly the expected finding) and its passing case (no finding), each in a throwaway git repository. A rule
-  holds, is broken, not available or not applicable (a rule that requires params is not applicable here). Exits 0
+  holds, is broken, not available or not applicable (a rule that requires a param its case does not give). Each
+  case runs with the params it gives over the rule's own. Exits 0
   all hold; 1 a rule is broken; 2 used wrongly or an unknown set or version; 3 nothing broke but a rule was not available or
   not applicable.
 - The rule file is --rules <path>, else temperare.toml at the top of the git repository.
@@ -62,14 +63,19 @@ sources.
   names. Both exit 0 when done, 1 when a step failed, 2 when used wrongly.
 - Exit codes of tm check: 0 nothing to refuse; 1 a quality error was found; 2 used wrongly or the rule file has a
   problem, nothing checked; 3 a rule was not available; 4 the only errors are security findings, which never
-  refuse; 5 a rule failed. The first of 2, 1, 5, 3, 4 that applies wins.
-- Exit 0 and exit 4 mean every rule ran, covered no file, or is listed under not_applicable. Exit 1 does not: read
-  counts.not_available and counts.failed.
+  refuse; 5 a rule failed; 6 a rule of the repository's own covers nothing. The first of 2, 1, 5, 3, 4, 6 that
+  applies wins.
+- Exit 0 means every rule ran or is listed under not_applicable. Exit 4 means the same, except that a rule may cover
+  nothing (4 ranks above 6). Exit 1 does not: read counts.not_available, counts.failed and counts.covers_nothing.
 - A rule that covers none of the files git lists in the rule file's folder (tracked files in the work tree, and
-  untracked files git does not ignore) runs nothing, and whether its engine is installed does not change its result
-  (the engine is still asked its version for the engines list). The report does not say so:
-  no line, no list entry and no count says it, and the exit code is what it would be without that rule, whether or
-  not its engine is installed. So exit 0 does not say every rule had a file to check.
+  untracked files git does not ignore), or a ShellCheck rule that covers none of the scripts there, runs nothing,
+  and whether its engine is installed does not change its result (the engine is still asked its version for the
+  engines list). One of the repository's own rules is then listed as covers nothing: a "covers nothing: <rule>
+  (<engine>)" line, covers_nothing in JSON ({rule, engine}), counts.covers_nothing, and exit 6, with next "fix the
+  paths of each rule that covers nothing above, or remove it from <rule file>" (under --json, "fix the paths of
+  each rule in covers_nothing, or remove it from <rule file>"). A baseline set's rule is listed under
+  not_applicable instead, with why "its paths match no file in the rule file's folder" (ShellCheck: "no file its
+  engine checks"). When git cannot list the files, no rule is settled this way.
 - --base <rev> keeps only findings on lines added since that commit. A rule with only_with_base = true reports only
   what a change adds: without --base it reports nothing and is listed under not_applicable ("reports only what a
   change adds; run with --base"). not_applicable is never a finding and never "not available".
@@ -121,7 +127,8 @@ sources.
 - Rules with engine = "shellcheck" are not available in this build. A rule's code is looked up in a list of
   ShellCheck codes built into tm, and that list holds no code: a rule with a well-formed code and a shell script to
   check is "not available" even with ShellCheck installed (<check> is not in temperare's list of shellcheck codes),
-  and ShellCheck is not run. A rule that covers no shell script runs nothing, and the report does not say so.
+  and ShellCheck is not run. A rule that covers no shell script runs nothing and covers nothing (not applicable,
+  "no file its engine checks", for a baseline set's rule).
 - Rules with engine = "git" (check test_ratio) count the lines a change adds against the commit tm check --base
   names; ast-grep rules with params.count count each file's setup and test lines whole, reporting the files the
   change adds lines to. Without --base such a rule is "not available" ("reports only what a change adds; run with

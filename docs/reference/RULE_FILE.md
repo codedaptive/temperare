@@ -189,8 +189,9 @@ An engine runs over the rule file's whole folder. Findings in files the rule doe
 findings outside the rule file's folder.
 
 A rule that covers none of the files git lists in the rule file's folder (the tracked files in the work tree and
-the untracked files git does not ignore) runs nothing, and the report does not say so: the exit code is what it
-would be without that rule ([`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)).
+the untracked files git does not ignore) runs nothing. One of your own covers nothing: the report lists it and the
+exit is 6 when nothing ranks above it. A baseline set's rule is not applicable instead
+([`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)).
 
 ### Globs
 
@@ -292,7 +293,7 @@ No rule of `standard@1` requires a param. Five rules of `house@1` do: four requi
 | Key | Where | Meaning |
 |---|---|---|
 | `required_params` | a set's `[[rule]]` | The params the repository must give, as above. Each item is a name, or `{ name = "...", type = "string" }` or `{ name = "...", type = "strings" }` (a list of strings) for a typed one |
-| `failing`, `passing` | a set's `[[rule]]` | The rule's two cases, which `tm baseline test` runs ([`OUTPUT.md`](OUTPUT.md#tm-baseline-test)). `failing = { files = [...], path = "...", line = N }` lists the case's files and the one finding it must give; `passing = { files = [...] }` lists files that must give none. Every rule of a set has both. A case may also carry `params`, such as the required params a repository would give; they are checked against the types in `required_params`, and `tm baseline test` does not run the case with them |
+| `failing`, `passing` | a set's `[[rule]]` | The rule's two cases, which `tm baseline test` runs ([`OUTPUT.md`](OUTPUT.md#tm-baseline-test)). `failing = { files = [...], path = "...", line = N }` lists the case's files and the one finding it must give; `passing = { files = [...] }` lists files that must give none. Every rule of a set has both. A case may also carry `params`, such as the required params a repository would give; they are checked against the types in `required_params`, and `tm baseline test` runs the case with them over the rule's own `params`. A case whose `params` lack a required param is not applicable and is not run. Each case of `house@1`'s five rules that require params gives them |
 | `retired` | a set's top level | Rule ids the set has retired. An id is never reused: a retired id is not a rule of the set, nor of another set taken with it. Neither set `tm` carries retires an id |
 
 In a repository's rule file each of these is an unknown key, which is a problem. `enforces`, `leaves` and
