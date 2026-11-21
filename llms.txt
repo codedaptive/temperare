@@ -46,7 +46,8 @@ sources.
 - Exit 0 and exit 4 mean every rule ran, covered no file, or is listed under not_applicable. Exit 1 does not: read
   counts.not_available and counts.failed.
 - A rule that covers none of the files git lists in the rule file's folder (tracked files in the work tree, and
-  untracked files git does not ignore) runs nothing, and its engine is not looked for. The report does not say so:
+  untracked files git does not ignore) runs nothing, and whether its engine is installed does not change its result
+  (the engine is still asked its version for the engines list). The report does not say so:
   no line, no list entry and no count says it, and the exit code is what it would be without that rule, whether or
   not its engine is installed. So exit 0 does not say every rule had a file to check.
 - --base <rev> keeps only findings on lines added since that commit. A rule with only_with_base = true reports only

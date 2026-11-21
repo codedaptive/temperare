@@ -343,7 +343,8 @@ A rule `tm` can refuse from the rule file alone fails whether or not its engine 
 
 **A rule that covers no file runs nothing, and the report does not say so.** Before any rule runs, `tm` asks git
 for the files of the rule file's folder: the tracked files in the work tree and the untracked files git does not
-ignore. A rule that covers none of them is not run and its engine is not looked for. The report has no line and no
+ignore. A rule that covers none of them is not run, and whether its engine is installed does not change its result
+(the engine is still asked its version for the engines list). The report has no line and no
 count that says so, and the exit code is what it would be without that rule, whether or not its engine is
 installed. So exit 0 does not say every rule had a file to check.
 
