@@ -6,5 +6,3 @@ mod open_in_folder_tests;
 mod read_rule_yaml_tests;
 mod rule_yaml_path_tests;
 mod rule_yaml_text_tests;
-mod temp_rule_drop_tests;
-mod temp_rule_write_tests;

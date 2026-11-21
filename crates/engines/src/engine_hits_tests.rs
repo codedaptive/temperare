@@ -1,5 +1,5 @@
 //! Unit tests for engine_hits.rs: an absent engine stops before anything runs, with availability's why; Tessera is never
-//! available; ruff and SwiftLint go to their own adapters; an unresolved folder fails only an available
+//! available; ruff and SwiftLint go to their entries' flows; an unresolved folder fails only an available
 //! engine. The host is a fake; nothing runs.
 
 use crate::engine_hits::engine_hits;
@@ -7,7 +7,7 @@ use crate::host::Host;
 use crate::types::{Hit, Stop};
 use procio::{Cmd, Output, ProcError};
 use rules::RuleFile;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::ffi::OsString;
 use std::path::Path;
 
@@ -24,7 +24,8 @@ pub(crate) fn hits_of(engine: &str, check: &str, on_path: bool) -> (Result<Vec<H
         Ok(Output { code: Some(2), stdout: b"garbage".to_vec(), stderr: Vec::new() })
     };
     let lookup = |_: &str| on_path;
-    let got = engine_hits(&file.rules[0], Ok(Path::new(FOLDER)), &Host { run: &run, on_path: &lookup });
+    let got =
+        engine_hits(&file.rules[0], Ok(Path::new(FOLDER)), &Host { run: &run, on_path: &lookup, raw_chars: &Cell::new(None) });
     (got, ran.into_inner())
 }
 
@@ -36,7 +37,7 @@ fn hits_without_folder(engine: &str, check: &str, on_path: bool) -> Result<Vec<H
     let run = |_: &Cmd| -> Result<Output, ProcError> { panic!("nothing runs without a folder") };
     let lookup = |_: &str| on_path;
     let unresolved = Stop::Failed { code: None, stderr: "no folder".to_string() };
-    engine_hits(&file.rules[0], Err(&unresolved), &Host { run: &run, on_path: &lookup })
+    engine_hits(&file.rules[0], Err(&unresolved), &Host { run: &run, on_path: &lookup, raw_chars: &Cell::new(None) })
 }
 
 #[test]
@@ -81,7 +82,7 @@ fn tessera_is_not_available_even_with_everything_on_path_and_runs_nothing() {
 }
 
 #[test]
-fn ruff_and_swiftlint_go_to_their_own_adapters() {
+fn ruff_and_swiftlint_go_to_their_entries_flows() {
     for program in ["ruff", "swiftlint"] {
         let (got, ran) = hits_of(program, "E711", true);
         assert_eq!(ran, vec![OsString::from(program)]);

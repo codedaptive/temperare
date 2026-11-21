@@ -6,21 +6,23 @@ use rules::{Finding, RelPath, Rule, RuleFile};
 /// One finding per hit, in hit order, for each hit that `rule` applies to and whose path equals an `only` entry or
 /// lies under one (the entry followed by '/'); any path when `only` is empty. The rule id, engine, kind, severity and
 /// fix come from `rule`; the owner from `file.owner_for` the hit's path; the path, line, column and message from the
-/// hit.
+/// hit. A hit with no line, or on line 0, gives a finding with no line (`line()` None): the engines count lines from 1.
 pub(crate) fn findings_from(file: &RuleFile, rule: &Rule, hits: Vec<Hit>, only: &[RelPath]) -> Vec<Finding> {
     hits.into_iter()
         .filter(|hit| (only.is_empty() || only.iter().any(|entry| covers(entry, &hit.path))) && rule.applies(&hit.path))
-        .map(|hit| Finding {
-            rule: rule.id.clone(),
-            engine: rule.engine,
-            kind: rule.kind,
-            severity: rule.severity,
-            owner: file.owner_for(&hit.path).map(str::to_string),
-            path: hit.path,
-            line: hit.line,
-            col: hit.col,
-            what: hit.what,
-            fix: rule.fix.clone(),
+        .map(|hit| {
+            let owner = file.owner_for(&hit.path).map(str::to_string);
+            let mut finding = Finding::new(
+                rule.id.clone(),
+                (rule.engine, rule.kind, rule.severity),
+                hit.path,
+                hit.line.filter(|line| *line != 0),
+                hit.col,
+                hit.what,
+                rule.fix.clone(),
+            );
+            finding.owner = owner;
+            finding
         })
         .collect()
 }

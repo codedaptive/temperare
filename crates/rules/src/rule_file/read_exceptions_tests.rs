@@ -98,3 +98,51 @@ fn an_empty_what_and_an_unknown_rule_are_both_reported() {
     assert_eq!(at, vec![(2, 8), (4, 8)]);
     assert_eq!(out[1].fix, EMPTY_WHAT_FIX);
 }
+
+/// An exception for "no-bool" at "a.rs" whose sixth line is `expires = <value>`.
+fn with_expires(value: &str) -> String {
+    format!("[[exception]]\nrule = \"no-bool\"\npath = \"a.rs\"\nreason = \"r\"\napproved = \"a\"\nexpires = {value}\n")
+}
+
+#[test]
+fn an_exception_with_a_real_expires_date_is_read() {
+    let text = with_expires("\"2026-12-31\"");
+    let doc = DeTable::parse(&text).unwrap();
+    let mut out = Vec::new();
+    let read = read_exceptions(&text, doc.get_ref(), &ids(), &mut out);
+    assert_eq!(out, vec![]);
+    assert_eq!(read, vec![Exception::new("no-bool", "a.rs", "r", "a")]);
+}
+
+#[test]
+fn an_expires_that_is_not_a_string_is_one_problem_at_the_value_and_left_out() {
+    let text = with_expires("20261231");
+    let doc = DeTable::parse(&text).unwrap();
+    let mut out = Vec::new();
+    assert_eq!(read_exceptions(&text, doc.get_ref(), &ids(), &mut out), vec![]);
+    assert_eq!(out.len(), 1, "{out:?}");
+    assert_eq!((out[0].line, out[0].col), (6, 11));
+    assert_eq!(out[0].what, "`expires` must be a string, not integer");
+}
+
+#[test]
+fn a_malformed_expires_is_one_problem_at_the_value_and_left_out() {
+    let text = with_expires("\"2026-2-03\"");
+    let doc = DeTable::parse(&text).unwrap();
+    let mut out = Vec::new();
+    assert_eq!(read_exceptions(&text, doc.get_ref(), &ids(), &mut out), vec![]);
+    assert_eq!(out.len(), 1, "{out:?}");
+    assert_eq!((out[0].line, out[0].col), (6, 11));
+    assert_eq!(out[0].what, "`expires` must be a real date written YYYY-MM-DD, not \"2026-2-03\"");
+}
+
+#[test]
+fn an_impossible_expires_date_is_one_problem_at_the_value_and_left_out() {
+    let text = with_expires("\"2026-02-30\"");
+    let doc = DeTable::parse(&text).unwrap();
+    let mut out = Vec::new();
+    assert_eq!(read_exceptions(&text, doc.get_ref(), &ids(), &mut out), vec![]);
+    assert_eq!(out.len(), 1, "{out:?}");
+    assert_eq!((out[0].line, out[0].col), (6, 11));
+    assert_eq!(out[0].what, "`expires` must be a real date written YYYY-MM-DD, not \"2026-02-30\"");
+}

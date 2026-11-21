@@ -1,7 +1,7 @@
 //! Unit tests for failed_tails.rs: each failed rule's stderr tail as indented text, in report order.
 
 use super::failed_tails::failed_tails;
-use report::{Counts, Failed, Report};
+use report::{Failed, Report};
 use rules::Engine;
 
 fn failed(rule: &str, engine: Engine, stderr_tail: &str) -> Failed {
@@ -9,24 +9,7 @@ fn failed(rule: &str, engine: Engine, stderr_tail: &str) -> Failed {
 }
 
 fn report(failed: Vec<Failed>) -> Report {
-    Report {
-        findings: vec![],
-        silenced: vec![],
-        exceptions_in_force: 0,
-        not_available: vec![],
-        failed,
-        base: None,
-        counts: Counts {
-            findings: 0,
-            errors: 0,
-            warnings: 0,
-            quality: 0,
-            security: 0,
-            silenced: 0,
-            not_available: 0,
-            failed: 0,
-        },
-    }
+    Report { failed, ..Default::default() }
 }
 
 #[test]

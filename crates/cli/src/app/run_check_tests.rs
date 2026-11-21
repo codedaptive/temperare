@@ -3,8 +3,9 @@
 
 use super::{run_check, CheckWorld};
 use crate::CheckArgs;
+use engines::{CheckedRules, RuleRun};
 use procio::{GitError, Oid};
-use report::{Counts, Failed, NotAvailable, Report, ReportError};
+use report::{Failed, NotAvailable, Report, ReportError};
 use rules::{Engine, Finding, Kind, Problem, RelPath, RuleFile, RuleOutcome, Severity};
 use serde_json::json;
 use std::cell::{Cell, RefCell};
@@ -42,60 +43,45 @@ fn read(path: &Path) -> Result<RuleFile, Vec<Problem>> {
     Ok(RuleFile::parse(TEXT, Path::new("/repo")).unwrap())
 }
 
-fn no_outcomes(_: &RuleFile, _: &Path, _: &[RelPath]) -> Outcomes {
-    Vec::new()
+fn no_runs(_: &RuleFile, _: &Path, _: &[RelPath]) -> CheckedRules {
+    CheckedRules { runs: vec![], engines: vec![] }
 }
 
 fn clean(_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>) -> Result<Report, ReportError> {
     Ok(report(vec![], vec![]))
 }
 
-/// A world that finds and reads the rule file, runs no rule and reports nothing; `rev_parse` panics.
+/// A world that finds and reads the rule file, runs no rule, reports nothing and has no HOME; `rev_parse` panics.
 fn world() -> CheckWorld<'static> {
     CheckWorld {
         toplevel: &top,
         exists: &there,
         read: &read,
         rev_parse: &|_, _| unreachable!("rev_parse"),
-        run_rules: &no_outcomes,
+        run_rules: &no_runs,
+        availability: &|_| engines::Availability::Available,
         build_report: &clean,
+        home: &|| None,
+        now: &|| 0,
     }
 }
 
 fn report(findings: Vec<Finding>, not_available: Vec<NotAvailable>) -> Report {
-    Report {
-        findings,
-        silenced: vec![],
-        exceptions_in_force: 0,
-        not_available,
-        failed: vec![],
-        base: None,
-        counts: Counts {
-            findings: 0,
-            errors: 0,
-            warnings: 0,
-            quality: 0,
-            security: 0,
-            silenced: 0,
-            not_available: 0,
-            failed: 0,
-        },
-    }
+    Report { findings, not_available, ..Default::default() }
 }
 
 fn quality_error() -> Finding {
-    Finding {
-        rule: "q".to_string(),
-        engine: Engine::Ruff,
-        kind: Kind::Quality,
-        severity: Severity::Error,
-        owner: Some("core".to_string()),
-        path: RelPath::new("a.py"),
-        line: 7,
-        col: Some(3),
-        what: "unused import".to_string(),
-        fix: "Remove the import.".to_string(),
-    }
+    let mut f = Finding::new(
+        "q",
+        (Engine::Ruff, Kind::Quality, Severity::Error),
+        RelPath::new("a.py"),
+        7,
+        Some(3),
+        "unused import",
+        "Remove the import.",
+    );
+    f.owner = Some("core".to_string());
+    f
 }
 
 /// Runs `tm check` in /repo; (exit, out, err).
@@ -103,6 +89,12 @@ fn check(args: &CheckArgs, world: &CheckWorld) -> (u8, String, String) {
     let (mut out, mut err) = (Vec::new(), Vec::new());
     let code = run_check(args, Path::new("/repo"), world, &mut out, &mut err);
     (code, String::from_utf8(out).unwrap(), String::from_utf8(err).unwrap())
+}
+
+/// The counts line is `prefix` alone or `prefix, <more>`: the report may append counts after "failed".
+fn is_counts_line(line: &str, prefix: &str) -> bool {
+    line == prefix
+        || line.strip_prefix(prefix).and_then(|rest| rest.strip_prefix(", ")).is_some_and(|more| !more.is_empty())
 }
 
 /// As text: exit 2, nothing on stdout, `stderr` on stderr. Under --json: exit 2, the same stderr, `object` on stdout.
@@ -222,7 +214,7 @@ fn kind_security_passes_only_the_security_rules_to_run_rules() {
     let ids = RefCell::new(Vec::new());
     let run_rules = |rf: &RuleFile, _: &Path, _: &[RelPath]| {
         ids.borrow_mut().extend(rf.rules.iter().map(|r| r.id.clone()));
-        Vec::new()
+        CheckedRules { runs: vec![], engines: vec![] }
     };
     let w = CheckWorld { run_rules: &run_rules, ..world() };
     let (code, _, _) = check(&CheckArgs { kind: Some(Kind::Security), ..CheckArgs::default() }, &w);
@@ -235,7 +227,8 @@ fn paths_reach_run_rules_as_paths_under_the_folder_and_outcomes_reach_the_report
     let seen = RefCell::new(None);
     let run_rules = |_: &RuleFile, repo: &Path, only: &[RelPath]| {
         *seen.borrow_mut() = Some((repo.to_path_buf(), only.to_vec()));
-        vec![("q".to_string(), RuleOutcome::Findings(vec![]))]
+        let outcome = RuleOutcome::Findings(vec![]);
+        CheckedRules { runs: vec![RuleRun::new("q".to_string(), Engine::Ruff, outcome, None)], engines: vec![] }
     };
     let build_report = |_: &RuleFile, outcomes: Outcomes, _: Option<(&Path, &Oid)>| {
         assert_eq!(outcomes, vec![("q".to_string(), RuleOutcome::Findings(vec![]))]);
@@ -286,16 +279,15 @@ fn a_resolved_base_reaches_the_report_as_the_top_and_the_commit() {
 
 #[test]
 fn a_clean_report_is_the_counts_then_nothing_to_do() {
-    assert_eq!(
-        check(&CheckArgs::default(), &world()),
-        (
-            0,
-            "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, \
-             0 failed\nnext: nothing to do\n"
-                .to_string(),
-            String::new()
-        )
-    );
+    let (code, out, err) = check(&CheckArgs::default(), &world());
+    assert_eq!((code, err.as_str()), (0, ""));
+    assert!(out.ends_with('\n'), "{out}");
+    let lines: Vec<&str> = out.lines().collect();
+    assert_eq!(lines.len(), 2, "{out}");
+    let counts = "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, \
+                  0 failed";
+    assert!(is_counts_line(lines[0], counts), "{out}");
+    assert_eq!(lines[1], "next: nothing to do");
 }
 
 #[test]
@@ -333,24 +325,22 @@ fn a_failed_engine_exits_5_with_its_stderr_tail_between_the_counts_and_next() {
             rule: "q".to_string(),
             engine: Engine::Ruff,
             code: Some(2),
-            stderr_tail: "ruff: unknown rule F999".to_string(),
+            stderr_tail: "ruff: Failed to parse /repo/pyproject.toml".to_string(),
         }];
         r.counts.failed = 1;
         Ok(r)
     };
-    assert_eq!(
-        check(&CheckArgs::default(), &CheckWorld { build_report: &failed, ..world() }),
-        (
-            5,
-            "failed: q (ruff), exit 2\n\
-             0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, \
-             1 failed\n\
-             stderr of q (ruff):\n  ruff: unknown rule F999\n\
-             next: see the engine output above\n"
-                .to_string(),
-            String::new()
-        )
-    );
+    let (code, out, err) = check(&CheckArgs::default(), &CheckWorld { build_report: &failed, ..world() });
+    assert_eq!((code, err.as_str()), (5, ""));
+    assert!(out.ends_with('\n'), "{out}");
+    let lines: Vec<&str> = out.lines().collect();
+    assert_eq!(lines.len(), 5, "{out}");
+    assert_eq!(lines[0], "failed: q (ruff), exit 2");
+    let counts = "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, \
+                  1 failed";
+    assert!(is_counts_line(lines[1], counts), "{out}");
+    assert_eq!(lines[2..4], ["stderr of q (ruff):", "  ruff: Failed to parse /repo/pyproject.toml"]);
+    assert_eq!(lines[4], "next: see the engine output above");
 }
 
 #[test]

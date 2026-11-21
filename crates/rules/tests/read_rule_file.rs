@@ -1,7 +1,6 @@
-//! Zone integration test: `RuleFile::read` on a real `temperare.toml` in a throwaway folder. Proves the pieces of the rules
-//! crate work together on a file read from disk: the folder it exposes resolves the rule's `check` file, the read
-//! rules scope paths by include, exclude and kit, the read exceptions match findings, and a broken file reports
-//! every problem with its line.
+//! Integration tests: rule-file reading and parsing work with the rest of the rules crate. Disk-backed tests use a
+//! `temperare.toml` in a throwaway folder; expiry tests parse strings directly. The tests cover check-file resolution,
+//! rule scopes, exception matching and expiry, and problems with their locations.
 
 use rules::{Engine, Finding, Kind, RelPath, RuleFile, Severity};
 use std::fs;
@@ -135,6 +134,42 @@ fn exception_for_matches_rule_path_and_what() {
     assert_eq!(file.exceptions_in_force().len(), 1);
 }
 
+const EXCEPTION_FILE: &str = "version = 1\n[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"f\"\n[[exception]]\nrule = \"r\"\npath = \"a.rs\"\nreason = \"legacy\"\napproved = \"reviewer\"\n";
+
+#[test]
+fn exception_with_valid_expiry_is_in_force() {
+    let text = format!("{EXCEPTION_FILE}expires = \"2026-12-31\"\n");
+    let parsed = RuleFile::parse(&text, Path::new("."));
+    assert!(parsed.is_ok(), "valid expiry should not produce problems: {parsed:?}");
+    let file = parsed.unwrap();
+    assert_eq!(file.exceptions_in_force().len(), 1);
+    assert_eq!(file.exceptions_in_force()[0].rule, "r");
+}
+
+#[test]
+fn impossible_expiry_is_one_problem_at_the_value() {
+    let text = format!("{EXCEPTION_FILE}expires = \"2026-02-30\"\n");
+    let parsed = RuleFile::parse(&text, Path::new("."));
+    assert!(parsed.is_err(), "an impossible expiry must not produce a rule file");
+    let problems = parsed.unwrap_err();
+    assert_eq!(problems.len(), 1, "{problems:?}");
+    assert_eq!((problems[0].line, problems[0].col), (12, 11), "{problems:?}");
+    assert_eq!(problems[0].what, "`expires` must be a real date written YYYY-MM-DD, not \"2026-02-30\"");
+    assert_eq!(problems[0].fix, "Write `expires` as a real calendar date, \"YYYY-MM-DD\".");
+}
+
+#[test]
+fn integer_expiry_is_one_problem_at_the_value() {
+    let text = format!("{EXCEPTION_FILE}expires = 20261231\n");
+    let parsed = RuleFile::parse(&text, Path::new("."));
+    assert!(parsed.is_err(), "an integer expiry must not produce a rule file");
+    let problems = parsed.unwrap_err();
+    assert_eq!(problems.len(), 1, "{problems:?}");
+    assert_eq!((problems[0].line, problems[0].col), (12, 11), "{problems:?}");
+    assert_eq!(problems[0].what, "`expires` must be a string, not integer");
+    assert_eq!(problems[0].fix, "Write `expires` as a string.");
+}
+
 #[test]
 fn broken_file_reports_every_problem_with_its_line() {
     let tmp = TempFolder::new("broken");
@@ -146,4 +181,50 @@ fn broken_file_reports_every_problem_with_its_line() {
     let mut lines: Vec<usize> = problems.iter().map(|p| p.line).collect();
     lines.sort();
     assert_eq!(lines, vec![1, 3]);
+}
+
+#[test]
+fn baseline_sets_keep_own_rule_and_exception() {
+    let tmp = TempFolder::new("baseline-own");
+    let path = tmp.0.join("temperare.toml");
+    fs::write(&path, "version = 1\nbaseline = [\"standard@1\", \"house@1\"]\n\n[[rule]]\nid = \"own-rule\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"Fix it.\"\n\n[[exception]]\nrule = \"own-rule\"\npath = \"a.rs\"\nreason = \"legacy\"\napproved = \"reviewer\"\n").unwrap();
+    let file = RuleFile::read(&path).expect("known empty baseline sets and an own rule should read");
+    assert_eq!(file.rules.iter().map(|rule| rule.id.as_str()).collect::<Vec<_>>(), vec!["own-rule"]);
+    assert_eq!(file.exceptions.iter().map(|exception| exception.rule.as_str()).collect::<Vec<_>>(), vec!["own-rule"]);
+}
+
+#[test]
+fn baseline_sets_unknown_set_reports_entry_location_and_fix() {
+    let tmp = TempFolder::new("baseline-unknown");
+    let path = tmp.0.join("temperare.toml");
+    fs::write(&path, "version = 1\nbaseline = [\"nosuch@1\"]\n").unwrap();
+    let problems = RuleFile::read(&path).expect_err("unknown baseline set must be rejected");
+    assert_eq!(
+        problems.iter().map(|p| (p.line, p.col, p.what.as_str(), p.fix.as_str())).collect::<Vec<_>>(),
+        vec![(2, 13, "unknown baseline set \"nosuch\"", "Use one of: house, standard.")],
+    );
+}
+
+#[test]
+fn baseline_sets_unknown_override_reports_rule_location_and_fix() {
+    let tmp = TempFolder::new("baseline-override");
+    let path = tmp.0.join("temperare.toml");
+    fs::write(&path, "version = 1\nbaseline = [\"standard@1\"]\n[[override]]\nrule = \"tm-none\"\noff = true\n").unwrap();
+    let problems = RuleFile::read(&path).expect_err("override of an unknown baseline rule must be rejected");
+    assert_eq!(
+        problems.iter().map(|p| (p.line, p.col, p.what.as_str(), p.fix.as_str())).collect::<Vec<_>>(),
+        vec![(4, 8, "override of unknown baseline rule \"tm-none\": no taken set holds it", "Name the id of a rule in a set this file takes in baseline, or remove the [[override]].")],
+    );
+}
+
+#[test]
+fn baseline_sets_reserved_own_id_reports_id_location_and_fix() {
+    let tmp = TempFolder::new("baseline-reserved");
+    let path = tmp.0.join("temperare.toml");
+    fs::write(&path, "version = 1\n[[rule]]\nid = \"tm-mine\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"Fix it.\"\n").unwrap();
+    let problems = RuleFile::read(&path).expect_err("own rule ids must not use the baseline prefix");
+    assert_eq!(
+        problems.iter().map(|p| (p.line, p.col, p.what.as_str(), p.fix.as_str())).collect::<Vec<_>>(),
+        vec![(3, 6, "id \"tm-mine\" starts with \"tm-\", which is kept for baseline rules", "Give the rule an id that does not start with \"tm-\", or change the baseline rule with an [[override]].")],
+    );
 }

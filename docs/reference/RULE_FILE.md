@@ -107,7 +107,7 @@ the owner of the findings in its files.
 | Key | Required | Meaning |
 |---|---|---|
 | `id` | yes | The rule's name in every report. One or more of `a-z`, `0-9` and `-`. No two rules share an id |
-| `engine` | yes | `clippy`, `swiftlint`, `ruff`, `ast-grep` or `tessera`, exactly as written here |
+| `engine` | yes | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `tessera`, `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `shellcheck` or `git`, exactly as written here. The last six are accepted, and their rules are "not available" until Temperare has an adapter for each ([`ENGINES.md`](ENGINES.md#engines-with-no-adapter-yet)) |
 | `check` | yes | What the engine is asked. See below |
 | `fix` | yes | The text shown with each finding of this rule |
 | `severity` | no | `error` (the default) or `warning` |
@@ -118,6 +118,7 @@ the owner of the findings in its files.
 | `outside_kits` | no | Kit names. The rule never covers a file held by one of these kits |
 | `config` | no | The engine's own config file. Passed to `swiftlint` and `ruff` as written; the other engines do not take one |
 | `params` | no | A table of values for the engine. See below |
+| `only_with_base` | no | `true` or `false` (the default). With `true` the rule reports only what a change adds, so it needs `--base`. Without `--base` the rule reports nothing, not even a failure, and is listed under `not_applicable` ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)) |
 
 Any other key is a problem.
 
@@ -130,33 +131,43 @@ Any other key is a problem.
 | `ruff` | A rule code (`E711`), a code prefix (`E7`, `F`), `ALL`, or several of these joined by commas with no spaces (`E711,F401`). Not a rule name |
 | `ast-grep` | The path of an ast-grep rule file (YAML) inside the rule file's folder. Every match of that file is a finding |
 | `tessera` | Required like any other, and not used today: nothing is run |
+| `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `shellcheck`, `git` | Required like any other, and not used yet: nothing is run |
 
 A finding is kept only when it can be matched back to `check`: for clippy and SwiftLint the engine reports exactly
 that lint or identifier, and for ruff the diagnostic's code starts with one of the parts of `check`.
 
 These are checked when the rule runs, not when the rule file is read. A `check` that cannot be matched (a clippy
-lint group or a name the toolchain does not list, `custom_rules`, a ruff rule name, an ast-grep file outside the
-rule file's folder) makes the rule "failed", exit 5, with the reason in the report. It never reads as clean, and
-`tm rules` does not report it. [`ENGINES.md`](ENGINES.md) has each case.
+lint group, `custom_rules`, a ruff rule name, an ast-grep file outside the rule file's folder) makes the rule
+"failed", exit 5, with the reason in the report. A `check` the installed clippy, SwiftLint or ruff does not know
+(a misspelt name, or one newer than that engine) makes the rule "not available", exit 3, with a reason naming the
+engine, its version and the check. Neither reads as clean, and `tm rules` reports neither, since it runs no
+engine. [`ENGINES.md`](ENGINES.md) has each case.
 
 ### `params`
 
-- **clippy:** `allow`, a list of lints left out, such as `{ allow = ["clippy::module_inception"] }`. It is the only
-  param a clippy rule reads; any other name makes the rule fail, so a misspelt `allow` cannot pass unnoticed.
+- **clippy:** `allow`, a list of lints left out, such as `{ allow = ["clippy::module_inception"] }`; and `max_nesting`, a
+  whole number from 1 to 1000, read only with check `clippy::excessive_nesting`. Any other name makes the rule fail,
+  so a misspelt `allow` cannot pass unnoticed.
 - **ast-grep:** names for the rule file's placeholders. Each `{{name}}` in the YAML is replaced by the param of that
   name before ast-grep runs. A string goes in as written. A list of strings goes in as its items joined by `|`, each
   escaped so it matches literally, which drops into a `regex:` line as "any of these". A `{{name}}` with no param of
-  that name makes the rule fail.
-- **swiftlint, ruff, tessera:** not read.
+  that name makes the rule fail, and so does a param the YAML never names as `{{name}}`, so a misspelt param name
+  cannot pass unnoticed.
+- **swiftlint:** `max_complexity`, a whole number from 1 to 1000, read only with check `cyclomatic_complexity`; and
+  `max_lines`, a whole number from 1 to 100000, read only with check `file_length`. At most one threshold per rule;
+  any other param fails the rule.
+- **ruff:** `max_complexity`, a whole number from 1 to 1000, read only with check `C901`; any other param fails the
+  rule.
+- **tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck, git:** not read.
 
 ### Which files a rule covers
 
 A rule covers a file when all of these hold:
 
-1. the file matches one of `paths`, or `paths` is absent;
+1. the file matches one of `paths`, or `paths` is absent or empty;
 2. the file matches none of `exclude`;
 3. the file is in none of the `outside_kits` kits;
-4. `kits` is absent, or the file is in one of those kits.
+4. `kits` is absent or empty, or the file is in one of those kits.
 
 An engine runs over the rule file's whole folder. Findings in files the rule does not cover are dropped, and so are
 findings outside the rule file's folder.
@@ -206,7 +217,7 @@ A rule file with a `security` rule must have a top-level `owner`, so a security 
 ```
 /path/to/temperare.toml:3:1  [[rule]] is missing `fix`  Add `fix = "..."` to this [[rule]].
 /path/to/temperare.toml:4:6  malformed id "No_None": an id is one or more of a-z, 0-9 and '-'  Write the id in lower-case letters, digits and dashes, e.g. "no-stored-bool".
-/path/to/temperare.toml:5:10  unknown engine "pylint"  Use one of: clippy, swiftlint, ruff, ast-grep, tessera.
+/path/to/temperare.toml:5:10  unknown engine "pylnit"  Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck, git.
 next: fix each problem listed for /path/to/temperare.toml
 ```
 

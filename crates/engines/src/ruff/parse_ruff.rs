@@ -47,7 +47,7 @@ pub fn parse_ruff(out: &Output, check: &str, cwd: &Path, folder: &Path) -> Resul
         .filter_map(|diagnostic| {
             Some(Hit {
                 path: rel_to_folder(cwd, folder, &diagnostic.filename)?,
-                line: diagnostic.location.row,
+                line: Some(diagnostic.location.row),
                 col: Some(diagnostic.location.column),
                 what: diagnostic.message,
             })

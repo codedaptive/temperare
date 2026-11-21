@@ -2,6 +2,29 @@
 
 All notable changes to Temperare are recorded here, newest first.
 
+## 0.2.0
+
+Built from source; there are no release downloads yet. MIT licensed.
+
+### Added
+
+- Tokens saved: a `tm check` that ran an engine opens its text with a `tokens saved` line, `--json` carries the
+  numbers as `saved`, each such check appends one line to `~/.local/state/temperare/savings.jsonl`, and
+  `savings_line = false` in `~/.config/temperare/config.toml` turns the line off. See `docs/reference/OUTPUT.md`.
+- The report carries the day of the check (`date`), the findings each rule silenced (`silenced_by_rule`), the version
+  of each engine that ran (`engines`) and the rules the check does not apply (`not_applicable`).
+- Rules that would get the same answer from one run of their engine share that run, in a fixed order; see
+  `docs/reference/ENGINES.md`.
+- Threshold params, such as clippy's `max_nesting`.
+- The rule file accepts eleven engine names. Six have no adapter yet and are reported "not available": golangci-lint,
+  pylint, clang-tidy, oclint, shellcheck and git.
+
+### Changed
+
+- A `check` that clippy, SwiftLint or ruff does not know is reported "not available", naming the engine's version.
+- A param that an engine does not take fails the rule.
+- A rule that applies only with `--base` is listed as not applicable when no base was given.
+
 ## 0.1.0
 
 The first version. Built from source; there are no release downloads yet. MIT licensed.

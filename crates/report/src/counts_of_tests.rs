@@ -4,18 +4,7 @@ use crate::Counts;
 use rules::{Engine, Finding, Kind, RelPath, Severity};
 
 fn finding(kind: Kind, severity: Severity) -> Finding {
-    Finding {
-        rule: "r".to_string(),
-        engine: Engine::Ruff,
-        kind,
-        severity,
-        owner: None,
-        path: RelPath::new("a.py"),
-        line: 1,
-        col: None,
-        what: "w".to_string(),
-        fix: "f".to_string(),
-    }
+    Finding::new("r", (Engine::Ruff, kind, severity), RelPath::new("a.py"), 1, None, "w", "f")
 }
 
 #[test]
@@ -35,8 +24,9 @@ fn findings_are_counted_by_severity_and_by_kind() {
         silenced: 5,
         not_available: 6,
         failed: 7,
+        not_applicable: 8,
     };
-    assert_eq!(Counts::of(&findings, 5, 6, 7), expected);
+    assert_eq!(Counts::of(&findings, 5, 6, 7, 8), expected);
 }
 
 #[test]
@@ -50,6 +40,7 @@ fn no_findings_count_zero() {
         silenced: 1,
         not_available: 0,
         failed: 2,
+        not_applicable: 3,
     };
-    assert_eq!(Counts::of(&[], 1, 0, 2), expected);
+    assert_eq!(Counts::of(&[], 1, 0, 2, 3), expected);
 }

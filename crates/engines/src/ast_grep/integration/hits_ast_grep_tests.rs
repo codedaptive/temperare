@@ -5,12 +5,12 @@
 //! The host is a fake; no engine runs. Matches come from the captured fixtures (see parse_ast_grep_tests.rs), whose
 //! paths are relative to where ast-grep ran. Each test removes its folder.
 
-use super::super::hits_ast_grep;
+use super::super::{hits_ast_grep, AST_GREP};
 use crate::host::Host;
 use crate::types::{Hit, Stop};
 use procio::{Cmd, Output, ProcError};
 use rules::{RelPath, RuleFile};
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -54,9 +54,58 @@ fn run_rule(
         answer()
     };
     let on_path = |_: &str| -> bool { panic!("hits_ast_grep looks nothing up on PATH") };
-    let got = hits_ast_grep(&file.rules[0], &folder, &Host { run: &run, on_path: &on_path });
+    let got = hits_ast_grep(&AST_GREP, &file.rules[0], &folder, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) });
     fs::remove_dir_all(&folder).unwrap();
     (got, folder, seen.into_inner())
+}
+
+/// `hits_ast_grep` for a rule checking `names.yml` with `extra` lines, the host's run answering `answer`; also the count
+/// the host holds after it and how many runs it was asked for.
+fn counted_ast_grep(
+    test: &str,
+    extra: &str,
+    answer: impl Fn() -> Result<Output, ProcError>,
+) -> (Result<Vec<Hit>, Stop>, Option<usize>, usize) {
+    let root = std::env::temp_dir().join(format!("engines-zit-{}-ast-counted-{test}", std::process::id()));
+    fs::create_dir(&root).unwrap();
+    let folder = fs::canonicalize(root).unwrap();
+    fs::write(folder.join("names.yml"), YAML).unwrap();
+    let file = RuleFile::parse(&rule_text("names.yml", extra), &folder).unwrap();
+    let raw_chars = Cell::new(None);
+    let runs = Cell::new(0);
+    let run = |_: &Cmd| {
+        runs.set(runs.get() + 1);
+        answer()
+    };
+    let host = Host { run: &run, on_path: &|_| panic!("unexpected PATH lookup"), raw_chars: &raw_chars };
+    let got = hits_ast_grep(&AST_GREP, &file.rules[0], &folder, &host);
+    fs::remove_dir_all(&folder).unwrap();
+    (got, raw_chars.get(), runs.get())
+}
+
+#[test]
+fn counted_ast_grep_includes_both_streams_with_lossy_utf8() {
+    let (got, chars, runs) = counted_ast_grep("output", NAMES, || {
+        Ok(Output { code: Some(8), stdout: b"bad\xff".to_vec(), stderr: "whyé".as_bytes().to_vec() })
+    });
+    assert_eq!(got, Err(Stop::Failed { code: Some(8), stderr: "whyé".into() }));
+    assert_eq!(chars, Some(8));
+    assert_eq!(runs, 1);
+}
+
+#[test]
+fn counted_ast_grep_unknown_param_leaves_no_count() {
+    let (got, chars, runs) = counted_ast_grep("refused", "", never_run);
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "unknown param {{names}} in names.yml".into() }));
+    assert_eq!(chars, None);
+    assert_eq!(runs, 0);
+}
+
+#[test]
+fn counted_ast_grep_not_found_counts_nothing() {
+    let (got, chars, _) = counted_ast_grep("absent", NAMES, || Err(ProcError::NotFound { program: "ast-grep".into() }));
+    assert_eq!(got, Err(Stop::NotAvailable { why: "ast-grep not found on PATH".to_string() }));
+    assert_eq!(chars, None);
 }
 
 fn matches() -> Result<Output, ProcError> {
@@ -68,7 +117,7 @@ fn never_run() -> Result<Output, ProcError> {
 }
 
 fn hit(path: &str, line: u32, col: u32, what: &str) -> Hit {
-    Hit { path: RelPath::new(path), line, col: Some(col), what: what.to_string() }
+    Hit { path: RelPath::new(path), line: Some(line), col: Some(col), what: what.to_string() }
 }
 
 #[test]
@@ -145,7 +194,7 @@ fn outside_case(test: &str, make_check: impl FnOnce(&Path) -> String) -> (Result
     let file = RuleFile::parse(&rule_text(&check, ""), &folder).unwrap();
     let run = |_: &Cmd| never_run();
     let on_path = |_: &str| -> bool { panic!("hits_ast_grep looks nothing up on PATH") };
-    let got = hits_ast_grep(&file.rules[0], &folder, &Host { run: &run, on_path: &on_path });
+    let got = hits_ast_grep(&AST_GREP, &file.rules[0], &folder, &Host { run: &run, on_path: &on_path, raw_chars: &Cell::new(None) });
     fs::remove_dir_all(&root).unwrap();
     (got, check)
 }

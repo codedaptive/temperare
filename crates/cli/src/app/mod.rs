@@ -6,7 +6,9 @@ mod check_world_real;
 mod discover_rule_file;
 mod leftover_folders_next;
 mod only_paths;
+mod report_engines;
 mod resolve_base;
+mod rule_counts;
 mod rules_world;
 mod rules_world_real;
 mod run;
@@ -29,11 +31,21 @@ mod leftover_folders_next_tests;
 #[cfg(test)]
 mod only_paths_tests;
 #[cfg(test)]
+mod report_engines_tests;
+#[cfg(test)]
 mod resolve_base_tests;
 #[cfg(test)]
 mod rules_world_real_tests;
 #[cfg(test)]
 mod rules_world_tests;
+#[cfg(test)]
+mod integration;
+#[cfg(test)]
+mod rule_counts_tests;
+#[cfg(test)]
+mod run_check_engines_tests;
+#[cfg(test)]
+mod run_check_savings_tests;
 #[cfg(test)]
 mod run_check_not_available_tests;
 #[cfg(test)]

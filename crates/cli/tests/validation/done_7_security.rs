@@ -1,4 +1,4 @@
-//! Done 7: a security rule. "A finding of a rule of kind `security` is reported with its
+//! Acceptance: a security rule. "A finding of a rule of kind `security` is reported with its
 //! severity, location and owner, and the run does not end with the refusing exit code. The same rule run alone over
 //! the tree reports the same finding." Security-only exits 4, never 1; the owner is the file's.
 

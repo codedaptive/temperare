@@ -1,7 +1,10 @@
-//! Unit tests for rule_file_parse.rs: the numbered checks one case each, then wrong types, `kind`, `owner`, syntax errors and problem order, on
-//! in-memory text, with the expected line and column written out.
+//! Unit tests for rule_file_parse.rs: one case per check of the rule file format and the `kind` and `owner` checks, on
+//! in-memory text, with the expected line and column written out; then the `baseline` and `[[override]]` keys, on
+//! baseline sets written here and passed to parse_with_sets.
 
-use crate::{Engine, Kind, Problem, RelPath, RuleFile, Severity};
+use super::baseline_set::BaselineSet;
+use super::rule_file_parse::parse_with_sets;
+use crate::{Engine, Kind, Problem, RelPath, Rule, RuleFile, Severity};
 use std::path::Path;
 
 /// A valid rule, to which a case adds lines.
@@ -262,4 +265,355 @@ fn the_spec_example_parses_to_its_fields() {
     assert_eq!(exception.what.as_deref(), Some("isArchived"));
     assert_eq!(exception.reason, "migration ships in 2.4");
     assert_eq!(exception.approved, "Bob 2026-11-17");
+}
+
+/// The baseline sets the cases below take, in place of the sets built into `tm`.
+const SETS: &[BaselineSet] = &[
+    BaselineSet {
+        name: "standard",
+        version: 1,
+        text: "version = 1\nretired = [\"tm-s-old\"]\n[[rule]]\nid = \"tm-s1\"\nengine = \"clippy\"\ncheck = \"s1\"\n\
+               fix = \"f\"\npaths = [\"**/*.rs\"]\nparams = { limit = 10, keep = \"k\" }\n\
+               failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
+        yaml: &[],
+        cases: &[("cases/tm-s1/failing/a.rs", "x\n"), ("cases/tm-s1/passing/a.rs", "x\n")],
+    },
+    BaselineSet { name: "standard", version: 2, text: "version = 1\n", yaml: &[], cases: &[] },
+    BaselineSet {
+        name: "house",
+        version: 1,
+        text: "version = 1\nretired = [\"tm-h-old\"]\n[[rule]]\nid = \"tm-h1\"\nengine = \"ruff\"\ncheck = \"h1\"\nfix = \"f\"\n\
+               failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n\
+               [[rule]]\nid = \"tm-h2\"\nengine = \"ast-grep\"\ncheck = \"h2\"\nfix = \"f\"\nrequired_params = [\"entity_types\"]\n\
+               failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
+        yaml: &[("h2", "rule: h2\n")],
+        cases: &[
+            ("cases/tm-h1/failing/a.rs", "x\n"),
+            ("cases/tm-h1/passing/a.rs", "x\n"),
+            ("cases/tm-h2/failing/a.rs", "x\n"),
+            ("cases/tm-h2/passing/a.rs", "x\n"),
+        ],
+    },
+    BaselineSet { name: "broken", version: 1, text: "version = 1\ncolour = 1\n", yaml: &[], cases: &[] },
+    BaselineSet {
+        name: "dup",
+        version: 1,
+        text: "version = 1\n[[rule]]\nid = \"tm-s1\"\nengine = \"ruff\"\ncheck = \"other\"\nfix = \"f\"\n\
+               failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
+        yaml: &[],
+        cases: &[("cases/tm-s1/failing/a.rs", "x\n"), ("cases/tm-s1/passing/a.rs", "x\n")],
+    },
+];
+
+/// Takes standard@1 then house@1; an override's `rule` string is on line 4, a key after it on line 5.
+const BOTH: &str = "version = 1\nbaseline = [\"standard@1\", \"house@1\"]\n";
+const TAKES_STANDARD: &str = "version = 1\nbaseline = [\"standard@1\"]\n";
+const H2_REASON: &str =
+    "required params not given: entity_types; give them in the params of an [[override]] for \"tm-h2\"";
+
+fn parse(text: &str) -> Result<RuleFile, Vec<Problem>> {
+    parse_with_sets(text, Path::new("."), SETS)
+}
+
+fn valid(text: &str) -> RuleFile {
+    parse(text).unwrap_or_else(|p| panic!("valid, but: {p:?}"))
+}
+
+fn ids(rules: &[Rule]) -> Vec<&str> {
+    rules.iter().map(|rule| rule.id.as_str()).collect()
+}
+
+/// `text`'s problems are exactly one, at `line`:`col`, with this what and fix.
+fn exactly(text: &str, line: usize, col: usize, what: &str, fix: &str) {
+    let expected = Problem { line, col, what: what.to_string(), fix: fix.to_string() };
+    assert_eq!(parse(text).expect_err("the text has a problem"), vec![expected]);
+}
+
+fn strings(items: &[&str]) -> Vec<String> {
+    items.iter().map(|item| item.to_string()).collect()
+}
+
+#[test]
+fn baseline_absent_reads_as_before_with_the_new_fields_empty() {
+    let file = valid(&format!("version = 1\n{RULE}"));
+    assert_eq!(ids(&file.rules), vec!["r"]);
+    assert_eq!(file.baseline, Vec::<String>::new());
+    assert_eq!(file.retired, Vec::<String>::new());
+    assert_eq!(ids(&file.not_applicable_rules), Vec::<&str>::new());
+}
+
+#[test]
+fn baseline_sets_rules_come_first_then_the_files_own() {
+    let file = valid(&format!("{BOTH}{RULE}"));
+    assert_eq!(ids(&file.rules), vec!["tm-s1", "tm-h1", "r"]);
+    assert_eq!(file.baseline, strings(&["standard@1", "house@1"]));
+    assert_eq!(file.retired, strings(&["tm-s-old", "tm-h-old"]));
+    assert_eq!(ids(&file.not_applicable_rules), vec!["tm-h2"]);
+    assert_eq!(file.not_applicable_rules[0].not_applicable.as_deref(), Some(H2_REASON));
+    assert_eq!(file.rules[0].not_applicable, None);
+}
+
+#[test]
+fn baseline_override_severity_changes_only_its_rule() {
+    let file = valid(&format!("{BOTH}[[override]]\nrule = \"tm-s1\"\nseverity = \"warning\"\n"));
+    assert_eq!(file.rules[0].severity, Severity::Warning);
+    assert_eq!(file.rules[1].severity, Severity::Error);
+}
+
+#[test]
+fn baseline_override_paths_and_exclude_rescope_the_rule() {
+    let file = valid(&format!("{TAKES_STANDARD}[[override]]\nrule = \"tm-s1\"\npaths = [\"src/**\"]\nexclude = [\"src/gen/**\"]\n"));
+    let rule = &file.rules[0];
+    assert!(rule.applies(&RelPath::new("src/a.py")), "in the override's paths");
+    assert!(!rule.applies(&RelPath::new("lib/a.rs")), "in the set's paths only");
+    assert!(!rule.applies(&RelPath::new("src/gen/a.rs")), "excluded");
+}
+
+#[test]
+fn baseline_override_params_merge_into_the_sets() {
+    let file = valid(&format!("{TAKES_STANDARD}[[override]]\nrule = \"tm-s1\"\nparams = {{ limit = 20, extra = true }}\n"));
+    let expected: toml::Table = toml::from_str("limit = 20\nkeep = \"k\"\nextra = true\n").expect("table");
+    assert_eq!(file.rules[0].params, expected);
+}
+
+#[test]
+fn baseline_override_off_removes_the_rule_and_an_exception_may_still_name_it() {
+    let exception = "[[exception]]\nrule = \"tm-s1\"\npath = \"a.rs\"\nreason = \"x\"\napproved = \"bob\"\n";
+    let file = valid(&format!("{BOTH}[[override]]\nrule = \"tm-s1\"\noff = true\n{exception}"));
+    assert_eq!(ids(&file.rules), vec!["tm-h1"]);
+    assert_eq!(ids(&file.not_applicable_rules), vec!["tm-h2"]);
+    assert_eq!(file.exceptions.iter().map(|e| e.rule.as_str()).collect::<Vec<_>>(), vec!["tm-s1"]);
+}
+
+#[test]
+fn baseline_required_param_given_by_an_override_makes_the_rule_apply() {
+    let file = valid(&format!("{BOTH}[[override]]\nrule = \"tm-h2\"\nparams = {{ entity_types = [\"Order\"] }}\n"));
+    assert_eq!(ids(&file.rules), vec!["tm-s1", "tm-h1", "tm-h2"]);
+    assert_eq!(file.rules[2].not_applicable, None);
+    assert_eq!(ids(&file.not_applicable_rules), Vec::<&str>::new());
+}
+
+#[test]
+fn baseline_exception_naming_a_baseline_rule_is_accepted() {
+    let exception = "[[exception]]\nrule = \"tm-h1\"\npath = \"a.rs\"\nreason = \"x\"\napproved = \"bob\"\n";
+    let file = valid(&format!("{BOTH}{exception}"));
+    assert_eq!(file.exceptions.iter().map(|e| e.rule.as_str()).collect::<Vec<_>>(), vec!["tm-h1"]);
+}
+
+#[test]
+fn baseline_problem_unknown_set() {
+    let fix = "Use one of: broken, dup, house, standard.";
+    exactly("version = 1\nbaseline = [\"nosuch@1\"]\n", 2, 13, "unknown baseline set \"nosuch\"", fix);
+}
+
+#[test]
+fn baseline_problem_unknown_version() {
+    let what = "unknown version 9 of baseline set \"standard\"";
+    exactly("version = 1\nbaseline = [\"standard@9\"]\n", 2, 13, what, "Use one of: standard@1, standard@2.");
+}
+
+#[test]
+fn baseline_problem_malformed_entry() {
+    let fix = "Write the entry as a set name, '@' and a whole-number version, e.g. \"standard@1\".";
+    exactly("version = 1\nbaseline = [\"standard@one\"]\n", 2, 13, "malformed baseline entry \"standard@one\"", fix);
+}
+
+#[test]
+fn baseline_problem_set_taken_twice() {
+    let text = "version = 1\nbaseline = [\"standard@1\", \"standard@2\"]\n";
+    exactly(text, 2, 27, "baseline set \"standard\" is taken twice", "Take each set once, at one version.");
+}
+
+#[test]
+fn baseline_problem_own_id_with_the_baseline_prefix() {
+    let text = format!("{TAKES_STANDARD}[[rule]]\nid = \"tm-mine\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\n");
+    let what = "id \"tm-mine\" starts with \"tm-\", which is kept for baseline rules";
+    let fix = "Give the rule an id that does not start with \"tm-\", or change the baseline rule with an [[override]].";
+    exactly(&text, 4, 6, what, fix);
+}
+
+const UNKNOWN_OVERRIDE_FIX: &str =
+    "Name the id of a rule in a set this file takes in baseline, or remove the [[override]].";
+
+#[test]
+fn baseline_problem_override_of_an_id_not_in_the_taken_sets() {
+    let what = "override of unknown baseline rule \"tm-h1\": no taken set holds it";
+    exactly(&format!("{TAKES_STANDARD}[[override]]\nrule = \"tm-h1\"\n"), 4, 8, what, UNKNOWN_OVERRIDE_FIX);
+}
+
+#[test]
+fn baseline_problem_override_with_no_baseline_key() {
+    let what = "override of unknown baseline rule \"tm-s1\": no taken set holds it";
+    exactly("version = 1\n[[override]]\nrule = \"tm-s1\"\n", 3, 8, what, UNKNOWN_OVERRIDE_FIX);
+}
+
+#[test]
+fn baseline_problem_override_with_an_unknown_key() {
+    let fix = "Remove it, or use one of: rule, severity, off, paths, exclude, params.";
+    let text = format!("{TAKES_STANDARD}[[override]]\nrule = \"tm-s1\"\nlevel = 2\n");
+    exactly(&text, 5, 1, "unknown key `level` in [[override]]", fix);
+}
+
+#[test]
+fn baseline_problem_override_with_a_wrong_type() {
+    let text = format!("{TAKES_STANDARD}[[override]]\nrule = \"tm-s1\"\npaths = \"x\"\n");
+    let what = "`paths` must be an array of strings, not string";
+    exactly(&text, 5, 9, what, "Write `paths` as an array of strings.");
+}
+
+#[test]
+fn baseline_problem_override_off_not_a_boolean() {
+    let text = format!("{TAKES_STANDARD}[[override]]\nrule = \"tm-s1\"\noff = \"yes\"\n");
+    exactly(&text, 5, 7, "`off` must be a boolean, not string", "Write `off` as a boolean.");
+}
+
+#[test]
+fn baseline_problem_a_set_files_own_problem() {
+    let what = "baseline set broken@1 has a problem at 2:1: unknown key `colour` in the top level";
+    let fix = "This is a fault in tm's embedded set; report it with this message.";
+    exactly("version = 1\nbaseline = [\"broken@1\"]\n", 2, 13, what, fix);
+}
+
+#[test]
+fn baseline_problem_the_same_id_in_two_sets() {
+    let text = "version = 1\nbaseline = [\"standard@1\", \"dup@1\"]\n";
+    exactly(text, 2, 27, "rule \"tm-s1\" is in both standard@1 and dup@1", "Take only one of the two sets.");
+}
+
+/// Baseline sets holding a security rule: `guard` (`tm-g1`), and `guardneeds` (`tm-n1`, which needs `types`); and
+/// `plain`, a quality rule only.
+const SECURITY_SETS: &[BaselineSet] = &[
+    BaselineSet {
+        name: "plain",
+        version: 1,
+        text: "version = 1\n[[rule]]\nid = \"tm-p1\"\nengine = \"ruff\"\ncheck = \"p1\"\nfix = \"f\"\n\
+               failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
+        yaml: &[],
+        cases: &[("cases/tm-p1/failing/a.rs", "x\n"), ("cases/tm-p1/passing/a.rs", "x\n")],
+    },
+    BaselineSet {
+        name: "guard",
+        version: 1,
+        text: "version = 1\n[[rule]]\nid = \"tm-g1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"g1\"\nfix = \"f\"\n\
+               failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
+        yaml: &[],
+        cases: &[("cases/tm-g1/failing/a.rs", "x\n"), ("cases/tm-g1/passing/a.rs", "x\n")],
+    },
+    BaselineSet {
+        name: "guardneeds",
+        version: 1,
+        text: "version = 1\n[[rule]]\nid = \"tm-n1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"n1\"\nfix = \"f\"\n\
+               required_params = [\"types\"]\n\
+               failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
+        yaml: &[],
+        cases: &[("cases/tm-n1/failing/a.rs", "x\n"), ("cases/tm-n1/passing/a.rs", "x\n")],
+    },
+];
+
+/// Takes plain@1 (entry at 2:13) then guard@1 (entry at 2:24).
+const TAKES_GUARD: &str = "version = 1\nbaseline = [\"plain@1\", \"guard@1\"]\n";
+
+fn parse_secure(text: &str) -> Result<RuleFile, Vec<Problem>> {
+    parse_with_sets(text, Path::new("."), SECURITY_SETS)
+}
+
+#[test]
+fn baseline_security_rule_without_an_owner_is_a_problem_at_its_entry() {
+    let expected = Problem {
+        line: 2,
+        col: 24,
+        what: "a security rule needs a top-level `owner`, and the rule file names none".to_string(),
+        fix: "Add a top-level `owner = \"<kit>\"`: a security finding must name its owner.".to_string(),
+    };
+    assert_eq!(parse_secure(TAKES_GUARD).expect_err("no owner"), vec![expected]);
+}
+
+#[test]
+fn baseline_security_rule_with_an_owner_is_no_problem() {
+    let file = parse_secure(&format!("{TAKES_GUARD}owner = \"core\"\n")).unwrap_or_else(|p| panic!("valid: {p:?}"));
+    assert_eq!(file.owner.as_deref(), Some("core"));
+    assert_eq!(ids(&file.rules), vec!["tm-p1", "tm-g1"]);
+}
+
+#[test]
+fn baseline_security_rule_turned_off_needs_no_owner() {
+    let text = format!("{TAKES_GUARD}[[override]]\nrule = \"tm-g1\"\noff = true\n");
+    let file = parse_secure(&text).unwrap_or_else(|p| panic!("valid: {p:?}"));
+    assert_eq!(ids(&file.rules), vec!["tm-p1"]);
+}
+
+#[test]
+fn baseline_security_rule_not_applicable_needs_no_owner() {
+    let file = parse_secure("version = 1\nbaseline = [\"guardneeds@1\"]\n").unwrap_or_else(|p| panic!("valid: {p:?}"));
+    assert_eq!(ids(&file.rules), Vec::<&str>::new());
+    assert_eq!(ids(&file.not_applicable_rules), vec!["tm-n1"]);
+}
+
+#[test]
+fn baseline_override_with_a_bad_severity_and_an_unknown_rule_is_both_problems_in_order() {
+    let text = format!("{TAKES_STANDARD}[[override]]\nrule = \"tm-none\"\nseverity = \"loud\"\n");
+    let unknown = Problem {
+        line: 4,
+        col: 8,
+        what: "override of unknown baseline rule \"tm-none\": no taken set holds it".to_string(),
+        fix: UNKNOWN_OVERRIDE_FIX.to_string(),
+    };
+    let severity = Problem {
+        line: 5,
+        col: 12,
+        what: "unknown severity \"loud\"".to_string(),
+        fix: "Use \"error\" or \"warning\".".to_string(),
+    };
+    assert_eq!(parse(&text).expect_err("two problems"), vec![unknown, severity]);
+}
+
+#[test]
+fn baseline_set_default_for_a_required_param_leaves_the_rule_not_applicable() {
+    let sets = [BaselineSet {
+        name: "defaulted",
+        version: 1,
+        text: "version = 1\n[[rule]]\nid = \"tm-t1\"\nengine = \"ast-grep\"\ncheck = \"t1\"\nfix = \"f\"\n\
+               params = { types = [\"X\"] }\nrequired_params = [\"types\"]\n\
+               failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
+        yaml: &[("t1", "rule: t1\n")],
+        cases: &[("cases/tm-t1/failing/a.rs", "x\n"), ("cases/tm-t1/passing/a.rs", "x\n")],
+    }];
+    let file = parse_with_sets("version = 1\nbaseline = [\"defaulted@1\"]\n", Path::new("."), &sets)
+        .unwrap_or_else(|p| panic!("valid: {p:?}"));
+    assert_eq!(ids(&file.rules), Vec::<&str>::new());
+    assert_eq!(ids(&file.not_applicable_rules), vec!["tm-t1"]);
+    let reason = "required params not given: types; give them in the params of an [[override]] for \"tm-t1\"";
+    assert_eq!(file.not_applicable_rules[0].not_applicable.as_deref(), Some(reason));
+}
+
+#[test]
+fn baseline_security_copy_dropped_as_a_duplicate_needs_no_owner() {
+    let sets = [
+        BaselineSet {
+            name: "qz",
+            version: 1,
+            text: "version = 1\n[[rule]]\nid = \"tm-z1\"\nengine = \"ruff\"\ncheck = \"z1\"\nfix = \"f\"\n\
+                   failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
+            yaml: &[],
+            cases: &[("cases/tm-z1/failing/a.rs", "x\n"), ("cases/tm-z1/passing/a.rs", "x\n")],
+        },
+        BaselineSet {
+            name: "sz",
+            version: 1,
+            text: "version = 1\n[[rule]]\nid = \"tm-z1\"\nengine = \"tessera\"\nkind = \"security\"\ncheck = \"z1\"\n\
+                   fix = \"f\"\n\
+                   failing = { files = [\"a.rs\"], path = \"a.rs\", line = 1 }\npassing = { files = [\"a.rs\"] }\n",
+            yaml: &[],
+            cases: &[("cases/tm-z1/failing/a.rs", "x\n"), ("cases/tm-z1/passing/a.rs", "x\n")],
+        },
+    ];
+    let found = parse_with_sets("version = 1\nbaseline = [\"qz@1\", \"sz@1\"]\n", Path::new("."), &sets)
+        .expect_err("the duplicate");
+    let duplicate = Problem {
+        line: 2,
+        col: 21,
+        what: "rule \"tm-z1\" is in both qz@1 and sz@1".to_string(),
+        fix: "Take only one of the two sets.".to_string(),
+    };
+    assert_eq!(found, vec![duplicate]);
 }

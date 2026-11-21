@@ -1,4 +1,4 @@
-//! Done 5: an exception. "An approved exception in the rule file silences its finding and is counted in the report."
+//! Acceptance: an exception. "An approved exception in the rule file silences its finding and is counted in the report."
 //! Every report counts the exceptions in force, with or without a finding to silence.
 
 use crate::check::Check;
@@ -18,7 +18,8 @@ fix = "Compare with `is None`."
 rule = "no-none-compare"
 path = "legacy.py"
 reason = "the legacy module is rewritten in 2.0"
-approved = "acceptance test"
+approved = "reviewer 2026-11-17"
+expires = "2099-12-31"
 "#;
 
 /// `tm check --json` over a repository holding `legacy` as legacy.py, recorded in `check`.

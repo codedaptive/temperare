@@ -1,13 +1,14 @@
 //! `Report`: what a check came to, the `--json` body.
 
-use crate::{Counts, Failed, NotAvailable, Silenced};
+use crate::{Counts, EngineVersion, Failed, NotApplicable, NotAvailable, RuleCount, Silenced};
 use procio::Oid;
 use rules::Finding;
 use serde::{Serialize, Serializer};
 
-/// The report of one check. `exceptions_in_force` is always serialized, 0 included; `base` is left out when the
-/// check had no base commit and otherwise is the commit id's hex text.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+/// The report of one check. `exceptions_in_force`, `not_applicable`, `date`, `silenced_by_rule` and `engines` are
+/// always serialized, 0, "" and `[]` included; `base` is left out when the check had no base commit and otherwise is
+/// the commit id's hex text.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct Report {
     /// The kept findings: on new lines when there is a base, and covered by no exception.
     pub findings: Vec<Finding>,
@@ -18,6 +19,15 @@ pub struct Report {
     pub failed: Vec<Failed>,
     #[serde(serialize_with = "oid_text", skip_serializing_if = "Option::is_none")]
     pub base: Option<Oid>,
+    /// The rules the check does not apply, each with why: none of them is a finding or "not available".
+    pub not_applicable: Vec<NotApplicable>,
+    /// The UTC day the exceptions were looked up on (`RuleFile::exception_on`), as "YYYY-MM-DD".
+    pub date: String,
+    /// The silenced findings counted by rule: rule-file order, then rules the file lacks; only rules with any.
+    pub silenced_by_rule: Vec<RuleCount>,
+    /// One per engine the rules name, in the order the rule file first names each; its version is `None` when it
+    /// could not be read or the engine is absent. Filled by the caller: `build_report` leaves it empty.
+    pub engines: Vec<EngineVersion>,
     pub counts: Counts,
 }
 

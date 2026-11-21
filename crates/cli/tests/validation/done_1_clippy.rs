@@ -1,4 +1,4 @@
-//! Done 1: a stock linter through a rule file. "A Rust file that breaks a clippy lint is reported with its rule, its
+//! Acceptance: a stock linter through a rule file. "A Rust file that breaks a clippy lint is reported with its rule, its
 //! place and its fix text; a clean file passes."
 
 use crate::check::Check;

@@ -1,4 +1,4 @@
-//! Done 8: named only inside. "A rule that a command is run only inside one kit reports a use
+//! Acceptance: named only inside. "A rule that a command is run only inside one kit reports a use
 //! of it in another kit and passes a use inside." One ast-grep rule matching the command, with `outside_kits` naming the
 //! kit it belongs to. The same call sits in both kits; only the one outside is reported,
 //! and its owner is the kit that holds the file.

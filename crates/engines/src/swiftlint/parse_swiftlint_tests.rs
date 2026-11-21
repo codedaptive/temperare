@@ -3,8 +3,8 @@
 //! force_cast_and_others.json: `swiftlint lint --reporter json --quiet --no-cache --config two.yml Example.swift
 //! NoNewline.swift` (two.yml's only_rules: force_cast, trailing_whitespace, trailing_newline), exit 2.
 //! clean.json: `swiftlint lint --reporter json --quiet --no-cache --only-rule force_cast Clean.swift`, exit 0.
-//! `swiftlint_cmd` now passes `--only-rule=<check>` and `--config=<config>`; swiftlint reads both spellings the
-//! same way, so the captures stand for today's run.
+//! `SWIFTLINT`'s command passes `--only-rule=<check>` and `--config=<config>`; swiftlint reads both spellings
+//! the same way, so the captures stand for the run it builds.
 //! The captures' home-folder paths are replaced by `/work/project`, so they and `DIR` start with it.
 
 use super::parse_swiftlint;
@@ -31,13 +31,13 @@ fn only_the_checked_rule_becomes_hits_in_output_order() {
         vec![
             Hit {
                 path: RelPath::new("Example.swift"),
-                line: 2,
+                line: Some(2),
                 col: Some(22),
                 what: "Force casts should be avoided".to_string(),
             },
             Hit {
                 path: RelPath::new("NoNewline.swift"),
-                line: 1,
+                line: Some(1),
                 col: Some(11),
                 what: "Force casts should be avoided".to_string(),
             },
@@ -52,7 +52,7 @@ fn a_null_character_is_no_column() {
         hits,
         vec![Hit {
             path: RelPath::new("NoNewline.swift"),
-            line: 1,
+            line: Some(1),
             col: None,
             what: "Files should have a single trailing newline".to_string(),
         }]
@@ -74,7 +74,7 @@ fn private_path_tmp_folder_keeps_a_printed_tmp_finding() {
     let folder = Path::new("/private/tmp/cap");
     assert_eq!(
         parse_swiftlint(&out, "force_cast", folder, folder),
-        Ok(vec![Hit { path: RelPath::new("Sources/Cast.swift"), line: 3, col: Some(17), what: "Force casts should be avoided".to_string() }])
+        Ok(vec![Hit { path: RelPath::new("Sources/Cast.swift"), line: Some(3), col: Some(17), what: "Force casts should be avoided".to_string() }])
     );
 }
 
@@ -84,7 +84,7 @@ fn private_path_tmp_folder_keeps_a_printed_private_tmp_finding() {
     let folder = Path::new("/private/tmp/cap");
     assert_eq!(
         parse_swiftlint(&out, "force_cast", folder, folder),
-        Ok(vec![Hit { path: RelPath::new("Sources/Cast.swift"), line: 3, col: Some(17), what: "Force casts should be avoided".to_string() }])
+        Ok(vec![Hit { path: RelPath::new("Sources/Cast.swift"), line: Some(3), col: Some(17), what: "Force casts should be avoided".to_string() }])
     );
 }
 

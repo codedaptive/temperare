@@ -3,7 +3,7 @@
 use super::{run_check, CheckWorld};
 use crate::CheckArgs;
 use procio::Oid;
-use report::{Counts, NotAvailable, Report};
+use report::{NotAvailable, Report};
 use rules::{Engine, RuleFile, RuleOutcome};
 use std::path::{Path, PathBuf};
 
@@ -25,24 +25,7 @@ fn unavailable(rule: &str, engine: Engine, why: &str) -> NotAvailable {
 
 fn check(not_available: Vec<NotAvailable>, json: bool) -> (u8, String, String) {
     let build_report = |_: &RuleFile, _: Outcomes, _: Option<(&Path, &Oid)>| {
-        Ok(Report {
-            findings: vec![],
-            silenced: vec![],
-            exceptions_in_force: 0,
-            not_available: not_available.clone(),
-            failed: vec![],
-            base: None,
-            counts: Counts {
-                findings: 0,
-                errors: 0,
-                warnings: 0,
-                quality: 0,
-                security: 0,
-                silenced: 0,
-                not_available: 0,
-                failed: 0,
-            },
-        })
+        Ok(Report { not_available: not_available.clone(), ..Default::default() })
     };
     let world = CheckWorld {
         toplevel: &|_| Ok(PathBuf::from("/repo")),
@@ -52,8 +35,11 @@ fn check(not_available: Vec<NotAvailable>, json: bool) -> (u8, String, String) {
             Ok(RuleFile::parse(TEXT, Path::new("/repo")).unwrap())
         },
         rev_parse: &|_, _| unreachable!("rev_parse"),
-        run_rules: &|_, _, _| vec![],
+        run_rules: &|_, _, _| engines::CheckedRules { runs: vec![], engines: vec![] },
+        availability: &|_| engines::Availability::Available,
         build_report: &build_report,
+        home: &|| None,
+        now: &|| 0,
     };
     let (mut out, mut err) = (Vec::new(), Vec::new());
     let code = run_check(

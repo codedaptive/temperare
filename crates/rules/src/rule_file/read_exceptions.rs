@@ -1,6 +1,7 @@
 //! `read_exceptions`: the `[[exception]]` tables of the rule file.
 
 use super::check_keys::check_keys;
+use super::date_value::date_value;
 use super::problem_at::problem_at;
 use super::required_string::required_string;
 use super::string_value::string_value;
@@ -10,9 +11,10 @@ use std::collections::BTreeSet;
 use toml::de::DeTable;
 
 const PLACE: &str = "[[exception]]";
-const EXCEPTION_KEYS: [&str; 5] = ["rule", "path", "what", "reason", "approved"];
+const EXCEPTION_KEYS: [&str; 6] = ["rule", "path", "what", "reason", "approved", "expires"];
 
-/// The exceptions of the `[[exception]]` tables without problems; `rule_ids` holds the id of every `[[rule]]`.
+/// The exceptions of the `[[exception]]` tables without problems; `rule_ids` holds the id of every `[[rule]]` and
+/// every rule id of the taken baseline sets.
 pub(crate) fn read_exceptions(
     text: &str,
     root: &DeTable,
@@ -69,6 +71,8 @@ fn read_exception(
     }
     let reason = required_string(text, table, "reason", PLACE, at, out);
     let approved = required_string(text, table, "approved", PLACE, at, out);
+    // `expires` is optional and only checked: Exception has no field for the date, so it is not kept.
+    date_value(text, table, "expires", out);
     let (Some((rule, _)), Some((path, _)), Some((reason, _)), Some((approved, _))) = (rule, path, reason, approved)
     else {
         return None;

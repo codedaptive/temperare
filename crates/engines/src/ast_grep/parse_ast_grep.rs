@@ -45,7 +45,7 @@ pub fn parse_ast_grep(out: &Output, cwd: &Path, folder: &Path) -> Result<Vec<Hit
         let found: Match = serde_json::from_str(line).map_err(|_| parse_error(out))?;
         let Some(path) = rel_to_folder(cwd, folder, &found.file) else { continue };
         let what = found.message.filter(|message| !message.is_empty()).or(found.rule_id).unwrap_or_default();
-        hits.push(Hit { path, line: found.range.start.line + 1, col: Some(found.range.start.column + 1), what });
+        hits.push(Hit { path, line: Some(found.range.start.line + 1), col: Some(found.range.start.column + 1), what });
     }
     Ok(hits)
 }

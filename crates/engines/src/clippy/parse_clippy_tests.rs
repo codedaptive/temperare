@@ -2,8 +2,8 @@
 //! captured once from tiny crates: `lint_and_other.jsonl` (exit 0; a bool_comparison at src/lib.rs:3:5 and an
 //! unused_variables warning at src/lib.rs:2:9), `clean.jsonl` (exit 0; no messages) and `build_failed.jsonl`
 //! (exit 101; an E0425 error and build-finished success false). The capture crate's folder was `CAPTURED`.
-//! `clippy_cmd` now passes `--warn=<check>` and `--allow=<lint>`; clippy reads both spellings the same way, so
-//! the captures stand for today's run.
+//! `CLIPPY`'s command passes `--warn=<check>` and `--allow=<lint>`; clippy reads both spellings the same way,
+//! so the captures stand for the run it builds.
 //! `all_targets_warnings.jsonl` was not captured: no capture folder was available, so it is hand-built in the shape of
 //! a `cargo clippy --all-targets` capture of a crate in `ALL_TARGETS`. Its compiler-messages: from the lib target an
 //! unused_variables warning at src/lib.rs:2:9 and a clippy::bool_comparison at src/lib.rs:3:5; the same two again from
@@ -12,7 +12,7 @@
 //! unknown_lint.jsonl and dashed_and_bare_group.jsonl are hand-built in the reported clippy 0.1.95 shape.
 //! renamed_allowed_check.jsonl is captured from clippy 0.1.95, exit 0, with
 //! `cargo clippy --all-targets --message-format=json --quiet -- --warn=clippy::blocks_in_conditions --allow=clippy::block_in_if_condition_expr`.
-//! Its `/private/tmp/engines-kong-2bf3-probe` path prefix is replaced by `/work/project`.
+//! Its `/private/tmp/engines-probe` path prefix is replaced by `/work/project`.
 //! The other captured fixtures' home-folder paths are replaced by `/work/project`, so those paths, `CAPTURED`,
 //! `ALL_TARGETS` and the absolute paths in `all_targets_warnings.jsonl` all start with it.
 
@@ -34,7 +34,7 @@ fn output(code: i32, stdout: &[u8], stderr: &[u8]) -> Output {
 }
 
 fn hit(path: &str, line: u32, col: u32, what: &str) -> Hit {
-    Hit { path: RelPath::new(path), line, col: Some(col), what: what.to_string() }
+    Hit { path: RelPath::new(path), line: Some(line), col: Some(col), what: what.to_string() }
 }
 
 #[test]

@@ -1,13 +1,16 @@
-//! Tests of crates/cli/src/app/check_world_real.rs: each seam of `CheckWorld::real()` is wired to its real function.
-//! The file mixes kinds, each case marked: cross-crate integration tests (cli→procio/rules/engines) and zone
-//! integration tests. `exists` and `read` are told from stubs on a file the tests write in a throwaway folder
-//! under the system temp folder, removed on drop; `run_rules` and `build_report` on a rule file with no rules in
-//! such a folder; `toplevel` and `rev_parse` are told by a folder that does not exist, where git fails. Nothing
-//! here needs a real repository or an engine: `run_rules` and `build_report` get rule files with no rules, so no
-//! engine is looked up, and the report has no base, so no git diff is run.
+//! Tests of crates/cli/src/app/check_world_real.rs: six of the nine seams of `CheckWorld::real()` (toplevel, exists,
+//! read, rev_parse, run_rules, build_report) are wired to their real functions. `availability`, `home` and `now` have
+//! no case here: `availability` would look at the real PATH, `home` would read the real HOME and `now` the real
+//! clock. The file mixes kinds, each case marked: interface tests (cli→procio/rules/engines/report, kept beside their caller)
+//! and a std disk seam. `exists` and `read` are told from stubs on
+//! a file the tests write in a throwaway folder under the system temp folder, removed on drop; `run_rules` (wired to
+//! `engines::run_rules_versioned`) and `build_report` on a rule file with no rules in such a folder; `toplevel` and
+//! `rev_parse` are told by a folder that does not exist, where git fails. Nothing here needs a real repository or an
+//! engine: `run_rules` and `build_report` get rule files with no rules, so no engine is looked up, and the report has
+//! no base, so no git diff is run.
 
 use cli::CheckWorld;
-use rules::{Exception, RelPath, RuleFile};
+use rules::{Exception, RuleFile};
 use std::fs;
 use std::io::ErrorKind;
 use std::path::PathBuf;
@@ -51,10 +54,13 @@ impl Drop for TempFolder {
 
 /// A rule file with no rules in `folder`.
 fn empty_rules(folder: PathBuf, exceptions: Vec<Exception>) -> RuleFile {
-    RuleFile { folder, kits: Vec::new(), owner: None, rules: Vec::new(), exceptions }
+    let mut rf = RuleFile::new(folder);
+    rf.exceptions = exceptions;
+    rf
 }
 
-/// Zone integration test: the seam is `Path::is_file`, std only (crates/cli/src/app/check_world_real.rs:13).
+/// Std disk seam, not a zone test: the seam is the standard library's `Path::is_file`, reached through the disk
+/// (crates/cli/src/app/check_world_real.rs:13).
 #[test]
 fn exists_is_true_for_a_file_only() {
     let world = CheckWorld::real();
@@ -88,28 +94,23 @@ fn toplevel_and_rev_parse_of_a_missing_folder_are_errors() {
     assert!((world.rev_parse)(&missing, "HEAD").is_err());
 }
 
-/// Cross-crate integration test: `fs::canonicalize` (crates/engines/src/rule_folder.rs:11), procio wired in
-/// (engines/src/run_rules.rs:17).
+/// Interface test: `engines::run_rules_versioned` (which wires procio in) and `rule_folder` (`fs::canonicalize` of the rule
+/// file's folder): a rule file with no rules runs nothing and names no engine.
 #[test]
 fn run_rules_of_a_rule_file_with_no_rules_is_empty() {
     let world = CheckWorld::real();
     let dir = TempFolder::new("run");
-    assert!((world.run_rules)(&empty_rules(dir.0.clone(), Vec::new()), &dir.0, &[]).is_empty());
+    let checked = (world.run_rules)(&empty_rules(dir.0.clone(), Vec::new()), &dir.0, &[]);
+    assert!(checked.runs.is_empty());
+    assert!(checked.engines.is_empty());
 }
 
-/// Zone integration test: no base returns pure `assemble_report` (crates/report/src/build_report.rs:19-20); the
-/// setup touches disk.
+/// Interface test: with no base, report's `build_report` returns pure `assemble_report`; the setup touches disk.
 #[test]
 fn build_report_with_no_base_counts_the_exception_in_force() {
     let world = CheckWorld::real();
     let dir = TempFolder::new("report");
-    let exception = Exception {
-        rule: "lint-all".to_string(),
-        path: RelPath::new("old.rs"),
-        what: None,
-        reason: "legacy".to_string(),
-        approved: "Bob, 2026-11-17".to_string(),
-    };
+    let exception = Exception::new("lint-all", "old.rs", "legacy", "Bob, 2026-11-17");
     let report = (world.build_report)(&empty_rules(dir.0.clone(), vec![exception]), Vec::new(), None).unwrap();
     assert!(report.findings.is_empty());
     assert_eq!(report.exceptions_in_force, 1);

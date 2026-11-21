@@ -1,9 +1,14 @@
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use engines::{availability, run_rules, Availability};
+use engines::{availability, run_rules_counted, Availability};
 use rules::{Engine, Kind, RelPath, RuleFile, RuleOutcome, Severity};
+
+/// Each of `run_rules_counted`'s runs read as (rule, outcome).
+fn outcomes_of(file: &RuleFile, repo: &Path, only: &[RelPath]) -> Vec<(String, RuleOutcome)> {
+    run_rules_counted(file, repo, only).into_iter().map(|run| (run.rule, run.outcome)).collect()
+}
 
 static NEXT_FOLDER: AtomicUsize = AtomicUsize::new(0);
 
@@ -100,8 +105,8 @@ fn run_rules_reports_ordered_findings_and_filters_to_one_file() {
     fs::write(folder.0.join("names.yml"), "id: selected-names\nlanguage: JavaScript\nmessage: matched name\nseverity: warning\nrule:\n  kind: identifier\n  regex: '^(?:{{names}})$'\n").unwrap();
     fs::write(folder.0.join("temperare.toml"), RULES).unwrap();
     let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
-    let outcomes = run_rules(&file, &folder.0, &[]);
-    let filtered = run_rules(&file, &folder.0, &[RelPath::new("example.py")]);
+    let outcomes = outcomes_of(&file, &folder.0, &[]);
+    let filtered = outcomes_of(&file, &folder.0, &[RelPath::new("example.py")]);
     let cache_exists = folder.0.join(".ruff_cache").exists();
     drop(folder);
 
@@ -121,7 +126,7 @@ fn run_rules_reports_ordered_findings_and_filters_to_one_file() {
         assert_eq!(hit.rule, id);
         assert_eq!(hit.engine, engine);
         assert_eq!(hit.path, RelPath::new(path));
-        assert_eq!(hit.line, line);
+        assert_eq!(hit.line(), Some(line));
         assert!(hit.what.to_lowercase().contains(&message.to_lowercase()), "{hit:?}");
         assert_eq!(hit.kind, kind);
         assert_eq!(hit.severity, severity);
@@ -152,14 +157,14 @@ fn clippy_workspace_member_finding_is_relative_to_rule_folder() {
     fs::write(member.join("src/lib.rs"), "pub fn compare(value: bool) -> bool {\n    value == true\n}\n").unwrap();
     fs::write(member.join("temperare.toml"), "version = 1\n[[rule]]\nid = \"member-bool\"\nengine = \"clippy\"\ncheck = \"clippy::bool_comparison\"\nfix = \"Simplify.\"\n").unwrap();
     let file = RuleFile::read(&member.join("temperare.toml")).unwrap();
-    let outcomes = run_rules(&file, &folder.0, &[]);
+    let outcomes = outcomes_of(&file, &folder.0, &[]);
     drop(folder);
     assert_eq!(outcomes.len(), 1);
     assert_eq!(outcomes[0].0, "member-bool");
     let RuleOutcome::Findings(findings) = &outcomes[0].1 else { panic!("{:?}", outcomes[0].1) };
     assert_eq!(findings.len(), 1, "{findings:?}");
     assert_eq!(findings[0].path, RelPath::new("src/lib.rs"));
-    assert_eq!(findings[0].line, 2);
+    assert_eq!(findings[0].line(), Some(2));
     assert!(findings[0].what.contains("true"), "{:?}", findings[0]);
 }
 
@@ -199,19 +204,19 @@ severity = "error"
 fix = "Fix warning."
 "#).unwrap();
     let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
-    let outcomes = run_rules(&file, &folder.0, &[]);
+    let outcomes = outcomes_of(&file, &folder.0, &[]);
     assert_eq!(outcomes.len(), 2);
     assert_eq!(outcomes[0].0, "allowed");
     assert_eq!(outcomes[1].0, "control");
     let RuleOutcome::Findings(allowed) = &outcomes[0].1 else { panic!("allowed: {:?}", outcomes[0].1) };
     let RuleOutcome::Findings(control) = &outcomes[1].1 else { panic!("control: {:?}", outcomes[1].1) };
-    assert!(allowed.iter().any(|f| f.path == RelPath::new("src/lib.rs") && f.line == 10
+    assert!(allowed.iter().any(|f| f.path == RelPath::new("src/lib.rs") && f.line() == Some(10)
         && f.what.starts_with("unused_variables: ") && f.severity == Severity::Error), "{allowed:?}");
-    assert_eq!(allowed.iter().filter(|f| f.path == RelPath::new("src/lib.rs") && f.line == 2
+    assert_eq!(allowed.iter().filter(|f| f.path == RelPath::new("src/lib.rs") && f.line() == Some(2)
         && f.what.starts_with("clippy::bool_comparison: ")).count(), 1, "{allowed:?}");
     for (code, line) in [("clippy::result_large_err", 4), ("clippy::module_inception", 5)] {
         assert!(!allowed.iter().any(|f| f.what.starts_with(code)), "{allowed:?}");
-        assert!(control.iter().any(|f| f.path == RelPath::new("src/lib.rs") && f.line == line
+        assert!(control.iter().any(|f| f.path == RelPath::new("src/lib.rs") && f.line() == Some(line)
             && f.what.starts_with(&format!("{code}: "))), "{control:?}");
     }
 }

@@ -1,4 +1,4 @@
-//! Done 3: a house rule. "'No stored Bool on a persisted entity' is stated in a rule file that lists the kit's entity
+//! Acceptance: a house rule. "'No stored Bool on a persisted entity' is stated in a rule file that lists the kit's entity
 //! types. A stored Bool added to a listed type is reported in a Swift file and in a Rust file. A computed accessor, and
 //! a Bool on a type that is not listed, pass." ast-grep does the reading; the entity types reach its rule through
 //! `params`.

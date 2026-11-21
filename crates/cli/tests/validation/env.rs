@@ -1,9 +1,11 @@
-//! The environment `temperare`, git and the report head's version lookups run in for acceptance, built from nothing
-//! (Done 6: no tool-specific variable set).
-//! Only HOME, PATH, TMPDIR, LANG and CARGO_NET_OFFLINE are passed. PATH is the caller's PATH with ~/.cargo/bin moved
-//! to the front.
+//! The environments acceptance runs programs in, built from nothing (no tool-specific variable set).
+//! `clean_env` (git and the PATH lookup) passes only HOME, PATH, TMPDIR, LANG and CARGO_NET_OFFLINE; PATH is the
+//! caller's PATH with ~/.cargo/bin moved to the front. `tm_env` (`temperare` and the report head's version lookups)
+//! is the same with HOME a folder the test made, plus CARGO_HOME and RUSTUP_HOME.
 
-/// The variables for one run. `path` replaces PATH whole (Done 4 runs with a PATH that lacks an engine).
+use std::path::Path;
+
+/// The variables for one run. `path` replaces PATH whole (the absent-engine case runs with a PATH that lacks an engine).
 pub fn clean_env(path: Option<&str>) -> Vec<(String, String)> {
     let home = std::env::var("HOME").expect("HOME is set");
     let path = match path {
@@ -20,6 +22,23 @@ pub fn clean_env(path: Option<&str>) -> Vec<(String, String)> {
     if let Ok(tmp) = std::env::var("TMPDIR") {
         env.push(("TMPDIR".to_string(), tmp));
     }
+    env
+}
+
+/// The variables for one run of `temperare`: `clean_env(path)` with HOME replaced by `home`, so the run reads no real
+/// ~/.config/temperare/config.toml and appends to no real ~/.local/state/temperare/savings.jsonl. PATH still comes from
+/// the real HOME (its ~/.cargo/bin first), and CARGO_HOME and RUSTUP_HOME are pinned to the real ones (the variable if
+/// set, else ~/.cargo and ~/.rustup of the real HOME), so rustup's cargo and clippy still find their toolchain. Git run
+/// by `temperare` here reads no real ~/.gitconfig; `clean_env` keeps the real HOME for the fixture's own commits.
+pub fn tm_env(path: Option<&str>, home: &Path) -> Vec<(String, String)> {
+    let real = std::env::var("HOME").expect("HOME is set");
+    let pinned = |var: &str, dir: &str| std::env::var(var).unwrap_or_else(|_| format!("{real}/{dir}"));
+    let cargo_home = pinned("CARGO_HOME", ".cargo");
+    let rustup_home = pinned("RUSTUP_HOME", ".rustup");
+    let mut env: Vec<(String, String)> = clean_env(path).into_iter().filter(|(k, _)| k != "HOME").collect();
+    env.push(("HOME".to_string(), home.display().to_string()));
+    env.push(("CARGO_HOME".to_string(), cargo_home));
+    env.push(("RUSTUP_HOME".to_string(), rustup_home));
     env
 }
 

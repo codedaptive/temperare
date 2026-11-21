@@ -1,10 +1,12 @@
-//! Zone integration tests for run_rules.rs (`run_rules_with`): outcomes in rule-file order over mixed engines, findings filled and cut,
-//! absent and Tessera rules not available, garbage output failed, and an unresolvable folder. Integration, not unit:
-//! each test makes and removes a real canonical temp folder for the rule file's repository. The host is a fake and
-//! no engine runs; ruff's output is hand-built.
+//! Integration tests for `run_rules_counted_with`, with each of `run_rules_counted`'s runs read as (rule, outcome):
+//! outcomes in rule-file order over mixed engines, findings filled and cut, absent and Tessera rules not available,
+//! garbage output failed, and an unresolvable folder. Integration, not unit: each test makes and removes a real
+//! canonical temp folder for the rule file's repository. The host is a fake and no engine runs; ruff's output is
+//! hand-built.
 
 use crate::host::Host;
-use crate::run_rules::run_rules_with;
+use crate::run_rules_counted_with::run_rules_counted_with;
+use crate::RuleRun;
 use procio::{Cmd, Output, ProcError};
 use rules::{Engine, Finding, Kind, RelPath, RuleFile, RuleOutcome, Severity};
 use std::cell::Cell;
@@ -12,7 +14,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 /// `py/` belongs to py-zone, the rest to repo. Rule order: ruff findings, tessera, an absent swiftlint, a ruff rule
-/// whose run prints garbage.
+/// whose run prints garbage. `unused-import`'s config, which the fake host never reads, keeps the two ruff rules from
+/// sharing a run.
 const TEXT: &str = r#"version = 1
 owner = "repo"
 [kits.py]
@@ -39,6 +42,7 @@ fix = "f"
 id = "unused-import"
 engine = "ruff"
 check = "F401"
+config = "/no/such/engines-zut-unused-import.toml"
 fix = "f"
 "#;
 
@@ -69,24 +73,29 @@ fn run(name: &str, only: &[&str]) -> Vec<(String, RuleOutcome)> {
     let file = RuleFile::parse(TEXT, Path::new("lint")).unwrap();
     let only: Vec<RelPath> = only.iter().map(|path| RelPath::new(path)).collect();
     let on_path = |program: &str| program == "ruff";
-    let got = run_rules_with(&file, &repo, &only, &Host { run: &fake_run, on_path: &on_path });
+    let host = Host { run: &fake_run, on_path: &on_path, raw_chars: &Cell::new(None) };
+    let got = outcomes(run_rules_counted_with(&file, &repo, &only, &host, &[]));
     fs::remove_dir_all(&repo).unwrap();
     got
 }
 
+/// Each of `run_rules_counted`'s runs read as (rule, outcome): its rule's id and outcome.
+fn outcomes(runs: Vec<RuleRun>) -> Vec<(String, RuleOutcome)> {
+    runs.into_iter().map(|run| (run.rule, run.outcome)).collect()
+}
+
 fn finding(owner: &str, path: &str, line: u32, col: u32, what: &str) -> Finding {
-    Finding {
-        rule: "none-compare".to_string(),
-        engine: Engine::Ruff,
-        kind: Kind::Quality,
-        severity: Severity::Warning,
-        owner: Some(owner.to_string()),
-        path: RelPath::new(path),
+    let mut finding = Finding::new(
+        "none-compare",
+        (Engine::Ruff, Kind::Quality, Severity::Warning),
+        RelPath::new(path),
         line,
-        col: Some(col),
-        what: what.to_string(),
-        fix: "Compare with `is None`.".to_string(),
-    }
+        Some(col),
+        what,
+        "Compare with `is None`.",
+    );
+    finding.owner = Some(owner.to_string());
+    finding
 }
 
 /// The three stopped outcomes, the same with or without `only`.
@@ -144,7 +153,8 @@ fn a_folder_that_cannot_be_resolved_fails_the_available_rules_and_runs_nothing()
         Err(ProcError::NotFound { program: "x".into() })
     };
     let on_path = |program: &str| program == "ruff";
-    let got = run_rules_with(&file, &repo, &[], &Host { run: &count, on_path: &on_path });
+    let host = Host { run: &count, on_path: &on_path, raw_chars: &Cell::new(None) };
+    let got = outcomes(run_rules_counted_with(&file, &repo, &[], &host, &[]));
     fs::remove_dir_all(&repo).unwrap();
     assert_eq!(runs.get(), 0);
     let ids: Vec<&str> = got.iter().map(|(id, _)| id.as_str()).collect();

@@ -1,5 +1,4 @@
-//! Unit tests for skill_text.rs: the front matter a harness reads, the commands (as `temperare`) and exit codes the skill
-//! must teach, and when `tm` answers.
+//! Unit tests for skill_text.rs: front matter, commands, exit codes, the short name and savings guidance.
 
 use super::SKILL_TEXT;
 
@@ -45,6 +44,24 @@ fn says_tessera_checks_are_not_available_yet() {
     assert!(!SKILL_TEXT.contains("Tessera when it is there"));
     assert!(SKILL_TEXT.contains("Tessera's checks are not available yet"));
     assert!(SKILL_TEXT.contains("installing Tessera changes nothing"));
+}
+
+#[test]
+fn savings_contract_names_the_savings_line() {
+    assert!(SKILL_TEXT.lines().any(|line| line == "## Tokens saved"));
+    assert!(SKILL_TEXT.lines().any(|line| line == "When an engine ran, the first line of `temperare check`'s text output estimates the tokens it saved:"));
+    assert!(SKILL_TEXT.lines().any(|line| line == "`[temperare] tokens saved ≈ N (P%) — this output ≈ X tok vs the raw output of K engine run(s) ≈ B tok (estimate).`"));
+}
+
+#[test]
+fn savings_contract_explains_the_savings_ask() {
+    assert!(SKILL_TEXT.lines().any(|line| line == "It is followed by an ask: at the end of your reply, tell the user the total temperare tokens saved this turn, the sum"));
+    assert!(SKILL_TEXT.lines().any(|line| line == "of each such line across your temperare calls. With `--json` there is no line: the object carries the numbers as"));
+}
+
+#[test]
+fn savings_contract_names_saved_json_and_the_off_switch() {
+    assert!(SKILL_TEXT.lines().any(|line| line == "`saved`. `savings_line = false` in `~/.config/temperare/config.toml` turns the line and its ask off."));
 }
 
 #[test]

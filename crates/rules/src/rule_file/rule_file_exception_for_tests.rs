@@ -14,7 +14,9 @@ fn exception(rule: &str, path: &str, what: Option<&str>, reason: &str) -> Except
 }
 
 fn file(exceptions: Vec<Exception>) -> RuleFile {
-    RuleFile { folder: PathBuf::from("."), kits: Vec::new(), owner: None, rules: Vec::new(), exceptions }
+    let mut f = RuleFile::new(PathBuf::from("."));
+    f.exceptions = exceptions;
+    f
 }
 
 fn finding(rule: &str, path: &str, what: &str) -> Finding {

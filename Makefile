@@ -1,5 +1,5 @@
-# Temperare workspace targets called by codeteam's zone.mk and by agents.
-# MAKEFILES=<codeteam>/zone/zone.mk supplies zone-test, zone-test-one, zone-test-status and warm.
+# Temperare workspace targets. Extra test targets of the team's harness are supplied from outside this
+# repository (MAKEFILES=<path>); the targets here need nothing but cargo.
 CARGO ?= cargo
 .PHONY: test-one test-group check test accept
 

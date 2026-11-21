@@ -15,14 +15,14 @@ fn entry(engine: Engine, why: &str) -> NotAvailable {
     NotAvailable { rule: "r".to_string(), engine, why: why.to_string() }
 }
 
-/// An engine whose program is missing, with the why engines gives for it.
+/// An engine whose program is missing, with the why engines gives for it (`<program> not found on
+/// PATH`); the program is `Engine::name` except for Clippy (`cargo-clippy`) and Tessera (`ts`; engines
+/// never reports Tessera this way, so its why is made up here).
 fn absent(engine: Engine) -> NotAvailable {
     let program = match engine {
         Engine::Clippy => "cargo-clippy",
-        Engine::SwiftLint => "swiftlint",
-        Engine::Ruff => "ruff",
-        Engine::AstGrep => "ast-grep",
         Engine::Tessera => "ts",
+        other => other.name(),
     };
     entry(engine, &format!("{program} not found on PATH"))
 }
@@ -112,6 +112,35 @@ fn exit_3_with_no_cargo_project_says_where_the_rule_file_goes() {
 fn exit_3_with_an_unknown_why_gives_the_engine_and_its_why() {
     let got = next_step(3, None, file(), &[entry(Engine::Clippy, "boom")]);
     assert_eq!(got, "clippy: boom (or run without those rules)");
+}
+
+#[test]
+fn next_step_unknown_check_gives_the_engine_and_the_cause() {
+    assert_eq!(
+        next_step(
+            3,
+            None,
+            file(),
+            &[entry(Engine::Ruff, "ruff 0.6.9 does not know the check `F999`: Unknown rule selector `F999` in `select` from the CLI")],
+        ),
+        "ruff: ruff 0.6.9 does not know the check `F999`: Unknown rule selector `F999` in `select` from the CLI (or run without those rules)"
+    );
+}
+
+#[test]
+fn next_step_missing_engine_and_unknown_check_combine_into_one_next_step() {
+    assert_eq!(
+        next_step(
+            3,
+            None,
+            file(),
+            &[
+                entry(Engine::Ruff, "ruff 0.6.9 does not know the check `F999`: Unknown rule selector `F999` in `select` from the CLI"),
+                absent(Engine::SwiftLint),
+            ],
+        ),
+        "install swiftlint; ruff: ruff 0.6.9 does not know the check `F999`: Unknown rule selector `F999` in `select` from the CLI (or run without those rules)"
+    );
 }
 
 #[test]

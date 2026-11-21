@@ -8,9 +8,15 @@ fn tessera_needs_the_graph() {
 }
 
 #[test]
-fn the_other_four_do_not() {
+fn the_others_do_not() {
     assert!(!Engine::Clippy.needs_graph());
     assert!(!Engine::SwiftLint.needs_graph());
     assert!(!Engine::Ruff.needs_graph());
     assert!(!Engine::AstGrep.needs_graph());
+    assert!(!Engine::GolangciLint.needs_graph());
+    assert!(!Engine::Pylint.needs_graph());
+    assert!(!Engine::ClangTidy.needs_graph());
+    assert!(!Engine::Oclint.needs_graph());
+    assert!(!Engine::ShellCheck.needs_graph());
+    assert!(!Engine::Git.needs_graph());
 }

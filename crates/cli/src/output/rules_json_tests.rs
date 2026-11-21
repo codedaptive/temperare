@@ -44,12 +44,14 @@ path = "src/a.rs"
 what = "unwrap"
 reason = "Legacy."
 approved = "bob 2026-11-17"
+expires = "2099-12-31"
 
 [[exception]]
 rule = "lint-all"
 path = "src/b.rs"
 reason = "Generated."
 approved = "bob 2026-11-16"
+expires = "2099-12-31"
 "#;
 
 #[test]

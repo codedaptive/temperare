@@ -1,5 +1,4 @@
-//! Unit tests for usage.rs: USAGE has each command line, the rule-file line and the line on when tm answers exactly, each
-//! a whole line.
+//! Unit tests for usage.rs: command, rule-file, short-name and savings help as whole lines.
 
 use super::USAGE;
 
@@ -46,6 +45,24 @@ fn says_tm_answers_only_where_install_made_the_link() {
 #[test]
 fn says_where_the_rule_file_comes_from() {
     assert!(has_line("The rule file is --rules <path>, else temperare.toml at the top of the git repository."));
+}
+
+#[test]
+fn savings_contract_explains_the_savings_estimate() {
+    assert!(has_line("When at least one engine ran, tm check's text output opens with an estimate of the tokens saved against the raw"));
+    assert!(has_line("output of the engines it ran (characters / 4)."));
+    assert!(!USAGE.lines().any(|line| line.starts_with("tm check opens with")));
+    assert!(has_line("It is an upper bound: the saving against reading that output whole."));
+}
+
+#[test]
+fn savings_contract_explains_the_switch_and_json() {
+    assert!(has_line("savings_line = false in ~/.config/temperare/config.toml turns the line and its ask off; the JSON saved object stays."));
+}
+
+#[test]
+fn savings_contract_names_the_savings_log() {
+    assert!(has_line("Each check that ran an engine appends a line to ~/.local/state/temperare/savings.jsonl."));
 }
 
 #[test]

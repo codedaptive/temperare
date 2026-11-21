@@ -37,22 +37,21 @@ fix = "Compare with `is None`."
 "#;
 
 fn hit(path: &str, line: u32, col: Option<u32>, what: &str) -> Hit {
-    Hit { path: RelPath::new(path), line, col, what: what.to_string() }
+    Hit { path: RelPath::new(path), line: Some(line), col, what: what.to_string() }
 }
 
 fn finding(owner: &str, path: &str, line: u32, col: Option<u32>, what: &str) -> Finding {
-    Finding {
-        rule: "no-none-compare".to_string(),
-        engine: Engine::Ruff,
-        kind: Kind::Security,
-        severity: Severity::Warning,
-        owner: Some(owner.to_string()),
-        path: RelPath::new(path),
+    let mut finding = Finding::new(
+        "no-none-compare",
+        (Engine::Ruff, Kind::Security, Severity::Warning),
+        RelPath::new(path),
         line,
         col,
-        what: what.to_string(),
-        fix: "Compare with `is None`.".to_string(),
-    }
+        what,
+        "Compare with `is None`.",
+    );
+    finding.owner = Some(owner.to_string());
+    finding
 }
 
 fn hits() -> Vec<Hit> {
@@ -129,17 +128,24 @@ fn a_file_with_no_owner_anywhere_has_none() {
     let text = "version = 1\n[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"clippy::bool_comparison\"\nfix = \"f\"\n";
     let file = RuleFile::parse(text, Path::new("/repo")).unwrap();
     let got = findings_from(&file, &file.rules[0], vec![hit("src/lib.rs", 1, Some(2), "m")], &[]);
-    let want = Finding {
-        rule: "r".to_string(),
-        engine: Engine::Clippy,
-        kind: Kind::Quality,
-        severity: Severity::Error,
-        owner: None,
-        path: RelPath::new("src/lib.rs"),
-        line: 1,
-        col: Some(2),
-        what: "m".to_string(),
-        fix: "f".to_string(),
-    };
+    let quality_error = (Engine::Clippy, Kind::Quality, Severity::Error);
+    let want = Finding::new("r", quality_error, RelPath::new("src/lib.rs"), 1, Some(2), "m", "f");
     assert_eq!(got, vec![want]);
+}
+
+#[test]
+fn a_hit_on_line_zero_gives_a_finding_with_no_line() {
+    let file = RuleFile::parse(TEXT, Path::new("/repo")).unwrap();
+    let got = findings_from(&file, &file.rules[0], vec![hit("py/a.py", 0, None, "no line")], &[]);
+    assert_eq!(got.len(), 1);
+    assert_eq!(got[0].line(), None);
+}
+
+#[test]
+fn a_hit_with_no_line_gives_a_finding_with_no_line() {
+    let file = RuleFile::parse(TEXT, Path::new("/repo")).unwrap();
+    let no_line = Hit { path: RelPath::new("py/a.py"), line: None, col: None, what: "no line".to_string() };
+    let got = findings_from(&file, &file.rules[0], vec![no_line], &[]);
+    assert_eq!(got.len(), 1);
+    assert_eq!(got[0].line(), None);
 }

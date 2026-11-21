@@ -1,13 +1,16 @@
-//! `CheckWorld`: what `tm check` needs from git, the disk, the engines and the report, as six seams.
+//! `CheckWorld`: what `tm check` needs from git, the disk, the engines, the report, HOME and the clock, as nine
+//! seams.
 
+use engines::{Availability, CheckedRules};
 use procio::{GitError, Oid};
 use report::{Report, ReportError};
-use rules::{Problem, RelPath, RuleFile, RuleOutcome};
+use rules::{Engine, Problem, RelPath, RuleFile, RuleOutcome};
 use std::path::{Path, PathBuf};
 
 /// `CheckWorld::real()` wires `procio::toplevel`, `Path::is_file`, `RuleFile::read`, `procio::rev_parse`,
-/// `engines::run_rules` and `report::build_report`; a unit test passes closures, so `tm check` is tested without
-/// running git or an engine, reading the disk or looking at PATH.
+/// `engines::run_rules_versioned`, `engines::availability`, `report::build_report`, HOME from the environment and the
+/// system clock; a unit test passes closures, so `tm check` is tested without running git or an engine, reading the
+/// disk or the environment, or looking at PATH.
 pub struct CheckWorld<'a> {
     /// The top of the repository holding a folder.
     pub toplevel: &'a dyn Fn(&Path) -> Result<PathBuf, GitError>,
@@ -17,9 +20,17 @@ pub struct CheckWorld<'a> {
     pub read: &'a dyn Fn(&Path) -> Result<RuleFile, Vec<Problem>>,
     /// The commit a revision names in a repository; None when it names none.
     pub rev_parse: &'a dyn Fn(&Path, &str) -> Result<Option<Oid>, GitError>,
-    /// Every rule run by its engine over the rule file's folder (relative to the repository), cut to the paths given.
-    pub run_rules: &'a dyn Fn(&RuleFile, &Path, &[RelPath]) -> Vec<(String, RuleOutcome)>,
+    /// Every rule run by its engine over the rule file's folder (relative to the repository), cut to the paths given,
+    /// in rule-file order, each with its engine and the characters its counted run printed; and each distinct engine
+    /// the rules name, once, with its version (None when it could not be read).
+    pub run_rules: &'a dyn Fn(&RuleFile, &Path, &[RelPath]) -> CheckedRules,
+    /// Whether tm finds an engine here, from a PATH lookup; nothing is run.
+    pub availability: &'a dyn Fn(Engine) -> Availability,
     /// The report of the outcomes, new findings only when given `(repository, base commit)`.
     pub build_report:
         &'a dyn Fn(&RuleFile, Vec<(String, RuleOutcome)>, Option<(&Path, &Oid)>) -> Result<Report, ReportError>,
+    /// The user's home folder, where the savings switch and log live; None when HOME is unset or empty.
+    pub home: &'a dyn Fn() -> Option<PathBuf>,
+    /// Seconds since the Unix epoch, for the savings log line.
+    pub now: &'a dyn Fn() -> u64,
 }

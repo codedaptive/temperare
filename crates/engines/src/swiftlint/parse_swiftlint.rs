@@ -28,12 +28,13 @@ struct Violation {
 /// is under `folder` in neither form is a `ParseError` naming that path, never a dropped finding.
 /// Every violation swiftlint reports for one valid `--only-rule` id carries that id, so keeping `rule_id == check`
 /// drops nothing for the checks that reach here: a `custom_rules` check, whose violations carry the custom rule's own
-/// id, is refused before running by `hits_swiftlint`. swiftlint given an id it does not know warns on stderr that
+/// id, is refused before running by `swiftlint_refusal`. swiftlint given an id it does not know warns on stderr that
 /// it "is not a valid rule identifier", prints `[]` and exits 0; that is a `ParseError` naming `check` and quoting
-/// swiftlint's warning line, never a clean answer. stdout that is not the array is a `ParseError` too, quoting the
+/// swiftlint's warning line, never a clean answer (`run_plain` stops such a run as an unknown check before it reads
+/// it, through the entry's `unknown_rule`). stdout that is not the array is a `ParseError` too, quoting the
 /// first 200 bytes of stderr, or of stdout when stderr is empty.
 pub fn parse_swiftlint(out: &Output, check: &str, cwd: &Path, folder: &Path) -> Result<Vec<Hit>, ParseError> {
-    if let Some(line) = unknown_rule(out) {
+    if let Some(line) = unknown_rule(out, check) {
         return Err(ParseError {
             why: format!(
                 "swiftlint check `{check}` is not a rule this swiftlint knows ({line}): tm cannot report it; name a \
@@ -48,7 +49,7 @@ pub fn parse_swiftlint(out: &Output, check: &str, cwd: &Path, folder: &Path) -> 
         .map(|violation| {
             Ok(Hit {
                 path: place(cwd, folder, &violation.file)?,
-                line: violation.line,
+                line: Some(violation.line),
                 col: violation.character,
                 what: violation.reason,
             })

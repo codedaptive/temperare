@@ -1,4 +1,4 @@
-//! Done 1 (SwiftLint): the stock linter check with SwiftLint run for real. One
+//! Acceptance, SwiftLint: the stock linter check with SwiftLint run for real. One
 //! rule, `engine = "swiftlint"`, `check = "force_cast"`: a Swift file holding `as!` is reported with its rule, path,
 //! line and fix, exit 1; a Swift file without it passes, exit 0. The repository holds no `.swiftlint.yml`. Only when
 //! swiftlint is not on the PATH `temperare` gets (`on_tm_path`, which runs nothing) is a case NOT RUN, with `temperare`'s reason,

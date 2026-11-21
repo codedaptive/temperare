@@ -1,13 +1,15 @@
-//! Done 6: alone. "All of the above run with no codeteam variable set." Every case in this suite runs `temperare` with
-//! only the variables it sets (`env.rs` for the acceptance cases, `install_temp_home.rs` its own); this case goes further and gives `temperare` only PATH and HOME, in a plain git
-//! repository with no Tessera rule (useful alone).
+//! Acceptance: alone. "All of the above run with no team-tool variable set." Every case in this suite runs `temperare` with
+//! only the variables it sets (`env.rs` for the acceptance cases, `install_temp_home.rs` its own); this case goes further
+//! and gives `temperare` only PATH and HOME (HOME a folder the test made), in a plain git repository with no Tessera
+//! rule (useful alone).
 
 use serde_json::Value;
 
 use crate::check::Check;
-use crate::env::clean_env;
+use crate::env::tm_env;
 use crate::repo::Repo;
 use crate::run_clean::run_clean;
+use crate::temp_home::TempHome;
 
 const RULES: &str = r#"version = 1
 
@@ -29,8 +31,9 @@ fn tm_checks_a_plain_git_repository_with_only_path_and_home() {
     repo.write("temperare.toml", RULES);
     repo.write("app.py", "def f(x):\n    return x is None\n");
     repo.commit("plain");
+    let home = TempHome::new();
     let keep: Vec<(String, String)> =
-        clean_env(None).into_iter().filter(|(k, _)| k == "PATH" || k == "HOME").collect();
+        tm_env(None, home.path()).into_iter().filter(|(k, _)| k == "PATH" || k == "HOME").collect();
     let args = ["check", "--json"];
     let out = run_clean(env!("CARGO_BIN_EXE_temperare"), &args, repo.path(), keep);
     let json: Value = serde_json::from_slice(&out.stdout).expect("tm --json prints JSON");

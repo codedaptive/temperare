@@ -12,15 +12,34 @@ what is "not available" and what is "failed".
 - **A rule's value is passed as a value, not as an option.** A `check`, `config` or `params.allow` value that
   begins with `-` is a problem in the rule file, and nothing runs. Each value reaches the engine joined to its own
   flag, as in `--select=<check>`, so the engine reads it as that flag's value.
-- **One run per rule.** Rules are run in rule-file order, each on its own. Two rules on the same engine are two
-  runs.
+- **One run per rule, or one shared run.** Rules share one run of their engine only when that run gives each of
+  them what it would get alone: the same engine, the same `config` and the same `params`, no param Temperare writes
+  to a temporary file or folder, and the same check or checks the engine reads together. When the two checks
+  differ: for clippy, neither check is `warnings`. For ruff, the codes do not overlap, neither selects `RUF100`, and no pair ruff
+  calls incompatible is split. For SwiftLint, neither check is `superfluous_disable_command`. For ast-grep, the
+  same rule file with no params. Tessera, and an engine with no adapter yet, never share. Each rule still keeps only its own check's
+  findings, in its own paths and with its own exceptions. Every other rule runs alone.
+- **The order of runs.** A rule joins the first group, in rule-file order, whose rules can all share with it. The
+  groups run one after another, in the order of each group's first rule, and the rule runs' results are kept in
+  rule-file order; the report sorts findings as OUTPUT.md describes.
 - **Run over the rule file's folder.** The engine checks the whole folder (clippy: the Cargo package that holds
   it). Temperare then keeps the findings that are inside that folder, in the files the rule covers (its `paths`,
   `exclude`, `kits`, `outside_kits`) and, when you gave paths on the command line, in those paths. Paths on the
   command line narrow the result; they do not make the engines do less work.
+- **Its version is read once per check.** Before the rules run, each engine named by the rules this check runs is
+  asked its version once, in the rule file's folder, when it is available: `cargo clippy --version`,
+  `swiftlint version`, `ruff --version`, `ast-grep --version`. Tessera, and an engine with no adapter yet, is not
+  asked. The version is named in the reason of a check the engine does not know (below).
 - **No time limit.** `tm` waits for an engine as long as it runs.
-- **The engine's environment is yours.** Temperare adds nothing to it and passes no flag that turns off an engine's
-  own search for its configuration.
+- **The engine's environment is yours.** Temperare adds nothing to it, except that for a clippy rule with `max_nesting` it
+  sets `CLIPPY_CONF_DIR` for that run to a temporary folder holding `clippy.toml`, which clippy reads instead of the
+  repository's own `clippy.toml`.
+- **The engine finds its own configuration,** as it does when you run it yourself, except where the rule says
+  otherwise. A rule's `config` is passed to SwiftLint or ruff as its config file. A SwiftLint threshold passes a
+  config file of its own, after the folder's `.swiftlint.yml` when there is one and the rule has no `config` (see
+  [swiftlint](#swiftlint)). A clippy `max_nesting` replaces the repository's `clippy.toml` for that run, as above.
+  A ruff threshold is layered over the rule's `config`, or over the config ruff finds when the rule has none, and
+  turns nothing off.
 - **The engine's exit code is not the answer.** Linters exit non-zero when they find something. Temperare reads the
   output; a non-zero exit with output it can read is a normal result.
 - **The rule decides severity.** A finding's `severity`, `kind` and `fix` come from the rule in `temperare.toml`.
@@ -36,14 +55,20 @@ Neither is ever "clean".
 |---|---|
 | `<program> not found on PATH` | The engine's program is not installed, or not on `PATH`. A clippy rule names the first of `cargo-clippy` and `clippy-driver` that is missing |
 | `no Cargo.toml at or above the rule file's folder` | A clippy rule in a folder that is not inside a Cargo package |
+| ``<engine> <version> does not know the check `<check>`: <what it said>`` | The installed clippy, SwiftLint or ruff does not know the rule's `check`: a name it does not have, often because it is older than the rule. `<version>` is `(version unknown)` when the version could not be read |
 | `Tessera's slop records are not defined yet` | Every rule with `engine = "tessera"` |
+| `no adapter for <engine> in this build` | Every rule whose engine the rule file accepts and this `tm` cannot run yet: `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `shellcheck` and `git` ([below](#engines-with-no-adapter-yet)) |
+
+An engine too old for a rule is not available rather than failed: the fix is a newer engine, or a `check` this one
+knows. ast-grep and Tessera have no such case: an ast-grep `check` is your own YAML, which ast-grep either reads or
+rejects.
 
 **Failed** (exit 5) means the rule gave no answer that can be trusted. Either the engine gave none: it was found
 and could not be started, it printed something that is not its findings format, or a clippy build did not succeed.
 Or Temperare refused the rule before running the engine, because the result could not be matched back to the rule
 or the rule's own files could not be used:
 
-- a clippy `check` that is a lint group, a `rustdoc::` lint, or a name the toolchain does not list;
+- a clippy `check` that is a lint group or a `rustdoc::` lint;
 - a SwiftLint `check` of `custom_rules`;
 - a ruff `check` with a part that is not a rule code, a code prefix or `ALL`;
 - an ast-grep `check` that is not a readable file inside the rule file's folder;
@@ -83,13 +108,18 @@ of the engine's stderr, or Temperare's own reason when the engine printed none o
   clean:
   - a lint group, such as `clippy::all`, `clippy::pedantic` or `unused`. clippy reports each message under its own
     lint's code, so a group's findings cannot be told from other warnings. Name each lint, or use `warnings`;
-  - a name the toolchain does not list: a misspelt lint, or one that was renamed or removed;
   - a `rustdoc::` lint, which clippy never runs.
+
+  A name the toolchain does not list (a misspelt lint, one renamed or removed, or one newer than this toolchain)
+  makes the rule not available before clippy runs, with the reason
+  ``clippy <version> does not know the check `<check>`: it is not a lint this toolchain lists (clippy-driver -W help)``.
+  A rule's own `allow` cannot hide it.
 
   The rule also fails when `clippy-driver -W help` cannot be read or lists no lint or no group, and when clippy
   itself reports that it did not take `check` as named.
-- **`params`:** `allow`, a list of strings. Any other param, or an `allow` that is not a list of strings, fails the
-  rule before anything runs.
+- **`params`:** `allow`, a list of strings; and `max_nesting`, a whole number from 1 to 1000, read only with check
+  `clippy::excessive_nesting` (tm writes it as `excessive-nesting-threshold` in `clippy.toml` for that run). Any other
+  param, or a bad value, fails the rule before clippy runs.
 - **`config`:** not used.
 - **A finding** is placed at the message's primary span. A message cargo prints once per target is reported once.
 - **Failed when** the build does not succeed. A build that failed has not linted everything, so it is not an
@@ -105,20 +135,29 @@ of the engine's stderr, or Temperare's own reason when the engine printed none o
 - **What runs:**
 
   ```
-  swiftlint lint --reporter json --quiet --only-rule=<check> [--config=<config>]
+  swiftlint lint --reporter json --quiet --only-rule=<check> [--config=<config>] [--config=<threshold file>]
   ```
 - **`check`:** one SwiftLint rule identifier, such as `force_cast`. Violations with exactly that identifier are the
   findings. For a custom rule, write the custom rule's own identifier.
 - **Failed** when `check` is `custom_rules`, before SwiftLint runs: under `--only-rule` that name runs no custom
-  rule, so the rule could match nothing. Failed too when SwiftLint says `check` is not a valid rule identifier, and
-  when SwiftLint finds no Swift file to lint in the folder (it exits with an error instead of an empty result).
-  For an identifier it does not know, the failure quotes SwiftLint's own warning line, which names the identifier.
+  rule, so the rule could match nothing. Failed too when SwiftLint finds no Swift file to lint in the folder (it
+  exits with an error instead of an empty result).
+- **Not available** when SwiftLint says `check` is not a valid rule identifier: it does not know that rule, with the
+  rule's `config` applied, so a custom rule the config defines is known. The reason quotes SwiftLint's own warning
+  line, which names the identifier. SwiftLint exits 0 with no findings in that case, so its warning is the only sign
+  that nothing was checked.
 - **Paths under `/private` on macOS.** SwiftLint prints file paths with a leading `/private` removed; a finding is
   placed under the rule file's folder either way, so code under `/tmp` and `/var` is checked as anywhere else. A
   path that cannot be placed under the folder at all makes the rule Failed, never clean.
 - **`config`:** passed as written, so a relative path is taken from the rule file's folder. Temperare does not read
   or copy the file.
-- **`params`:** not read.
+- **`params`:** `max_complexity`, a whole number from 1 to 1000, read only with check `cyclomatic_complexity`; and
+  `max_lines`, a whole number from 1 to 100000, read only with check `file_length`. At most one threshold per rule.
+  The threshold is written to a temporary `.yml` file that sets the check's warning and error levels both to it, and
+  that file is passed as the last `--config=`, so it wins over the rule's `config`. A rule with a threshold and no
+  `config` passes the folder's own `.swiftlint.yml` first, when there is one, since an explicit `--config` would
+  otherwise make SwiftLint skip it. No config of yours is changed, and the temporary file is removed after the run.
+  A threshold out of range or with another check, and any other param, fail the rule before SwiftLint runs.
 - **A finding** has no column when SwiftLint gives none, as for a violation of a whole line or file.
 
 ## ruff
@@ -128,7 +167,7 @@ of the engine's stderr, or Temperare's own reason when the engine printed none o
 - **What runs:**
 
   ```
-  ruff check --no-cache --output-format json --select=<check> [--config=<config>] .
+  ruff check --no-cache --output-format json --select=<check> [--config=<config>] [--config=lint.mccabe.max-complexity=<n>] .
   ```
 
   `--no-cache` keeps ruff from leaving a `.ruff_cache` folder in the code it checks.
@@ -142,9 +181,14 @@ of the engine's stderr, or Temperare's own reason when the engine printed none o
 - **Failed** when a part of `check` is anything else, such as a rule name (`none-comparison`) or a lower-case code,
   before ruff runs: Temperare could not tell which findings it selects. Failed too when ruff says a code `check`
   selects has been remapped to another, since its findings would carry the new code. Write the new code.
+- **Not available** when ruff says a part of `check` is an unknown rule selector: a code this ruff does not have,
+  often one newer than it. The reason quotes ruff's own line, which names the code.
 - **`config`:** passed as written, so a relative path is taken from the rule file's folder. Temperare does not read
   or copy the file.
-- **`params`:** not read.
+- **`params`:** `max_complexity`, a whole number from 1 to 1000, read only with check `C901`, passed as
+  `--config=lint.mccabe.max-complexity=<n>` after the rule's `config`. ruff lays that over the config file, so the
+  threshold wins over the same key set there, and nothing is written. A threshold out of range or with another check,
+  and any other param, fail the rule before ruff runs.
 
 ## ast-grep
 
@@ -159,7 +203,7 @@ ast-grep is for rules about the shape of code that no stock linter states: a hou
   ```
 - **`check`:** the path of an ast-grep rule file (YAML), relative to the rule file's folder. Every match of that
   file is a finding. One file can hold several rules, separated by `---`, for example one per language.
-- **The YAML must be a file inside the rule file's folder.** The rule fails, and ast-grep is not run, when `check`:
+- **The YAML must be a file inside the rule file's folder.** The rule fails, before the scan runs, when `check`:
   - is an absolute path;
   - resolves to a place outside the rule file's folder, through `..` or through a symlink;
   - names a file that is missing or cannot be read.
@@ -181,8 +225,13 @@ ast-grep is for rules about the shape of code that no stock linter states: a hou
   - a list of strings goes in as its items joined by `|`, each escaped to match literally, ready for a `regex:`
     line.
 
-  A `{{name}}` with no param of that name, or a param that is neither a string nor a list of strings, fails the
-  rule.
+  The rule fails, before the scan runs, when the YAML has a `{{name}}` with no param of that name, when a param
+  is neither a string nor a list of strings, or when a param has no `{{name}}` in the YAML, so a misspelt param
+  name cannot pass unnoticed. The reason for the last names the YAML's placeholders: with params `entity_type` and
+  `entity_types` and a YAML that names only `{{entity_types}}`, it is
+  ``param entity_type in rules/no-stored-bool.yml: the rule YAML has no {{entity_type}}; its placeholders are {{entity_types}}``.
+- **A YAML that ast-grep rejects** fails the rule. ast-grep has no "not available" case for an unknown `check`: the
+  check is your own YAML, which ast-grep either reads or rejects.
 - **`config`:** not used.
 - **A finding's message** is the `message` of the ast-grep rule that matched, or that rule's `id` when it has no
   message.
@@ -260,8 +309,25 @@ first. The `next:` line says `Tessera's checks are not available yet` and does n
 exit 0, leave Tessera rules out of the rule file, or check with a rule file that has none
 (`--rules <path>`).
 
-## The engines version 0.1.0 was accepted with
+A Tessera rule with `only_with_base = true`, run without `--base`, is not applicable rather than not available, as
+any such rule is ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)).
 
-The acceptance checks for 0.1.0 ran against clippy 0.1.95, SwiftLint 0.65.1, ruff 0.17.4 and ast-grep 0.51.1.
+## Engines with no adapter yet
+
+A rule may name `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `shellcheck` or `git`. The rule file accepts
+these names, so a rule written for one of them needs no change when its adapter lands. `git` is the engine that
+will count what a change adds against a base; `tm` already runs git itself for `--base`, and that is not this
+engine. Until then this `tm` cannot run
+them: the rule is reported "not available" with the reason `no adapter for <engine> in this build`, whether or
+not the engine is installed, and nothing is run. `tm rules` shows the same reason. A rule with
+`only_with_base = true`, run without `--base`, is not applicable instead.
+
+A run with such a rule ends with exit 3, unless a quality error (1) or a failed engine (5) comes first. The `next:`
+line says `<engine>: no adapter for <engine> in this build (or run without those rules)`; installing the engine
+changes nothing.
+
+## The engines version 0.2.0 was accepted with
+
+The acceptance checks for 0.2.0 ran against clippy 0.1.95, SwiftLint 0.65.1, ruff 0.17.4 and ast-grep 0.51.1.
 Temperare reads each engine's JSON output, so another version of an engine may print something it reads
 differently. If a rule stops reporting after an engine upgrade, try it on a file you know breaks it.

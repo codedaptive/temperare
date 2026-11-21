@@ -1,6 +1,7 @@
 //! Unit tests for run.rs: help, version and usage errors (install's and uninstall's included). The Rules and Check arms
-//! reach real git, disk and PATH, so run_rules_tests.rs and run_check_tests.rs (seams) cover them, and the
-//! validation target, tests/validation/ (cli_tm.rs, cli_check.rs), covers the runs of the built `temperare`. The
+//! reach real git, disk and PATH (the Check arm also HOME and the clock), so run_rules_tests.rs and
+//! run_check_tests.rs (seams) cover them, and the validation target, tests/validation/ (cli_tm.rs, cli_check.rs),
+//! covers the runs of the built `temperare`. The
 //! Install and Uninstall arms read the real HOME, so no test here reaches them: the zone integration target
 //! tests/install covers run_install and run_uninstall on a temporary HOME.
 
@@ -37,7 +38,7 @@ fn version_prints_temperare_the_workspace_version_and_the_commit() {
     let (code, out, err) = run_with(&["--version"]);
     assert_eq!(code, 0);
     let commit = env!("TEMPERARE_COMMIT");
-    assert_eq!(out, format!("temperare 0.1.0 ({commit})\n"));
+    assert_eq!(out, format!("temperare 0.2.0 ({commit})\n"));
     if env!("TEMPERARE_CHECKOUT") == "yes" {
         assert_eq!(commit.len(), 12, "{commit}");
         assert!(commit.chars().all(|ch| matches!(ch, '0'..='9' | 'a'..='f')), "{commit}");

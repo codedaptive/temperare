@@ -9,11 +9,13 @@ use toml::de::DeTable;
 
 /// The rules of the `[[rule]]` tables without problems, and the id of every `[[rule]]`, so an exception for a rule
 /// that has problems is not also reported as naming no rule. A repeated id is a Problem at its second and later
-/// occurrences.
+/// occurrences. `from_set` is true when `text` is an embedded baseline set and false for a repository's own file;
+/// each rule is read with it (read_rule says what it changes).
 pub(crate) fn read_rules(
     text: &str,
     root: &DeTable,
     kits: &[Kit],
+    from_set: bool,
     out: &mut Vec<Problem>,
 ) -> (Vec<Rule>, BTreeSet<String>) {
     let mut ids = BTreeSet::new();
@@ -34,7 +36,7 @@ pub(crate) fn read_rules(
             continue;
         };
         let duplicate = is_duplicate(text, table, &mut ids, out);
-        let rule = read_rule(text, item.span().start, table, kits, params(&doc, i), out);
+        let rule = read_rule(text, item.span().start, table, kits, params(&doc, i), from_set, out);
         rules.extend(rule.filter(|_| !duplicate));
     }
     (rules, ids)

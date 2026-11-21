@@ -1,4 +1,4 @@
-//! Done 2: new violations only. "With one violation at the base commit and one added after it, only the added one is
+//! Acceptance: new violations only. "With one violation at the base commit and one added after it, only the added one is
 //! reported." A violation in a new, untracked file is new too: the base has no version of it.
 
 use crate::check::Check;

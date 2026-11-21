@@ -1,11 +1,21 @@
-//! Done 4: an absent engine. "A rule whose linter is not installed, and a rule that needs Tessera with no Tessera, each
+//! Acceptance: an absent engine. "A rule whose linter is not installed, and a rule that needs Tessera with no Tessera, each
 //! report 'not available'." Not available is never clean: its own exit code, 3.
 
 use crate::check::Check;
+use crate::env::tm_env;
 use crate::repo::Repo;
+use crate::run_clean::run_clean;
+use crate::temp_home::TempHome;
 use crate::tm::tm_with_path;
 
 const RULES: &str = r#"version = 1
+
+[[rule]]
+id = "tessera-erosion"
+engine = "tessera"
+check = "erosion"
+severity = "warning"
+fix = "Split the file along its seams."
 
 [[rule]]
 id = "swift-force-cast"
@@ -13,13 +23,6 @@ engine = "swiftlint"
 check = "force_cast"
 severity = "error"
 fix = "Use `as?` and handle nil."
-
-[[rule]]
-id = "file-erosion"
-engine = "tessera"
-check = "erosion"
-severity = "warning"
-fix = "Split the file along its seams."
 "#;
 
 // git is in /usr/bin; no linter and no `ts` is in either folder.
@@ -29,7 +32,7 @@ const PATH_WITHOUT_ENGINES: &str = "/usr/bin:/bin";
 fn an_absent_linter_and_absent_tessera_each_report_not_available() {
     let mut check = Check::new(
         "an_absent_linter_and_absent_tessera_each_report_not_available",
-        "rules swift-force-cast (swiftlint) and file-erosion (tessera); tm runs with PATH /usr/bin:/bin, which \
+        "rules tessera-erosion (tessera) then swift-force-cast (swiftlint); tm runs with PATH /usr/bin:/bin, which \
          holds neither swiftlint nor ts",
     );
     let repo = Repo::new();
@@ -51,10 +54,18 @@ fn an_absent_linter_and_absent_tessera_each_report_not_available() {
     assert_eq!(
         missing,
         vec![
-            (String::from("file-erosion"), String::from("tessera")),
             (String::from("swift-force-cast"), String::from("swiftlint")),
+            (String::from("tessera-erosion"), String::from("tessera")),
         ],
         "both rules, each with its engine: {:#}",
         a.json
     );
+    // `tm_with_path` keeps only the parsed JSON, so the printed bytes come from a second run in the same environment.
+    let home = TempHome::new();
+    let out = run_clean(env!("CARGO_BIN_EXE_temperare"), &args, repo.path(), tm_env(Some(PATH_WITHOUT_ENGINES), home.path()));
+    let printed = String::from_utf8(out.stdout).unwrap();
+    // `engines` lists only an engine tm found, so neither absent swiftlint nor Tessera is in it.
+    assert!(printed.contains(r#""engines":[]"#), "no engine was found, so none is listed: {printed}");
+    let value: serde_json::Value = serde_json::from_str(&printed).unwrap_or_else(|e| panic!("stdout is not JSON ({e}): {printed}"));
+    assert_eq!(value["engines"], serde_json::json!([]), "{printed}");
 }
