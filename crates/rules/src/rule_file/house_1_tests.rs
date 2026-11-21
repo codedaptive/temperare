@@ -89,9 +89,9 @@ pub(super) fn expected_rows() -> Vec<Row<'static>> {
         ("tm-house-test-asserts-sentence-swift", "ast-grep", "ast-grep/tm-house-test-asserts-sentence-swift.yml", Q, W, none(), needs(&[]), true, "DescribeTests.swift", 8),
         ("tm-house-unit-test-fakes-own-kit-rust", "ast-grep", "ast-grep/tm-house-unit-test-fakes-own-kit-rust.yml", Q, W, none(), needs(&[]), true, "src/store_tests.rs", 7),
         ("tm-house-unit-test-fakes-own-kit-python", "ast-grep", "ast-grep/tm-house-unit-test-fakes-own-kit-python.yml", Q, W, none(), needs(&["own_package"]), true, "tests/unit/test_store.py", 7),
-        ("tm-house-test-setup-heavier-rust", "ast-grep", "ast-grep/tm-house-test-setup-heavier-rust.yml", Q, W, setup_vs_tests(&["**/tests/common/**"]), needs(&[]), true, "tests/parse.rs", 1),
+        ("tm-house-test-setup-heavier-rust", "ast-grep", "ast-grep/tm-house-test-setup-heavier-rust.yml", Q, W, setup_vs_tests(&["**/tests/common/**"]), needs(&[]), true, "tests/parse.rs", 3),
         ("tm-house-test-setup-heavier-python", "ast-grep", "ast-grep/tm-house-test-setup-heavier-python.yml", Q, W, setup_vs_tests(&["**/conftest.py", "**/tests/**/helpers.py"]), needs(&[]), true, "tests/test_parse.py", 1),
-        ("tm-house-test-setup-heavier-swift", "ast-grep", "ast-grep/tm-house-test-setup-heavier-swift.yml", Q, W, setup_vs_tests(&["**/*Tests/Support/**"]), needs(&[]), true, "ParseTests.swift", 1),
+        ("tm-house-test-setup-heavier-swift", "ast-grep", "ast-grep/tm-house-test-setup-heavier-swift.yml", Q, W, setup_vs_tests(&["**/*Tests/Support/**"]), needs(&[]), true, "ParseTests.swift", 4),
     ]
 }
 
