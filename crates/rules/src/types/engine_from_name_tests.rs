@@ -1,4 +1,4 @@
-//! ZUT for engine_from_name.rs: the fifteen rule-file names, and None for anything else.
+//! ZUT for engine_from_name.rs: the fourteen rule-file names, and None for anything else.
 
 use super::Engine;
 
@@ -40,11 +40,6 @@ fn pylint() {
 #[test]
 fn clang_tidy() {
     assert_eq!(Engine::from_name("clang-tidy"), Some(Engine::ClangTidy));
-}
-
-#[test]
-fn oclint() {
-    assert_eq!(Engine::from_name("oclint"), Some(Engine::Oclint));
 }
 
 #[test]
@@ -93,7 +88,6 @@ fn unknown_names_are_none() {
         "ShellCheck",
         "shell-check",
         "PyLint",
-        "OCLint",
         "Git",
         "GIT",
         "git ",

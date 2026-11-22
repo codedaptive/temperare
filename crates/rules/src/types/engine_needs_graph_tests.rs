@@ -16,7 +16,6 @@ fn the_others_do_not() {
     assert!(!Engine::GolangciLint.needs_graph());
     assert!(!Engine::Pylint.needs_graph());
     assert!(!Engine::ClangTidy.needs_graph());
-    assert!(!Engine::Oclint.needs_graph());
     assert!(!Engine::ShellCheck.needs_graph());
     assert!(!Engine::Git.needs_graph());
     assert!(!Engine::Vulture.needs_graph());

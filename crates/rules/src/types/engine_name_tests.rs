@@ -4,7 +4,7 @@
 use super::Engine;
 use serde::Serialize;
 
-const ALL: [Engine; 15] = [
+const ALL: [Engine; 14] = [
     Engine::Clippy,
     Engine::SwiftLint,
     Engine::Ruff,
@@ -13,7 +13,6 @@ const ALL: [Engine; 15] = [
     Engine::GolangciLint,
     Engine::Pylint,
     Engine::ClangTidy,
-    Engine::Oclint,
     Engine::ShellCheck,
     Engine::Git,
     Engine::Vulture,
@@ -60,11 +59,6 @@ fn pylint() {
 #[test]
 fn clang_tidy() {
     assert_eq!(Engine::ClangTidy.name(), "clang-tidy");
-}
-
-#[test]
-fn oclint() {
-    assert_eq!(Engine::Oclint.name(), "oclint");
 }
 
 #[test]

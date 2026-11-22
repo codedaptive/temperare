@@ -22,8 +22,6 @@ pub enum Engine {
     Pylint,
     #[serde(rename = "clang-tidy")]
     ClangTidy,
-    #[serde(rename = "oclint")]
-    Oclint,
     #[serde(rename = "shellcheck")]
     ShellCheck,
     #[serde(rename = "git")]
