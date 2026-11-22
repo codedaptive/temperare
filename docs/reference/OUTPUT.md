@@ -50,36 +50,36 @@ In order:
 4. **One line per rule that covers nothing:** `covers nothing: <rule id> (<engine>)`. Such a rule is one of the
    repository's own, and it ran nothing because no file it checks is in its scope
    ([`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)).
-5. **One line per rule that is not applicable:** `not applicable: <rule id> (<engine>): <why>`, such as a rule with
-   `only_with_base = true` run without `--base`, or a baseline set's rule that covers no file. A not-applicable rule
-   checked nothing, so it is shown here as well as in `--json`.
-6. **One line per expired exception:** `expired: <rule id> <path> (expired <YYYY-MM-DD>)`, such as
+5. **One line per expired exception:** `expired: <rule id> <path> (expired <YYYY-MM-DD>)`, such as
    `expired: no-unwrap src/main.rs (expired 2026-11-30)`, the date being the exception's `expires`. An expired
    exception silences nothing ([`RULE_FILE.md`](RULE_FILE.md#an-exception-exception)).
-7. **The engines line:** `engines: <engine> <version>, ...`, one entry per engine that ran, in the order the rule
+6. **The engines line:** `engines: <engine> <version>, ...`, one entry per engine that ran, in the order the rule
    file first names each. An engine that ran is one `tm` found and asked its version, whatever its rules came to: a
    rule refused before its engine ran, a rule that covered no file, or a check the installed engine does not know,
    still counts. An engine that is absent (not on `PATH`, or with no adapter in this build) is left out, and its
-   rules appear only on their `not available:`, `covers nothing:` or `not applicable:` lines, or on a `failed:` line
-   when the rule was refused. A rule with `only_with_base` run with no `--base` is on a
-   `not applicable:` line whatever its engine's state. Tessera is never listed today, since `tm` does not look for it.
+   rules appear only on their `not available:` or `covers nothing:` lines, on a `failed:` line when the rule was
+   refused, or in the not-applicable count. A rule with `only_with_base` run with no `--base` is counted as not
+   applicable whatever its engine's state. Tessera is never listed today, since `tm` does not look for it.
    `<engine> (version unknown)` when a found engine gave no version. No line when no engine ran.
-8. **The counts line,** ending with the number of not-applicable rules, then the number of rules that cover
+7. **The counts line,** ending with the number of not-applicable rules, then the number of rules that cover
    nothing, then the number of expired exceptions, `0` included. `exceptions in force` counts the exceptions that
-   have not expired on the report's day.
-9. **Why each failed rule failed:** `stderr of <rule id> (<engine>):`, then the lines of its `stderr_tail`, each
+   have not expired on the report's day. A not-applicable rule gets no line of its own in text: it is counted here,
+   and `--json` lists each one with its why (`not_applicable`). A repository that takes a baseline set has a rule
+   that is not applicable for each language it does not hold, and a line for each could make the text longer
+   than the engines' own output.
+8. **Why each failed rule failed:** `stderr of <rule id> (<engine>):`, then the lines of its `stderr_tail`, each
    indented two spaces. When there is nothing to show, the one line `stderr of <rule id> (<engine>): (empty)`.
    A run with no failed rule prints none of this.
-10. **The `next:` line.**
+9. **The `next:` line.**
 
 Findings are sorted by path, line, column and rule id; not-available and failed rules by rule id; rules that cover
-nothing, not-applicable rules and expired exceptions in rule-file order. The same results from the
+nothing and expired exceptions in rule-file order. The same results from the
 engines give the same output. A silenced finding is counted on the counts line and not listed.
 
 A rule that ran nothing because no file it checks is in its scope is on a `covers nothing:` line when it is one of
-the repository's own, and on a `not applicable:` line when it comes from a baseline set, with the why `its paths
-match no file in the rule file's folder` (or, for a ShellCheck rule, `no file its engine checks`). A rule with
-`only_with_base = true` run without `--base` is not applicable for want of `--base` whatever it covers
+the repository's own, and is counted as not applicable when it comes from a baseline set; `--json` gives its why,
+`its paths match no file in the rule file's folder` (or, for a ShellCheck rule, `no file its engine checks`). A
+rule with `only_with_base = true` run without `--base` is not applicable for want of `--base` whatever it covers
 ([`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)).
 
 ## `tm check --json`
@@ -384,7 +384,7 @@ A finding on an older line is dropped before exceptions are applied, so it is ne
 counted. A `--base` that names no commit is exit 2, never an empty result.
 
 A rule with `only_with_base = true` reports only what a change adds. Without `--base` it reports nothing and is
-listed as not applicable (a `not applicable:` line in text, `not_applicable` in JSON), with the why
+not applicable (counted on the counts line in text, listed in `not_applicable` in JSON), with the why
 `reports only what a change adds; run with --base`.
 
 Two kinds of rule use the commit `--base` names: a rule with `engine = "git"`, which counts the lines a change adds,
@@ -405,7 +405,7 @@ the rule file's folder, a `--base` that names no commit) prints the two lines on
 A rule file with problems prints, with `--json`:
 
 ```json
-{"exit":2,"next":"fix each problem listed for /path/to/temperare.toml","problems":[{"col":10,"fix":"Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck, git.","line":5,"what":"unknown engine \"pylnit\""}],"rule_file":"/path/to/temperare.toml"}
+{"exit":2,"next":"fix each problem listed for /path/to/temperare.toml","problems":[{"col":10,"fix":"Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck, git, vulture, periphery, gitleaks, cargo-audit.","line":5,"what":"unknown engine \"pylnit\""}],"rule_file":"/path/to/temperare.toml"}
 ```
 
 Without `--json` it prints one line per problem, `file:line:col  what  fix`, then the `next:` line. See

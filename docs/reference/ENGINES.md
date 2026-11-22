@@ -63,7 +63,7 @@ Neither is ever "clean".
 | `shellcheck <version>: <check> is not in temperare's list of shellcheck codes (taken from shellcheck <list version>)` | A ShellCheck rule whose code is not on the list built into `tm`. In this build the list holds no code and its version reads `pending`, so this is every ShellCheck rule that has a script to check and finds ShellCheck ([below](#shellcheck)) |
 | `reports only what a change adds; run with --base` | A git rule, and an ast-grep rule in count mode, run without `--base` ([git](#git), [ast-grep](#ast-grep)) |
 | `Tessera's slop records are not defined yet` | A rule with `engine = "tessera"` ([below](#tessera)) |
-| `no adapter for <engine> in this build` | A rule whose engine the rule file accepts and this `tm` cannot run yet: `golangci-lint`, `pylint`, `clang-tidy` and `oclint` ([below](#engines-with-no-adapter-yet)) |
+| `no adapter for <engine> in this build` | A rule whose engine the rule file accepts and this `tm` cannot run yet: `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `vulture`, `periphery`, `gitleaks` and `cargo-audit` ([below](#engines-with-no-adapter-yet)) |
 
 A rule that is refused, or that covers no file, is settled before any of these is looked at
 ([the order a rule settles in](#the-order-a-rule-settles-in)).
@@ -104,7 +104,7 @@ Each rule is settled by the first of these that applies:
    and covers none of the scripts there. The rule runs nothing ([below](#a-rule-that-covers-no-file)).
 3. **Needs a base.** A rule with `only_with_base = true`, run without `--base`, settles here, whatever its engine.
    Its engine is not looked up on `PATH` and runs no check for it, and when it shares a run with other rules its
-   check is left out of that run. The report lists it as not applicable
+   check is left out of that run. It is not applicable: counted in the text, listed under `not_applicable` in JSON
    ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)). An engine found on `PATH` is still asked its version for
    the engines line.
 4. **Not available.** The engine's program is not on `PATH`, the engine has no adapter in this build, or it is
@@ -144,12 +144,13 @@ The report shows such a rule by where it comes from:
 - **One of the repository's own rules covers nothing.** It is on a `covers nothing: <rule> (<engine>)` line in the
   text, under `covers_nothing` in JSON (`rule`, `engine`), and in the `covers nothing` count, and it makes the exit
   6 when nothing ranks above it ([`OUTPUT.md`](OUTPUT.md#exit-codes)).
-- **A baseline set's rule is not applicable,** with the why `its paths match no file in the rule file's folder`, or
+- **A baseline set's rule is not applicable.** The text counts it in the `not applicable` count and gives it no
+  line; JSON lists it under `not_applicable` with the why `its paths match no file in the rule file's folder`, or
   `no file its engine checks` for a ShellCheck rule that covers files but no script. It does not change the exit
   code.
 
 A refused rule is not such a rule: it is settled first and is failed, whatever it covers. A rule with
-`only_with_base = true`, run without `--base`, is listed as not applicable for want of `--base` whatever it covers,
+`only_with_base = true`, run without `--base`, is not applicable for want of `--base` whatever it covers,
 as any such rule is. A check whose only rule is one of its own and covers no file prints
 `covers nothing: <rule> (<engine>)`, then
 `0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable, 1 covers nothing, 0 expired`
@@ -341,8 +342,8 @@ ast-grep is for rules about the shape of code that no stock linter states: a hou
 
   Count mode needs the base commit, which `tm check --base <rev>` hands it. Without `--base`, a count-mode rule
   that gets as far as its run is not available, with the why `reports only what a change adds; run with --base`,
-  and ast-grep is not run for it. With `only_with_base = true` and no `--base` the rule is listed as not applicable
-  instead, as any such rule is.
+  and ast-grep is not run for it. With `only_with_base = true` and no `--base` the rule is not applicable instead,
+  as any such rule is.
 - **A YAML that ast-grep rejects** fails the rule. ast-grep has no "not available" case for an unknown `check`: the
   check is your own YAML, which ast-grep either reads or rejects.
 - **`config`:** not used.
@@ -490,7 +491,7 @@ which needs no rule.
 - **It needs `--base`.** It counts a change against the base commit `tm check --base <rev>` names. Without
   `--base`, a git rule that is not refused, covers a file and finds git is not available, with the why
   `reports only what a change adds; run with --base`, and nothing is counted. With `only_with_base = true` and no
-  `--base` the rule is listed as not applicable instead, as any such rule is.
+  `--base` the rule is not applicable instead, as any such rule is.
 - **`check`:** `test_ratio`, the only one. Any other fails the rule before anything runs, with the reason
   ``git check `<check>` is not one git counts: the git entry checks only `test_ratio` ``.
 - **`params`,** all three required:
@@ -531,7 +532,8 @@ any such rule is ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)).
 
 ## Engines with no adapter yet
 
-A rule may name `golangci-lint`, `pylint`, `clang-tidy` or `oclint`. The rule file accepts
+A rule may name `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `vulture`, `periphery`, `gitleaks` or
+`cargo-audit`. The rule file accepts
 these names, so a rule written for one of them needs no change when its adapter lands. Until then this `tm` cannot run
 them: a rule that covers a file is reported "not available" with the reason `no adapter for <engine> in this build`,
 whether or not the engine is installed, and nothing is run. Its `check` and `params` are not read, so it is never
