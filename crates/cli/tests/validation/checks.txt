@@ -17,5 +17,11 @@
 70|a_security_finding_is_reported_with_severity_place_and_owner_and_never_refuses|Done 7: a security rule
 80|a_command_named_only_inside_one_kit_is_reported_in_another_and_passes_inside|Done 8: named only inside
 90|clippy_line_reports_test_code_not_allowed_lints|A clippy check line: test code reported, allowed lints not
+92|a_golangci_lint_finding_is_reported_with_its_rule_place_fix_and_version|Done 9: golangci-lint through a rule file
+92|golangci_lint_off_path_is_not_available|Done 9: golangci-lint through a rule file
+94|a_pylint_message_is_reported_with_its_rule_place_fix_and_version|Done 9: pylint through a rule file
+94|pylint_off_path_is_not_available|Done 9: pylint through a rule file
+96|a_clang_tidy_warning_is_reported_with_its_rule_place_fix_and_version|Done 9: clang-tidy through a rule file
+96|clang_tidy_off_path_is_not_available|Done 9: clang-tidy through a rule file
 100|two_ruff_rules_share_one_engine_run|Done 10: the baseline
 100|the_shipped_baseline_sets_hold|Done 10: the baseline

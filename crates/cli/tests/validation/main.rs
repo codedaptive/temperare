@@ -6,10 +6,11 @@
 //! `baseline_test_real_ruff` runs `run_baseline_test` with a const test set in a child of this test binary, with HOME
 //! a folder the test made.
 //!
-//! Acceptance: the mission's Done list (MISSION-temperare-2026-11-16, Done 1-8, and Done 10's shared run and baseline
-//! test), run against the built `temperare` with the real engines, each case in a throwaway folder it makes and
-//! removes. Validation, not a unit or integration test: a run of the shipped binary, written by the orchestrator
-//! (SPEC-cli, Tests).
+//! Acceptance: the mission's Done list (MISSION-temperare-2026-11-16, Done 1-8, SPEC-engines-common's Done 9 for
+//! golangci-lint, pylint and clang-tidy, and Done 10's shared run and baseline test), run against the built
+//! `temperare` with the real engines, each case in a throwaway folder it makes and removes.
+//! Validation, not a unit or integration test: a run of the shipped binary, written by the orchestrator (SPEC-cli,
+//! Tests).
 //! `make accept` runs it.
 //! No codeteam variable reaches `temperare` in any case (Done 6): each case passes only the variables it sets (`env.rs`
 //! for the acceptance cases, `install_temp_home.rs` its own).
@@ -25,6 +26,7 @@ mod cli_check;
 mod cli_tm;
 mod savings_real_engine;
 
+mod absent_engine_reason;
 mod check;
 mod check_drop;
 mod check_new;
@@ -33,6 +35,7 @@ mod check_saw_tm;
 mod clean_cmd;
 mod env;
 mod on_tm_path;
+mod probed_version;
 mod repo;
 mod run_clean;
 mod temp_home;
@@ -49,6 +52,9 @@ mod done_5_exception;
 mod done_6_alone;
 mod done_7_security;
 mod done_8_named_inside;
+mod done_9_golangci_lint;
+mod done_9_pylint;
+mod done_9_clang_tidy;
 mod done_10_shared_run;
 mod done_10_baseline_test;
 
