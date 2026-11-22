@@ -38,7 +38,8 @@ These are properties of the code, not of how it is deployed.
 
   Each is created new, never opened over an existing file or folder, and removed when the run of that rule ends. If
   `tm` is killed in between, it is left there. No config file of the repository is written. A ruff threshold is
-  passed as an argument, and a ShellCheck, git, pylint, clang-tidy or golangci-lint rule writes no file. A
+  passed as an argument, and a ShellCheck, git, pylint, clang-tidy, golangci-lint, gitleaks or cargo-audit rule
+  writes no file. A
   golangci-lint run passes `--fix=false`, so a repository config that asks golangci-lint to fix cannot edit the
   code, and runs go with `GOFLAGS` removed, so go does not rewrite `go.mod` or `go.sum`. A rule that is refused, or
   that covers no file, writes none either. Besides these, `tm check` appends one line to its savings log,
@@ -68,13 +69,13 @@ Limits, as plainly as possible.
 **The rule file is trusted input.** `temperare.toml` decides which engines run, what each is asked, and which config
 file each is given. Temperare keeps a rule's value from being read as an engine option and keeps an ast-grep rule
 file inside the rule file's folder, as above. It does not judge what a value asks for. A `config` is handed to
-SwiftLint, ruff, ShellCheck, pylint, clang-tidy or golangci-lint as written and may name any file, inside the
+SwiftLint, ruff, ShellCheck, pylint, clang-tidy, golangci-lint or gitleaks as written and may name any file, inside the
 repository or not. An ast-grep rule file is the
 repository's own, and ast-grep runs whatever it holds over the code. Running `tm check` in a repository is running
 that repository's instructions.
 
 **The engines are trusted programs.** Temperare finds git, cargo, SwiftLint, ruff, ast-grep, ShellCheck, pylint,
-clang-tidy, golangci-lint and go on your `PATH` and runs whatever is there, with your environment and your privileges. Whoever controls `PATH` controls what runs.
+clang-tidy, golangci-lint, go, gitleaks and cargo-audit on your `PATH` and runs whatever is there, with your environment and your privileges. Whoever controls `PATH` controls what runs.
 There is no sandbox.
 
 **A clippy rule builds the code.** `cargo clippy` compiles the crate. A build runs that crate's build scripts and
@@ -83,6 +84,17 @@ procedural macros, and cargo may download its dependencies. That is code from th
 **A golangci-lint rule loads the code with go.** go runs with `GOTOOLCHAIN=local`, `GOPROXY=off` and `GOSUMDB=off`,
 so it downloads no toolchain and no module and looks up no checksum; code that needs a module not already on the
 machine fails its rule.
+
+**A cargo-audit rule is as current as its advisory database.** cargo-audit runs with `--no-fetch` and
+`--no-yanked`, so it reaches no network: it reads the RustSec advisory database already at
+`$CARGO_HOME/advisory-db` (else `$HOME/.cargo/advisory-db`), and Temperare never fetches or updates it. An advisory
+published after that copy was fetched is not reported, and the report does not say how old the copy is. Fetch it
+yourself (`cargo audit update-db`) as often as you need. With no copy there the rule is not available, never clean.
+
+**A gitleaks rule never prints the secret.** gitleaks runs with `--redact`, every gitleaks finding's message is a
+fixed text of Temperare's, never gitleaks' own, and of gitleaks' stderr only its error lines are kept, so a matched
+secret does not reach the text or the JSON report. The finding's path, line and column are still given, and the
+secret is still in the file.
 
 **The engines read their own configuration.** Each engine looks for its config in the code it checks, as it always
 does. Except for the exceptions below, Temperare passes no flag that turns that off, so a repository's own linter config shapes what its linter
@@ -99,7 +111,11 @@ reports. The exceptions:
 - a pylint run turns every message off and the rule's one on, on its command line, which pylint lays over its
   config, so a config cannot turn the rule's message off;
 - a golangci-lint run's fixed flags (`--enable-only`, `--fix=false`, no cap on issues) hold over the repository's
-  config.
+  config;
+- a gitleaks run has `GITLEAKS_CONFIG` and `GITLEAKS_CONFIG_TOML` removed from its environment, so a config set
+  there cannot replace the rule's `config` or the folder's `.gitleaks.toml`;
+- a cargo-audit rule fails when cargo-audit's report shows it applied an `audit.toml` (settings other than its
+  defaults), since that file's `ignore` list would silence advisories outside the rule file.
 
 **There is no time limit.** Temperare waits for an engine for as long as it runs. An engine that hangs, hangs the
 check.
@@ -124,11 +140,12 @@ untracked files git does not ignore) is not run at all: its engine runs no check
 version), and whether the engine is installed does not change the result. One of the repository's own rules is
 then reported as covering nothing, and makes the exit code 6 when nothing ranks above it; a baseline set's rule is
 only counted as not applicable and does not change the exit code. A ShellCheck rule that covers no shell script is
-the same. A clang-tidy rule that covers files but no C-family source is the same when clang-tidy is installed;
+the same, and so is a cargo-audit rule whose folder has no `Cargo.lock` it covers (only the rule file's folder's own
+`Cargo.lock` is read). A clang-tidy rule that covers files but no C-family source is the same when clang-tidy is installed;
 without clang-tidy it is not available (exit 3). Try a new rule on a file you know breaks it.
 
-**Engine messages are printed as given.** In the text output a finding's message is the engine's own text. The JSON
-output escapes it.
+**Engine messages are printed as given.** In the text output a finding's message is the engine's own text
+(gitleaks' apart, as above). The JSON output escapes it.
 
 ## Running it on code you do not trust
 

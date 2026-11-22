@@ -18,8 +18,8 @@ what is run for each one, what `check` means to it, and what is "not available" 
   to a temporary file or folder, and the same check or checks the engine reads together. When the two checks
   differ: for clippy, neither check is `warnings`. For ruff, the codes do not overlap, neither selects `RUF100`, and no pair ruff
   calls incompatible is split. For SwiftLint, neither check is `superfluous_disable_command`. For ast-grep, the
-  same rule file with no params. pylint, clang-tidy, golangci-lint, ShellCheck, git, Tessera, and an engine with no
-  adapter yet, never share. Each rule still keeps only its own check's
+  same rule file with no params. pylint, clang-tidy, golangci-lint, gitleaks, cargo-audit, ShellCheck, git, Tessera,
+  and an engine with no adapter yet, never share. Each rule still keeps only its own check's
   findings, in its own paths and with its own exceptions. Every other rule runs alone. A rule that is refused, or
   that covers no file ([below](#the-order-a-rule-settles-in)), runs nothing and joins no shared run.
 - **The order of runs.** A rule joins the first group, in rule-file order, whose rules can all share with it. The
@@ -33,18 +33,20 @@ what is run for each one, what `check` means to it, and what is "not available" 
 - **Its version is read once per check.** Before the rules run, each engine named by the rules this check runs is
   asked its version once, in the rule file's folder, when it is available: `cargo clippy --version`,
   `swiftlint version`, `ruff --version`, `ast-grep --version`, `shellcheck --version`, `git --version`,
-  `pylint --version`, `clang-tidy --version`, `golangci-lint --version`. Tessera, and
+  `pylint --version`, `clang-tidy --version`, `golangci-lint --version`, `gitleaks version`,
+  `cargo-audit --version`. Tessera, and
   an engine with no adapter yet, is not asked. An engine is asked even when every rule that names it is refused or
   covers no file. The version is named in the reason of a check the engine does not know, and of a ShellCheck code
   that is not on `tm`'s list (below).
 - **No time limit.** `tm` waits for an engine as long as it runs.
 - **The engine's environment is yours.** Temperare adds nothing to it, except: for a clippy rule with `max_nesting` it
   sets `CLIPPY_CONF_DIR` for that run to a temporary folder holding `clippy.toml`, which clippy reads instead of the
-  repository's own `clippy.toml`; for ShellCheck it removes `SHELLCHECK_OPTS`; and for golangci-lint it keeps Go
-  local ([golangci-lint](#golangci-lint)).
+  repository's own `clippy.toml`; for ShellCheck it removes `SHELLCHECK_OPTS`; for gitleaks it removes
+  `GITLEAKS_CONFIG` and `GITLEAKS_CONFIG_TOML` ([gitleaks](#gitleaks)); and for golangci-lint it keeps Go local
+  ([golangci-lint](#golangci-lint)).
 - **The engine finds its own configuration,** as it does when you run it yourself, except where the rule says
-  otherwise. A rule's `config` is passed to SwiftLint, ruff, pylint, golangci-lint, ShellCheck or clang-tidy as its
-  config file. clang-tidy without a `config`, and ShellCheck without one, read no config file of the repository's
+  otherwise. A rule's `config` is passed to SwiftLint, ruff, pylint, golangci-lint, gitleaks, ShellCheck or
+  clang-tidy as its config file. clang-tidy without a `config`, and ShellCheck without one, read no config file of the repository's
   (see [clang-tidy](#clang-tidy) and [shellcheck](#shellcheck)). A SwiftLint threshold passes a
   config file of its own, after the folder's `.swiftlint.yml` when there is one and the rule has no `config` (see
   [swiftlint](#swiftlint)). A clippy `max_nesting` replaces the repository's `clippy.toml` for that run, as above.
@@ -66,11 +68,12 @@ Neither is ever "clean".
 | `<program> not found on PATH` | The engine's program is not installed, or not on `PATH`. A clippy rule names the first of `cargo-clippy` and `clippy-driver` that is missing. A ShellCheck rule names `git` when ShellCheck is there and git, which lists its scripts, is not. A golangci-lint rule names `go` when golangci-lint is there and go is not. A clang-tidy rule names `git` when clang-tidy is there and git, which lists its sources, is not |
 | `no compile database (compile_commands.json) or compile flags (compile_flags.txt) for <file> or any folder above it, so clang-tidy would check it without flags` | A clang-tidy rule on a source with neither file at or above it ([clang-tidy](#clang-tidy)) |
 | `no Cargo.toml at or above the rule file's folder` | A clippy rule in a folder that is not inside a Cargo package |
-| ``<engine> <version> does not know the check `<check>`: <what it said>`` | The installed clippy, SwiftLint, ruff, pylint, clang-tidy or golangci-lint does not know the rule's `check`: a name it does not have, often because it is older than the rule. `<version>` is `(version unknown)` when the version could not be read |
+| ``<engine> <version> does not know the check `<check>`: <what it said>`` | The installed clippy, SwiftLint, ruff, pylint, clang-tidy, golangci-lint or gitleaks does not know the rule's `check`: a name it does not have, often because it is older than the rule. For cargo-audit, an advisory id its local advisory database does not hold (`<check> is not in the advisory database at <db>`). `<version>` is `(version unknown)` when the version could not be read |
+| ``no advisory database at <db>: fetch it with `cargo audit update-db --db <db>` (tm never fetches it)`` | A cargo-audit rule when the advisory database has not been fetched ([cargo-audit](#cargo-audit)). With neither `CARGO_HOME` nor `HOME` set the reason is `no advisory database: neither CARGO_HOME nor HOME is set` |
 | `shellcheck <version>: <check> is not in temperare's list of shellcheck codes (taken from shellcheck <list version>)` | A ShellCheck rule whose code is not on the list built into `tm`: the 510 codes of ShellCheck 0.11.0, so `<list version>` is `0.11.0` ([below](#shellcheck)) |
 | `reports only what a change adds; run with --base` | A git rule, and an ast-grep rule in count mode, run without `--base` ([git](#git), [ast-grep](#ast-grep)) |
 | `Tessera's slop records are not defined yet` | A rule with `engine = "tessera"` ([below](#tessera)) |
-| `no adapter for <engine> in this build` | A rule whose engine the rule file accepts and this `tm` cannot run yet: `oclint`, `vulture`, `periphery`, `gitleaks` and `cargo-audit` ([below](#engines-with-no-adapter-yet)) |
+| `no adapter for <engine> in this build` | A rule whose engine the rule file accepts and this `tm` cannot run yet: `oclint`, `vulture` and `periphery` ([below](#engines-with-no-adapter-yet)) |
 
 A rule that is refused, or that covers no file, is settled before any of these is looked at
 ([the order a rule settles in](#the-order-a-rule-settles-in)).
@@ -94,6 +97,8 @@ or the rule's own files could not be used:
 - a pylint `check` that is not one message id, or that is an old id pylint renamed;
 - a clang-tidy `check` that is not one check name;
 - a golangci-lint `check` with a part that is not a linter name, or that is `typecheck`;
+- a gitleaks `check` with an empty part, or a part that is `ALL`;
+- a cargo-audit `check` that is not an advisory id or a kind, or that is `yanked`;
 - `params` that cannot be used.
 
 A rule refused before its engine ran has no exit code. The reason is printed under the counts line of the text
@@ -107,20 +112,22 @@ Each rule is settled by the first of these that applies:
 1. **Refused.** `tm` refuses the rule from the rule file alone, reading no other file and running nothing: a clippy
    `rustdoc::` lint, SwiftLint's `custom_rules`, a ruff `check` with a part that is not a code, a ShellCheck `check`
    that is not one code, a git `check` other than `test_ratio`, a pylint `check` that is not one message id or is an
-   old one, a clang-tidy `check` that is not one check name, a golangci-lint `check` that is not linter names, an
+   old one, a clang-tidy `check` that is not one check name, a golangci-lint `check` that is not linter names, a
+   gitleaks `check` with an empty or `ALL` part, a cargo-audit `check` that is not an advisory id or a kind, an
    ast-grep `check` that is an absolute path or
    whose `..` climbs above the rule file's folder at any step (read from the text alone), a
    param the engine does not take, a param with a bad value, or a threshold out of range or with another check
    (ast-grep's placeholder params apart: see below). The rule is failed (exit 5).
 2. **No file.** The rule covers none of the files git lists in the rule file's folder, or it is a ShellCheck rule
-   and covers none of the scripts there. The rule runs nothing ([below](#a-rule-that-covers-no-file)).
+   and covers none of the scripts there, or it is a cargo-audit rule and the folder has no `Cargo.lock` the rule
+   covers. The rule runs nothing ([below](#a-rule-that-covers-no-file)).
 3. **Needs a base.** A rule with `only_with_base = true`, run without `--base`, settles here, whatever its engine.
    Its engine is not looked up on `PATH` and runs no check for it, and when it shares a run with other rules its
    check is left out of that run. It is not applicable: counted in the text, listed under `not_applicable` in JSON
    ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)). An engine found on `PATH` is still asked its version for
    the engines line.
 4. **Not available.** The engine's program is not on `PATH`, the engine has no adapter in this build, or it is
-   Tessera.
+   Tessera. (cargo-audit's advisory database is looked for in the run, at step 5.)
 5. **The run.** What the engine's run comes to: findings, none, not available or failed.
 
 So a refused rule is failed (exit 5) whether or not its engine is installed, and installing the engine would not help it. Its engine is still asked its version, as above. The one exception is an `only_with_base` rule run without `--base`, which is listed under `not_applicable` instead, as any such rule is.
@@ -149,7 +156,9 @@ Before any rule runs, `tm` asks git for the files of the rule file's folder: the
 tree, and the untracked files git does not ignore. A rule that covers none of them, by its `paths`, `exclude`,
 `kits` and `outside_kits`, runs nothing. Its engine runs no check for it, and whether the engine is on `PATH` does
 not change its result (the engine is still asked its version for the engines line, below). A ShellCheck rule
-that covers a file is settled the same way when it covers none of the scripts in the folder. A clang-tidy rule
+that covers a file is settled the same way when it covers none of the scripts in the folder, and so is a
+cargo-audit rule when the folder holds no `Cargo.lock` (a regular file, not a symlink) or the rule does not cover
+it ([cargo-audit](#cargo-audit)). A clang-tidy rule
 that covers a file but none of the C-family sources runs nothing too, once clang-tidy is found on `PATH`
 ([above](#the-order-a-rule-settles-in)).
 
@@ -164,8 +173,8 @@ The report shows such a rule by where it comes from:
   6 when nothing ranks above it ([`OUTPUT.md`](OUTPUT.md#exit-codes)).
 - **A baseline set's rule is not applicable.** The text counts it in the `not applicable` count and gives it no
   line; JSON lists it under `not_applicable` with the why `its paths match no file in the rule file's folder`, or
-  `no file its engine checks` for a ShellCheck rule that covers files but no script, or a clang-tidy rule that
-  covers files but no C-family source. It does not change the exit
+  `no file its engine checks` for a ShellCheck rule that covers files but no script, a cargo-audit rule with no
+  `Cargo.lock` it covers, or a clang-tidy rule that covers files but no C-family source. It does not change the exit
   code.
 
 A refused rule is not such a rule: it is settled first and is failed, whatever it covers. A rule with
@@ -645,6 +654,83 @@ which needs no rule.
   issue's text.
 - **Runs alone.** A golangci-lint rule never shares a run.
 
+## gitleaks
+
+- **Available when** `gitleaks` is on `PATH`.
+- **Where:** the rule file's folder.
+- **What runs:**
+
+  ```
+  gitleaks dir --no-banner --no-color --redact --report-format=sarif --report-path=- --enable-rule=<check> [--config=<config>] .
+  ```
+
+  `dir` scans the files in the folder as they are on disk; gitleaks' `git` mode, which reads the history, is not
+  used. The SARIF log on stdout is the answer, whatever gitleaks' exit code.
+- **The secret is never printed.** `--redact` has gitleaks write `REDACTED` in place of what it matched, and every
+  finding's message is one fixed text of `tm`'s, `gitleaks found a secret here; tm does not print it`, never
+  gitleaks' own. Of gitleaks' stderr `tm` keeps only its error lines (`ERR` and `FTL`), so no finding reaches the
+  report through a failed rule's stderr either.
+- **The environment:** `GITLEAKS_CONFIG` and `GITLEAKS_CONFIG_TOML` are removed for the run, so a config set in your
+  environment cannot stand in for the rule's. Nothing gitleaks does here reaches the network.
+- **`check`:** a gitleaks rule id, such as `aws-access-token`, or several joined by commas with no spaces. Results
+  with exactly one of those ids are the findings. Ids are not checked for their shape, since a repository's own
+  gitleaks config can name rules of its own.
+- **Failed before gitleaks runs** when a part of `check` is empty or is `ALL`, with the reason
+  ``gitleaks check `<check>`: <the part> is not a gitleaks rule id``.
+- **Not available** when gitleaks says `Requested rule <id> not found in rules` for a part of `check`. The reason
+  quotes that line.
+- **Failed** when what gitleaks prints is not a SARIF log. The reason is `gitleaks printed no SARIF log and no
+  error`, with its error lines in its place when it printed any.
+- **`config`:** passed as `--config=<config>`, as written, so a relative path is taken from the rule file's folder.
+  Without one, gitleaks reads the folder's `.gitleaks.toml` when there is one, else its own default rules.
+- **`params`:** none. Any param fails the rule before gitleaks runs, with the reason `gitleaks param <name>: unknown`.
+- **A finding** is placed at the result's line and column.
+- **Runs alone.** A gitleaks rule never shares a run.
+
+## cargo-audit
+
+- **Available when** `cargo-audit` is on `PATH`, and its advisory database has been fetched (below).
+- **Which file it checks:** the `Cargo.lock` in the rule file's folder, and only that one: a lock file in a folder
+  above or below is not read. With no `Cargo.lock` there (a symlink does not count, since it could point outside the
+  repository), or one the rule does not cover, the rule runs nothing and covers nothing
+  ([above](#a-rule-that-covers-no-file)). This is settled before cargo-audit is looked for on `PATH`.
+- **What runs,** in the rule file's folder:
+
+  ```
+  cargo-audit audit --no-fetch --no-yanked --json --db <db> --file <folder>/Cargo.lock
+  ```
+
+- **Nothing reaches the network.** `<db>` is cargo-audit's own default database, `$CARGO_HOME/advisory-db`, else
+  `$HOME/.cargo/advisory-db`; `tm` only reads those two variables to find it and sets none. `--no-fetch` reads the
+  database as it is, and `--no-yanked` keeps cargo-audit off the crates.io index. A database with no `crates` folder
+  makes the rule not available, with the reason
+  ``no advisory database at <db>: fetch it with `cargo audit update-db --db <db>` (tm never fetches it)``.
+  An old database is read as it is: fetch it again to see newer advisories.
+- **`check`:** an advisory id, `RUSTSEC-` then a four-digit year, `-` and four digits (`RUSTSEC-2023-0071`), or a
+  kind: `vulnerability`, `unmaintained`, `unsound`, `notice`, or `all` for every advisory. The check is not passed
+  to cargo-audit: it reports every advisory and `tm` keeps the rule's. An advisory is kept when the check is `all`,
+  its kind or its id.
+- **Failed before cargo-audit runs** when `check` is neither an id nor a kind, with the reason
+  ``cargo-audit check `<check>` is not an advisory id (RUSTSEC-YYYY-NNNN) or a kind: all, vulnerability, unmaintained, unsound or notice``.
+  `yanked` is refused too, since cargo-audit learns of a yanked crate only from the crates.io index:
+  ``cargo-audit check `yanked` needs the crates.io index, which tm never fetches; name an advisory id or a kind: all, vulnerability, unmaintained, unsound or notice``.
+- **Not available** when the check is an advisory id the database does not hold: cargo-audit would report nothing
+  for it, which is not clean. The reason ends `<check> is not in the advisory database at <db>`.
+- **An `audit.toml` silences nothing.** cargo-audit applies an `audit.toml` it finds, and its `ignore` list can
+  silence an advisory outside the rule file. When cargo-audit's report shows settings other than its defaults, the
+  rule fails, with the reason
+  `cargo-audit applied an audit.toml tm was not given (<the settings>); the rule file is the only home for an exception, so tm reads no findings under it`.
+  Put an exception in the rule file instead ([`RULE_FILE.md`](RULE_FILE.md#an-exception-exception)).
+- **Failed** also when what cargo-audit prints is not its JSON report, with the reason
+  `cargo-audit printed no JSON report: <the start of what it printed>`.
+- **`config`:** not used.
+- **`params`:** none. Any param fails the rule before cargo-audit runs, with the reason
+  `cargo-audit param <name>: unknown`.
+- **A finding** is on `Cargo.lock`, with no line, and reads
+  `<id>: <crate> <version>: <title>; upgrade to <version>` (several patched versions joined with ` or `), or ends
+  `; no patched version`.
+- **Runs alone.** A cargo-audit rule never shares a run.
+
 ## tessera
 
 A rule may name `tessera` as its engine. The rule file accepts it, and a Tessera rule that covers a file is reported
@@ -666,7 +752,7 @@ any such rule is ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)).
 
 ## Engines with no adapter yet
 
-A rule may name `oclint`, `vulture`, `periphery`, `gitleaks` or `cargo-audit`. The rule file accepts
+A rule may name `oclint`, `vulture` or `periphery`. The rule file accepts
 these names, so a rule written for one of them needs no change when its adapter lands. Until then this `tm` cannot run
 them: a rule that covers a file is reported "not available" with the reason `no adapter for <engine> in this build`,
 whether or not the engine is installed, and nothing is run. Its `check` and `params` are not read, so it is never
