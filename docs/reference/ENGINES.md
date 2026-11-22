@@ -18,8 +18,8 @@ what is run for each one, what `check` means to it, and what is "not available" 
   to a temporary file or folder, and the same check or checks the engine reads together. When the two checks
   differ: for clippy, neither check is `warnings`. For ruff, the codes do not overlap, neither selects `RUF100`, and no pair ruff
   calls incompatible is split. For SwiftLint, neither check is `superfluous_disable_command`. For ast-grep, the
-  same rule file with no params. pylint, clang-tidy, golangci-lint, gitleaks, cargo-audit, ShellCheck, git, Tessera,
-  and an engine with no adapter yet, never share. Each rule still keeps only its own check's
+  same rule file with no params. pylint, clang-tidy, golangci-lint, gitleaks, cargo-audit, vulture, Periphery,
+  ShellCheck, git, Tessera, and an engine with no adapter yet, never share. Each rule still keeps only its own check's
   findings, in its own paths and with its own exceptions. Every other rule runs alone. A rule that is refused, or
   that covers no file ([below](#the-order-a-rule-settles-in)), runs nothing and joins no shared run.
 - **The order of runs.** A rule joins the first group, in rule-file order, whose rules can all share with it. The
@@ -34,7 +34,7 @@ what is run for each one, what `check` means to it, and what is "not available" 
   asked its version once, in the rule file's folder, when it is available: `cargo clippy --version`,
   `swiftlint version`, `ruff --version`, `ast-grep --version`, `shellcheck --version`, `git --version`,
   `pylint --version`, `clang-tidy --version`, `golangci-lint --version`, `gitleaks version`,
-  `cargo-audit --version`. Tessera, and
+  `cargo-audit --version`, `vulture --version`, `periphery version`. Tessera, and
   an engine with no adapter yet, is not asked. An engine is asked even when every rule that names it is refused or
   covers no file. The version is named in the reason of a check the engine does not know, and of a ShellCheck code
   that is not on `tm`'s list (below).
@@ -47,7 +47,9 @@ what is run for each one, what `check` means to it, and what is "not available" 
 - **The engine finds its own configuration,** as it does when you run it yourself, except where the rule says
   otherwise. A rule's `config` is passed to SwiftLint, ruff, pylint, golangci-lint, gitleaks, ShellCheck or
   clang-tidy as its config file. clang-tidy without a `config`, and ShellCheck without one, read no config file of the repository's
-  (see [clang-tidy](#clang-tidy) and [shellcheck](#shellcheck)). A SwiftLint threshold passes a
+  (see [clang-tidy](#clang-tidy) and [shellcheck](#shellcheck)). vulture and Periphery never read one: a rule's
+  `config` does not reach them, and `tm` points each at an empty config of its own ([vulture](#vulture),
+  [periphery](#periphery)). A gitleaks config that declares an allowlist fails the rule ([gitleaks](#gitleaks)). A SwiftLint threshold passes a
   config file of its own, after the folder's `.swiftlint.yml` when there is one and the rule has no `config` (see
   [swiftlint](#swiftlint)). A clippy `max_nesting` replaces the repository's `clippy.toml` for that run, as above.
   A ruff threshold is layered over the rule's `config`, or over the config ruff finds when the rule has none, and
@@ -65,7 +67,9 @@ Neither is ever "clean".
 
 | `why` | When |
 |---|---|
-| `<program> not found on PATH` | The engine's program is not installed, or not on `PATH`. A clippy rule names the first of `cargo-clippy` and `clippy-driver` that is missing. A ShellCheck rule names `git` when ShellCheck is there and git, which lists its scripts, is not. A golangci-lint rule names `go` when golangci-lint is there and go is not. A clang-tidy rule names `git` when clang-tidy is there and git, which lists its sources, is not |
+| `<program> not found on PATH` | The engine's program is not installed, or not on `PATH`. A clippy rule names the first of `cargo-clippy` and `clippy-driver` that is missing. A ShellCheck rule names `git` when ShellCheck is there and git, which lists its scripts, is not. A golangci-lint rule names `go` when golangci-lint is there and go is not. A clang-tidy rule names `git` when clang-tidy is there and git, which lists its sources, is not. A Periphery rule names `swift` when Periphery is there and swift, which builds the package, is not |
+| `no Package.swift at or above the rule file's folder: Periphery builds the project, and tm runs it only on a Swift package` | A Periphery rule outside a Swift package, such as one in an Xcode project ([periphery](#periphery)) |
+| `the package depends on <identities>, which tm would have to fetch: tm never fetches packages, so Periphery cannot build it here` | A Periphery rule on a package whose manifest names a source-control or registry dependency ([periphery](#periphery)) |
 | `no compile database (compile_commands.json) or compile flags (compile_flags.txt) for <file> or any folder above it, so clang-tidy would check it without flags` | A clang-tidy rule on a source with neither file at or above it ([clang-tidy](#clang-tidy)) |
 | `no Cargo.toml at or above the rule file's folder` | A clippy rule in a folder that is not inside a Cargo package |
 | ``<engine> <version> does not know the check `<check>`: <what it said>`` | The installed clippy, SwiftLint, ruff, pylint, clang-tidy, golangci-lint or gitleaks does not know the rule's `check`: a name it does not have, often because it is older than the rule. For cargo-audit, an advisory id its local advisory database does not hold (`<check> is not in the advisory database at <db>`). `<version>` is `(version unknown)` when the version could not be read |
@@ -73,7 +77,7 @@ Neither is ever "clean".
 | `shellcheck <version>: <check> is not in temperare's list of shellcheck codes (taken from shellcheck <list version>)` | A ShellCheck rule whose code is not on the list built into `tm`: the 510 codes of ShellCheck 0.11.0, so `<list version>` is `0.11.0` ([below](#shellcheck)) |
 | `reports only what a change adds; run with --base` | A git rule, and an ast-grep rule in count mode, run without `--base` ([git](#git), [ast-grep](#ast-grep)) |
 | `Tessera's slop records are not defined yet` | A rule with `engine = "tessera"` ([below](#tessera)) |
-| `no adapter for <engine> in this build` | A rule whose engine the rule file accepts and this `tm` cannot run yet: `vulture`, `periphery` and fourteen more ([below](#engines-with-no-adapter-yet)) |
+| `no adapter for <engine> in this build` | A rule whose engine the rule file accepts and this `tm` cannot run yet: the fourteen listed [below](#engines-with-no-adapter-yet) |
 
 A rule that is refused, or that covers no file, is settled before any of these is looked at
 ([the order a rule settles in](#the-order-a-rule-settles-in)).
@@ -99,6 +103,8 @@ or the rule's own files could not be used:
 - a golangci-lint `check` with a part that is not a linter name, or that is `typecheck`;
 - a gitleaks `check` with an empty part, or a part that is `ALL`;
 - a cargo-audit `check` that is not an advisory id or a kind, or that is `yanked`;
+- a vulture `check` that is not one vulture code;
+- a Periphery `check` that is not one of Periphery's result hints or `all`;
 - `params` that cannot be used.
 
 A rule refused before its engine ran has no exit code. The reason is printed under the counts line of the text
@@ -113,14 +119,16 @@ Each rule is settled by the first of these that applies:
    `rustdoc::` lint, SwiftLint's `custom_rules`, a ruff `check` with a part that is not a code, a ShellCheck `check`
    that is not one code, a git `check` other than `test_ratio`, a pylint `check` that is not one message id or is an
    old one, a clang-tidy `check` that is not one check name, a golangci-lint `check` that is not linter names, a
-   gitleaks `check` with an empty or `ALL` part, a cargo-audit `check` that is not an advisory id or a kind, an
+   gitleaks `check` with an empty or `ALL` part, a cargo-audit `check` that is not an advisory id or a kind, a
+   vulture `check` that is not one vulture code, a Periphery `check` that is not a result hint, an
    ast-grep `check` that is an absolute path or
    whose `..` climbs above the rule file's folder at any step (read from the text alone), a
    param the engine does not take, a param with a bad value, or a threshold out of range or with another check
    (ast-grep's placeholder params apart: see below). The rule is failed (exit 5).
 2. **No file.** The rule covers none of the files git lists in the rule file's folder, or it is a ShellCheck rule
    and covers none of the scripts there, or it is a cargo-audit rule and the folder has no `Cargo.lock` the rule
-   covers. The rule runs nothing ([below](#a-rule-that-covers-no-file)).
+   covers, or it is a clang-tidy rule and covers none of the C-family sources there. The rule runs nothing
+   ([below](#a-rule-that-covers-no-file)).
 3. **Needs a base.** A rule with `only_with_base = true`, run without `--base`, settles here, whatever its engine.
    Its engine is not looked up on `PATH` and runs no check for it, and when it shares a run with other rules its
    check is left out of that run. It is not applicable: counted in the text, listed under `not_applicable` in JSON
@@ -132,23 +140,21 @@ Each rule is settled by the first of these that applies:
 
 So a refused rule is failed (exit 5) whether or not its engine is installed, and installing the engine would not help it. Its engine is still asked its version, as above. The one exception is an `only_with_base` rule run without `--base`, which is listed under `not_applicable` instead, as any such rule is.
 
-Three refusals need more than the rule file, so they are made in the run, at step 5, after steps 2 to 4; the ast-grep YAML's own disk checks are listed in its section:
+Four refusals need more than the rule file, so they are made in the run, at step 5, after steps 2 to 4; the ast-grep YAML's own disk checks are listed in its section:
 
 - a clippy lint group, which is told from a lint by `clippy-driver -W help`;
 - an ast-grep rule file that is missing or cannot be read, or that leads outside the rule file's folder through a
   symlink;
 - an ast-grep placeholder param that cannot be used (a `{{name}}` with no param, a param with no `{{name}}`, a
-  param that is neither a string nor a list of strings), which needs the YAML read.
+  param that is neither a string nor a list of strings), which needs the YAML read;
+- a gitleaks rule whose folder carries an exception outside the rule file: an allowlist in the config gitleaks
+  reads, a config that does not parse, or a `.gitleaksignore` that lists anything ([gitleaks](#gitleaks)).
 
 Such a rule fails when its engine is installed and it covers a file. With the engine missing it is not available,
 and when it covers no file it runs nothing.
 
 Outside a git repository a ShellCheck rule that finds ShellCheck fails on git's listing of its scripts, before its
 code is looked up in `tm`'s list ([shellcheck](#shellcheck)).
-
-A clang-tidy rule is told it has no source to check in its run, at step 5, not at step 2: with clang-tidy missing,
-a rule whose paths hold files but no C-family source is not available, and with clang-tidy installed it runs
-nothing ([clang-tidy](#clang-tidy)).
 
 ### A rule that covers no file
 
@@ -158,9 +164,8 @@ tree, and the untracked files git does not ignore. A rule that covers none of th
 not change its result (the engine is still asked its version for the engines line, below). A ShellCheck rule
 that covers a file is settled the same way when it covers none of the scripts in the folder, and so is a
 cargo-audit rule when the folder holds no `Cargo.lock` (a regular file, not a symlink) or the rule does not cover
-it ([cargo-audit](#cargo-audit)). A clang-tidy rule
-that covers a file but none of the C-family sources runs nothing too, once clang-tidy is found on `PATH`
-([above](#the-order-a-rule-settles-in)).
+it ([cargo-audit](#cargo-audit)), and so is a clang-tidy rule that covers a file but none of the C-family sources
+git lists there ([clang-tidy](#clang-tidy)), whether or not clang-tidy is installed.
 
 These are not among those files, so a rule that covers only such files covers no file: a file git ignores, a
 tracked file deleted from the work tree, a skip-worktree file whether or not it is there, and the files of an
@@ -190,7 +195,7 @@ version and listed, and a missing one is not. In `--json`, `saved.counted` holds
 `tm rules` shows each rule's scope.
 
 When git cannot list the files (the rule file's folder is in no git repository, or git is missing or fails), no
-rule is settled by its paths or its scripts, and each goes on to steps 3 to 5. A cargo-audit rule is the one
+rule is settled by its paths, its scripts or its C-family sources, and each goes on to steps 3 to 5. A cargo-audit rule is the one
 exception: when the rule file's folder is still found, `tm` looks for its `Cargo.lock` on disk, so a rule whose
 folder has no `Cargo.lock` it covers still settles here.
 
@@ -587,8 +592,8 @@ which needs no rule.
   folder (the tracked files, then the untracked files git does not ignore): those ending `.c`, `.cc`, `.cpp`,
   `.cxx`, `.c++`, `.m` or `.mm`, that are regular files and not symlinks, and that the rule covers. That is C, C++,
   Objective-C and Objective-C++. A header (`.h`, `.hpp`) is not handed over itself. A rule that covers files but
-  none of these sources runs nothing ([above](#a-rule-that-covers-no-file)); this is found in the run, after
-  clang-tidy is found on `PATH`.
+  none of these sources runs nothing ([above](#a-rule-that-covers-no-file)); this is settled before clang-tidy is
+  looked for, so it is the same whether or not clang-tidy is installed.
 - **What runs,** in the rule file's folder:
 
   ```
@@ -664,7 +669,7 @@ which needs no rule.
 - **What runs:**
 
   ```
-  gitleaks dir --no-banner --no-color --redact --report-format=sarif --report-path=- --enable-rule=<check> [--config=<config>] .
+  gitleaks dir --no-banner --no-color --redact --ignore-gitleaks-allow --report-format=sarif --report-path=- --enable-rule=<check> [--config=<config>] .
   ```
 
   `dir` scans the files in the folder as they are on disk; gitleaks' `git` mode, which reads the history, is not
@@ -686,7 +691,24 @@ which needs no rule.
 - **Failed** when what gitleaks prints is not a SARIF log. The reason is `gitleaks printed no SARIF log and no
   error`, with its error lines in its place when it printed any.
 - **`config`:** passed as `--config=<config>`, as written, so a relative path is taken from the rule file's folder.
-  Without one, gitleaks reads the folder's `.gitleaks.toml` when there is one, else its own default rules.
+  Without one, gitleaks reads the folder's `.gitleaks.toml` when there is one, else its own default rules. The
+  config's own rules apply.
+- **The rule file is the only home for an exception.** A `gitleaks:allow` comment in the code silences nothing
+  (`--ignore-gitleaks-allow`). gitleaks' other ways to silence a finding cannot be turned off, so each fails the
+  rule before gitleaks runs, once gitleaks is found on `PATH`:
+  - an allowlist in the config gitleaks reads (the rule's `config`, else the folder's `.gitleaks.toml`), or in a
+    file it extends, with its keys matched in any case as gitleaks reads them. The reason is
+    ``gitleaks config `<name>` declares an allowlist (`<key path>`); the rule file is the only home for an exception, so tm reads no findings under it``.
+    A part of the key path that is not one of gitleaks' table names prints as `<key>`, since config text can hold a
+    secret;
+  - such a config that does not parse as TOML:
+    ``gitleaks config `<name>` does not parse as TOML, so tm cannot tell whether it declares an allowlist and reads no findings under it``;
+  - a `.gitleaksignore` in the rule file's folder that lists anything (a line that is not empty and not a `#`
+    comment): `` `.gitleaksignore` in the rule's folder lists findings to ignore; the rule file is the only home for an exception, so tm reads no findings under it ``.
+    gitleaks reads that file whatever it is told, so `tm` cannot switch it off.
+
+  gitleaks' own default configuration leaves some paths out of every scan, such as `.svg` files and
+  `package-lock.json`. That is gitleaks' definition of its checks, as a lint's scope is, not an exception.
 - **`params`:** none. Any param fails the rule before gitleaks runs, with the reason
   `gitleaks param <name>: a gitleaks rule takes no params`.
 - **A finding** is placed at the result's line and column.
@@ -736,6 +758,91 @@ which needs no rule.
   `; no patched version`.
 - **Runs alone.** A cargo-audit rule never shares a run.
 
+## vulture
+
+- **Available when** `vulture` is on `PATH`.
+- **Where:** the rule file's folder.
+- **What runs:**
+
+  ```
+  vulture --config=/dev/null .
+  ```
+
+  with `PYTHONWARNINGS=ignore` set for the run, so a Python warning about a file vulture reads well does not land
+  on stderr. Every Python file under the folder is scanned; findings outside the rule's scope are dropped after.
+  vulture does not read `.gitignore`, so a virtualenv inside the folder is scanned unless the rule's `paths` or
+  `exclude` leave it out. With no Python file, vulture prints nothing and the rule reads clean. Nothing reaches the
+  network.
+- **`check`:** one vulture code: `V101` (unused attribute), `V102` (class), `V103` (function), `V104` (import),
+  `V105` (method), `V106` (property), `V107` (variable, and unused argument) or `V201` (unreachable code). vulture
+  reports every kind at once, so `tm` keeps the findings of the rule's code. Any other check fails the rule before
+  vulture runs, with the reason
+  ``vulture check `<check>` is not a vulture code (one of V101, V102, V103, V104, V105, V106, V107, V201), so tm cannot tell which findings it selects``.
+  `F401` and `F841`, flake8's codes, are refused with the code to use instead: `V104` and `V107`.
+- **No confidence floor.** vulture's confidence is fixed by kind (60 for definitions, 90 for imports, 100 for
+  unreachable code and unused arguments), so the check already chooses it.
+- **Failed** when vulture exits with anything but 0 (nothing found) or 3 (findings), and when it writes anything to
+  stderr, which it does only for a file it could not read or parse: a rule never reads clean over a file vulture
+  skipped. Also when it prints a line that is not a finding.
+- **`config`:** not used. `--config=/dev/null` keeps vulture from reading the folder's `pyproject.toml`, whose
+  `[tool.vulture]` settings (`ignore_names`, `ignore_decorators`, `exclude`, `min_confidence`) would hide findings
+  outside the rule file.
+- **What vulture still honours,** which `tm` cannot turn off:
+  - a `# noqa` comment on the item's line, bare or naming its code (or `F401`, `F841`). A repository that takes
+    `standard@1` gets each such comment reported by `tm-python-suppression`, as any `# noqa` is;
+  - a whitelist module the repository keeps, such as one made with `--make-whitelist`: it is Python code under the
+    folder, so the names it uses count as used, and `tm` cannot tell it from real use;
+  - vulture's own bundled whitelists for standard-library modules (such as `sys`, `logging` and `unittest`), read
+    when the code imports the module. That is vulture's definition of its check, not an exception.
+- **`params`:** none. Any param fails the rule before vulture runs, with the reason
+  `vulture param <name>: a vulture rule takes no params`.
+- **A finding** is placed at vulture's line, with no column, and its message is vulture's without the confidence.
+- **Runs alone.** A vulture rule never shares a run.
+
+## periphery
+
+- **Available when** `periphery` is on `PATH`, and the rule file's folder is inside a Swift package. Periphery finds
+  unused code from a build's index, so `tm` builds the package first, with `swift`, which must be on `PATH` too.
+- **Where:** the nearest folder at or above the rule file's folder that holds a `Package.swift`. The whole package
+  is built and scanned; only results in the rule file's folder are kept.
+- **Swift packages only.** With no `Package.swift` at or above the folder, as in an Xcode project, the rule is not
+  available:
+  `no Package.swift at or above the rule file's folder: Periphery builds the project, and tm runs it only on a Swift package`.
+- **What runs,** each in the package's folder:
+
+  ```
+  swift package --scratch-path <scratch>/build dump-package
+  swift package --scratch-path <scratch>/build describe --type json
+  swift build --build-tests --build-system swiftbuild --scratch-path <scratch>/build --disable-automatic-resolution
+  periphery scan --skip-build --format json --disable-update-check --quiet --index-store-path <scratch>/build/out --json-package-manifest-path <scratch>/describe.json --config <scratch>/periphery.yml
+  ```
+
+  `<scratch>` is a folder `tm` makes under the system's temporary folder and removes after the run, however it
+  ends: nothing is built in the repository or in DerivedData. The tests are built too, so code only they use counts
+  as used.
+- **Offline.** `tm` never fetches packages. A package whose manifest names a source-control or registry dependency
+  is not available before anything is built:
+  `the package depends on <identities>, which tm would have to fetch: tm never fetches packages, so Periphery cannot build it here`.
+  `--disable-automatic-resolution` makes a build that would resolve a dependency fail instead, and
+  `--disable-update-check` keeps Periphery from asking for a newer release.
+- **Failed** when a `swift` step exits with anything but 0 (a package that does not compile gives no answer), with
+  its stderr, or its stdout when stderr is empty; when the build leaves no index store; and when Periphery prints
+  something that is not its JSON result list.
+- **`check`:** one of Periphery's result hints, written as Periphery writes it: `unused`, `assignOnlyProperty`,
+  `redundantProtocol`, `redundantConformance`, `redundantPublicAccessibility`, `superfluousIgnoreCommand`, or
+  `all` for every result. Periphery reports every result at once, so `tm` keeps those with the rule's hint. Any other
+  check fails the rule before anything runs, with the reason
+  ``periphery check `<check>` is not a Periphery result hint: all, unused, assignOnlyProperty, redundantProtocol, redundantConformance, redundantPublicAccessibility or superfluousIgnoreCommand``.
+- **`config`:** not used. `--config` names an empty file `tm` writes, so the package's `.periphery.yml`, whose
+  retain and exclude options are exceptions outside the rule file, is never read.
+- **What Periphery still honours,** which `tm` cannot turn off: `// periphery:ignore` comments in the code (also
+  `periphery:ignore:all` and `periphery:ignore:parameters`) and `// periphery:override`. No released baseline set
+  reports them: `standard@1`'s `tm-swift-suppression` reports `swiftlint:disable` only.
+- **`params`:** none. Any param fails the rule before anything runs, with the reason
+  `periphery param <name>: a periphery rule takes no params`.
+- **A finding** is placed at the result's line and column and reads `<kind> <name>: <hints>`.
+- **Runs alone.** A Periphery rule never shares a run.
+
 ## tessera
 
 A rule may name `tessera` as its engine. The rule file accepts it, and a Tessera rule that covers a file is reported
@@ -761,8 +868,6 @@ A rule may name any of these engines, which have no adapter in this build:
 
 | Engine | Checks |
 |---|---|
-| `vulture` | Dead code in Python |
-| `periphery` | Dead code in Swift |
 | `eslint` | JavaScript and TypeScript |
 | `mypy` | Python types |
 | `pmd` | Java |

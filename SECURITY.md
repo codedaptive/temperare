@@ -28,18 +28,21 @@ These are properties of the code, not of how it is deployed.
 - **One place starts programs.** Everything Temperare runs, git included, goes through one small crate, `procio`.
   The repository's own rule file holds that line: a rule reports any other code that starts a process.
 - **It does not edit what it checks.** `tm check` and `tm rules` write to stdout and stderr. `tm check` creates
-  temporary files in the system's temporary folder for three kinds of rule, and only for them:
+  temporary files in the system's temporary folder for four kinds of rule, and only for them:
   - an ast-grep rule that gets as far as its scan (each one, with or without `params`): a copy of its rule file
     with its params filled in, `tm-ast-grep-<pid>-<n>.yml`;
   - a SwiftLint rule with `max_complexity` or `max_lines`: the threshold as a SwiftLint config,
     `tm-swiftlint-<pid>-<n>.yml`;
   - a clippy rule with `max_nesting`: a new folder `tm-clippy-<pid>-<n>` holding one `clippy.toml` with the
-    threshold.
+    threshold;
+  - a Periphery rule that gets as far as its run: a new folder `tm-periphery-<pid>-<n>` holding the package's
+    build and its index, SwiftPM's description of the package and an empty Periphery config. Nothing is built in
+    the repository or in DerivedData.
 
   Each is created new, never opened over an existing file or folder, and removed when the run of that rule ends. If
   `tm` is killed in between, it is left there. No config file of the repository is written. A ruff threshold is
-  passed as an argument, and a ShellCheck, git, pylint, clang-tidy, golangci-lint, gitleaks or cargo-audit rule
-  writes no file. A
+  passed as an argument, and a ShellCheck, git, pylint, clang-tidy, golangci-lint, gitleaks, cargo-audit or vulture
+  rule writes no file. A
   golangci-lint run passes `--fix=false`, so a repository config that asks golangci-lint to fix cannot edit the
   code, and runs go with `GOFLAGS` removed, so go does not rewrite `go.mod` or `go.sum`. A rule that is refused, or
   that covers no file, writes none either. Besides these, `tm check` appends one line to its savings log,
@@ -75,11 +78,17 @@ repository's own, and ast-grep runs whatever it holds over the code. Running `tm
 that repository's instructions.
 
 **The engines are trusted programs.** Temperare finds git, cargo, SwiftLint, ruff, ast-grep, ShellCheck, pylint,
-clang-tidy, golangci-lint, go, gitleaks and cargo-audit on your `PATH` and runs whatever is there, with your environment and your privileges. Whoever controls `PATH` controls what runs.
+clang-tidy, golangci-lint, go, gitleaks, cargo-audit, vulture, Periphery and swift on your `PATH` and runs whatever is there, with your environment and your privileges. Whoever controls `PATH` controls what runs.
 There is no sandbox.
 
 **A clippy rule builds the code.** `cargo clippy` compiles the crate. A build runs that crate's build scripts and
 procedural macros, and cargo may download its dependencies. That is code from the repository running as you.
+
+**A Periphery rule builds the package.** Before Periphery scans, `swift` reads the package's `Package.swift`, which
+is Swift code that runs as you, and `swift build` compiles the package and its tests, running any build plugins it
+declares. The build goes to Temperare's temporary folder, and with `--disable-automatic-resolution` it fetches no
+dependency; a package whose manifest names a source-control or registry dependency is not available before
+anything is built.
 
 **A golangci-lint rule loads the code with go.** go runs with `GOTOOLCHAIN=local`, `GOPROXY=off` and `GOSUMDB=off`,
 so it downloads no toolchain and no module and looks up no checksum; code that needs a module not already on the
@@ -113,9 +122,22 @@ reports. The exceptions:
 - a golangci-lint run's fixed flags (`--enable-only`, `--fix=false`, no cap on issues) hold over the repository's
   config;
 - a gitleaks run has `GITLEAKS_CONFIG` and `GITLEAKS_CONFIG_TOML` removed from its environment, so a config set
-  there cannot replace the rule's `config` or the folder's `.gitleaks.toml`;
+  there cannot replace the rule's `config` or the folder's `.gitleaks.toml`; it passes `--ignore-gitleaks-allow`, so
+  a `gitleaks:allow` comment silences nothing; and the rule fails before gitleaks runs when the config gitleaks
+  reads (or a file it extends) declares an allowlist or does not parse, or when the folder's `.gitleaksignore`
+  lists anything, since gitleaks would apply those whatever it is told;
 - a cargo-audit rule fails when cargo-audit's report shows it applied an `audit.toml` (settings other than its
-  defaults), since that file's `ignore` list would silence advisories outside the rule file.
+  defaults), since that file's `ignore` list would silence advisories outside the rule file;
+- a vulture run passes `--config=/dev/null`, so the `[tool.vulture]` table of the repository's `pyproject.toml` is
+  not read;
+- a Periphery run passes `--config` naming an empty file Temperare writes, so the package's `.periphery.yml` is not
+  read.
+
+**Some suppressions written in the code cannot be turned off.** vulture honours a `# noqa` comment on an item's
+line, and reads a whitelist module the repository keeps as ordinary code that uses names. Periphery honours
+`// periphery:ignore` (with `:all` or `:parameters`) and `// periphery:override`. Neither engine has a switch for
+these, so a finding they silence is not reported and not counted. A repository that takes `standard@1` gets each
+`# noqa` reported by `tm-python-suppression`; no released set reports the Periphery comments.
 
 **There is no time limit.** Temperare waits for an engine for as long as it runs. An engine that hangs, hangs the
 check.
@@ -141,8 +163,8 @@ version), and whether the engine is installed does not change the result. One of
 then reported as covering nothing, and makes the exit code 6 when nothing ranks above it; a baseline set's rule is
 only counted as not applicable and does not change the exit code. A ShellCheck rule that covers no shell script is
 the same, and so is a cargo-audit rule whose folder has no `Cargo.lock` it covers (only the rule file's folder's own
-`Cargo.lock` is read). A clang-tidy rule that covers files but no C-family source is the same when clang-tidy is installed;
-without clang-tidy it is not available (exit 3). Try a new rule on a file you know breaks it.
+`Cargo.lock` is read), and so is a clang-tidy rule that covers files but no C-family source, whether or not
+clang-tidy is installed. Try a new rule on a file you know breaks it.
 
 **Engine messages are printed as given.** In the text output a finding's message is the engine's own text
 (gitleaks' apart, as above). The JSON output escapes it.
@@ -150,7 +172,8 @@ without clang-tidy it is not available (exit 3). Try a new rule on a file you kn
 ## Running it on code you do not trust
 
 - Read `temperare.toml` first, and the files it names: each ast-grep rule file and each `config`.
-- Expect a clippy rule to build the code. If you would not build the repository, do not check it with a clippy rule.
+- Expect a clippy or Periphery rule to build the code. If you would not build the repository, do not check it with
+  either.
 - Use a rule file of your own with `--rules <path>` when you want your rules and not the repository's.
 - Run it where a build of that code would be safe: a container, a virtual machine or a throwaway account.
 

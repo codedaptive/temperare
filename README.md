@@ -115,6 +115,8 @@ binary and none of the above, `cargo install --path crates/cli --locked` puts it
 | `golangci-lint` | `golangci-lint` and `go` |
 | `gitleaks` | `gitleaks` |
 | `cargo-audit` | `cargo-audit`, and its advisory database already fetched (`cargo audit update-db`): `tm` never fetches it |
+| `vulture` | `vulture` |
+| `periphery` | `periphery` and `swift`, which builds the package; the rule file's folder must be inside a Swift package |
 
 `tm rules` shows, for each rule, whether its engine is available.
 
@@ -258,7 +260,7 @@ approved = "who approved it"
 | Key of a `[[rule]]` | Meaning |
 |---|---|
 | `id` | The rule's name in every report: lower-case letters, digits and `-`, unique in the file |
-| `engine` | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`, `git`, `pylint`, `clang-tidy`, `golangci-lint`, `gitleaks`, `cargo-audit` or `tessera` (what each runs today: [Engines](#engines)); also `vulture`, `periphery`, `eslint`, `mypy`, `pmd`, `detekt`, `rubocop`, `phpstan`, `dart`, `markdownlint`, `yamllint`, `actionlint`, `hadolint`, `vale`, `stylelint` and `sqlfluff`, accepted and "not available" until their adapters land |
+| `engine` | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`, `git`, `pylint`, `clang-tidy`, `golangci-lint`, `gitleaks`, `cargo-audit`, `vulture`, `periphery` or `tessera` (what each runs today: [Engines](#engines)); also `eslint`, `mypy`, `pmd`, `detekt`, `rubocop`, `phpstan`, `dart`, `markdownlint`, `yamllint`, `actionlint`, `hadolint`, `vale`, `stylelint` and `sqlfluff`, accepted and "not available" until their adapters land |
 | `check` | What the engine is asked. clippy: one lint the toolchain lists (`clippy::bool_comparison`), or `warnings` for every warning clippy reports; not a lint group. SwiftLint: one rule identifier (`force_cast`). ruff: a rule code, a code prefix or `ALL` (`E711`, `E7`), or several joined by commas. ast-grep: the path of a rule file inside the rule file's folder. ShellCheck: one code (`SC2086`). git: `test_ratio`. pylint: one message id (`C0121`). clang-tidy: one check name (`bugprone-branch-clone`). golangci-lint: linter names (`staticcheck`, or `staticcheck,govet`). gitleaks: rule ids (`aws-access-token`, or several joined by commas). cargo-audit: an advisory id (`RUSTSEC-2023-0071`) or a kind (`vulnerability`, `unmaintained`, `unsound`, `notice`, `all`) |
 | `fix` | The text shown with each finding |
 | `severity` | `error` (the default) or `warning` |
@@ -268,7 +270,7 @@ approved = "who approved it"
 | `kits` | The rule applies only inside the named kits |
 | `outside_kits` | The rule applies everywhere except inside the named kits: "this is named only inside kit Y" |
 | `config` | The engine's own config file, passed to SwiftLint, ruff, ShellCheck, pylint, clang-tidy, golangci-lint or gitleaks as written |
-| `params` | Values for the engine: names filled into an ast-grep rule (such as a list of type names), `allow` (lints left out) and `max_nesting` for clippy, `max_complexity` for ruff and swiftlint, `max_lines` for swiftlint, `max_ratio`, `floor` and `test_paths` for git. ShellCheck, pylint, clang-tidy, golangci-lint, gitleaks and cargo-audit take none |
+| `params` | Values for the engine: names filled into an ast-grep rule (such as a list of type names), `allow` (lints left out) and `max_nesting` for clippy, `max_complexity` for ruff and swiftlint, `max_lines` for swiftlint, `max_ratio`, `floor` and `test_paths` for git. ShellCheck, pylint, clang-tidy, golangci-lint, gitleaks, cargo-audit, vulture and Periphery take none |
 
 `version = 1` is required, and so are a rule's `id`, `engine`, `check` and `fix`. A kit is a named set of paths,
 `[kits.<name>]`, with an optional `owner`. A finding's owner is the owner of the first kit that holds its file, else
@@ -337,8 +339,9 @@ available or not applicable.
 | `golangci-lint` | `golangci-lint run` in the rule file's folder, with only the rule's linters on, and go kept from downloading anything | Go |
 | `gitleaks` | `gitleaks dir` on the rule file's folder, with only the rule's rule ids on; the secret is never printed | Secrets in any file |
 | `cargo-audit` | `cargo-audit audit` on the rule file's folder's `Cargo.lock`, against the advisory database already on this machine | Rust dependencies with a RustSec advisory |
+| `vulture` | `vulture` in the rule file's folder, reading none of the repository's config | Dead code in Python |
+| `periphery` | A build of the Swift package with `swift`, in a temporary folder, then `periphery scan` on its index, reading none of the repository's config; only on a Swift package, never fetching a dependency | Dead code in Swift |
 | `tessera` | Nothing | Not available today |
-| `vulture`, `periphery` | Nothing yet | Dead code in Python and Swift. Accepted in the rule file; not available until each adapter lands |
 | `eslint`, `mypy`, `pmd`, `detekt`, `rubocop`, `phpstan`, `dart` | Nothing yet | JavaScript and TypeScript, Python types, Java, Kotlin, Ruby, PHP and Dart. Accepted in the rule file; not available until each adapter lands |
 | `markdownlint`, `yamllint`, `actionlint`, `hadolint`, `vale`, `stylelint`, `sqlfluff` | Nothing yet | Markdown, YAML, GitHub Actions workflows, Dockerfiles, prose, CSS and SQL. Accepted in the rule file; not available until each adapter lands |
 
@@ -346,8 +349,8 @@ Engines are run as programs. Rules on the same engine with the same `config` and
 engine can answer each of them in it, so ten ruff rules for ten codes can be one ruff run; each rule still keeps
 only its own findings. A rule whose params reach the engine through a temporary file or folder runs alone, even with
 identical params: a SwiftLint rule with `max_complexity` or `max_lines`, a clippy rule with `max_nesting`, an
-ast-grep rule with `params`. A ShellCheck, git, pylint, clang-tidy, golangci-lint, gitleaks or cargo-audit rule
-always runs alone.
+ast-grep rule with `params`. A ShellCheck, git, pylint, clang-tidy, golangci-lint, gitleaks, cargo-audit, vulture
+or Periphery rule always runs alone.
 Temperare links no engine and takes
 its findings only from what the engine prints. The report shows the rule's own `severity` and `fix`; the engine's
 own severity for a finding is not read.
@@ -378,7 +381,7 @@ A rule `tm` can refuse from the rule file alone fails whether or not its engine 
 **A rule that covers no file runs nothing, and the report says so.** Before any rule runs, `tm` asks git for the
 files of the rule file's folder: the tracked files in the work tree and the untracked files git does not ignore. A
 rule that covers none of them is not run (nor is a ShellCheck rule that covers no script, a cargo-audit rule whose
-folder has no `Cargo.lock` it covers, or a clang-tidy rule that covers no C-family source once clang-tidy is found),
+folder has no `Cargo.lock` it covers, or a clang-tidy rule that covers no C-family source),
 and whether its engine is
 installed does not change its result (the engine is still asked its version for the engines list). A rule of your
 own is then listed as `covers nothing: <rule> (<engine>)`, is counted, and makes the exit 6 when nothing ranks
@@ -459,10 +462,9 @@ Temperare runs other programs with your privileges, and the rule file decides wh
   `tm baseline test` on the ready sets, `house@1` and `standard@1`, and in the acceptance record all 89 of their
   rules (36 and 53) hold on their own failing and passing cases.
 - **Platforms:** built and accepted on macOS. The code is written for Unix systems; Linux and Windows are untested.
-- **Not available today:** rules with `engine = "tessera"`; and rules naming `vulture`, `periphery`, `eslint`,
-  `mypy`, `pmd`, `detekt`, `rubocop`, `phpstan`, `dart`, `markdownlint`, `yamllint`, `actionlint`, `hadolint`,
-  `vale`, `stylelint` or `sqlfluff`, which the rule file accepts before their adapters land (see
-  [Engines](#engines)).
+- **Not available today:** rules with `engine = "tessera"`; and rules naming `eslint`, `mypy`, `pmd`, `detekt`,
+  `rubocop`, `phpstan`, `dart`, `markdownlint`, `yamllint`, `actionlint`, `hadolint`, `vale`, `stylelint` or
+  `sqlfluff`, which the rule file accepts before their adapters land (see [Engines](#engines)).
 - **License:** MIT. See [`LICENSE`](LICENSE).
 
 ---
