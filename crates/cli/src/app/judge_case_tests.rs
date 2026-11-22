@@ -1,13 +1,13 @@
 //! ZUT for judge_case.rs: each outcome of a failing and of a passing case, the whys written out by hand. Every row is
 //! given the cause `EngineNotOnPath`; only the not-available verdict carries it.
-//! A finding with no line (stored 0) prints as `:0` and matches an expected line of 0.
+//! A finding with no line (`line()` None) prints its path alone and matches an expected line of 0.
 
 use super::judge_case::judge_case;
 use crate::output::CaseVerdict;
 use engines::NotAvailableCause::EngineNotOnPath;
 use rules::{Engine, ExpectedFinding, Finding, Kind, RelPath, RuleOutcome, Severity};
 
-fn finding(rule: &str, path: &str, line: u32) -> Finding {
+fn finding(rule: &str, path: &str, line: impl Into<Option<u32>>) -> Finding {
     Finding::new(rule, (Engine::Ruff, Kind::Quality, Severity::Error), RelPath::new(path), line, None, "w", "f")
 }
 
@@ -31,8 +31,14 @@ fn judge_case_rows() {
         (
             "failing, finding with no line, expected line 3",
             true,
-            found(vec![finding("tm-zeta", "pkg/a.py", 0)]),
-            broken("gave tm-zeta at pkg/a.py:0; expected tm-zeta at pkg/a.py:3"),
+            found(vec![finding("tm-zeta", "pkg/a.py", None)]),
+            broken("gave tm-zeta at pkg/a.py; expected tm-zeta at pkg/a.py:3"),
+        ),
+        (
+            "failing, two findings, one with no line",
+            true,
+            found(vec![finding("tm-zeta", "pkg/a.py", None), finding("tm-zeta", "pkg/a.py", 9)]),
+            broken("gave tm-zeta at pkg/a.py, tm-zeta at pkg/a.py:9; expected tm-zeta at pkg/a.py:3"),
         ),
         (
             "failing, wrong line",
@@ -88,7 +94,7 @@ fn judge_case_rows() {
         found(vec![finding("tm-zeta", "src/a.py", 3)]), CaseVerdict::Holds, &normalized_expected);
     let no_line_expected = ExpectedFinding { rule_id: "tm-zeta".into(), path: "pkg/a.py".into(), line: 0 };
     let no_line_row = ("failing, finding with no line, expected line 0", true,
-        found(vec![finding("tm-zeta", "pkg/a.py", 0)]), CaseVerdict::Holds, &no_line_expected);
+        found(vec![finding("tm-zeta", "pkg/a.py", None)]), CaseVerdict::Holds, &no_line_expected);
     for (name, failing, outcome, want, expected) in rows.into_iter()
         .map(|(name, failing, outcome, want)| (name, failing, outcome, want, &expected))
         .chain([normalized_row, no_line_row])

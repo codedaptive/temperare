@@ -27,5 +27,9 @@
 97|vulture_off_path_is_not_available|Done 9: vulture through a rule file
 98|a_periphery_result_is_reported_with_its_rule_place_fix_and_version|Done 9: Periphery through a rule file
 98|periphery_off_path_is_not_available|Done 9: Periphery through a rule file
+99|a_gitleaks_secret_is_reported_with_its_rule_place_fix_and_version|Done 9: gitleaks through a rule file
+99|gitleaks_off_path_is_not_available|Done 9: gitleaks through a rule file
+99|a_cargo_audit_advisory_is_reported_on_cargo_lock_with_no_line|Done 9: cargo-audit through a rule file
+99|cargo_audit_off_path_is_not_available|Done 9: cargo-audit through a rule file
 100|two_ruff_rules_share_one_engine_run|Done 10: the baseline
 100|the_shipped_baseline_sets_hold|Done 10: the baseline

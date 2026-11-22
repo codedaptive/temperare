@@ -79,6 +79,18 @@ check = "unused"
 fix = "none"
 
 [[rule]]
+id = "head-gitleaks"
+engine = "gitleaks"
+check = "aws-access-token"
+fix = "none"
+
+[[rule]]
+id = "head-cargo-audit"
+engine = "cargo-audit"
+check = "all"
+fix = "none"
+
+[[rule]]
 id = "head-tessera"
 engine = "tessera"
 check = "erosion"
@@ -89,7 +101,7 @@ fix = "none"
 /// arguments that print its version. `temperare rules` lists only RULES' engines, so an engine it lists must be
 /// here; one added to RULES is added here too. Tessera's is asked only once `temperare` says
 /// Tessera is available, which it does not yet (S-20).
-const VERSIONS: [(&str, &str, &[&str]); 10] = [
+const VERSIONS: [(&str, &str, &[&str]); 12] = [
     ("clippy", "cargo", &["clippy", "--version"]),
     ("swiftlint", "swiftlint", &["version"]),
     ("ruff", "ruff", &["--version"]),
@@ -99,6 +111,8 @@ const VERSIONS: [(&str, &str, &[&str]); 10] = [
     ("clang-tidy", "clang-tidy", &["--version"]),
     ("vulture", "vulture", &["--version"]),
     ("periphery", "periphery", &["version"]),
+    ("gitleaks", "gitleaks", &["version"]),
+    ("cargo-audit", "cargo-audit", &["--version"]),
     ("tessera", "ts", &["--version"]),
 ];
 
