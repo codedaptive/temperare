@@ -1,7 +1,8 @@
-//! RIT for report_engines.rs with engines' real entries: report_engines reads each engine's version probe from
-//! `engines::entry_for`, so these cases hold only while ruff, SwiftLint, Clippy and ast-grep have one and Tessera has
-//! none; the no-adapter case needs at least one Engine variant with no adapter, picked from `Engine::ALL` by
-//! `entry_for`. The availability is a closure; no engine runs and no PATH lookup.
+//! ZIT for report_engines.rs, in cli's integration group, with engines' real entries: report_engines keeps an engine
+//! only when `engines::entry_for` gives it an entry with a version probe, so these cases hold only while the entries
+//! of ruff, SwiftLint, Clippy and ast-grep have a probe and Tessera's has none (Tessera has an entry; it is left out
+//! for having no probe). The no-adapter case needs at least one variant that `entry_for` gives no entry, picked from
+//! `Engine::ALL` by `entry_for`. The availability is a closure; no engine runs and no PATH lookup.
 
 use super::super::report_engines::report_engines;
 use engines::Availability;
