@@ -1,0 +1,68 @@
+{
+  "cLanguageStandard" : null,
+  "cxxLanguageStandard" : null,
+  "defaultLocalization" : null,
+  "dependencies" : [
+
+  ],
+  "name" : "Probe",
+  "packageKind" : {
+    "root" : [
+      "/private/tmp/periphery-binary-fixture-1zh9ck7k"
+    ]
+  },
+  "pkgConfig" : null,
+  "platforms" : [
+
+  ],
+  "products" : [
+
+  ],
+  "providers" : null,
+  "swiftLanguageVersions" : null,
+  "targets" : [
+    {
+      "checksum" : "0000000000000000000000000000000000000000000000000000000000000000",
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Bin",
+      "packageAccess" : false,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary",
+      "url" : "https://example.invalid/Bin.xcframework.zip"
+    },
+    {
+      "dependencies" : [
+
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "Local",
+      "packageAccess" : false,
+      "path" : "Local.xcframework",
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "binary"
+    }
+  ],
+  "toolsVersion" : {
+    "_version" : "6.0.0"
+  },
+  "traits" : [
+
+  ]
+}

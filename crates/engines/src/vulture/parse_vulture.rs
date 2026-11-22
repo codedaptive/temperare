@@ -11,7 +11,7 @@ use std::path::Path;
 /// whose message starts as one of `check`'s in `VULTURE_KINDS`. Its path, relative to `cwd`, is made relative to
 /// `folder` (a file outside `folder` is not a hit); its line is kept, vulture gives no column, and its `what` is the
 /// message without the confidence. Exit 0 (nothing found) and 3 (findings) are answers; any other exit is a
-/// `ParseError`. So is any stderr: with PYTHONWARNINGS=ignore (`run_vulture`) vulture writes there only for a file it
+/// `ParseError`. So is any stderr: with PYTHONWARNINGS=ignore (`run_vulture_with`) vulture writes there only for a file it
 /// could not read or parse, so a rule is never read clean, or partly clean, over a file vulture skipped. A line of
 /// another shape, or a message no kind starts, is a `ParseError` quoting the line, whatever the check.
 pub fn parse_vulture(out: &Output, check: &str, cwd: &Path, folder: &Path) -> Result<Vec<Hit>, ParseError> {

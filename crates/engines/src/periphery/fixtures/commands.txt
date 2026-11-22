@@ -9,6 +9,22 @@ Package.swift was replaced with a dependency-free manifest.
 swift package --package-path "$T" --scratch-path "$T/build" dump-package > dump_package_clean.json
 Neither command resolves dependencies. Absolute paths in the JSON are from that temporary package.
 
+Binary fixture: T=/private/tmp/periphery-binary-fixture-1zh9ck7k
+Package.swift declared .binaryTarget(name: "Bin", url: "https://example.invalid/Bin.xcframework.zip", checksum: "0000000000000000000000000000000000000000000000000000000000000000") and .binaryTarget(name: "Local", path: "Local.xcframework"). An empty Local.xcframework directory existed.
+Swift: swift-driver version: 1.168.6 Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1)
+Target: arm64-apple-macosx27.3.0
+sandbox-exec -p '(version 1)(allow default)(deny network-outbound (remote ip))(deny network-outbound (remote unix-socket (path-regex #"^/private/var/run/mDNSResponder")))' swift package --disable-sandbox --package-path "$T" --scratch-path "$T/build" dump-package > dump_package_binary.json
+Exit: 0. stderr: empty. stdout: 1084 bytes. The temporary folder was removed.
+Build with a remote binary target, no fixture kept: a package whose executable target depends on the same remote
+"Bin" binaryTarget, under the same sandbox profile and Swift 6.4.2:
+sandbox-exec -p '<profile above>' swift build --disable-sandbox --build-tests --build-system swiftbuild --scratch-path "$T/scratch" --disable-automatic-resolution
+Exit: 1. Output:
+    Downloading binary artifact https://example.invalid/Bin.xcframework.zip
+    error: failed downloading 'https://example.invalid/Bin.xcframework.zip' which is required by binary target 'Bin': downloadError("A server with the specified hostname could not be found.")
+So the build fetches a remote binary artifact even with --disable-automatic-resolution; tm refuses such a package
+before building. Control under the same profile: curl -m 5 http://192.0.2.1/ failed in 17 ms ("Could not connect
+to server"), not at its 5 s limit, so the network was denied.
+
 Scan fixture workspace: T=/var/folders/zc/zl4w__wx2xdfmd5lps9dp2000000gn/T/periphery-scan-fixture.W5ECgzZMGi
 The package is $T/package; $T/scratch is outside the package. Package.swift contained:
     // swift-tools-version: 6.0
@@ -35,3 +51,20 @@ From $T/package (the actual invocation set cwd using Python os.chdir before exec
 /opt/homebrew/bin/periphery scan --skip-build --format json --disable-update-check --quiet --index-store-path "$T/scratch/build/out" --json-package-manifest-path "$T/scratch/describe.json" --config "$T/scratch/periphery.yml" > scan.json
 periphery.yml was empty. scan.json is the second scan's unmodified stdout; its locations are canonical absolute
 paths into the temporary package. The tests use that same path as cwd and folder even after the package is removed.
+
+Two-local fixture and cycle experiment (Swift 6.4.2, arm64-apple-macosx27.3.0):
+T=/Users/bob/devlop/team-temperare/workcrews/engines/scratchpad/periphery-local-fixture-jd0gvfna
+The fixture package at $T/package declared .package(path: "First") and .package(path: "Second") in that order.
+Using the sandbox profile on line 16 and the Swift executable from /usr/bin/xcrun --find swift:
+sandbox-exec -p '<profile above>' swift package --disable-sandbox --package-path "$T/package" --scratch-path "$T/scratch" dump-package > dump_package_two_local.json
+Exit 0; stderr empty. The JSON is unmodified. The temporary tree was removed.
+
+Cycle experiment: the root executable package declared .package(path: "A"); library A declared
+.package(path: "../B"), and library B declared .package(path: "../A"). Each library had a source file.
+sandbox-exec -p '<profile above>' swift package --disable-sandbox --package-path "$T/package" --scratch-path "$T/scratch" dump-package
+The same command for $T/package/A and $T/package/B also exited 0; stderr was empty for all three.
+sandbox-exec -p '<profile above>' swift package --disable-sandbox --package-path "$T/package" --scratch-path "$T/scratch" describe --type json
+Exit 0; stderr empty.
+sandbox-exec -p '<profile above>' swift build --disable-sandbox --package-path "$T/package" --build-tests --build-system swiftbuild --scratch-path "$T/scratch" --disable-automatic-resolution
+Exit 0; stdout ended "Build complete!"; stderr warned "dependency 'a' is not used by any target".
+SwiftPM accepted and built this cycle; the temporary tree was removed.

@@ -8,6 +8,9 @@ use std::path::{Path, PathBuf};
 use engines::run_rules_versioned_at;
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
+#[path = "support/git.rs"]
+mod git_support;
+
 struct TempFolder(PathBuf);
 
 impl TempFolder {
@@ -48,11 +51,24 @@ fn vulture_rule_reports_findings_clean_config_warnings_and_absence() {
         ("warning", Some(violation), false, true, false, 1),
         ("no-python", None, false, false, false, 0),
         ("absent", Some(violation), false, false, true, 0),
+        ("ignored-venv", Some("def clean():\n    pass\nclean()\n"), false, false, false, 0),
+        ("tracked-broken", None, false, false, false, 0),
     ];
     let mut failed = Vec::new();
     for (name, source, config, warning, absent, count) in cases {
         let result = std::panic::catch_unwind(|| {
             let folder = TempFolder::new(name);
+            if name == "ignored-venv" || name == "tracked-broken" {
+                git_support::git(&folder.0, &["init", "-q"], b"");
+                if name == "ignored-venv" {
+                    fs::write(folder.0.join(".gitignore"), ".venv/\n").unwrap();
+                    fs::create_dir_all(folder.0.join(".venv/lib")).unwrap();
+                    fs::write(folder.0.join(".venv/lib/broken.py"), "def broken(:\n").unwrap();
+                } else {
+                    fs::write(folder.0.join("broken.py"), "def broken(:\n").unwrap();
+                    git_support::git(&folder.0, &["add", "broken.py"], b"");
+                }
+            }
             if let Some(source) = source { fs::write(folder.0.join("example.py"), source).unwrap(); }
             if source.is_none() { fs::write(folder.0.join("notes.txt"), "no Python here\n").unwrap(); }
             if config { fs::write(folder.0.join("pyproject.toml"), "[tool.vulture]\nignore_names = [\"dead\"]\n").unwrap(); }
@@ -69,6 +85,13 @@ fn vulture_rule_reports_findings_clean_config_warnings_and_absence() {
             } else { None };
             let runs = run_rules_versioned_at(&file, &folder.0, &[], None).runs;
             assert_eq!(runs.len(), 1, "{name}: {runs:?}");
+            if name == "tracked-broken" {
+                let RuleOutcome::Failed { stderr, .. } = &runs[0].outcome else {
+                    panic!("{name}: expected failure, got {:?}", runs[0].outcome);
+                };
+                assert!(stderr.contains("broken.py"), "{name}: {stderr}");
+                return;
+            }
             if absent {
                 assert_eq!(runs[0].outcome, RuleOutcome::NotAvailable {
                     rule: "dead-function".into(), engine: Engine::Vulture, why: "vulture not found on PATH".into(),
