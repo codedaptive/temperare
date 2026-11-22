@@ -36,7 +36,8 @@ These are properties of the code, not of how it is deployed.
   - a clippy rule with `max_nesting`: a new folder `tm-clippy-<pid>-<n>` holding one `clippy.toml` with the
     threshold;
   - a Periphery rule that gets as far as its run: a new folder `tm-periphery-<pid>-<n>` holding the package's
-    build and its index, SwiftPM's description of the package and an empty Periphery config. Nothing is built in
+    build and its index, a scratch path for each local package's manifest reading, SwiftPM's description of the
+    package and an empty Periphery config. Nothing is built in
     the repository or in DerivedData.
 
   Each is created new, never opened over an existing file or folder, and removed when the run of that rule ends. If
@@ -84,11 +85,15 @@ There is no sandbox.
 **A clippy rule builds the code.** `cargo clippy` compiles the crate. A build runs that crate's build scripts and
 procedural macros, and cargo may download its dependencies. That is code from the repository running as you.
 
-**A Periphery rule builds the package.** Before Periphery scans, `swift` reads the package's `Package.swift`, which
-is Swift code that runs as you, and `swift build` compiles the package and its tests, running any build plugins it
-declares. The build goes to Temperare's temporary folder, and with `--disable-automatic-resolution` it fetches no
-dependency; a package whose manifest names a source-control or registry dependency is not available before
-anything is built.
+**A Periphery rule builds the package.** Before Periphery scans, `swift` reads the package's `Package.swift`, and
+the `Package.swift` of each local package it depends on; each is Swift code that runs as you. `swift build` then
+compiles the package and its tests, running any build plugins it declares. The package is looked for no higher
+than the top of the git repository, and a local package outside the repository, or one that does not resolve,
+makes the rule not available before anything is built, so Temperare asks swift to read no manifest outside the
+repository. The build goes
+to Temperare's temporary folder, and with `--disable-automatic-resolution` it fetches no dependency; a source-control
+or registry dependency, or a binary target with a `url`, in any of those manifests makes the rule not available
+before anything is built.
 
 **A golangci-lint rule loads the code with go.** go runs with `GOTOOLCHAIN=local`, `GOPROXY=off` and `GOSUMDB=off`,
 so it downloads no toolchain and no module and looks up no checksum; code that needs a module not already on the

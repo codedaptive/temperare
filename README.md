@@ -339,8 +339,8 @@ available or not applicable.
 | `golangci-lint` | `golangci-lint run` in the rule file's folder, with only the rule's linters on, and go kept from downloading anything | Go |
 | `gitleaks` | `gitleaks dir` on the rule file's folder, with only the rule's rule ids on; the secret is never printed | Secrets in any file |
 | `cargo-audit` | `cargo-audit audit` on the rule file's folder's `Cargo.lock`, against the advisory database already on this machine | Rust dependencies with a RustSec advisory |
-| `vulture` | `vulture` in the rule file's folder, reading none of the repository's config | Dead code in Python |
-| `periphery` | A build of the Swift package with `swift`, in a temporary folder, then `periphery scan` on its index, reading none of the repository's config; only on a Swift package, never fetching a dependency | Dead code in Swift |
+| `vulture` | `vulture` in the rule file's folder, leaving out what git ignores and reading none of the repository's config | Dead code in Python |
+| `periphery` | A build of the Swift package with `swift`, in a temporary folder, then `periphery scan` on its index, reading none of the repository's config; only on a Swift package inside the repository whose local packages are the repository's own, never fetching a dependency or binary | Dead code in Swift |
 | `tessera` | Nothing | Not available today |
 | `eslint`, `mypy`, `pmd`, `detekt`, `rubocop`, `phpstan`, `dart` | Nothing yet | JavaScript and TypeScript, Python types, Java, Kotlin, Ruby, PHP and Dart. Accepted in the rule file; not available until each adapter lands |
 | `markdownlint`, `yamllint`, `actionlint`, `hadolint`, `vale`, `stylelint`, `sqlfluff` | Nothing yet | Markdown, YAML, GitHub Actions workflows, Dockerfiles, prose, CSS and SQL. Accepted in the rule file; not available until each adapter lands |

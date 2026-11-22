@@ -68,8 +68,9 @@ Neither is ever "clean".
 | `why` | When |
 |---|---|
 | `<program> not found on PATH` | The engine's program is not installed, or not on `PATH`. A clippy rule names the first of `cargo-clippy` and `clippy-driver` that is missing. A ShellCheck rule names `git` when ShellCheck is there and git, which lists its scripts, is not. A golangci-lint rule names `go` when golangci-lint is there and go is not. A clang-tidy rule names `git` when clang-tidy is there and git, which lists its sources, is not. A Periphery rule names `swift` when Periphery is there and swift, which builds the package, is not |
-| `no Package.swift at or above the rule file's folder: Periphery builds the project, and tm runs it only on a Swift package` | A Periphery rule outside a Swift package, such as one in an Xcode project ([periphery](#periphery)) |
-| `the package depends on <identities>, which tm would have to fetch: tm never fetches packages, so Periphery cannot build it here` | A Periphery rule on a package whose manifest names a source-control or registry dependency ([periphery](#periphery)) |
+| `no Package.swift at or above the rule file's folder: Periphery builds the project, and tm runs it only on a Swift package` | A Periphery rule outside a Swift package in its repository, such as one in an Xcode project ([periphery](#periphery)) |
+| `<subject> depends on <identities>, which tm would have to fetch: tm never fetches packages, so Periphery cannot build it here` | A Periphery rule on a package that, or one of whose local packages, names a source-control or registry dependency or a binary target with a `url` ([periphery](#periphery)) |
+| `<subject> depends on the local package <path>, which does not resolve: ...` or `..., outside the repository: ...` | A Periphery rule on a package that depends on a local package `tm` cannot read, or that is not the repository's ([periphery](#periphery)) |
 | `no compile database (compile_commands.json) or compile flags (compile_flags.txt) for <file> or any folder above it, so clang-tidy would check it without flags` | A clang-tidy rule on a source with neither file at or above it ([clang-tidy](#clang-tidy)) |
 | `no Cargo.toml at or above the rule file's folder` | A clippy rule in a folder that is not inside a Cargo package |
 | ``<engine> <version> does not know the check `<check>`: <what it said>`` | The installed clippy, SwiftLint, ruff, pylint, clang-tidy, golangci-lint or gitleaks does not know the rule's `check`: a name it does not have, often because it is older than the rule. For cargo-audit, an advisory id its local advisory database does not hold (`<check> is not in the advisory database at <db>`). `<version>` is `(version unknown)` when the version could not be read |
@@ -765,15 +766,26 @@ which needs no rule.
 - **What runs:**
 
   ```
-  vulture --config=/dev/null .
+  vulture --config=/dev/null [--exclude=<what git ignores>] .
   ```
 
   with `PYTHONWARNINGS=ignore` set for the run, so a Python warning about a file vulture reads well does not land
-  on stderr. Every Python file under the folder is scanned; findings outside the rule's scope are dropped after.
-  vulture does not read `.gitignore`, and the rule's `paths` and `exclude` only drop findings after the scan, so a
-  virtualenv inside the folder is always scanned: its findings are dropped when the rule does not cover it, but a
-  file in it that vulture cannot read or parse still fails the rule (below). With no Python file, vulture prints nothing and the rule reads clean. Nothing reaches the
-  network.
+  on stderr. Nothing reaches the network.
+- **What it scans.** Two things decide it, and they are separate:
+  - **Left out of the scan:** what git ignores under the folder. Before vulture runs, `tm` asks git for its ignored
+    paths (`git ls-files --others --ignored --exclude-standard --directory`) and passes each ignored `.py` file, and
+    each ignored folder that holds one (a `.gitignore`d virtualenv, build output), to `--exclude`. vulture neither
+    reads nor reports them, so a name used only there counts as unused. Tracked files, and untracked files git does
+    not ignore, are scanned. Outside a git repository nothing is left out and the whole folder is scanned.
+  - **Dropped after the scan:** findings outside the rule's `paths`, `exclude`, `kits` and `outside_kits`. These do
+    not narrow the scan, so a file the rule does not cover is still read, and one vulture cannot read or parse
+    still fails the rule (below).
+
+  With no Python file to scan, vulture prints nothing and the rule reads clean.
+- **Failed before vulture runs** when an ignored path holds a `,` (vulture splits `--exclude` on commas):
+  `cannot leave the git-ignored path <path> out of vulture's scan: vulture splits --exclude on commas`; and when
+  the ignored Python paths do not fit in one argument:
+  ``too many git-ignored Python paths under the folder for vulture's --exclude (more than 98304 bytes in one argument); ignoring their folders instead (a `dir/` line in .gitignore) keeps the list short``.
 - **`check`:** one vulture code: `V101` (unused attribute), `V102` (class), `V103` (function), `V104` (import),
   `V105` (method), `V106` (property), `V107` (variable, and unused argument) or `V201` (unreachable code). vulture
   reports every kind at once, so `tm` keeps the findings of the rule's code. Any other check fails the rule before
@@ -791,8 +803,8 @@ which needs no rule.
 - **What vulture still honours,** which `tm` cannot turn off:
   - a `# noqa` comment on the item's line, bare or naming its code (or `F401`, `F841`). A repository that takes
     `standard@1` gets each such comment reported by `tm-python-suppression`, as any `# noqa` is;
-  - a whitelist module the repository keeps, such as one made with `--make-whitelist`: it is Python code under the
-    folder, so the names it uses count as used, and `tm` cannot tell it from real use;
+  - a whitelist module the repository keeps, such as one made with `--make-whitelist`, when git does not ignore it:
+    it is Python code under the folder, so the names it uses count as used, and `tm` cannot tell it from real use;
   - vulture's own bundled whitelists for standard-library modules (such as `sys`, `logging` and `unittest`), read
     when the code imports the module. That is vulture's definition of its check, not an exception.
 - **`params`:** none. Any param fails the rule before vulture runs, with the reason
@@ -804,15 +816,18 @@ which needs no rule.
 
 - **Available when** `periphery` is on `PATH`, and the rule file's folder is inside a Swift package. Periphery finds
   unused code from a build's index, so `tm` builds the package first, with `swift`, which must be on `PATH` too.
-- **Where:** the nearest folder at or above the rule file's folder that holds a `Package.swift`. The whole package
-  is built and scanned; only results in the rule file's folder are kept.
-- **Swift packages only.** With no `Package.swift` at or above the folder, as in an Xcode project, the rule is not
-  available:
+- **Where:** the nearest folder at or above the rule file's folder that holds a `Package.swift`, looking no higher
+  than the top of the git repository, so a package outside the repository is never built. The whole package is
+  built and scanned; only results in the rule file's folder are kept. A rule file's folder in no git repository
+  fails the rule, with git's error.
+- **Swift packages only.** With no `Package.swift` at or above the folder within the repository, as in an Xcode
+  project, the rule is not available:
   `no Package.swift at or above the rule file's folder: Periphery builds the project, and tm runs it only on a Swift package`.
-- **What runs,** each in the package's folder:
+- **What runs,** in the package's folder unless said otherwise:
 
   ```
   swift package --scratch-path <scratch>/build dump-package
+  swift package --scratch-path <scratch>/dep-<n> dump-package      (in each local package's folder)
   swift package --scratch-path <scratch>/build describe --type json
   swift build --build-tests --build-system swiftbuild --scratch-path <scratch>/build --disable-automatic-resolution
   periphery scan --skip-build --format json --disable-update-check --quiet --index-store-path <scratch>/build/out --json-package-manifest-path <scratch>/describe.json --config <scratch>/periphery.yml
@@ -821,11 +836,25 @@ which needs no rule.
   `<scratch>` is a folder `tm` makes under the system's temporary folder and removes after the run, however it
   ends: nothing is built in the repository or in DerivedData. The tests are built too, so code only they use counts
   as used.
-- **Offline.** `tm` never fetches packages. A package whose manifest names a source-control or registry dependency
-  is not available before anything is built:
-  `the package depends on <identities>, which tm would have to fetch: tm never fetches packages, so Periphery cannot build it here`.
-  `--disable-automatic-resolution` makes a build that would resolve a dependency fail instead, and
-  `--disable-update-check` keeps Periphery from asking for a newer release.
+- **Offline, and only the repository's own code.** Before anything is built, `tm` reads the manifest of the package
+  and of every local package it depends on by path, and of theirs in turn, each once. The rule is not available
+  when any of them:
+  - names a source-control or registry dependency, or a binary target with a `url`, all of which SwiftPM would
+    fetch: `<subject> depends on <identities>, which tm would have to fetch: tm never fetches packages, so Periphery cannot build it here`,
+    where a binary target reads `binary target <name> (<url>)`;
+  - depends on a local package whose path does not resolve:
+    `<subject> depends on the local package <path>, which does not resolve: tm cannot vouch for it, so Periphery cannot build it here`;
+  - depends on a local package outside the repository:
+    `<subject> depends on the local package <path>, outside the repository: tm cannot vouch for it, so Periphery cannot build it here`.
+
+  `<subject>` is `the package` for the rule's own package and `the local package <path in the repository>` for one
+  it reaches. A binary target with a local `path` is allowed. `--disable-automatic-resolution` makes a build that
+  would resolve a dependency fail instead, and `--disable-update-check` keeps Periphery from asking for a newer
+  release.
+- **A limit of Periphery 3.8.0's own.** Periphery credits a top-level reference in `main.swift` to the nearest
+  declaration above it in that file. When that declaration is unused, the function the top-level code calls is
+  reported unused too. It is the same through `tm`, a native build and Periphery's own build. To avoid it, put the
+  top-level code before the declarations, or the declarations in other files.
 - **Failed** when a `swift` step exits with anything but 0 (a package that does not compile gives no answer), with
   its stderr, or its stdout when stderr is empty; when the build leaves no index store; and when Periphery prints
   something that is not its JSON result list.

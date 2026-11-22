@@ -144,14 +144,21 @@ sources.
   report. GITLEAKS_CONFIG and GITLEAKS_CONFIG_TOML are removed for the run, and --ignore-gitleaks-allow makes a
   gitleaks:allow comment silence nothing. gitleaks' default skipped paths (such as .svg files and package-lock.json)
   are its stock check, not an exception.
-- vulture runs as vulture --config=/dev/null . in the rule file's folder, so [tool.vulture] in pyproject.toml is not
-  read; it still honours a # noqa on an item's line (standard@1's tm-python-suppression reports every noqa) and a
+- vulture runs as vulture --config=/dev/null [--exclude=<what git ignores>] . in the rule file's folder, so
+  [tool.vulture] in pyproject.toml is not read and git-ignored Python files and folders (a virtualenv) are not
+  scanned; outside a git repository the whole folder is. The rule's paths and exclude only drop findings after the
+  scan. An ignored path holding a comma, or too many ignored paths for one argument, fails the rule before vulture
+  runs. It still honours a # noqa on an item's line (standard@1's tm-python-suppression reports every noqa) and a
   whitelist module in the repository. Its findings have a line and no column.
-- periphery builds the Swift package with swift in a temporary folder tm removes after (nothing built in the
-  repository), never fetches a dependency (a package with a source-control or registry dependency is not
-  available), and passes an empty --config so .periphery.yml is not read. It still honours // periphery:ignore and
-  // periphery:override comments, which no released baseline set reports. A clippy or periphery rule builds the
-  code.
+- periphery builds the Swift package (the nearest Package.swift at or above the rule file's folder, no higher than
+  the git top) with swift in a temporary folder tm removes after (nothing built in the repository). Before building
+  it reads the manifest of the package and of each local package it reaches: a source-control or registry
+  dependency or a binary target with a url anywhere, or a local package that does not resolve or lies outside the
+  repository, makes the rule not available. It passes an empty --config so .periphery.yml is not read. It still
+  honours // periphery:ignore and // periphery:override comments, which no released baseline set reports.
+  Periphery 3.8.0 credits a top-level reference in main.swift to the nearest declaration above it, so when that
+  declaration is unused the function it calls reads unused too; put top-level code first, or declarations in other
+  files. A clippy or periphery rule builds the code.
 - cargo-audit reads only the Cargo.lock in the rule file's folder, with --no-fetch and --no-yanked against the
   advisory database already at $CARGO_HOME/advisory-db (else $HOME/.cargo/advisory-db); tm never fetches it. With
   no database there the rule is not available, and the why names `cargo audit update-db --db <db>`. Every finding
