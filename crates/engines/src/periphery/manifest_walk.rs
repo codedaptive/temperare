@@ -1,7 +1,8 @@
-//! `manifest_walk`: every local package a Swift package reaches, read before anything is built. It runs SwiftPM, so
-//! its test is the zone integration test tests/periphery.rs and it has no unit-test sibling.
+//! `manifest_walk`: every local package a Swift package reaches, read before anything is built. Its unit-test sibling
+//! manifest_walk_tests.rs runs it on a fake host's dump-package output; the zone integration test tests/periphery.rs
+//! runs it on SwiftPM. Its own disk use is canonicalizing the local paths it follows.
 
-use super::{answered, dump_package_cmd, local_dependencies, remote_dependencies};
+use super::{answered, dump_package_cmd, local_dependencies, package_subject, remote_dependencies};
 use crate::host::Host;
 use crate::parse_failed::parse_failed;
 use crate::types::Stop;
@@ -12,8 +13,8 @@ use std::path::{Path, PathBuf};
 /// once: a visited set of canonical paths, starting with `root`, ends a cycle of local packages (SwiftPM builds one:
 /// fixtures/commands.txt). Each package's `dump_package_cmd` gets a scratch path of its own under `scratch`: the
 /// root's `<scratch>/build`, the one its build uses, then `<scratch>/dep-<n>` for the n-th package after it. Each
-/// package can stop the rule, `<subject>` being "the package" for the root and "the local package <its path relative
-/// to `top`>" for any other:
+/// package can stop the rule, `<subject>` being `package_subject`'s: "the package" for the root and "the local package
+/// <its path relative to `top`>" for any other, "the local package ." for a package at `top` itself:
 /// - a dependency or url binary target to fetch (`remote_dependencies`) is `NotAvailable`, since tm never fetches
 ///   packages;
 /// - a local package (`local_dependencies`) whose path does not resolve, or resolves outside `top` (the repository
@@ -25,13 +26,13 @@ pub(crate) fn manifest_walk(root: &Path, top: &Path, scratch: &Path, host: &Host
     let mut queue = VecDeque::from([root.to_path_buf()]);
     let mut n = 0;
     while let Some(package) = queue.pop_front() {
-        let (build, subject) = if package == root {
-            (scratch.join("build"), "the package".to_string())
+        let build = if package == root {
+            scratch.join("build")
         } else {
             n += 1;
-            let relative = package.strip_prefix(top).unwrap_or(&package);
-            (scratch.join(format!("dep-{n}")), format!("the local package {}", relative.display()))
+            scratch.join(format!("dep-{n}"))
         };
+        let subject = package_subject(&package, root, top);
         let dump = answered(&dump_package_cmd(&package, &build), host)?;
         let remote = remote_dependencies(&dump).map_err(|err| parse_failed(&dump, err))?;
         if !remote.is_empty() {
