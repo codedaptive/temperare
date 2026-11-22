@@ -770,6 +770,7 @@ changes nothing.
 
 ## The engines version 0.1.0 was accepted with
 
-The acceptance checks for 0.1.0 ran against clippy 0.1.95, SwiftLint 0.65.1, ruff 0.17.4 and ast-grep 0.51.1.
+The acceptance checks for 0.1.0 ran against clippy 0.1.95, SwiftLint 0.65.1, ruff 0.17.4, ast-grep 0.51.1,
+golangci-lint 2.15.0 (built with go 1.27.2), pylint 4.1.4 and clang-tidy 23.1.6 (Homebrew LLVM).
 Temperare reads each engine's JSON output, so another version of an engine may print something it reads
 differently. If a rule stops reporting after an engine upgrade, try it on a file you know breaks it.

@@ -446,10 +446,12 @@ Temperare runs other programs with your privileges, and the rule file decides wh
 ## Status and license
 
 - **Version:** 0.1.0. See [`CHANGELOG.md`](CHANGELOG.md).
-- **Proven:** the acceptance checks run the built binary against real clippy, SwiftLint, ruff and ast-grep. They
-  cover a stock lint in Rust, Swift and Python, new findings only against a base commit, a house rule in Swift and
-  Rust, an absent engine, an exception, a run with nothing but `PATH` and `HOME` set, a security rule, a rule that
-  a command is named only inside one kit, and clippy's `warnings` with an `allow` list. They also run
+- **Proven:** the acceptance checks run the built binary against real clippy, SwiftLint, ruff, ast-grep,
+  golangci-lint, pylint and clang-tidy. They cover a stock lint in Rust, Swift and Python, new findings only against
+  a base commit, a house rule in Swift and Rust, an absent engine, an exception, a run with nothing but `PATH` and
+  `HOME` set, a security rule, a rule that a command is named only inside one kit, clippy's `warnings` with an
+  `allow` list, and a lint from golangci-lint (Go), pylint (Python) and clang-tidy (C) that is reported with its
+  rule, place and fix, and is not available when the engine is off `PATH`. They also run
   `tm baseline test` on the ready sets, `house@1` and `standard@1`, and in the acceptance record all 89 of their
   rules (36 and 53) hold on their own failing and passing cases.
 - **Platforms:** built and accepted on macOS. The code is written for Unix systems; Linux and Windows are untested.
