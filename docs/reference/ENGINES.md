@@ -571,7 +571,8 @@ which needs no rule.
 - **Failed** when what pylint prints is not its json2 output, as when it finds no file to lint.
 - **`config`:** passed as `--rcfile=<config>`, as written, so a relative path is taken from the rule file's folder.
   Without one, pylint finds its own configuration.
-- **`params`:** none. Any param fails the rule before pylint runs, with the reason `pylint param <name>: unknown`.
+- **`params`:** none. Any param fails the rule before pylint runs, with the reason
+  `pylint param <name>: a pylint rule takes no params`.
 - **A finding** is placed at the message's line and column, and its message is pylint's. pylint's own messages
   about its options are not findings.
 - **Runs alone.** A pylint rule never shares a run.
@@ -613,7 +614,7 @@ which needs no rule.
   folder. Without one the run gets `--config={}`, so no `.clang-tidy` file in the code is read: the rule file is the
   only home for a rule.
 - **`params`:** none. Any param fails the rule before clang-tidy runs, with the reason
-  `clang-tidy param <name>: unknown`.
+  `clang-tidy param <name>: a clang-tidy rule takes no params`.
 - **A finding** is placed at the diagnostic's line and column, and its message is clang-tidy's.
 - **Runs alone.** A clang-tidy rule never shares a run.
 
@@ -649,7 +650,7 @@ which needs no rule.
 - **`config`:** passed as `--config=<config>`, as written, so a relative path is taken from the rule file's folder.
   Without one, golangci-lint finds its own configuration. `--enable-only` decides the linters either way.
 - **`params`:** none. Any param fails the rule before golangci-lint runs, with the reason
-  `golangci-lint param <name>: unknown`.
+  `golangci-lint param <name>: a golangci-lint rule takes no params`.
 - **A finding** is placed at the issue's line and column (none when golangci-lint gives 0), and its message is the
   issue's text.
 - **Runs alone.** A golangci-lint rule never shares a run.
@@ -676,14 +677,16 @@ which needs no rule.
   with exactly one of those ids are the findings. Ids are not checked for their shape, since a repository's own
   gitleaks config can name rules of its own.
 - **Failed before gitleaks runs** when a part of `check` is empty or is `ALL`, with the reason
-  ``gitleaks check `<check>`: <the part> is not a gitleaks rule id``.
+  ``gitleaks check `<check>`: `ALL` is not a gitleaks rule id`` or
+  ``gitleaks check `<check>`: an empty part is not a gitleaks rule id``.
 - **Not available** when gitleaks says `Requested rule <id> not found in rules` for a part of `check`. The reason
   quotes that line.
 - **Failed** when what gitleaks prints is not a SARIF log. The reason is `gitleaks printed no SARIF log and no
   error`, with its error lines in its place when it printed any.
 - **`config`:** passed as `--config=<config>`, as written, so a relative path is taken from the rule file's folder.
   Without one, gitleaks reads the folder's `.gitleaks.toml` when there is one, else its own default rules.
-- **`params`:** none. Any param fails the rule before gitleaks runs, with the reason `gitleaks param <name>: unknown`.
+- **`params`:** none. Any param fails the rule before gitleaks runs, with the reason
+  `gitleaks param <name>: a gitleaks rule takes no params`.
 - **A finding** is placed at the result's line and column.
 - **Runs alone.** A gitleaks rule never shares a run.
 
@@ -725,7 +728,7 @@ which needs no rule.
   `cargo-audit printed no JSON report: <the start of what it printed>`.
 - **`config`:** not used.
 - **`params`:** none. Any param fails the rule before cargo-audit runs, with the reason
-  `cargo-audit param <name>: unknown`.
+  `cargo-audit param <name>: a cargo-audit rule takes no params`.
 - **A finding** is on `Cargo.lock`, with no line, and reads
   `<id>: <crate> <version>: <title>; upgrade to <version>` (several patched versions joined with ` or `), or ends
   `; no patched version`.
