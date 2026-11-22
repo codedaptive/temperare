@@ -70,7 +70,7 @@ fn a_golangci_lint_finding_is_reported_with_its_rule_place_fix_and_version() {
     assert_eq!(f[0]["path"], "same.go");
     assert_eq!(f[0]["line"], 5);
     assert_eq!(f[0]["fix"], FIX);
-    let version = probed_version("golangci-lint", repo.path());
+    let version = probed_version("golangci-lint", &["--version"], repo.path());
     assert_eq!(a.json["engines"], json!([{ "engine": "golangci-lint", "version": version }]), "{:#}", a.json);
 }
 

@@ -65,7 +65,7 @@ fn a_pylint_message_is_reported_with_its_rule_place_fix_and_version() {
     assert_eq!(f[0]["path"], "example.py");
     assert_eq!(f[0]["line"], 2);
     assert_eq!(f[0]["fix"], FIX);
-    let version = probed_version("pylint", repo.path());
+    let version = probed_version("pylint", &["--version"], repo.path());
     assert_eq!(a.json["engines"], json!([{ "engine": "pylint", "version": version }]), "{:#}", a.json);
 }
 

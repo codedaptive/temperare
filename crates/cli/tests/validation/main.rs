@@ -7,8 +7,8 @@
 //! a folder the test made.
 //!
 //! Acceptance: the mission's Done list (MISSION-temperare-2026-11-16, Done 1-8, SPEC-engines-common's Done 9 for
-//! golangci-lint, pylint and clang-tidy, and Done 10's shared run and baseline test), run against the built
-//! `temperare` with the real engines, each case in a throwaway folder it makes and removes.
+//! golangci-lint, pylint, clang-tidy, vulture and Periphery, and Done 10's shared run and baseline test), run against
+//! the built `temperare` with the real engines, each case in a throwaway folder it makes and removes.
 //! Validation, not a unit or integration test: a run of the shipped binary, written by the cli lane to the
 //! orchestrator's measures (rule 11).
 //! `make accept` runs it.
@@ -41,6 +41,7 @@ mod run_clean;
 mod temp_home;
 mod tm;
 mod tm_lines;
+mod tm_path_folder;
 mod write_head_once;
 
 mod done_1_clippy;
@@ -55,6 +56,8 @@ mod done_8_named_inside;
 mod done_9_golangci_lint;
 mod done_9_pylint;
 mod done_9_clang_tidy;
+mod done_9_vulture;
+mod done_9_periphery;
 mod done_10_shared_run;
 mod done_10_baseline_test;
 

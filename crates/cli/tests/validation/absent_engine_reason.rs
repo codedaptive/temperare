@@ -1,9 +1,10 @@
-//! `absent_engine_reason`: NOT RUN's reason for a case whose engine is not on the PATH `temperare` gets.
+//! `absent_engine_reason`: NOT RUN's reason for a case whose engine, or a tool it needs, is missing for `temperare`.
 
 use crate::on_tm_path::on_tm_path;
 use crate::tm::Answer;
 
-/// None when every one of `programs` is on the PATH `temperare` gets (`on_tm_path`, which runs nothing). Otherwise
+/// None when every one of `programs` is on the PATH `temperare` gets, an absolute one being the file at that path
+/// (`on_tm_path`, which runs nothing). Otherwise
 /// `tm: <why>`, `temperare`'s own reason in `a` for reporting `rule` not available, which it must then give (panics
 /// when it does not).
 pub fn absent_engine_reason(a: &Answer, programs: &[&str], rule: &str) -> Option<String> {

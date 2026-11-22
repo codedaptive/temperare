@@ -69,7 +69,7 @@ fn a_clang_tidy_warning_is_reported_with_its_rule_place_fix_and_version() {
     assert_eq!(f[0]["path"], "a.c");
     assert_eq!(f[0]["line"], 1);
     assert_eq!(f[0]["fix"], FIX);
-    let version = probed_version("clang-tidy", repo.path());
+    let version = probed_version("clang-tidy", &["--version"], repo.path());
     assert_eq!(a.json["engines"], json!([{ "engine": "clang-tidy", "version": version }]), "{:#}", a.json);
 }
 
