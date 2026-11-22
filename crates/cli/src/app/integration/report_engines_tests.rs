@@ -53,7 +53,7 @@ fn tessera_is_left_out_even_when_found_as_it_has_no_version_probe() {
 
 // Picked from entry_for rather than named, so a new adapter for any one engine leaves this case something to test.
 fn an_engine_with_no_adapter() -> Engine {
-    const ALL: [Engine; 15] = [
+    const ALL: [Engine; 14] = [
         Engine::Clippy,
         Engine::SwiftLint,
         Engine::Ruff,
@@ -62,7 +62,6 @@ fn an_engine_with_no_adapter() -> Engine {
         Engine::GolangciLint,
         Engine::Pylint,
         Engine::ClangTidy,
-        Engine::Oclint,
         Engine::ShellCheck,
         Engine::Git,
         Engine::Vulture,
