@@ -22,6 +22,9 @@ These are properties of the code, not of how it is deployed.
   it points at, and everything that is not a regular file. To tell a script that has no extension it reads at most
   the file's first 257 bytes, on Unix only, opened without following a symlink and without waiting on a FIFO; on
   other systems it reads none and such a file is left out.
+- **The sources listed for a clang-tidy rule never include a symlink.** `tm` picks them among the files git lists
+  in the rule file's folder by their extension, keeps only regular files that are not symlinks, and reads none of
+  them itself.
 - **One place starts programs.** Everything Temperare runs, git included, goes through one small crate, `procio`.
   The repository's own rule file holds that line: a rule reports any other code that starts a process.
 - **It does not edit what it checks.** `tm check` and `tm rules` write to stdout and stderr. `tm check` creates
@@ -35,8 +38,10 @@ These are properties of the code, not of how it is deployed.
 
   Each is created new, never opened over an existing file or folder, and removed when the run of that rule ends. If
   `tm` is killed in between, it is left there. No config file of the repository is written. A ruff threshold is
-  passed as an argument, and a ShellCheck or git rule writes no file. A rule that is refused, or that covers no
-  file, writes none either. Besides these, `tm check` appends one line to its savings log,
+  passed as an argument, and a ShellCheck, git, pylint, clang-tidy or golangci-lint rule writes no file. A
+  golangci-lint run passes `--fix=false`, so a repository config that asks golangci-lint to fix cannot edit the
+  code, and runs go with `GOFLAGS` removed, so go does not rewrite `go.mod` or `go.sum`. A rule that is refused, or
+  that covers no file, writes none either. Besides these, `tm check` appends one line to its savings log,
   `~/.local/state/temperare/savings.jsonl`, when an engine ran, making that folder when it is missing.
   The line holds the time, the rule file's folder as an absolute path, the verb and two token counts; no code and no
   finding.
@@ -54,7 +59,7 @@ These are properties of the code, not of how it is deployed.
 - **"Not available" is never "clean".** A rule that has a file to check and whose engine is missing, or that cannot
   be run, is reported as such, is counted, and has its own exit code. A rule that failed has another, and a rule
   `tm` refuses from the rule file alone fails whether or not its engine is installed. A rule that covers no file is
-  not run, and the report does not say so ([below](#what-this-does-not-defend-against)).
+  not run, and the report says so ([below](#what-this-does-not-defend-against)).
 
 ## What this does not defend against
 
@@ -63,22 +68,38 @@ Limits, as plainly as possible.
 **The rule file is trusted input.** `temperare.toml` decides which engines run, what each is asked, and which config
 file each is given. Temperare keeps a rule's value from being read as an engine option and keeps an ast-grep rule
 file inside the rule file's folder, as above. It does not judge what a value asks for. A `config` is handed to
-SwiftLint or ruff as written and may name any file, inside the repository or not. An ast-grep rule file is the
+SwiftLint, ruff, ShellCheck, pylint, clang-tidy or golangci-lint as written and may name any file, inside the
+repository or not. An ast-grep rule file is the
 repository's own, and ast-grep runs whatever it holds over the code. Running `tm check` in a repository is running
 that repository's instructions.
 
-**The engines are trusted programs.** Temperare finds git, cargo, SwiftLint, ruff, ast-grep and ShellCheck on your
-`PATH` and runs whatever is there, with your environment and your privileges. Whoever controls `PATH` controls what runs.
+**The engines are trusted programs.** Temperare finds git, cargo, SwiftLint, ruff, ast-grep, ShellCheck, pylint,
+clang-tidy, golangci-lint and go on your `PATH` and runs whatever is there, with your environment and your privileges. Whoever controls `PATH` controls what runs.
 There is no sandbox.
 
 **A clippy rule builds the code.** `cargo clippy` compiles the crate. A build runs that crate's build scripts and
 procedural macros, and cargo may download its dependencies. That is code from the repository running as you.
 
+**A golangci-lint rule loads the code with go.** go runs with `GOTOOLCHAIN=local`, `GOPROXY=off` and `GOSUMDB=off`,
+so it downloads no toolchain and no module and looks up no checksum; code that needs a module not already on the
+machine fails its rule.
+
 **The engines read their own configuration.** Each engine looks for its config in the code it checks, as it always
 does. Except for the exceptions below, Temperare passes no flag that turns that off, so a repository's own linter config shapes what its linter
-reports. Three exceptions: for a clippy rule with `max_nesting`, `CLIPPY_CONF_DIR` points that run at Temperare's
-temporary `clippy.toml`, which clippy reads in place of the repository's own; and a SwiftLint run given `--config`
-(the rule's own `config`, or Temperare's threshold file) reads those files in place of its own config search; and a ShellCheck run, which passes `--norc` unless the rule gives a `config`, so the repository's `.shellcheckrc` is not read (with a `config`, that file is read in its place).
+reports. The exceptions:
+
+- for a clippy rule with `max_nesting`, `CLIPPY_CONF_DIR` points that run at Temperare's temporary `clippy.toml`,
+  which clippy reads in place of the repository's own;
+- a SwiftLint run given `--config` (the rule's own `config`, or Temperare's threshold file) reads those files in
+  place of its own config search;
+- a ShellCheck run passes `--norc` unless the rule gives a `config`, so the repository's `.shellcheckrc` is not
+  read (with a `config`, that file is read in its place);
+- a clang-tidy run passes `--config={}` unless the rule gives a `config`, so no `.clang-tidy` in the code is read
+  (with a `config`, that file is read in its place);
+- a pylint run turns every message off and the rule's one on, on its command line, which pylint lays over its
+  config, so a config cannot turn the rule's message off;
+- a golangci-lint run's fixed flags (`--enable-only`, `--fix=false`, no cap on issues) hold over the repository's
+  config.
 
 **There is no time limit.** Temperare waits for an engine for as long as it runs. An engine that hangs, hangs the
 check.
@@ -100,10 +121,10 @@ rule was not available or its engine failed. The counts in the output say so; th
 rule and is never clean. A rule whose ast-grep pattern matches no code reports no findings and is not flagged. A
 rule that covers none of the files git lists in the rule file's folder (the tracked files in the work tree and the
 untracked files git does not ignore) is not run at all: its engine runs no check for it (it is still asked its
-version), whether the engine is installed does not change the result, and no line or
-count of the report says so. The exit code is what it would be without that rule, so a
-rule with a mistyped `paths` and a missing engine can end in exit 0. A ShellCheck rule that covers no shell script
-is the same. Try a new rule on a file you know breaks it.
+version), and whether the engine is installed does not change the result. One of the repository's own rules is
+then reported as covering nothing, and makes the exit code 6 when nothing ranks above it; a baseline set's rule is
+only counted as not applicable and does not change the exit code. A ShellCheck rule that covers no shell script,
+and a clang-tidy rule that covers no C-family source, are the same. Try a new rule on a file you know breaks it.
 
 **Engine messages are printed as given.** In the text output a finding's message is the engine's own text. The JSON
 output escapes it.

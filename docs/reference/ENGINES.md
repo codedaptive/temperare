@@ -18,28 +18,34 @@ what is run for each one, what `check` means to it, and what is "not available" 
   to a temporary file or folder, and the same check or checks the engine reads together. When the two checks
   differ: for clippy, neither check is `warnings`. For ruff, the codes do not overlap, neither selects `RUF100`, and no pair ruff
   calls incompatible is split. For SwiftLint, neither check is `superfluous_disable_command`. For ast-grep, the
-  same rule file with no params. ShellCheck, git, Tessera, and an engine with no adapter yet, never share. Each rule still keeps only its own check's
+  same rule file with no params. pylint, clang-tidy, golangci-lint, ShellCheck, git, Tessera, and an engine with no
+  adapter yet, never share. Each rule still keeps only its own check's
   findings, in its own paths and with its own exceptions. Every other rule runs alone. A rule that is refused, or
   that covers no file ([below](#the-order-a-rule-settles-in)), runs nothing and joins no shared run.
 - **The order of runs.** A rule joins the first group, in rule-file order, whose rules can all share with it. The
   groups run one after another, in the order of each group's first rule, and the rule runs' results are kept in
   rule-file order; the report sorts findings as OUTPUT.md describes.
 - **Run over the rule file's folder.** The engine checks the whole folder (clippy: the Cargo package that holds
-  it). Temperare then keeps the findings that are inside that folder, in the files the rule covers (its `paths`,
+  it; ShellCheck: every script `tm` lists there; clang-tidy: the C-family sources `tm` lists there that the rule
+  covers). Temperare then keeps the findings that are inside that folder, in the files the rule covers (its `paths`,
   `exclude`, `kits`, `outside_kits`) and, when you gave paths on the command line, in those paths. Paths on the
   command line narrow the result; they do not make the engines do less work.
 - **Its version is read once per check.** Before the rules run, each engine named by the rules this check runs is
   asked its version once, in the rule file's folder, when it is available: `cargo clippy --version`,
-  `swiftlint version`, `ruff --version`, `ast-grep --version`, `shellcheck --version`, `git --version`. Tessera, and
+  `swiftlint version`, `ruff --version`, `ast-grep --version`, `shellcheck --version`, `git --version`,
+  `pylint --version`, `clang-tidy --version`, `golangci-lint --version`. Tessera, and
   an engine with no adapter yet, is not asked. An engine is asked even when every rule that names it is refused or
   covers no file. The version is named in the reason of a check the engine does not know, and of a ShellCheck code
   that is not on `tm`'s list (below).
 - **No time limit.** `tm` waits for an engine as long as it runs.
-- **The engine's environment is yours.** Temperare adds nothing to it, except that for a clippy rule with `max_nesting` it
+- **The engine's environment is yours.** Temperare adds nothing to it, except: for a clippy rule with `max_nesting` it
   sets `CLIPPY_CONF_DIR` for that run to a temporary folder holding `clippy.toml`, which clippy reads instead of the
-  repository's own `clippy.toml`.
+  repository's own `clippy.toml`; for ShellCheck it removes `SHELLCHECK_OPTS`; and for golangci-lint it keeps Go
+  local ([golangci-lint](#golangci-lint)).
 - **The engine finds its own configuration,** as it does when you run it yourself, except where the rule says
-  otherwise. A rule's `config` is passed to SwiftLint or ruff as its config file. A SwiftLint threshold passes a
+  otherwise. A rule's `config` is passed to SwiftLint, ruff, pylint, golangci-lint, ShellCheck or clang-tidy as its
+  config file. clang-tidy without a `config`, and ShellCheck without one, read no config file of the repository's
+  (see [clang-tidy](#clang-tidy) and [shellcheck](#shellcheck)). A SwiftLint threshold passes a
   config file of its own, after the folder's `.swiftlint.yml` when there is one and the rule has no `config` (see
   [swiftlint](#swiftlint)). A clippy `max_nesting` replaces the repository's `clippy.toml` for that run, as above.
   A ruff threshold is layered over the rule's `config`, or over the config ruff finds when the rule has none, and
@@ -57,13 +63,14 @@ Neither is ever "clean".
 
 | `why` | When |
 |---|---|
-| `<program> not found on PATH` | The engine's program is not installed, or not on `PATH`. A clippy rule names the first of `cargo-clippy` and `clippy-driver` that is missing. A ShellCheck rule names `git` when ShellCheck is there and git, which lists its scripts, is not |
+| `<program> not found on PATH` | The engine's program is not installed, or not on `PATH`. A clippy rule names the first of `cargo-clippy` and `clippy-driver` that is missing. A ShellCheck rule names `git` when ShellCheck is there and git, which lists its scripts, is not. A golangci-lint rule names `go` when golangci-lint is there and go is not. A clang-tidy rule names `git` when clang-tidy is there and git, which lists its sources, is not |
+| `no compile database (compile_commands.json) or compile flags (compile_flags.txt) for <file> or any folder above it, so clang-tidy would check it without flags` | A clang-tidy rule on a source with neither file at or above it ([clang-tidy](#clang-tidy)) |
 | `no Cargo.toml at or above the rule file's folder` | A clippy rule in a folder that is not inside a Cargo package |
-| ``<engine> <version> does not know the check `<check>`: <what it said>`` | The installed clippy, SwiftLint or ruff does not know the rule's `check`: a name it does not have, often because it is older than the rule. `<version>` is `(version unknown)` when the version could not be read |
-| `shellcheck <version>: <check> is not in temperare's list of shellcheck codes (taken from shellcheck <list version>)` | A ShellCheck rule whose code is not on the list built into `tm`. In this build the list holds no code and its version reads `pending`, so this is every ShellCheck rule that has a script to check and finds ShellCheck ([below](#shellcheck)) |
+| ``<engine> <version> does not know the check `<check>`: <what it said>`` | The installed clippy, SwiftLint, ruff, pylint, clang-tidy or golangci-lint does not know the rule's `check`: a name it does not have, often because it is older than the rule. `<version>` is `(version unknown)` when the version could not be read |
+| `shellcheck <version>: <check> is not in temperare's list of shellcheck codes (taken from shellcheck <list version>)` | A ShellCheck rule whose code is not on the list built into `tm`: the 510 codes of ShellCheck 0.11.0, so `<list version>` is `0.11.0` ([below](#shellcheck)) |
 | `reports only what a change adds; run with --base` | A git rule, and an ast-grep rule in count mode, run without `--base` ([git](#git), [ast-grep](#ast-grep)) |
 | `Tessera's slop records are not defined yet` | A rule with `engine = "tessera"` ([below](#tessera)) |
-| `no adapter for <engine> in this build` | A rule whose engine the rule file accepts and this `tm` cannot run yet: `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `vulture`, `periphery`, `gitleaks` and `cargo-audit` ([below](#engines-with-no-adapter-yet)) |
+| `no adapter for <engine> in this build` | A rule whose engine the rule file accepts and this `tm` cannot run yet: `oclint`, `vulture`, `periphery`, `gitleaks` and `cargo-audit` ([below](#engines-with-no-adapter-yet)) |
 
 A rule that is refused, or that covers no file, is settled before any of these is looked at
 ([the order a rule settles in](#the-order-a-rule-settles-in)).
@@ -84,6 +91,9 @@ or the rule's own files could not be used:
   apart: its YAML is inside `tm` and no file is read for it, see [ast-grep](#ast-grep));
 - a ShellCheck `check` that is not one code;
 - a git `check` other than `test_ratio`;
+- a pylint `check` that is not one message id, or that is an old id pylint renamed;
+- a clang-tidy `check` that is not one check name;
+- a golangci-lint `check` with a part that is not a linter name, or that is `typecheck`;
 - `params` that cannot be used.
 
 A rule refused before its engine ran has no exit code. The reason is printed under the counts line of the text
@@ -96,7 +106,9 @@ Each rule is settled by the first of these that applies:
 
 1. **Refused.** `tm` refuses the rule from the rule file alone, reading no other file and running nothing: a clippy
    `rustdoc::` lint, SwiftLint's `custom_rules`, a ruff `check` with a part that is not a code, a ShellCheck `check`
-   that is not one code, a git `check` other than `test_ratio`, an ast-grep `check` that is an absolute path or
+   that is not one code, a git `check` other than `test_ratio`, a pylint `check` that is not one message id or is an
+   old one, a clang-tidy `check` that is not one check name, a golangci-lint `check` that is not linter names, an
+   ast-grep `check` that is an absolute path or
    whose `..` climbs above the rule file's folder at any step (read from the text alone), a
    param the engine does not take, a param with a bad value, or a threshold out of range or with another check
    (ast-grep's placeholder params apart: see below). The rule is failed (exit 5).
@@ -127,13 +139,19 @@ and when it covers no file it runs nothing.
 Outside a git repository a ShellCheck rule that finds ShellCheck fails on git's listing of its scripts, before its
 code is looked up in `tm`'s list ([shellcheck](#shellcheck)).
 
+A clang-tidy rule is told it has no source to check in its run, at step 5, not at step 2: with clang-tidy missing,
+a rule whose paths hold files but no C-family source is not available, and with clang-tidy installed it runs
+nothing ([clang-tidy](#clang-tidy)).
+
 ### A rule that covers no file
 
 Before any rule runs, `tm` asks git for the files of the rule file's folder: the tracked files that are in the work
 tree, and the untracked files git does not ignore. A rule that covers none of them, by its `paths`, `exclude`,
 `kits` and `outside_kits`, runs nothing. Its engine runs no check for it, and whether the engine is on `PATH` does
 not change its result (the engine is still asked its version for the engines line, below). A ShellCheck rule
-that covers a file is settled the same way when it covers none of the scripts in the folder.
+that covers a file is settled the same way when it covers none of the scripts in the folder. A clang-tidy rule
+that covers a file but none of the C-family sources runs nothing too, once clang-tidy is found on `PATH`
+([above](#the-order-a-rule-settles-in)).
 
 These are not among those files, so a rule that covers only such files covers no file: a file git ignores, a
 tracked file deleted from the work tree, a skip-worktree file whether or not it is there, and the files of an
@@ -146,7 +164,8 @@ The report shows such a rule by where it comes from:
   6 when nothing ranks above it ([`OUTPUT.md`](OUTPUT.md#exit-codes)).
 - **A baseline set's rule is not applicable.** The text counts it in the `not applicable` count and gives it no
   line; JSON lists it under `not_applicable` with the why `its paths match no file in the rule file's folder`, or
-  `no file its engine checks` for a ShellCheck rule that covers files but no script. It does not change the exit
+  `no file its engine checks` for a ShellCheck rule that covers files but no script, or a clang-tidy rule that
+  covers files but no C-family source. It does not change the exit
   code.
 
 A refused rule is not such a rule: it is settled first and is failed, whatever it covers. A rule with
@@ -415,9 +434,11 @@ rule:
 ## shellcheck
 
 - **Available when** `shellcheck` is on `PATH`. `tm` lists the scripts with git, so git must be there too.
-- **In this build no ShellCheck rule reaches ShellCheck.** A rule's code is looked up in a list of ShellCheck's
-  codes that is built into `tm`, and the list in this build holds no code; its version reads `pending`.
-  A ShellCheck rule therefore comes to one of these, in the order [a rule settles in](#the-order-a-rule-settles-in):
+- **A list of codes built into `tm`.** ShellCheck never says it does not know a code: asked for one it does not
+  have, it runs, matches nothing and reads clean. So a rule's code is looked up in a list of ShellCheck's codes that
+  is built into `tm`: the 510 codes the ShellCheck 0.11.0 source emits. The list is copied from that source when
+  `tm` is built and never fetched. A ShellCheck rule comes to one of these, in the order
+  [a rule settles in](#the-order-a-rule-settles-in):
   - failed, when its `check` is not one code or it has a param;
   - nothing run, when git lists the scripts and it covers none of them;
   - not available, with `shellcheck not found on PATH`. This comes before any git error: when git cannot list the
@@ -425,10 +446,12 @@ rule:
     is `shellcheck not found on PATH`;
   - with ShellCheck installed, not available, with `git not found on PATH`, when git is not installed and so cannot
     list the scripts; or failed, with git's own reason, when git cannot list them;
-  - not available, with
-    ``shellcheck <version>: <check> is not in temperare's list of shellcheck codes (taken from shellcheck pending)``.
+  - not available, when its code is not on the list, with
+    ``shellcheck <version>: <check> is not in temperare's list of shellcheck codes (taken from shellcheck 0.11.0)``.
     `<version>` is the installed ShellCheck's, or `(version unknown)` when it could not be read; the last word is
-    the list's version.
+    the list's version, so a code newer than ShellCheck 0.11.0 reads as a gap in `tm`'s list, not in your
+    ShellCheck;
+  - otherwise ShellCheck's run, below: findings, none, or failed.
 
   `tm rules` runs nothing, so it shows a ShellCheck rule as available whenever `shellcheck` is on `PATH`.
 - **Where:** the rule file's folder, which must be inside a git repository.
@@ -511,6 +534,117 @@ which needs no rule.
 - **`config`:** not used.
 - **Runs alone.** A git rule never shares a run.
 
+## pylint
+
+- **Available when** `pylint` is on `PATH`.
+- **Where:** the rule file's folder.
+- **What runs:**
+
+  ```
+  pylint --persistent=n --output-format=json2 --disable=all --enable=unknown-option-value,useless-option-value --enable=<check> [--rcfile=<config>] .
+  ```
+
+  `--disable=all` then `--enable=<check>` runs the one message. pylint lays its command line over the config file,
+  so a config that disables the check does not hide it. `unknown-option-value` (W0012) and `useless-option-value`
+  (R0022) stay on so that pylint says when it does not know the check. `--persistent=n` keeps pylint from writing its
+  statistics file under your home folder.
+- **`check`:** one pylint message id: a letter `C`, `R`, `W`, `E`, `F` or `I` and four digits, such as `C0121`.
+  Messages with exactly that id are the findings.
+- **Failed before pylint runs** when `check` is:
+  - anything but a message id, such as a symbol (`singleton-comparison`), a category, a checker name or a list.
+    Those turn on messages reported under other ids, so a finding could not be matched back. The reason is
+    ``pylint check `<check>` is not a message id (a letter C, R, W, E, F or I and four digits, as C0121), so tm cannot tell which findings it selects``;
+  - an old id that pylint 4.1.4 still takes and reports under its new id (such as `W0703`, now `W0718`). The rule
+    would read clean, so the reason names the id to write:
+    ``pylint check `W0703` is an old id of W0718 in pylint 4.1.4, whose findings carry W0718: name W0718``.
+- **Not available** when pylint says it does not know `check`: its W0012 or R0022 message names the check, often
+  because the id is newer than the installed pylint or was removed from it. The reason quotes pylint's message.
+- **Failed** when what pylint prints is not its json2 output, as when it finds no file to lint.
+- **`config`:** passed as `--rcfile=<config>`, as written, so a relative path is taken from the rule file's folder.
+  Without one, pylint finds its own configuration.
+- **`params`:** none. Any param fails the rule before pylint runs, with the reason `pylint param <name>: unknown`.
+- **A finding** is placed at the message's line and column, and its message is pylint's. pylint's own messages
+  about its options are not findings.
+- **Runs alone.** A pylint rule never shares a run.
+
+## clang-tidy
+
+- **Available when** `clang-tidy` is on `PATH`. `tm` lists the sources with git, so git must be there too.
+- **Where:** the rule file's folder, which must be inside a git repository.
+- **Which files it is handed.** `tm` picks the sources itself, among the files git lists under the rule file's
+  folder (the tracked files, then the untracked files git does not ignore): those ending `.c`, `.cc`, `.cpp`,
+  `.cxx`, `.c++`, `.m` or `.mm`, that are regular files and not symlinks, and that the rule covers. That is C, C++,
+  Objective-C and Objective-C++. A header (`.h`, `.hpp`) is not handed over itself. A rule that covers files but
+  none of these sources runs nothing ([above](#a-rule-that-covers-no-file)); this is found in the run, after
+  clang-tidy is found on `PATH`.
+- **What runs,** in the rule file's folder:
+
+  ```
+  clang-tidy --quiet --warnings-as-errors=-* --checks=-*,<check> --config-file=<config> <source>...
+  ```
+
+  or, for a rule with no `config`, the same with `--config={}` in place of `--config-file=<config>`. Each source is
+  passed as an absolute path. `--checks=-*,<check>` turns every check off, then the rule's on.
+- **A compile database is needed.** Each source needs a `compile_commands.json` or a `compile_flags.txt` in its
+  folder or a folder above it. Without one clang-tidy checks the file with no flags and still exits 0, so its
+  findings would not be your project's. The rule is then not available, with the reason
+  `no compile database (compile_commands.json) or compile flags (compile_flags.txt) for <file> or any folder above it, so clang-tidy would check it without flags`.
+  The `file` entries of a `compile_commands.json` must be absolute paths: with relative ones clang-tidy prints its
+  findings relative to the database, and the rule fails.
+- **`check`:** one clang-tidy check name: a letter, then letters, digits, `-`, `.` and `_`, such as
+  `bugprone-branch-clone` or `clang-analyzer-core.NullDereference`. Diagnostics tagged with exactly that name are the
+  findings. A glob (`*`), a list (`,`) or a leading `-` fails the rule before clang-tidy runs, with the reason
+  ``clang-tidy check `<check>` is not one check name (letters, digits, `-`, `.` and `_`, starting with a letter), so tm cannot tell which findings it selects``.
+- **Not available** when clang-tidy says `Error: no checks enabled.`: the run turns on only the rule's check, so
+  clang-tidy does not know it. The reason is
+  ``clang-tidy <version> does not know the check `<check>`: Error: no checks enabled.``.
+- **Failed** when clang-tidy exits with anything but 0, as when a source does not compile; the reason quotes its
+  first `error:` line.
+- **`config`:** passed as `--config-file=<config>`, as written, so a relative path is taken from the rule file's
+  folder. Without one the run gets `--config={}`, so no `.clang-tidy` file in the code is read: the rule file is the
+  only home for a rule.
+- **`params`:** none. Any param fails the rule before clang-tidy runs, with the reason
+  `clang-tidy param <name>: unknown`.
+- **A finding** is placed at the diagnostic's line and column, and its message is clang-tidy's.
+- **Runs alone.** A clang-tidy rule never shares a run.
+
+## golangci-lint
+
+- **Available when** `golangci-lint` and `go` are both on `PATH`: golangci-lint loads the packages with go. With go
+  missing the reason is `go not found on PATH`, and the `next:` line asks you to install golangci-lint.
+- **Where:** the rule file's folder.
+- **What runs:**
+
+  ```
+  golangci-lint run --output.json.path=stdout --output.text.path=stderr --show-stats=false --issues-exit-code=1 --max-issues-per-linter=0 --max-same-issues=0 --uniq-by-line=false --allow-parallel-runners --path-mode=abs --path-prefix= --fix=false --enable-only=<check> [--config=<config>] ./...
+  ```
+
+  Each fixed flag holds against the repository's own config: every issue is reported, none is capped or folded,
+  nothing is fixed in the code (a config's `issues.fix` would edit it), and a second golangci-lint may run beside
+  this one.
+- **Go stays local.** The run gets `GOTOOLCHAIN=local`, `GOPROXY=off` and `GOSUMDB=off`, so go downloads no
+  toolchain and no module and looks up no checksum, and `GOFLAGS` is removed, so nothing is written to `go.mod` or
+  `go.sum`. `PWD` is set to the rule file's folder. Code that cannot be loaded with what is already on this machine
+  fails the rule (below).
+- **`check`:** golangci-lint linter names: one, such as `staticcheck`, or several joined by commas with no spaces,
+  such as `staticcheck,govet`. Issues from those linters are the findings. A linter's own check, such as
+  staticcheck's `SA1019`, cannot be a `check`: golangci-lint takes those only from its config file.
+- **Failed before golangci-lint runs** when a part of `check` is not a linter name (lower-case letters, digits and
+  `_`) or is `typecheck`, golangci-lint's loading step. The reason is
+  ``golangci-lint check `<check>`: `<part>` is not a linter name; tm picks golangci-lint's linters by name (`staticcheck`), not a linter's own checks (`SA1019`)``.
+- **Not available** when golangci-lint says a linter of `check` is unknown (`unknown linters: '<names>'`). The
+  reason quotes its line.
+- **Failed** when golangci-lint exits with anything but 0 or 1 (as when the folder holds no Go module), when what
+  it prints is not its JSON, and when it reports an issue from `typecheck`: the code did not load or compile, so no
+  linter checked it. The reason then is `golangci-lint could not load the code, so its linters did not check it: <text>`.
+- **`config`:** passed as `--config=<config>`, as written, so a relative path is taken from the rule file's folder.
+  Without one, golangci-lint finds its own configuration. `--enable-only` decides the linters either way.
+- **`params`:** none. Any param fails the rule before golangci-lint runs, with the reason
+  `golangci-lint param <name>: unknown`.
+- **A finding** is placed at the issue's line and column (none when golangci-lint gives 0), and its message is the
+  issue's text.
+- **Runs alone.** A golangci-lint rule never shares a run.
+
 ## tessera
 
 A rule may name `tessera` as its engine. The rule file accepts it, and a Tessera rule that covers a file is reported
@@ -532,8 +666,7 @@ any such rule is ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)).
 
 ## Engines with no adapter yet
 
-A rule may name `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `vulture`, `periphery`, `gitleaks` or
-`cargo-audit`. The rule file accepts
+A rule may name `oclint`, `vulture`, `periphery`, `gitleaks` or `cargo-audit`. The rule file accepts
 these names, so a rule written for one of them needs no change when its adapter lands. Until then this `tm` cannot run
 them: a rule that covers a file is reported "not available" with the reason `no adapter for <engine> in this build`,
 whether or not the engine is installed, and nothing is run. Its `check` and `params` are not read, so it is never
