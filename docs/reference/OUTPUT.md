@@ -424,6 +424,7 @@ rules (3):
   no-none-compare  ruff  quality  error  paths: all files  available
   git-only-in-deploy  ast-grep  quality  error  paths: **/*.rs  exclude: **/generated/**  outside kits: deploy  available
   file-erosion  tessera  quality  error  paths: all files  not available: Tessera's slop records are not defined yet
+not applicable (0):
 exceptions in force (1):
   no-none-compare  legacy.py  what: Comparison to  approved: who approved it  reason: the legacy module is rewritten in 2.0
 exceptions expired (1):
@@ -439,15 +440,36 @@ when the exception has one, who approved it and the reason.
 The exceptions are judged on today's date in UTC, as `tm check` judges them: in force are those that have not
 expired, an exception still counting on its `expires` day; expired are those whose `expires` day has passed, each
 line with `expires:` before who approved it. Each exception is in one list, never both, and each list keeps the
-file's order. Both headers are always printed with their count, `(0)` included. An expired exception does not
-change the exit code: `tm rules` lists, it does not check.
+file's order. All four headers, `rules`, `not applicable` and the two exception lists, are always printed with their
+count, `(0)` included. An expired exception does not change the exit code: `tm rules` lists, it does not check.
 
 When the rule file takes a baseline set ([`RULE_FILE.md`](RULE_FILE.md#baseline-sets)), the set's rules are listed
 first, in `baseline` order and then each set's own order, with the file's overrides applied; the file's own rules
 follow, and `rules (N)` counts both. This is also the rule-file order of a `tm check` report. A set's rule is a
 line like any other, such as `  tm-rust-dead-code  clippy  quality  warning  paths: **/*.rs  available`: nothing
-names its set, and its id starts with `tm-`. Two kinds of set rule are not listed, as text or as JSON: one an
-`[[override]]` turned off, and one that is not applicable because a required param is not given.
+names its set, and its id starts with `tm-`. A set rule an `[[override]]` turned off is not listed anywhere, as
+text or as JSON, and a set rule that waits for a required param is not under `rules (N)`.
+
+Under `not applicable (P)` come the set rules that do not apply here, in rule-file order, one line each:
+`<rule id>  <engine>  <why>`, such as
+`  tm-rust-dead-code  clippy  its paths match no file in the rule file's folder`. The why is the one
+`tm check --json` gives the rule under `not_applicable`, since `tm check`'s text gives these rules only as a count.
+No engine is run. A rule is listed once, for the first of these that holds:
+
+- **It waits for a required param:** the why is `required params not given: <names>; give them in the params of an
+  [[override]] for "<rule id>"` ([`RULE_FILE.md`](RULE_FILE.md#required-params)). This is the only place
+  `tm rules` names it.
+- **It covers no file in the rule file's folder,** judged as `tm check` judges it before any engine runs, from the
+  files git lists: the why is `its paths match no file in the rule file's folder`, or `no file its engine checks`
+  for a ShellCheck rule with no script and a cargo-audit rule with no `Cargo.lock`
+  ([`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)). Such a rule keeps its own line under `rules (N)` too,
+  with its availability. A clang-tidy rule that covers files but no C-family source is not listed: `tm check` finds
+  that only when clang-tidy runs. A rule `tm` refuses is not judged here, as `tm check` fails it first. When git
+  cannot list the files, no rule is listed this way.
+
+A rule with `only_with_base = true` is listed only when it covers no file: one that covers files applies whenever
+`tm check` is given a base, and `tm rules` takes none. A rule of your own is never listed here: one that covers no
+file is one `tm check` reports as covering nothing (exit 6), not as not applicable.
 
 `tm rules --json` prints one object:
 
@@ -459,6 +481,8 @@ names its set, and its id starts with `tm-`. Two kinds of set rule are not liste
 | `exceptions_in_force` | How many exceptions are in force, as `tm check` counts them: those not expired today (UTC) |
 | `expired` | Each expired exception: the same fields, and `expires` as `"YYYY-MM-DD"` |
 | `exceptions_expired` | How many exceptions have expired |
+| `not_applicable` | Each set rule that does not apply here, as the text lists it: `rule`, `engine` and `why`, the shape of `tm check --json`'s `not_applicable` |
+| `rules_not_applicable` | How many rules `not_applicable` lists |
 | `exit`, `next` | As for `tm check` |
 
 ## `tm rules --loosened`

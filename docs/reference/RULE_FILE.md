@@ -288,8 +288,8 @@ cannot limit it to kits. Each rule takes at most one `[[override]]`.
 
 A set's rule can name params the repository must give. The rule file gives each one in the `params` of an
 `[[override]]` for that rule; a value in the set's own `params` does not count. Until every one is given the rule
-is not applicable: it is not run, `tm rules` does not list it, and `tm check` counts it in text and, under
-`--json`, lists it under `not_applicable` with the why `required params not given: <names>; give them in the params of an [[override]] for "<rule id>"`.
+is not applicable: it is not run, `tm check` counts it in text, and `tm rules` (text and `--json`) and
+`tm check --json` list it under not applicable, not among the rules, with the why `required params not given: <names>; give them in the params of an [[override]] for "<rule id>"`.
 
 No rule of `standard@1` requires a param. Five rules of `house@1` do: four require `entity_types` and one
 `own_package`, and the set declares each as a list of strings, such as `params = { entity_types = ["Order",
