@@ -25,6 +25,10 @@ fn each_engine_serializes_to_its_rule_file_name() {
     assert_eq!(serialized(Engine::Oclint), "engine = \"oclint\"\n");
     assert_eq!(serialized(Engine::ShellCheck), "engine = \"shellcheck\"\n");
     assert_eq!(serialized(Engine::Git), "engine = \"git\"\n");
+    assert_eq!(serialized(Engine::Vulture), "engine = \"vulture\"\n");
+    assert_eq!(serialized(Engine::Periphery), "engine = \"periphery\"\n");
+    assert_eq!(serialized(Engine::Gitleaks), "engine = \"gitleaks\"\n");
+    assert_eq!(serialized(Engine::CargoAudit), "engine = \"cargo-audit\"\n");
 }
 
 #[test]

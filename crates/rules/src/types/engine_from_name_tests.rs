@@ -1,4 +1,4 @@
-//! ZUT for engine_from_name.rs: the eleven rule-file names, and None for anything else.
+//! ZUT for engine_from_name.rs: the fifteen rule-file names, and None for anything else.
 
 use super::Engine;
 
@@ -58,6 +58,26 @@ fn git() {
 }
 
 #[test]
+fn vulture() {
+    assert_eq!(Engine::from_name("vulture"), Some(Engine::Vulture));
+}
+
+#[test]
+fn periphery() {
+    assert_eq!(Engine::from_name("periphery"), Some(Engine::Periphery));
+}
+
+#[test]
+fn gitleaks() {
+    assert_eq!(Engine::from_name("gitleaks"), Some(Engine::Gitleaks));
+}
+
+#[test]
+fn cargo_audit() {
+    assert_eq!(Engine::from_name("cargo-audit"), Some(Engine::CargoAudit));
+}
+
+#[test]
 fn unknown_names_are_none() {
     for name in [
         "eslint",
@@ -77,6 +97,12 @@ fn unknown_names_are_none() {
         "Git",
         "GIT",
         "git ",
+        "Vulture",
+        "Periphery",
+        "VULTURE",
+        "Gitleaks",
+        "cargo_audit",
+        "cargo audit",
     ] {
         assert_eq!(Engine::from_name(name), None, "{name:?}");
     }

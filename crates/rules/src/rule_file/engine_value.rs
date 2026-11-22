@@ -18,7 +18,7 @@ pub(crate) fn engine_value(text: &str, table: &DeTable, at: usize, out: &mut Vec
             text,
             name_at,
             format!("unknown engine \"{name}\""),
-            "Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck, git.",
+            "Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck, git, vulture, periphery, gitleaks, cargo-audit.",
         ));
     }
     engine

@@ -19,4 +19,8 @@ fn the_others_do_not() {
     assert!(!Engine::Oclint.needs_graph());
     assert!(!Engine::ShellCheck.needs_graph());
     assert!(!Engine::Git.needs_graph());
+    assert!(!Engine::Vulture.needs_graph());
+    assert!(!Engine::Periphery.needs_graph());
+    assert!(!Engine::Gitleaks.needs_graph());
+    assert!(!Engine::CargoAudit.needs_graph());
 }

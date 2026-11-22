@@ -4,7 +4,7 @@
 use super::Engine;
 use serde::Serialize;
 
-const ALL: [Engine; 11] = [
+const ALL: [Engine; 15] = [
     Engine::Clippy,
     Engine::SwiftLint,
     Engine::Ruff,
@@ -16,6 +16,10 @@ const ALL: [Engine; 11] = [
     Engine::Oclint,
     Engine::ShellCheck,
     Engine::Git,
+    Engine::Vulture,
+    Engine::Periphery,
+    Engine::Gitleaks,
+    Engine::CargoAudit,
 ];
 
 #[test]
@@ -71,6 +75,26 @@ fn shellcheck() {
 #[test]
 fn git() {
     assert_eq!(Engine::Git.name(), "git");
+}
+
+#[test]
+fn vulture() {
+    assert_eq!(Engine::Vulture.name(), "vulture");
+}
+
+#[test]
+fn periphery() {
+    assert_eq!(Engine::Periphery.name(), "periphery");
+}
+
+#[test]
+fn gitleaks() {
+    assert_eq!(Engine::Gitleaks.name(), "gitleaks");
+}
+
+#[test]
+fn cargo_audit() {
+    assert_eq!(Engine::CargoAudit.name(), "cargo-audit");
 }
 
 #[test]
