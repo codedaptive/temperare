@@ -4,7 +4,7 @@ use super::{Engine, Kind, RelPath, Severity};
 use serde::{Deserialize, Serialize};
 
 /// One finding. The field names are the output names; `owner` is left out when the file has no owner, and `col`
-/// when the engine gives no column.
+/// when the engine gives no column. `line` is written as null in JSON when None; toml has no null and leaves it out.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Finding {
     /// The rule id; also the `Reason:` tag.
@@ -17,8 +17,9 @@ pub struct Finding {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub owner: Option<String>,
     pub path: RelPath,
-    /// 1-based, or 0 when built with None; read it through `Finding::line` and build with `Finding::new`.
-    pub line: u32,
+    /// 1-based; None when the engine gives no line (null in JSON, left out by toml). Read it through `Finding::line`
+    /// and build with `Finding::new`.
+    pub line: Option<u32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub col: Option<u32>,
     /// The engine's message.
