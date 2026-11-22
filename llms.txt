@@ -157,8 +157,9 @@ sources.
   no database there the rule is not available, and the why names `cargo audit update-db --db <db>`. Every finding
   is on Cargo.lock with no line.
 - Every finding's path is relative to the rule file's folder.
-- A finding has: rule, engine, kind, severity, owner (when the rule file names one), path, line, col (when the
-  engine gives one), what (the engine's message), fix (the rule's fix text).
+- A finding has: rule, engine, kind, severity, owner (when the rule file names one), path, line (always present;
+  null when the finding has no line, as cargo-audit's on Cargo.lock), col (when the engine gives one), what (the
+  engine's message), fix (the rule's fix text).
 - An exception is an [[exception]] table in the rule file with rule, path, reason and approved. It records a
   person's approval. An agent does not add one on its own. An optional expires = "YYYY-MM-DD" is its last day (UTC):
   from the day after, it silences nothing and tm check lists it as expired: an "expired: <rule> <path> (expired

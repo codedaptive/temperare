@@ -191,7 +191,7 @@ in the text; `saved.counted` names it, with `chars` 0 ([`ENGINES.md`](ENGINES.md
 | `severity` | `error` or `warning`, from the rule |
 | `owner` | Who owns the file, from the rule file. Left out when it names none |
 | `path` | The file, relative to the rule file's folder, with `/` between its parts |
-| `line` | The line, counted from 1 |
+| `line` | The line, counted from 1. Always present: `null` for a finding with no line, such as cargo-audit's on `Cargo.lock` (where earlier versions wrote `0`) |
 | `col` | The column, counted from 1. Left out when the engine gives none |
 | `what` | The engine's own message |
 | `fix` | The rule's fix text |
