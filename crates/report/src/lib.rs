@@ -19,6 +19,7 @@ mod report_error;
 mod report_error_display;
 mod report_error_source;
 mod rule_count;
+mod set_aside_why;
 mod silenced;
 mod silenced_by_rule;
 mod split_by_exceptions;
@@ -63,6 +64,8 @@ mod report_tests;
 #[cfg(test)]
 mod rule_count_tests;
 #[cfg(test)]
+mod set_aside_why_tests;
+#[cfg(test)]
 mod silenced_by_rule_tests;
 #[cfg(test)]
 mod silenced_tests;
@@ -97,6 +100,7 @@ pub use render_text::render_text;
 pub use report::Report;
 pub use report_error::ReportError;
 pub use rule_count::RuleCount;
+pub use set_aside_why::set_aside_why;
 pub use silenced::Silenced;
 pub use split_by_exceptions::split_by_exceptions;
 pub use utc_date::utc_date;

@@ -1,14 +1,11 @@
 //! `assemble_report`: the report from the rules' outcomes, given the new-only filter.
 
 use crate::{
-    silenced_by_rule, split_by_exceptions, stderr_tail, Counts, CoversNothing, Expired, Failed, NotApplicable,
-    NotAvailable, Report, Silenced,
+    set_aside_why, silenced_by_rule, split_by_exceptions, stderr_tail, Counts, CoversNothing, Expired, Failed,
+    NotApplicable, NotAvailable, Report, Silenced,
 };
 use procio::Oid;
 use rules::{Date, Exception, Finding, RuleFile, RuleOutcome, ONLY_WITH_BASE_WHY};
-
-/// The why of a not-applicable rule whose reason is None; the rule is still listed, since it does not run.
-const NO_REASON: &str = "no reason given";
 
 /// The start of every baseline set's rule id; a repository's own ids never start with it (rules' `check_id`).
 const BASELINE_PREFIX: &str = "tm-";
@@ -121,7 +118,7 @@ fn out_of_play<'a>(
         let listed = |why: &str| NotApplicable { rule: rule.id.clone(), engine: rule.engine, why: why.to_string() };
         match (set_aside.contains(&std::ptr::from_ref(rule)), no_base && rule.only_with_base, flag) {
             (true, _, _) => {
-                not_applicable.push(listed(rule.not_applicable.as_deref().unwrap_or(NO_REASON)));
+                not_applicable.push(listed(set_aside_why(rule)));
                 continue;
             }
             (_, true, _) => not_applicable.push(listed(ONLY_WITH_BASE_WHY)),
