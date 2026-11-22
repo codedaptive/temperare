@@ -73,7 +73,7 @@ Neither is ever "clean".
 | `shellcheck <version>: <check> is not in temperare's list of shellcheck codes (taken from shellcheck <list version>)` | A ShellCheck rule whose code is not on the list built into `tm`: the 510 codes of ShellCheck 0.11.0, so `<list version>` is `0.11.0` ([below](#shellcheck)) |
 | `reports only what a change adds; run with --base` | A git rule, and an ast-grep rule in count mode, run without `--base` ([git](#git), [ast-grep](#ast-grep)) |
 | `Tessera's slop records are not defined yet` | A rule with `engine = "tessera"` ([below](#tessera)) |
-| `no adapter for <engine> in this build` | A rule whose engine the rule file accepts and this `tm` cannot run yet: `oclint`, `vulture` and `periphery` ([below](#engines-with-no-adapter-yet)) |
+| `no adapter for <engine> in this build` | A rule whose engine the rule file accepts and this `tm` cannot run yet: `vulture` and `periphery` ([below](#engines-with-no-adapter-yet)) |
 
 A rule that is refused, or that covers no file, is settled before any of these is looked at
 ([the order a rule settles in](#the-order-a-rule-settles-in)).
@@ -755,8 +755,7 @@ any such rule is ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)).
 
 ## Engines with no adapter yet
 
-A rule may name `oclint`, `vulture` or `periphery`. The rule file accepts
-these names, so a rule written for one of them needs no change when its adapter lands. Until then this `tm` cannot run
+A rule may name `vulture` or `periphery`. The rule file accepts these names, so a rule written for one of them needs no change when its adapter lands. Until then this `tm` cannot run
 them: a rule that covers a file is reported "not available" with the reason `no adapter for <engine> in this build`,
 whether or not the engine is installed, and nothing is run. Its `check` and `params` are not read, so it is never
 refused. `tm rules` shows the same reason. A rule with `only_with_base = true`, run without `--base`, is not

@@ -409,7 +409,7 @@ the rule file's folder, a `--base` that names no commit) prints the two lines on
 A rule file with problems prints, with `--json`:
 
 ```json
-{"exit":2,"next":"fix each problem listed for /path/to/temperare.toml","problems":[{"col":10,"fix":"Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck, git, vulture, periphery, gitleaks, cargo-audit.","line":5,"what":"unknown engine \"pylnit\""}],"rule_file":"/path/to/temperare.toml"}
+{"exit":2,"next":"fix each problem listed for /path/to/temperare.toml","problems":[{"col":10,"fix":"Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, shellcheck, git, vulture, periphery, gitleaks, cargo-audit.","line":5,"what":"unknown engine \"pylnit\""}],"rule_file":"/path/to/temperare.toml"}
 ```
 
 Without `--json` it prints one line per problem, `file:line:col  what  fix`, then the `next:` line. See

@@ -110,7 +110,7 @@ the owner of the findings in its files.
 | Key | Required | Meaning |
 |---|---|---|
 | `id` | yes | The rule's name in every report. One or more of `a-z`, `0-9` and `-`. No two rules share an id. It may not start with `tm-`, which is kept for the rules of baseline sets |
-| `engine` | yes | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`, `git`, `tessera`, `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `vulture`, `periphery`, `gitleaks` or `cargo-audit`, exactly as written here. `oclint`, `vulture` and `periphery` are accepted, and their rules are "not available" until Temperare has an adapter for each ([`ENGINES.md`](ENGINES.md#engines-with-no-adapter-yet)). A `git` rule needs `--base` ([`ENGINES.md`](ENGINES.md#git)) |
+| `engine` | yes | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`, `git`, `tessera`, `golangci-lint`, `pylint`, `clang-tidy`, `vulture`, `periphery`, `gitleaks` or `cargo-audit`, exactly as written here. `vulture` and `periphery` are accepted, and their rules are "not available" until Temperare has an adapter for each ([`ENGINES.md`](ENGINES.md#engines-with-no-adapter-yet)). A `git` rule needs `--base` ([`ENGINES.md`](ENGINES.md#git)) |
 | `check` | yes | What the engine is asked. See below |
 | `fix` | yes | The text shown with each finding of this rule |
 | `severity` | no | `error` (the default) or `warning` |
@@ -143,7 +143,7 @@ Any other key is a problem.
 | `gitleaks` | gitleaks rule ids: one (`aws-access-token`), or several joined by commas with no spaces. Not `ALL` |
 | `cargo-audit` | An advisory id (`RUSTSEC-2023-0071`) or a kind: `vulnerability`, `unmaintained`, `unsound`, `notice`, or `all` for every advisory. Not `yanked` |
 | `tessera` | Required like any other, and not used today: nothing is run |
-| `oclint`, `vulture`, `periphery` | Required like any other, and not used yet: nothing is run |
+| `vulture`, `periphery` | Required like any other, and not used yet: nothing is run |
 
 A finding is kept only when it can be matched back to `check`: for clippy, SwiftLint, pylint and clang-tidy the
 engine reports exactly that lint, identifier, message id or check; for ruff the diagnostic's code starts with one of
@@ -185,7 +185,7 @@ engine. [`ENGINES.md`](ENGINES.md) has each case.
   fail the rule ([`ENGINES.md`](ENGINES.md#git)).
 - **pylint, clang-tidy, golangci-lint, gitleaks, cargo-audit:** none; any param fails the rule.
 - **tessera:** none; any param fails the rule.
-- **oclint, vulture, periphery:** not read.
+- **vulture, periphery:** not read.
 
 ### Which files a rule covers
 
@@ -376,7 +376,7 @@ A rule file with a `security` rule must have a top-level `owner`, so a security 
 ```
 /path/to/temperare.toml:3:1  [[rule]] is missing `fix`  Add `fix = "..."` to this [[rule]].
 /path/to/temperare.toml:4:6  malformed id "No_None": an id is one or more of a-z, 0-9 and '-'  Write the id in lower-case letters, digits and dashes, e.g. "no-stored-bool".
-/path/to/temperare.toml:5:10  unknown engine "pylnit"  Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck, git, vulture, periphery, gitleaks, cargo-audit.
+/path/to/temperare.toml:5:10  unknown engine "pylnit"  Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, shellcheck, git, vulture, periphery, gitleaks, cargo-audit.
 next: fix each problem listed for /path/to/temperare.toml
 ```
 

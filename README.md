@@ -257,7 +257,7 @@ approved = "who approved it"
 | Key of a `[[rule]]` | Meaning |
 |---|---|
 | `id` | The rule's name in every report: lower-case letters, digits and `-`, unique in the file |
-| `engine` | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`, `git`, `pylint`, `clang-tidy`, `golangci-lint`, `gitleaks`, `cargo-audit` or `tessera` (what each runs today: [Engines](#engines)); also `oclint`, `vulture` and `periphery`, accepted and "not available" until their adapters land |
+| `engine` | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`, `git`, `pylint`, `clang-tidy`, `golangci-lint`, `gitleaks`, `cargo-audit` or `tessera` (what each runs today: [Engines](#engines)); also `vulture` and `periphery`, accepted and "not available" until their adapters land |
 | `check` | What the engine is asked. clippy: one lint the toolchain lists (`clippy::bool_comparison`), or `warnings` for every warning clippy reports; not a lint group. SwiftLint: one rule identifier (`force_cast`). ruff: a rule code, a code prefix or `ALL` (`E711`, `E7`), or several joined by commas. ast-grep: the path of a rule file inside the rule file's folder. ShellCheck: one code (`SC2086`). git: `test_ratio`. pylint: one message id (`C0121`). clang-tidy: one check name (`bugprone-branch-clone`). golangci-lint: linter names (`staticcheck`, or `staticcheck,govet`). gitleaks: rule ids (`aws-access-token`, or several joined by commas). cargo-audit: an advisory id (`RUSTSEC-2023-0071`) or a kind (`vulnerability`, `unmaintained`, `unsound`, `notice`, `all`) |
 | `fix` | The text shown with each finding |
 | `severity` | `error` (the default) or `warning` |
@@ -337,7 +337,7 @@ available or not applicable.
 | `gitleaks` | `gitleaks dir` on the rule file's folder, with only the rule's rule ids on; the secret is never printed | Secrets in any file |
 | `cargo-audit` | `cargo-audit audit` on the rule file's folder's `Cargo.lock`, against the advisory database already on this machine | Rust dependencies with a RustSec advisory |
 | `tessera` | Nothing | Not available today |
-| `oclint`, `vulture`, `periphery` | Nothing yet | Accepted in the rule file; not available until each adapter lands |
+| `vulture`, `periphery` | Nothing yet | Accepted in the rule file; not available until each adapter lands |
 
 Engines are run as programs. Rules on the same engine with the same `config` and `params` share one run where the
 engine can answer each of them in it, so ten ruff rules for ten codes can be one ruff run; each rule still keeps
@@ -455,7 +455,7 @@ Temperare runs other programs with your privileges, and the rule file decides wh
   `tm baseline test` on the ready sets, `house@1` and `standard@1`, and in the acceptance record all 89 of their
   rules (36 and 53) hold on their own failing and passing cases.
 - **Platforms:** built and accepted on macOS. The code is written for Unix systems; Linux and Windows are untested.
-- **Not available today:** rules with `engine = "tessera"`; and rules naming `oclint`, `vulture` or `periphery`,
+- **Not available today:** rules with `engine = "tessera"`; and rules naming `vulture` or `periphery`,
   which the rule file accepts before their adapters land (see [Engines](#engines)).
 - **License:** MIT. See [`LICENSE`](LICENSE).
 
