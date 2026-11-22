@@ -48,10 +48,10 @@ make accept                            # the acceptance checks, with a report
 
 `GROUP` is `unit` (the default), `integration` or `validation`, and works with `test-one` as well.
 `CARGO_TEST_ARGS=<name>` passes a test name filter. `make accept` needs clippy, SwiftLint, ruff, ast-grep,
-golangci-lint (with go), pylint and clang-tidy installed: a check whose engine is missing does not run, and the
-report says so. The integration tests of the `engines` crate run those engines for real, and ShellCheck, gitleaks,
-cargo-audit, vulture and Periphery (with swift) too. `make accept` writes its report to `target/accept-report.md` and fails
-when a check fails or does not run.
+golangci-lint (with go), pylint, clang-tidy, vulture and Periphery installed, and for Periphery Apple's `swift` at
+`/usr/bin/swift`: a check whose engine is missing does not run, and the report says so. The integration tests of
+the `engines` crate run those engines for real, and ShellCheck, gitleaks and cargo-audit too. `make accept` writes
+its report to `target/accept-report.md` and fails when a check fails or does not run.
 
 Start with the smallest test that proves your change, then widen.
 
