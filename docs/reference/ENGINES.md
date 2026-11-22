@@ -770,8 +770,9 @@ which needs no rule.
 
   with `PYTHONWARNINGS=ignore` set for the run, so a Python warning about a file vulture reads well does not land
   on stderr. Every Python file under the folder is scanned; findings outside the rule's scope are dropped after.
-  vulture does not read `.gitignore`, so a virtualenv inside the folder is scanned unless the rule's `paths` or
-  `exclude` leave it out. With no Python file, vulture prints nothing and the rule reads clean. Nothing reaches the
+  vulture does not read `.gitignore`, and the rule's `paths` and `exclude` only drop findings after the scan, so a
+  virtualenv inside the folder is always scanned: its findings are dropped when the rule does not cover it, but a
+  file in it that vulture cannot read or parse still fails the rule (below). With no Python file, vulture prints nothing and the rule reads clean. Nothing reaches the
   network.
 - **`check`:** one vulture code: `V101` (unused attribute), `V102` (class), `V103` (function), `V104` (import),
   `V105` (method), `V106` (property), `V107` (variable, and unused argument) or `V201` (unreachable code). vulture
