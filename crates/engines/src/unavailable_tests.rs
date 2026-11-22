@@ -8,7 +8,7 @@ use std::cell::RefCell;
 #[test]
 fn unavailable_reports_missing_adapters_engines_and_programs() {
     let cases = [
-        ("no adapter", Engine::Oclint, vec![], vec![], Some(Stop::NotAvailable { why: "no adapter for oclint in this build".into() })),
+        ("no adapter", Engine::Periphery, vec![], vec![], Some(Stop::NotAvailable { why: "no adapter for periphery in this build".into() })),
         ("never", Engine::Tessera, vec![], vec![], Some(Stop::NotAvailable { why: "Tessera's slop records are not defined yet".into() })),
         ("ruff absent", Engine::Ruff, vec![], vec!["ruff"], Some(Stop::NotOnPath { program: "ruff".into() })),
         ("clippy driver absent", Engine::Clippy, vec!["cargo-clippy"], vec!["cargo-clippy", "clippy-driver"], Some(Stop::NotOnPath { program: "clippy-driver".into() })),

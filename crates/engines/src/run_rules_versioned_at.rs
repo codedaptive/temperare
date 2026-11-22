@@ -12,8 +12,8 @@ use std::path::Path;
 /// relative to `repo` unless absolute; every finding's path is relative to it. `only` empty checks the whole folder;
 /// otherwise findings are cut to the files and folders it lists, a folder keeping what lies under it (engines still
 /// run over the folder). A rule tm refuses (its check or params, ast-grep's `{{name}}` params apart) is `Failed`
-/// first, whatever its engine; a ShellCheck rule with no script in its paths is no findings with the `no_files` flag,
-/// even if ShellCheck is absent; any other rule with `only_with_base` and no `base`, whose paths match a listed file
+/// first, whatever its engine; a ShellCheck rule with no script in its paths, or a cargo-audit rule with no Cargo.lock in
+/// its folder or paths, is no findings with the `no_files` flag, even if its engine is absent; any other rule with `only_with_base` and no `base`, whose paths match a listed file
 /// or where no listing is made, is `NotAvailable` with `rules::ONLY_WITH_BASE_WHY`, whatever its engine, and its check
 /// never runs; an absent engine is `NotAvailable` with `availability`'s why; a check the engine does not know is
 /// `NotAvailable` with a why naming the engine, its version

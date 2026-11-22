@@ -4,7 +4,7 @@
 use crate::entry_for::entry_for;
 use rules::Engine;
 
-const ENGINES: [(Engine, &str); 10] = [
+const ENGINES: [(Engine, &str); 12] = [
     (Engine::Clippy, "clippy"),
     (Engine::SwiftLint, "swiftlint"),
     (Engine::Ruff, "ruff"),
@@ -15,6 +15,8 @@ const ENGINES: [(Engine, &str); 10] = [
     (Engine::Pylint, "pylint"),
     (Engine::ClangTidy, "clang-tidy"),
     (Engine::GolangciLint, "golangci-lint"),
+    (Engine::Gitleaks, "gitleaks"),
+    (Engine::CargoAudit, "cargo-audit"),
 ];
 
 #[test]
@@ -52,6 +54,6 @@ fn git_maps_to_the_git_entry() {
 }
 
 #[test]
-fn oclint_has_no_entry_in_this_build() {
-    assert!(entry_for(Engine::Oclint).is_none());
+fn periphery_has_no_entry_in_this_build() {
+    assert!(entry_for(Engine::Periphery).is_none());
 }

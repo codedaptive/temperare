@@ -1,9 +1,10 @@
 //! `run_shellcheck_with`: shellcheck's flow for one rule, against a given list of shellcheck codes.
 
-use super::{no_script, parse_shellcheck, read_code_list, shellcheck_cmd};
+use super::{parse_shellcheck, read_code_list, shellcheck_cmd};
 use crate::check_run::check_run;
 use crate::entry::Entry;
 use crate::host::Host;
+use crate::no_script::no_script;
 use crate::parse_failed::parse_failed;
 use crate::types::{Hit, Stop};
 use rules::Rule;

@@ -1,6 +1,6 @@
 //! ZUT for git_stop.rs: each kind of `GitError`, built by hand, read as its `Stop`. Nothing runs.
 
-use super::git_stop;
+use crate::git_stop::git_stop;
 use crate::types::Stop;
 use procio::{GitError, ProcError};
 use std::ffi::OsString;
