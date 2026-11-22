@@ -3,6 +3,7 @@
 
 mod case_file;
 mod engine;
+mod engine_all;
 mod engine_from_name;
 mod engine_name;
 mod engine_needs_graph;
@@ -24,6 +25,8 @@ mod severity_from_name;
 
 #[cfg(test)]
 mod case_file_tests;
+#[cfg(test)]
+mod engine_all_tests;
 #[cfg(test)]
 mod engine_from_name_tests;
 #[cfg(test)]

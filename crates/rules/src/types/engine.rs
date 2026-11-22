@@ -34,4 +34,32 @@ pub enum Engine {
     Gitleaks,
     #[serde(rename = "cargo-audit")]
     CargoAudit,
+    #[serde(rename = "eslint")]
+    Eslint,
+    #[serde(rename = "mypy")]
+    Mypy,
+    #[serde(rename = "pmd")]
+    Pmd,
+    #[serde(rename = "detekt")]
+    Detekt,
+    #[serde(rename = "rubocop")]
+    Rubocop,
+    #[serde(rename = "phpstan")]
+    Phpstan,
+    #[serde(rename = "dart")]
+    Dart,
+    #[serde(rename = "markdownlint")]
+    Markdownlint,
+    #[serde(rename = "yamllint")]
+    Yamllint,
+    #[serde(rename = "actionlint")]
+    Actionlint,
+    #[serde(rename = "hadolint")]
+    Hadolint,
+    #[serde(rename = "vale")]
+    Vale,
+    #[serde(rename = "stylelint")]
+    Stylelint,
+    #[serde(rename = "sqlfluff")]
+    Sqlfluff,
 }

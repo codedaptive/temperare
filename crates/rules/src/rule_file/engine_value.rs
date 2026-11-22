@@ -14,12 +14,8 @@ pub(crate) fn engine_value(text: &str, table: &DeTable, at: usize, out: &mut Vec
     let (name, name_at) = required_string(text, table, "engine", PLACE, at, out)?;
     let engine = Engine::from_name(&name);
     if engine.is_none() {
-        out.push(problem_at(
-            text,
-            name_at,
-            format!("unknown engine \"{name}\""),
-            "Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, shellcheck, git, vulture, periphery, gitleaks, cargo-audit.",
-        ));
+        let hint = format!("Use one of: {}.", Engine::ALL.map(Engine::name).join(", "));
+        out.push(problem_at(text, name_at, format!("unknown engine \"{name}\""), &hint));
     }
     engine
 }

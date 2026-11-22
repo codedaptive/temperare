@@ -20,6 +20,20 @@ impl Engine {
             Engine::Periphery => "periphery",
             Engine::Gitleaks => "gitleaks",
             Engine::CargoAudit => "cargo-audit",
+            Engine::Eslint => "eslint",
+            Engine::Mypy => "mypy",
+            Engine::Pmd => "pmd",
+            Engine::Detekt => "detekt",
+            Engine::Rubocop => "rubocop",
+            Engine::Phpstan => "phpstan",
+            Engine::Dart => "dart",
+            Engine::Markdownlint => "markdownlint",
+            Engine::Yamllint => "yamllint",
+            Engine::Actionlint => "actionlint",
+            Engine::Hadolint => "hadolint",
+            Engine::Vale => "vale",
+            Engine::Stylelint => "stylelint",
+            Engine::Sqlfluff => "sqlfluff",
         }
     }
 }
