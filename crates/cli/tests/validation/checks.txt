@@ -23,5 +23,9 @@
 94|pylint_off_path_is_not_available|Done 9: pylint through a rule file
 96|a_clang_tidy_warning_is_reported_with_its_rule_place_fix_and_version|Done 9: clang-tidy through a rule file
 96|clang_tidy_off_path_is_not_available|Done 9: clang-tidy through a rule file
+97|a_vulture_finding_is_reported_with_its_rule_place_fix_and_version|Done 9: vulture through a rule file
+97|vulture_off_path_is_not_available|Done 9: vulture through a rule file
+98|a_periphery_result_is_reported_with_its_rule_place_fix_and_version|Done 9: Periphery through a rule file
+98|periphery_off_path_is_not_available|Done 9: Periphery through a rule file
 100|two_ruff_rules_share_one_engine_run|Done 10: the baseline
 100|the_shipped_baseline_sets_hold|Done 10: the baseline

@@ -67,6 +67,18 @@ check = "readability-braces-around-statements"
 fix = "none"
 
 [[rule]]
+id = "head-vulture"
+engine = "vulture"
+check = "V103"
+fix = "none"
+
+[[rule]]
+id = "head-periphery"
+engine = "periphery"
+check = "unused"
+fix = "none"
+
+[[rule]]
 id = "head-tessera"
 engine = "tessera"
 check = "erosion"
@@ -77,7 +89,7 @@ fix = "none"
 /// arguments that print its version. `temperare rules` lists only RULES' engines, so an engine it lists must be
 /// here; one added to RULES is added here too. Tessera's is asked only once `temperare` says
 /// Tessera is available, which it does not yet (S-20).
-const VERSIONS: [(&str, &str, &[&str]); 8] = [
+const VERSIONS: [(&str, &str, &[&str]); 10] = [
     ("clippy", "cargo", &["clippy", "--version"]),
     ("swiftlint", "swiftlint", &["version"]),
     ("ruff", "ruff", &["--version"]),
@@ -85,6 +97,8 @@ const VERSIONS: [(&str, &str, &[&str]); 8] = [
     ("golangci-lint", "golangci-lint", &["--version"]),
     ("pylint", "pylint", &["--version"]),
     ("clang-tidy", "clang-tidy", &["--version"]),
+    ("vulture", "vulture", &["--version"]),
+    ("periphery", "periphery", &["version"]),
     ("tessera", "ts", &["--version"]),
 ];
 
