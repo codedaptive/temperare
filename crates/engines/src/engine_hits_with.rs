@@ -4,17 +4,17 @@
 use crate::entry_for::entry_for;
 use crate::host::Host;
 use crate::no_adapter_why::no_adapter_why;
-use crate::shellcheck::no_script;
+use crate::shellcheck::no_script_listed;
 use crate::types::{Hit, Stop};
 use crate::unavailable::unavailable;
-use rules::{Engine, Rule, ONLY_WITH_BASE_WHY};
+use rules::{Rule, ONLY_WITH_BASE_WHY};
 use std::path::{Path, PathBuf};
 
 /// The hits of `rule` under `folder`: the rule file's canonical folder, or the `Stop` its resolving gave. In the
 /// order every engine settles a rule (refusals, which the caller settles first; no file; not available; the run):
-/// 1. a ShellCheck rule with a resolved folder lists its scripts with `scripts`; when `no_script` finds none the rule
-///    applies to, it is `NoFiles`, nothing is looked up on PATH and the flow never runs. A listing error falls
-///    through to the steps below (an available ShellCheck's flow lists again and stops with it);
+/// 1. a ShellCheck rule with a resolved folder lists its scripts with `scripts`; when `no_script_listed` finds none
+///    the rule applies to, it is `NoFiles`, nothing is looked up on PATH and the flow never runs. A listing error
+///    falls through to the steps below (an available ShellCheck's flow lists again and stops with it);
 /// 1b. a rule with `only_with_base` and no `host.base` is `NotAvailable` with `rules::ONLY_WITH_BASE_WHY`, whatever its
 ///    engine and whatever `folder` is: nothing is looked up on PATH and the flow never runs;
 /// 2. an engine with no entry in this build (`entry_for`) is `NotAvailable` with `no_adapter_why`; an engine that
@@ -28,10 +28,8 @@ pub(crate) fn engine_hits_with(
     host: &Host,
     scripts: &dyn Fn(&Path) -> Result<Vec<PathBuf>, Stop>,
 ) -> Result<Vec<Hit>, Stop> {
-    if let (Engine::ShellCheck, Ok(folder)) = (rule.engine, folder) {
-        if let Some(stop) = scripts(folder).ok().and_then(|listed| no_script(rule, &listed)) {
-            return Err(stop);
-        }
+    if let Some(stop) = no_script_listed(rule, folder.ok(), scripts) {
+        return Err(stop);
     }
     if rule.only_with_base && host.base.is_none() {
         return Err(Stop::NotAvailable { why: ONLY_WITH_BASE_WHY.to_string() });

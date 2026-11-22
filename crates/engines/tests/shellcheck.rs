@@ -43,7 +43,7 @@ fn git(repo: &Path, args: &[&str]) {
 }
 
 #[test]
-fn shellcheck_entry_reports_pending_code_and_missing_program() {
+fn shellcheck_entry_reports_sc2086_finding_and_missing_program() {
     assert_eq!(availability(Engine::ShellCheck), Availability::Available);
     assert_eq!(entry_for(Engine::ShellCheck).unwrap().name, "shellcheck");
 
@@ -65,31 +65,19 @@ fix = "Quote the variable."
     assert_eq!(runs.len(), 1);
     assert_eq!(runs[0].rule, "quote");
     assert_eq!(runs[0].engine, Engine::ShellCheck);
-    let RuleOutcome::NotAvailable { rule, engine, why } = &runs[0].outcome else {
-        panic!("expected pending code: {:?}", runs[0]);
-    };
-    assert_eq!(rule, "quote");
-    assert_eq!(*engine, Engine::ShellCheck);
-    assert!(why.starts_with("shellcheck "), "{why}");
-    assert!(why.ends_with(": SC2086 is not in temperare's list of shellcheck codes (taken from shellcheck pending)"), "{why}");
-    assert_eq!(runs[0].raw_chars, None);
+    assert!(matches!(&runs[0].outcome, RuleOutcome::Findings(_)), "expected Findings: {:?}", runs[0].outcome);
+    let RuleOutcome::Findings(findings) = &runs[0].outcome else { unreachable!() };
+    assert_eq!(findings.len(), 1);
+    assert_eq!(findings[0].rule, "quote");
+    assert_eq!(findings[0].path, rules::RelPath::new("quote.sh"));
+    assert_eq!(findings[0].line(), Some(3));
+    assert_eq!(findings[0].what, "Double quote to prevent globbing and word splitting.");
+    assert_eq!(findings[0].fix, "Quote the variable.");
+    assert!(runs[0].raw_chars.is_some());
 
-    // FLIPS WHEN temperare's list of shellcheck codes holds SC2086:
-    // let RuleOutcome::Findings(findings) = &runs[0].outcome else { panic!("{:?}", runs[0]); };
-    // assert_eq!(findings.len(), 1);
-    // assert_eq!(findings[0].rule, "quote");
-    // assert_eq!(findings[0].path, rules::RelPath::new("quote.sh"));
-    // assert_eq!(findings[0].line(), Some(3));
-    // assert_eq!(findings[0].what, "Double quote to prevent globbing and word splitting.");
-    // assert_eq!(findings[0].fix, "Quote the variable.");
-    // assert!(runs[0].raw_chars.is_some());
-    //
-    // A clean script passing through this path waits for the same list: while it is pending, a clean script's rule
-    // is not available too, so that case belongs to the order that brings the real list of shellcheck codes in. Once
-    // the list holds the code, a folder with no scripts is a rule that is `NoFiles` and ran no check (raw_chars None),
-    // which
+    // A clean script through this path is a separate case. A folder with no scripts is `NoFiles` with no check run;
     // src/shellcheck/integration/run_shellcheck_with_tests.rs (`repository_without_scripts_is_no_files_and_no_check_run`)
-    // proves on the flow.
+    // proves that flow.
 
     let path = PathGuard(std::env::var_os("PATH"));
     let without_shellcheck = std::env::join_paths(std::env::split_paths(path.0.as_ref().unwrap()).filter(|dir| {

@@ -2,6 +2,9 @@
 
 use rules::{RelPath, Rule};
 
+/// Why a rule ran nothing when `no_file_match` says its paths match no file of the folder's listing.
+pub(crate) const NO_FILE_MATCH_WHY: &str = "its paths match no file in the rule file's folder";
+
 /// True when `rule` applies to none of `files`, the tracked and untracked-not-ignored files of the rule file's folder
 /// relative to it (`files_in_folder`). `Rule::applies` is the rule's compiled scope (its paths, its excludes, its
 /// kits and outside kits), the same test `findings_from` puts each hit to, so a rule this says no to could give no

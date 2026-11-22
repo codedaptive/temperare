@@ -1,9 +1,12 @@
 //! `entry_for`: the registry of engines, each engine's entry.
 
 use crate::ast_grep::AST_GREP;
+use crate::clang_tidy::CLANG_TIDY;
 use crate::clippy::CLIPPY;
 use crate::entry::Entry;
 use crate::git::GIT;
+use crate::golangci_lint::GOLANGCI_LINT;
+use crate::pylint::PYLINT;
 use crate::ruff::RUFF;
 use crate::shellcheck::SHELLCHECK;
 use crate::swiftlint::SWIFTLINT;
@@ -21,6 +24,9 @@ pub fn entry_for(engine: Engine) -> Option<&'static Entry> {
         Engine::Tessera => Some(&TESSERA),
         Engine::ShellCheck => Some(&SHELLCHECK),
         Engine::Git => Some(&GIT),
+        Engine::Pylint => Some(&PYLINT),
+        Engine::ClangTidy => Some(&CLANG_TIDY),
+        Engine::GolangciLint => Some(&GOLANGCI_LINT),
         // Each variant with no adapter in this build gives None, which callers report as not available with
         // `no_adapter_why`. An adapter adds its arm above.
         _ => None,

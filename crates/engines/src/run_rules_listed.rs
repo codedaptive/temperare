@@ -2,7 +2,7 @@
 //! of its folder settled before anything runs.
 
 use crate::host::Host;
-use crate::no_file_match::no_file_match;
+use crate::no_file_match::{no_file_match, NO_FILE_MATCH_WHY};
 use crate::refused::refused;
 use crate::rule_run_of::rule_run_of;
 use crate::run_group::run_group;
@@ -10,9 +10,6 @@ use crate::shared_groups::shared_groups;
 use crate::types::{EngineVersion, HitsFn, RuleRun, Stop};
 use rules::{RelPath, Rule, RuleFile, RuleOutcome};
 use std::path::Path;
-
-/// Why a rule ran nothing when `no_file_match` says its paths match no file of the folder's listing.
-const NO_FILE_MATCH_WHY: &str = "its paths match no file in the rule file's folder";
 
 /// Each rule's run, in rule-file order, `files` being the tracked and untracked-not-ignored files of the rule file's
 /// folder relative to it (None when git could not list them), `hits` being one rule's flow (`engine_hits` in
