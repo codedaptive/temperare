@@ -1,7 +1,7 @@
 //! The SARIF reader: one SARIF 2.1 log on stdout, read into hits. Of the log it reads `runs[].results[]`, and of each
 //! result `ruleId` (else `rule.id`), `message.text` and its first location's `physicalLocation.artifactLocation.uri`
-//! and `region.startLine`/`startColumn`. No engine adapter prints SARIF yet: an entry whose engine prints SARIF sets
-//! its reader to `parse_sarif`.
+//! and `region.startLine`/`startColumn`. An entry whose engine prints SARIF sets its reader to `parse_sarif`, or to a
+//! reader that calls it (`parse_gitleaks` does).
 
 mod parse_sarif;
 mod sarif_path;

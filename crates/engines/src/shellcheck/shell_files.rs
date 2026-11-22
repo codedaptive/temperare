@@ -2,7 +2,9 @@
 //! reads the real filesystem, so its tests are the zone integration tests in integration/shell_files_tests.rs and it
 //! has no unit-test sibling.
 
-use super::{git_stop, is_regular_file, read_head, shell_files_with};
+use super::{read_head, shell_files_with};
+use crate::git_stop::git_stop;
+use crate::is_regular_file::is_regular_file;
 use crate::types::Stop;
 use std::path::{Path, PathBuf};
 

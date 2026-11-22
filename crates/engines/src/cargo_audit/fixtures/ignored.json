@@ -1,0 +1,1 @@
+{"database":{"advisory-count":1555,"last-commit":null,"last-updated":null},"lockfile":{"dependency-count":2},"settings":{"target_arch":[],"target_os":[],"severity":null,"ignore":["RUSTSEC-2021-0003"],"informational_warnings":["unmaintained","unsound","notice"]},"vulnerabilities":{"found":false,"count":0,"list":[]},"warnings":{}}

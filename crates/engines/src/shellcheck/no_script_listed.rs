@@ -1,6 +1,6 @@
 //! `no_script_listed`: ShellCheck's no-file outcome for a rule, its folder's scripts listed through a given lister.
 
-use super::no_script;
+use crate::no_script::no_script;
 use crate::types::Stop;
 use rules::{Engine, Rule};
 use std::path::{Path, PathBuf};

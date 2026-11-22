@@ -86,7 +86,7 @@ fn a_refused_check_or_param_is_failed_with_its_flows_stderr_and_any_other_rule_i
             Some("param shared_setup in names.yml: not a list of globs"),
         ),
         ("ast-grep", "names.yml", "params = { count = \"setup-vs-tests\", shared_setup = [\"common/**\"] }\n", None),
-        ("oclint", "anything", "params = { x = [\"y\"] }\n", None),
+        ("periphery", "anything", "params = { x = [\"y\"] }\n", None),
     ];
     for (engine, check, extra, stderr) in cases {
         let want = stderr.map(|stderr| Stop::Failed { code: None, stderr: stderr.to_string() });

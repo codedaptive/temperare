@@ -3,7 +3,7 @@
 
 use super::is_c_source;
 use crate::folder_files::folder_files;
-use crate::shellcheck::git_stop;
+use crate::git_stop::git_stop;
 use crate::types::Stop;
 use std::path::{Path, PathBuf};
 

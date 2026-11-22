@@ -76,8 +76,8 @@ struct Region {
 /// of `check`, or `check` is `ALL`; one with no rule id never is. The URI is read by `sarif_path` and made relative
 /// to `folder` with `cwd` as the engine's working directory; a result with no location, or in a file outside
 /// `folder`, is not a hit. Any exit code with a SARIF log on stdout is an answer; stdout that is not one (not JSON,
-/// or no `runs` array) is a `ParseError` quoting the start of what the engine printed. No engine adapter prints
-/// SARIF yet: an entry whose engine does sets its reader to `parse_sarif`.
+/// or no `runs` array) is a `ParseError` quoting the start of what the engine printed. An entry whose
+/// engine prints SARIF sets its reader to `parse_sarif`, or to a reader that calls it (`parse_gitleaks` does).
 pub fn parse_sarif(out: &Output, check: &str, cwd: &Path, folder: &Path) -> Result<Vec<Hit>, ParseError> {
     let log: Log = serde_json::from_slice(&out.stdout)
         .map_err(|_| ParseError { why: format!("SARIF output is not a SARIF log: {}", printed_start(out)) })?;

@@ -1,6 +1,6 @@
 //! ZUT for no_script: only scripts in the rule's scope count.
 
-use super::no_script::no_script;
+use crate::no_script::no_script;
 use crate::types::Stop;
 use rules::RuleFile;
 use std::path::{Path, PathBuf};

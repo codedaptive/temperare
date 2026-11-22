@@ -5,10 +5,7 @@
 //! `CodeList` reader).
 
 mod code_list;
-mod git_stop;
-mod is_regular_file;
 mod is_shell_shebang;
-mod no_script;
 mod no_script_listed;
 mod parse_shellcheck;
 mod read_code_list;
@@ -23,15 +20,11 @@ mod shellcheck_refusal;
 mod shellcheck_version;
 
 #[cfg(test)]
-mod git_stop_tests;
-#[cfg(test)]
 mod integration;
 #[cfg(test)]
 mod is_shell_shebang_tests;
 #[cfg(test)]
 mod no_script_listed_tests;
-#[cfg(test)]
-mod no_script_tests;
 #[cfg(test)]
 mod parse_shellcheck_tests;
 #[cfg(test)]
@@ -52,10 +45,7 @@ mod shellcheck_refusal_tests;
 mod shellcheck_version_tests;
 
 pub(crate) use code_list::CodeList;
-pub(crate) use git_stop::git_stop;
-pub(crate) use is_regular_file::is_regular_file;
 pub(crate) use is_shell_shebang::is_shell_shebang;
-pub(crate) use no_script::no_script;
 pub(crate) use no_script_listed::no_script_listed;
 pub use parse_shellcheck::parse_shellcheck;
 pub(crate) use read_code_list::read_code_list;

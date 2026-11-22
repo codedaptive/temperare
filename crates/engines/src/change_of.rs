@@ -2,8 +2,9 @@
 //! keeps. It runs git and reads the real filesystem, so its tests are the zone integration tests in
 //! integration/change_of_tests.rs and it has no unit-test sibling.
 
+use crate::git_stop::git_stop;
+use crate::is_regular_file::is_regular_file;
 use crate::rel_to_folder::rel_to_folder;
-use crate::shellcheck::{git_stop, is_regular_file};
 use crate::types::Stop;
 use rules::RelPath;
 use std::ops::Range;

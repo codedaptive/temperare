@@ -1,5 +1,5 @@
 //! ZUT for availability.rs: engine program lookups, including both Clippy programs and ShellCheck, exact absence
-//! reasons, Tessera never available (settled S-20), and an engine with no adapter in this build (OCLint) not
+//! reasons, Tessera never available (settled S-20), and an engine with no adapter in this build (Periphery) not
 //! available whatever is on PATH, from `availability_from`.
 
 use crate::availability::availability_from;
@@ -88,9 +88,9 @@ fn clippy_looks_up_both_programs_in_order_when_present() {
 }
 
 #[test]
-fn oclint_has_no_adapter_whatever_is_on_path_and_looks_up_nothing() {
-    let why = not_available("no adapter for oclint in this build");
-    assert_eq!(availability_from(Engine::Oclint, |_| true), why);
-    assert_eq!(availability_from(Engine::Oclint, |_| false), why);
-    assert_eq!(asked_for(Engine::Oclint), Vec::<String>::new());
+fn periphery_has_no_adapter_whatever_is_on_path_and_looks_up_nothing() {
+    let why = not_available("no adapter for periphery in this build");
+    assert_eq!(availability_from(Engine::Periphery, |_| true), why);
+    assert_eq!(availability_from(Engine::Periphery, |_| false), why);
+    assert_eq!(asked_for(Engine::Periphery), Vec::<String>::new());
 }

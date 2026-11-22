@@ -16,7 +16,7 @@ fn each_stop_maps_to_its_cause() {
         ("cargo absent under clippy", Engine::Clippy, not_on_path("cargo"), helper),
         ("git absent for shellcheck", Engine::ShellCheck, not_on_path("git"), helper),
         ("git absent for git", Engine::Git, not_on_path("git"), engine),
-        ("a program run for an engine with no entry", Engine::Oclint, not_on_path("x"), helper),
+        ("a program run for an engine with no entry", an_engine_with_no_adapter(), not_on_path("x"), helper),
         ("unknown check", Engine::Ruff, Stop::UnknownCheck { said: "unknown".into() }, Some(NotAvailableCause::UnknownCheck)),
         (
             "no Cargo.toml for clippy",
@@ -32,4 +32,28 @@ fn each_stop_maps_to_its_cause() {
     for (name, engine, stop, expected) in cases {
         assert_eq!(not_available_cause_of(&stop, engine), expected, "{name}");
     }
+}
+
+/// The first engine with no adapter in this build, picked through entry_for so the case keeps working as adapters
+/// arrive.
+fn an_engine_with_no_adapter() -> Engine {
+    const ALL: [Engine; 14] = [
+        Engine::Clippy,
+        Engine::SwiftLint,
+        Engine::Ruff,
+        Engine::AstGrep,
+        Engine::Tessera,
+        Engine::GolangciLint,
+        Engine::Pylint,
+        Engine::ClangTidy,
+        Engine::ShellCheck,
+        Engine::Git,
+        Engine::Vulture,
+        Engine::Periphery,
+        Engine::Gitleaks,
+        Engine::CargoAudit,
+    ];
+    ALL.into_iter()
+        .find(|e| crate::entry_for::entry_for(*e).is_none())
+        .expect("every engine has an adapter in this build, so the no-adapter case has nothing to test")
 }
