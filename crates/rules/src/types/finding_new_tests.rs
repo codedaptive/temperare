@@ -1,4 +1,4 @@
-//! ZUT for finding_new.rs: `line` takes a number or an Option (None stored as 0), owner is None, and every other
+//! ZUT for finding_new.rs: `line` takes a number or an Option, owner is None, and every other
 //! argument lands in its field.
 
 use super::{Engine, Finding, Kind, RelPath, Severity};
@@ -16,18 +16,14 @@ fn built(line: impl Into<Option<u32>>, col: Option<u32>) -> Finding {
 }
 
 #[test]
-fn a_plain_number_is_stored_as_the_line() {
-    assert_eq!(built(7, None).line, 7);
-}
-
-#[test]
-fn some_number_is_stored_as_the_line() {
-    assert_eq!(built(Some(7), None).line, 7);
-}
-
-#[test]
-fn none_is_stored_as_zero() {
-    assert_eq!(built(None, None).line, 0);
+fn line_is_stored_as_given() {
+    for (case, finding, expected) in [
+        ("number", built(7, None), Some(7)),
+        ("some", built(Some(7), None), Some(7)),
+        ("none", built(None, None), None),
+    ] {
+        assert_eq!(finding.line, expected, "{case}");
+    }
 }
 
 #[test]
@@ -39,7 +35,7 @@ fn every_field_lands_where_it_should_with_owner_none() {
         severity: Severity::Warning,
         owner: None,
         path: RelPath::new("src/a.rs"),
-        line: 7,
+        line: Some(7),
         col: Some(3),
         what: "stored Bool".to_string(),
         fix: "Store a bitmap field.".to_string(),

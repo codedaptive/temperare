@@ -1,5 +1,5 @@
-//! ZUT for finding.rs: the serialized field names and values (codeteam's finding fields), and `owner` and `col` left
-//! out when None. Serialized with toml (serde_json is not a dependency); the serde names are the same.
+//! ZUT for finding.rs: field names and values, with `owner` and `col` omitted when None. JSON always serializes
+//! `line` (see rule_outcome_tests); toml drops a None line because it cannot represent null.
 
 use super::{Engine, Finding, Kind, RelPath, Severity};
 
@@ -11,7 +11,7 @@ fn finding(kind: Kind, owner: Option<&str>, col: Option<u32>) -> Finding {
         severity: Severity::Warning,
         owner: owner.map(str::to_string),
         path: RelPath::new("src/a.rs"),
-        line: 7,
+        line: Some(7),
         col,
         what: "stored Bool".to_string(),
         fix: "Store a bitmap field.".to_string(),
@@ -45,6 +45,18 @@ fn col_is_left_out_when_none() {
     let text = toml::to_string(&finding(Kind::Quality, None, None)).unwrap();
     assert!(!text.contains("col"), "{text}");
     assert!(text.contains("line = 7\n"), "{text}");
+}
+
+#[test]
+fn optional_line_round_trips_through_toml() {
+    for (line, line_in_text) in [(Some(7), true), (None, false)] {
+        let mut original = finding(Kind::Quality, None, None);
+        original.line = line;
+        let text = toml::to_string(&original).unwrap();
+        assert_eq!(text.contains("line = "), line_in_text, "{text}");
+        let read: Finding = toml::from_str(&text).unwrap();
+        assert_eq!(read, original, "{text}");
+    }
 }
 
 #[test]
