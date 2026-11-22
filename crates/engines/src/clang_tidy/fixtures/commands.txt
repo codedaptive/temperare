@@ -1,0 +1,39 @@
+How each fixture in this folder was made: real clang-tidy output, saved unedited.
+
+Version (`clang-tidy --version`, first line): Homebrew LLVM version 23.1.6
+Program: /opt/homebrew/bin/clang-tidy
+Root: /private/tmp/clang-tidy-fixtures.H87jA4 (made with `mktemp -d /tmp/clang-tidy-fixtures.XXXXXX`; /tmp is a link
+to /private/tmp, and clang-tidy printed the /private/tmp form it was given). No compile_commands.json or
+compile_flags.txt in /private/tmp or above it.
+
+Each compile_commands.json below is a JSON array with one entry per file:
+  {"directory": "<root>/<sub>", "file": "<root>/<sub>/<name>", "arguments": ["clang", "-c", "<root>/<sub>/<name>"]}
+
+one_finding.txt: stdout, exit 0 (stderr held only the "[1/2] Processing file ..." progress lines).
+  cwd: <root>/find
+  files:
+    a.c: int f(int a) { if (a) return 1; return 0; }
+    b.c: int g(int a) { if (a) { return 1; } return 0; }
+  database: <root>/find/compile_commands.json, entries for a.c and b.c
+  command: clang-tidy --quiet '--warnings-as-errors=-*' '--checks=-*,readability-braces-around-statements' '--config={}' <root>/find/a.c <root>/find/b.c
+
+compile_error.txt: stdout, exit 1 (stderr: "Error while processing <root>/broken/a.c.").
+  cwd: <root>/broken
+  files:
+    a.c: int f(int a) { return a + undefined_name; }
+  database: <root>/broken/compile_commands.json, an entry for a.c
+  command: clang-tidy --quiet '--warnings-as-errors=-*' '--checks=-*,readability-braces-around-statements' '--config={}' <root>/broken/a.c
+
+no_database.txt: stderr, exit 0 (stdout held the braces finding in a.c, as in one_finding.txt).
+  cwd: <root>/nodb
+  files:
+    a.c: int f(int a) { if (a) return 1; return 0; }
+  database: none, and no compile_flags.txt
+  command: clang-tidy --quiet '--warnings-as-errors=-*' '--checks=-*,readability-braces-around-statements' '--config={}' <root>/nodb/a.c
+
+no_checks.txt: stderr, exit 1 (stdout held clang-tidy's usage text).
+  cwd: <root>/nochecks
+  files:
+    a.c: int f(int a) { if (a) return 1; return 0; }
+  database: <root>/nochecks/compile_commands.json, an entry for a.c
+  command: clang-tidy --quiet '--warnings-as-errors=-*' '--checks=-*,nosuch-check' '--config={}' <root>/nochecks/a.c

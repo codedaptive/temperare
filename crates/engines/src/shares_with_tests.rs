@@ -207,7 +207,7 @@ fn git_never_shares_even_with_the_same_check_and_params() {
 
 #[test]
 fn an_engine_with_no_adapter_never_shares() {
-    assert!(!shares(("pylint", "C0114", ""), ("pylint", "C0114", "")));
+    assert!(!shares(("oclint", "LongLine", ""), ("oclint", "LongLine", "")));
 }
 
 /// Two ast-grep rules of check `rules/no-unwrap.yml` with no params, carrying `a` and `b` as their YAML text.

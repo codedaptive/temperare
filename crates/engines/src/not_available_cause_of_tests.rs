@@ -16,7 +16,7 @@ fn each_stop_maps_to_its_cause() {
         ("cargo absent under clippy", Engine::Clippy, not_on_path("cargo"), helper),
         ("git absent for shellcheck", Engine::ShellCheck, not_on_path("git"), helper),
         ("git absent for git", Engine::Git, not_on_path("git"), engine),
-        ("a program run for an engine with no entry", Engine::Pylint, not_on_path("x"), helper),
+        ("a program run for an engine with no entry", Engine::Oclint, not_on_path("x"), helper),
         ("unknown check", Engine::Ruff, Stop::UnknownCheck { said: "unknown".into() }, Some(NotAvailableCause::UnknownCheck)),
         (
             "no Cargo.toml for clippy",

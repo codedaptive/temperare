@@ -1,0 +1,27 @@
+Real pylint output, captured once with pylint 4.1.4 / astroid 4.3.4 (Python 3.15.2), /opt/homebrew/bin/pylint, in a
+throwaway folder under /tmp that was removed afterwards. Each command is PYLINT's argv with its check; stdout went to
+the fixture.
+
+The folder held example.py:
+    import os
+    value = None
+    if value == None:
+        pass
+
+c0121.json (exit 16), run in that folder:
+    pylint --persistent=n --output-format=json2 --disable=all --enable=unknown-option-value,useless-option-value --enable=C0121 .
+
+unknown_id.json (exit 0), run in that folder:
+    pylint --persistent=n --output-format=json2 --disable=all --enable=unknown-option-value,useless-option-value --enable=ZZ9999 .
+
+removed_id.json (exit 0), run in that folder:
+    pylint --persistent=n --output-format=json2 --disable=all --enable=unknown-option-value,useless-option-value --enable=C0330 .
+
+clean.json (exit 0), run in a folder holding only clean.py:
+    pylint --persistent=n --output-format=json2 --disable=all --enable=unknown-option-value,useless-option-value --enable=C0121 .
+
+where clean.py held:
+    """Doc."""
+    VALUE = None
+    if VALUE is None:
+        pass

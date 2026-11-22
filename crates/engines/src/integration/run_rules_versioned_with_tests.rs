@@ -1,8 +1,8 @@
 //! ZIT for run_rules_versioned_with.rs: the engines' versions probed once each before the rules run, the probes not
 //! counted in any run, and a too-old rule's why naming the version read. The two ruff rules of `RULES` share a run
 //! that ruff fails on the unknown selector, so `too-old` counts that run and `clean` the rerun without it. The host is fake, so
-//! no engine runs; the rule file's folder is `/`, which always resolves. A ShellCheck code absent from the pending
-//! list also uses the single version probe, in a throwaway git repository the test makes and removes, holding one
+//! no engine runs; the rule file's folder is `/`, which always resolves. A ShellCheck code absent from the list
+//! also uses the single version probe, in a throwaway git repository the test makes and removes, holding one
 //! script, since its scripts are listed before the code is looked up in the list. A rule marked `only_with_base` with
 //! no base still has its engine probed, and no other host command or check runs.
 
@@ -129,7 +129,7 @@ fn shellcheck_unlisted_code_uses_one_version_probe() {
 [[rule]]
 id = "quote"
 engine = "shellcheck"
-check = "SC2086"
+check = "SC9999"
 fix = "f"
 "#, Path::new(".")).unwrap();
     let probes = Cell::new(0);
@@ -148,7 +148,7 @@ fix = "f"
         runs: vec![RuleRun::new("quote".into(), Engine::ShellCheck, RuleOutcome::NotAvailable {
             rule: "quote".into(),
             engine: Engine::ShellCheck,
-            why: "shellcheck 0.11.0: SC2086 is not in temperare's list of shellcheck codes (taken from shellcheck pending)".into(),
+            why: "shellcheck 0.11.0: SC9999 is not in temperare's list of shellcheck codes (taken from shellcheck 0.11.0)".into(),
         }, None).with_cause(NotAvailableCause::Other)],
         engines: vec![EngineVersion { engine: Engine::ShellCheck, version: Some("0.11.0".into()) }],
     });

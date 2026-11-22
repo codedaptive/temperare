@@ -1,0 +1,55 @@
+How the golangci-lint fixtures were made (2026-11-21)
+
+Versions
+  golangci-lint --version: golangci-lint has version 2.15.0 built with go1.27.2 from 25c5369 on 2026-10-16T10:51:54Z
+  go version: go version go1.27.3 darwin/arm64
+  golangci-lint at /opt/homebrew/bin/golangci-lint
+
+Environment, every run
+  cwd: the scratch folder named below (its canonical /private/tmp path)
+  GOTOOLCHAIN=local GOPROXY=off GOSUMDB=off PWD=<the scratch folder>, GOFLAGS unset
+
+Command, every run (CHECK as listed per fixture)
+  golangci-lint run --output.json.path=stdout --output.text.path=stderr --show-stats=false --issues-exit-code=1
+    --max-issues-per-linter=0 --max-same-issues=0 --uniq-by-line=false --allow-parallel-runners --path-mode=abs
+    --path-prefix= --fix=false --enable-only=CHECK ./...
+
+staticcheck_and_govet.json (stdout)
+  folder: /private/tmp/gcl-fix/issues
+  files: go.mod (module example.com/issues, go 1.22); probe.go with strings.Title(s) (line 9), x == x (line 13) and
+    func Locked(mu sync.Mutex) (line 16)
+  CHECK: staticcheck,govet
+  exit: 1
+  issues: govet copylocks 16:16; staticcheck SA1019 9:9 (Text ends with a space); staticcheck SA4000 13:9
+
+clean.json (stdout)
+  folder: /private/tmp/gcl-fix/clean
+  files: go.mod (module example.com/clean, go 1.22); clean.go with one documented func Add
+  CHECK: staticcheck
+  exit: 0
+
+typecheck.json (stdout)
+  folder: /private/tmp/gcl-fix/typecheck
+  files: go.mod (module example.com/typecheck, go 1.22, require example.invalid/none v1.0.0); uses.go importing
+    example.invalid/none
+  CHECK: staticcheck
+  exit: 1
+  issues: typecheck 3:8 "could not import example.invalid/none (... missing go.sum entry ...)"
+
+no_module.json (stdout) and no_module.stderr (stderr)
+  folder: /private/tmp/gcl-fix/nomod
+  files: probe.go only, no go.mod
+  CHECK: staticcheck
+  exit: 7
+
+unknown_linters.stderr (stderr; stdout was empty)
+  folder: /private/tmp/gcl-fix/unknown
+  files: go.mod (module example.com/unknown, go 1.22); clean.go
+  CHECK: nosuchlinter
+  exit: 3
+
+unknown_two_linters.stderr (stderr; stdout was empty)
+  folder: /private/tmp/gcl-fix/unknown
+  files: go.mod (module example.com/unknown, go 1.22); clean.go
+  CHECK: foo,bar
+  exit: 3
