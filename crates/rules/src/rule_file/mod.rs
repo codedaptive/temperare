@@ -51,7 +51,6 @@ mod read_set_cases;
 mod required_string;
 mod resolve_baseline;
 mod resolved_baseline;
-#[allow(clippy::module_inception)]
 mod rule_file;
 mod rule_file_exception_for;
 mod rule_file_exception_on;

@@ -17,6 +17,10 @@ impl Engine {
             "oclint" => Some(Engine::Oclint),
             "shellcheck" => Some(Engine::ShellCheck),
             "git" => Some(Engine::Git),
+            "vulture" => Some(Engine::Vulture),
+            "periphery" => Some(Engine::Periphery),
+            "gitleaks" => Some(Engine::Gitleaks),
+            "cargo-audit" => Some(Engine::CargoAudit),
             _ => None,
         }
     }

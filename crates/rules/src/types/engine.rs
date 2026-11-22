@@ -28,4 +28,12 @@ pub enum Engine {
     ShellCheck,
     #[serde(rename = "git")]
     Git,
+    #[serde(rename = "vulture")]
+    Vulture,
+    #[serde(rename = "periphery")]
+    Periphery,
+    #[serde(rename = "gitleaks")]
+    Gitleaks,
+    #[serde(rename = "cargo-audit")]
+    CargoAudit,
 }

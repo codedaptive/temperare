@@ -1,7 +1,6 @@
 //! What a change to a rule file loosened: the loosening, its kind, and the comparison of two rule files.
 
 mod exception_loosenings;
-#[allow(clippy::module_inception)]
 mod loosened;
 mod loosening;
 mod loosening_kind;

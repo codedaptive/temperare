@@ -13,7 +13,6 @@ mod rule_applies;
 mod rule_cases;
 mod rule_embedded_yaml;
 mod rule_new;
-#[allow(clippy::module_inception)]
 mod scope;
 mod scope_build;
 mod scope_matches;
