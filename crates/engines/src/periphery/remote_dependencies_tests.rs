@@ -3,8 +3,9 @@ use procio::Output;
 
 #[test]
 fn remote_dependencies_cases() {
-    let rows: [(&str, &[u8], Option<Vec<&str>>); 3] = [
+    let rows: [(&str, &[u8], Option<Vec<&str>>); 4] = [
         ("remote and local", include_bytes!("fixtures/dump_package_remote.json"), Some(vec!["dep"])),
+        ("remote and local binary targets", include_bytes!("fixtures/dump_package_binary.json"), Some(vec!["binary target Bin (https://example.invalid/Bin.xcframework.zip)"])),
         ("no dependencies", include_bytes!("fixtures/dump_package_clean.json"), Some(vec![])),
         ("not JSON", b"not JSON", None),
     ];

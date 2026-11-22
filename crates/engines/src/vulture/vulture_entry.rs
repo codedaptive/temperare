@@ -4,9 +4,13 @@ use super::{parse_vulture, run_vulture, vulture_refusal};
 use crate::entry::{version_word, Entry, Params, Pick, VersionProbe};
 use rules::Engine;
 
-/// `vulture --config=/dev/null .` run in the rule file's folder, read by `parse_vulture`. Every Python file under the
-/// folder is scanned, as ruff and pylint scan `.`; findings outside the rule's scope are dropped later. Vulture does
-/// not read .gitignore, so a virtualenv inside the folder is scanned unless the rule's paths leave it out.
+/// `vulture --config=/dev/null [--exclude=<what git ignores>] .` run in the rule file's folder, read by
+/// `parse_vulture`. The Python files under the folder are scanned, as ruff and pylint scan `.`; findings outside the
+/// rule's scope are dropped later. Tracked files and untracked files git does not ignore are scanned. What git ignores
+/// under the folder (a .gitignore'd virtualenv, build output) is left out through `--exclude`, so vulture neither
+/// reports nor reads it, and a name used only there now counts as unused. Outside a git repository nothing is ignored
+/// and the whole folder is scanned. An ignored path holding `,`, or more ignored Python paths than one argument
+/// holds, makes the rule `Failed` before running (`run_vulture_with`).
 ///
 /// The check is one vulture code (V101 to V107, V201: the codes vulture's own `# noqa` uses). Vulture has no option
 /// that selects a kind and reports all of them, so the reader keeps the rule's; anything else is refused before
@@ -20,12 +24,13 @@ use rules::Engine;
 ///
 /// Suppressions vulture still honours, none of which tm can turn off: a `# noqa` comment on the item's line (bare, or
 /// naming its V code, F401 or F841); a whitelist module the repository keeps (one made with `--make-whitelist`, say),
-/// which is a .py file under the folder, so the `.` scan reads it and the names it uses count as used, as any code's
-/// do; and vulture's own bundled whitelists (`vulture/whitelists/<module>_whitelist.py`, for stdlib modules such as
-/// sys, logging and unittest), one of which vulture reads whenever the scanned code imports its module.
+/// which is a .py file under the folder that git does not ignore, so the `.` scan reads it and the names it uses count
+/// as used, as any code's do; and vulture's own bundled whitelists (`vulture/whitelists/<module>_whitelist.py`, for
+/// stdlib modules such as sys, logging and unittest), one of which vulture reads whenever
+/// the scanned code imports its module.
 ///
 /// With no Python file under the folder vulture prints nothing and exits 0, so the rule reads clean, as ruff's does.
-/// Exit 3 with findings is an answer, not an error. `run_vulture` sets PYTHONWARNINGS=ignore; nothing reaches the
+/// Exit 3 with findings is an answer, not an error. `run_vulture_with` sets PYTHONWARNINGS=ignore; nothing reaches the
 /// network. Vulture takes no params: any param makes the rule `Failed` before running. Vulture rules never share a
 /// run: `shares_with` has no arm for it.
 pub static VULTURE: Entry = Entry {

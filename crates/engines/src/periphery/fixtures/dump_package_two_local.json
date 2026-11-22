@@ -1,0 +1,59 @@
+{
+  "cLanguageStandard" : null,
+  "cxxLanguageStandard" : null,
+  "defaultLocalization" : null,
+  "dependencies" : [
+    {
+      "fileSystem" : [
+        {
+          "identity" : "first",
+          "path" : "/Users/bob/devlop/team-temperare/workcrews/engines/scratchpad/periphery-local-fixture-jd0gvfna/package/First",
+          "productFilter" : null,
+          "traits" : [
+            {
+              "name" : "default"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "fileSystem" : [
+        {
+          "identity" : "second",
+          "path" : "/Users/bob/devlop/team-temperare/workcrews/engines/scratchpad/periphery-local-fixture-jd0gvfna/package/Second",
+          "productFilter" : null,
+          "traits" : [
+            {
+              "name" : "default"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "name" : "Probe",
+  "packageKind" : {
+    "root" : [
+      "/Users/bob/devlop/team-temperare/workcrews/engines/scratchpad/periphery-local-fixture-jd0gvfna/package"
+    ]
+  },
+  "pkgConfig" : null,
+  "platforms" : [
+
+  ],
+  "products" : [
+
+  ],
+  "providers" : null,
+  "swiftLanguageVersions" : null,
+  "targets" : [
+
+  ],
+  "toolsVersion" : {
+    "_version" : "6.0.0"
+  },
+  "traits" : [
+
+  ]
+}

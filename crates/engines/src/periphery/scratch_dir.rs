@@ -8,8 +8,9 @@ use std::sync::atomic::{AtomicU64, Ordering};
 /// Numbers the folders this process makes, so two runs at once never share a name.
 static NEXT: AtomicU64 = AtomicU64::new(0);
 
-/// A new folder `tm-periphery-<pid>-<n>` under the system's temporary folder, holding the build, the package
-/// description and the empty config of one run; dropping it removes the folder and everything in it
+/// A new folder `tm-periphery-<pid>-<n>` under the system's temporary folder, holding the build, the scratch paths of
+/// the local packages' dump-packages (`dep-<n>`), the package description and the empty config of one run; dropping it
+/// removes the folder and everything in it
 /// (`scratch_dir_drop.rs`).
 #[derive(Debug)]
 pub(crate) struct ScratchDir {
