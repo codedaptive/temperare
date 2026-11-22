@@ -158,7 +158,7 @@ sources.
   savings_line = false in ~/.config/temperare/config.toml turns the line off.
 - Rules with engine = "tessera" are accepted and, when they cover a file and have no params, are reported "not
   available" today, whether or not Tessera is installed. A Tessera rule with a param fails (exit 5).
-- Rules with engine = "oclint", "vulture" or "periphery" are accepted and, when they
+- Rules with engine = "vulture" or "periphery" are accepted and, when they
   cover a file, reported "not available" (no adapter for <engine> in this build) until each adapter lands, whether
   or not the engine is installed.
 - Rules with engine = "git" (check test_ratio) count the lines a change adds against the commit tm check --base
