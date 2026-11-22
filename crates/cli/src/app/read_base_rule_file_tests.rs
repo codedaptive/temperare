@@ -39,6 +39,10 @@ fn loosened_base_is_asked_of_git_in_the_folder_and_parsed() {
         now: &|| panic!("now must not be called"),
         rev_parse: &rev_parse,
         blob_at: &blob_at,
+        // --loosened never judges no-file rules.
+        no_file_rules: &|_: &RuleFile, _: &Path| -> Vec<engines::NoFileRule> {
+            panic!("no_file_rules must not be called")
+        },
     };
     let Ok(base) = read_base_rule_file(Path::new("/repo/sub/rules.toml"), "release-1", &world) else {
         panic!("the base rule file did not parse");

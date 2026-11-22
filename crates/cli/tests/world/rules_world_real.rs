@@ -1,8 +1,8 @@
-//! Tests of crates/cli/src/app/rules_world_real.rs: each disk and git seam of `RulesWorld::real()` is wired to its
-//! real function. The file mixes kinds, each case marked: RITs (cli→procio/rules, kept beside their caller) and
-//! a ZIT. `exists` and `read` are real disk functions, so the only way to tell them from a stub is to use them on
-//! the disk: the tests use a throwaway folder under the system temp folder and remove it. `toplevel` runs git (found
-//! on PATH), which fails on a folder that does not exist; nothing here needs a real repository.
+//! Tests of crates/cli/src/app/rules_world_real.rs: the `exists`, `read` and `toplevel` seams of `RulesWorld::real()`
+//! are wired to their real functions. The file mixes kinds, each case marked: RITs (cli→procio/rules, kept beside their
+//! caller) and a ZIT. `exists` and `read` are real disk functions, so the only way to tell them from a stub is to use
+//! them on the disk: the tests use a throwaway folder under the system temp folder and remove it. `toplevel` runs git
+//! (found on PATH), which fails on a folder that does not exist; nothing here needs a real repository.
 
 use cli::RulesWorld;
 use std::fs;

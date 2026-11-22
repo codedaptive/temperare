@@ -62,7 +62,7 @@ expires = "2099-12-31"
 #[test]
 fn rules_exceptions_and_count_in_file_order() {
     assert_eq!(
-        rules_json(Path::new("repo/temperare.toml"), &parse(FULL), &all_available, day()),
+        rules_json(Path::new("repo/temperare.toml"), &parse(FULL), &all_available, day(), &[]),
         json!({
             "rule_file": "repo/temperare.toml",
             "rules": [
@@ -82,6 +82,8 @@ fn rules_exceptions_and_count_in_file_order() {
             "exceptions_in_force": 2,
             "expired": [],
             "exceptions_expired": 0,
+            "not_applicable": [],
+            "rules_not_applicable": 0,
         })
     );
 }
@@ -89,10 +91,10 @@ fn rules_exceptions_and_count_in_file_order() {
 #[test]
 fn an_empty_file_has_empty_lists_and_zero_in_force() {
     assert_eq!(
-        rules_json(Path::new("t.toml"), &parse("version = 1\n"), &all_available, day()),
+        rules_json(Path::new("t.toml"), &parse("version = 1\n"), &all_available, day(), &[]),
         json!({
             "rule_file": "t.toml", "rules": [], "exceptions": [], "exceptions_in_force": 0, "expired": [],
-            "exceptions_expired": 0,
+            "exceptions_expired": 0, "not_applicable": [], "rules_not_applicable": 0,
         })
     );
 }
@@ -107,7 +109,8 @@ engine = "swiftlint"
 check = "force_cast"
 fix = "Cast safely."
 "#;
-    assert_eq!(rules_json(Path::new("t.toml"), &parse(text), &all_available, day())["rules"][0]["engine"], json!("swiftlint"));
+    let value = rules_json(Path::new("t.toml"), &parse(text), &all_available, day(), &[]);
+    assert_eq!(value["rules"][0]["engine"], json!("swiftlint"));
 }
 
 #[test]
@@ -132,7 +135,7 @@ fix = "Cast safely."
         other => panic!("availability asked for {other:?}"),
     };
     assert_eq!(
-        rules_json(Path::new("t.toml"), &parse(text), &availability, day())["rules"],
+        rules_json(Path::new("t.toml"), &parse(text), &availability, day(), &[])["rules"],
         json!([
             {"id": "py-lint", "engine": "ruff", "kind": "quality", "severity": "error", "check": "E501",
              "paths": [], "exclude": [], "kits": [], "outside_kits": [], "available": true, "why": null},
@@ -160,14 +163,14 @@ check = "clippy::all"
 outside_kits = ["a", "b"]
 fix = "Do what clippy says."
 "#;
-    let value = rules_json(Path::new("t.toml"), &parse(text), &all_available, day());
+    let value = rules_json(Path::new("t.toml"), &parse(text), &all_available, day(), &[]);
     assert_eq!(value["rules"][0]["outside_kits"], json!(["a", "b"]));
     assert_eq!(value["rules"][0]["kits"], json!([]));
 }
 
 #[test]
 fn an_exception_without_what_has_no_what_key_and_one_with_what_keeps_it() {
-    let value = rules_json(Path::new("t.toml"), &parse(FULL), &all_available, day());
+    let value = rules_json(Path::new("t.toml"), &parse(FULL), &all_available, day(), &[]);
     assert_eq!(value["exceptions"][0]["what"], json!("unwrap"));
     let without = value["exceptions"][1].as_object().unwrap();
     assert!(without.get("what").is_none(), "{without:?}");
@@ -199,7 +202,7 @@ reason = "New."
 approved = "bob 2026-11-17"
 expires = "2099-12-31"
 "#;
-    let value = rules_json(Path::new("t.toml"), &parse(text), &all_available, day());
+    let value = rules_json(Path::new("t.toml"), &parse(text), &all_available, day(), &[]);
     assert_eq!(
         (&value["exceptions"], &value["exceptions_in_force"], &value["expired"], &value["exceptions_expired"]),
         (
@@ -208,6 +211,30 @@ expires = "2099-12-31"
             &json!([{"rule": "lint-all", "path": "src/old.rs", "what": "dead_code", "reason": "Old.",
                      "approved": "bob 2026-01-02", "expires": "2026-01-31"}]),
             &json!(1),
+        )
+    );
+}
+
+#[test]
+fn not_applicable_lists_the_entries_in_the_given_order_with_their_count() {
+    let entries = [
+        report::NotApplicable { rule: "tm-z".to_string(), engine: Engine::AstGrep, why: "param x not given".to_string() },
+        report::NotApplicable {
+            rule: "tm-a".to_string(),
+            engine: Engine::Clippy,
+            why: "its paths match no file in the rule file's folder".to_string(),
+        },
+    ];
+    let value = rules_json(Path::new("t.toml"), &parse("version = 1\n"), &all_available, day(), &entries);
+    // Kills: entries reversed or sorted; engine not its serde name; rules_not_applicable missing or wrong.
+    assert_eq!(
+        (&value["not_applicable"], &value["rules_not_applicable"]),
+        (
+            &json!([
+                {"rule": "tm-z", "engine": "ast-grep", "why": "param x not given"},
+                {"rule": "tm-a", "engine": "clippy", "why": "its paths match no file in the rule file's folder"},
+            ]),
+            &json!(2),
         )
     );
 }
