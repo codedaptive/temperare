@@ -78,7 +78,8 @@ engines give the same output. A silenced finding is counted on the counts line a
 
 A rule that ran nothing because no file it checks is in its scope is on a `covers nothing:` line when it is one of
 the repository's own, and is counted as not applicable when it comes from a baseline set; `--json` gives its why,
-`its paths match no file in the rule file's folder` (or, for a ShellCheck rule, `no file its engine checks`). A
+`its paths match no file in the rule file's folder` (or, for a ShellCheck or clang-tidy rule, `no file its engine
+checks`). A
 rule with `only_with_base = true` run without `--base` is not applicable for want of `--base` whatever it covers
 ([`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)).
 
@@ -164,7 +165,7 @@ The run above, as `--json` prints it (on one line; wrapped here to read):
 | `expired` | Each exception past its `expires` day on `date`, in rule-file order: `rule`, `path`, `what` (`null` when the exception has none), `expires` (`YYYY-MM-DD`), `reason`, `approved`. Such an exception silences nothing. Always present, `[]` when empty |
 | `not_available` | Each rule that could not be checked: `rule`, `engine`, `why` |
 | `covers_nothing` | Each of the repository's own rules that ran nothing because no file it checks is in its scope: `rule`, `engine`. Always present, `[]` when empty, in rule-file order. Never a finding, "not available" or clean: such a rule makes the exit 6 when nothing ranks above it |
-| `not_applicable` | Each rule the check does not apply: `rule`, `engine`, `why`. Always present, `[]` when empty, in rule-file order. Listed: each not-applicable rule of the rule file (`why` is its reason, or "no reason given"); with no `--base`, each rule with `only_with_base` (`why`: "reports only what a change adds; run with --base"); and each baseline set's rule that covers no file (`why`: "its paths match no file in the rule file's folder", or "no file its engine checks" for ShellCheck). Never a finding and never "not available" |
+| `not_applicable` | Each rule the check does not apply: `rule`, `engine`, `why`. Always present, `[]` when empty, in rule-file order. Listed: each not-applicable rule of the rule file (`why` is its reason, or "no reason given"); with no `--base`, each rule with `only_with_base` (`why`: "reports only what a change adds; run with --base"); and each baseline set's rule that covers no file (`why`: "its paths match no file in the rule file's folder", or "no file its engine checks" for ShellCheck and clang-tidy). Never a finding and never "not available" |
 | `failed` | Each rule that failed: `rule`, `engine`, `code` (the engine's exit code, or `null` when it had none or was not run), `stderr_tail` (the last 20 lines of what explains the failure: the engine's stderr, or Temperare's own reason when the engine printed none or was not run) |
 | `base` | The full id of the commit `--base` named. Present only with `--base` |
 | `date` | The day of the check in UTC, as `YYYY-MM-DD`. Always present |
@@ -352,7 +353,8 @@ for exit 6:
 | 6 | `fix the paths of each rule that covers nothing above, or remove it from <rule file>`; under `--json`, `next` is `fix the paths of each rule in covers_nothing, or remove it from <rule file>` |
 
 For exit 3 the engines are named as a rule file names them (`clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`,
-`git`), each once.
+`git`, `pylint`, `clang-tidy`, `golangci-lint`), each once. A golangci-lint rule with `go` missing names
+golangci-lint to install.
 Tessera is never among the engines to install, because installing it changes nothing today:
 
 - only Tessera rules were not available: `Tessera's checks are not available yet (run without those rules)`;
@@ -364,7 +366,9 @@ file's folder, so put the rule file inside the Cargo project it checks (or run w
 `not available:` line of that rule keeps the reason. A `check` the installed engine does not know gives
 ``ruff: ruff 0.17.4 does not know the check `ZZZ999`: <ruff's own line> (or run without those rules)``. The fix is a
 newer engine or a check it knows. A ShellCheck code that is not on `tm`'s list gives
-`shellcheck: shellcheck 0.11.0: SC2086 is not in temperare's list of shellcheck codes (taken from shellcheck pending) (or run without those rules)`,
+`shellcheck: shellcheck 0.11.0: SC9999 is not in temperare's list of shellcheck codes (taken from shellcheck 0.11.0) (or run without those rules)`,
+a clang-tidy source with no compile database gives
+`clang-tidy: no compile database (compile_commands.json) or compile flags (compile_flags.txt) for <file> or any folder above it, so clang-tidy would check it without flags (or run without those rules)`,
 and a git rule or an ast-grep rule in count mode, run without `--base` with its engine on `PATH`, gives
 `git: reports only what a change adds; run with --base (or run without those rules)` (`ast-grep:` for ast-grep)
 ([`ENGINES.md`](ENGINES.md#git), [`ENGINES.md`](ENGINES.md#ast-grep)).

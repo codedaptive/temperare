@@ -110,6 +110,9 @@ binary and none of the above, `cargo install --path crates/cli --locked` puts it
 | `ast-grep` | `ast-grep` |
 | `shellcheck` | `shellcheck` (and `git`, which lists the scripts) |
 | `git` | `git` |
+| `pylint` | `pylint` |
+| `clang-tidy` | `clang-tidy` (and `git`, which lists the sources) |
+| `golangci-lint` | `golangci-lint` and `go` |
 
 `tm rules` shows, for each rule, whether its engine is available.
 
@@ -252,8 +255,8 @@ approved = "who approved it"
 | Key of a `[[rule]]` | Meaning |
 |---|---|
 | `id` | The rule's name in every report: lower-case letters, digits and `-`, unique in the file |
-| `engine` | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`, `git` or `tessera` (what each runs today: [Engines](#engines)); also `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `vulture`, `periphery`, `gitleaks` and `cargo-audit`, accepted and "not available" until their adapters land |
-| `check` | What the engine is asked. clippy: one lint the toolchain lists (`clippy::bool_comparison`), or `warnings` for every warning clippy reports; not a lint group. SwiftLint: one rule identifier (`force_cast`). ruff: a rule code, a code prefix or `ALL` (`E711`, `E7`), or several joined by commas. ast-grep: the path of a rule file inside the rule file's folder. ShellCheck: one code (`SC2086`). git: `test_ratio` |
+| `engine` | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`, `git`, `pylint`, `clang-tidy`, `golangci-lint` or `tessera` (what each runs today: [Engines](#engines)); also `oclint`, `vulture`, `periphery`, `gitleaks` and `cargo-audit`, accepted and "not available" until their adapters land |
+| `check` | What the engine is asked. clippy: one lint the toolchain lists (`clippy::bool_comparison`), or `warnings` for every warning clippy reports; not a lint group. SwiftLint: one rule identifier (`force_cast`). ruff: a rule code, a code prefix or `ALL` (`E711`, `E7`), or several joined by commas. ast-grep: the path of a rule file inside the rule file's folder. ShellCheck: one code (`SC2086`). git: `test_ratio`. pylint: one message id (`C0121`). clang-tidy: one check name (`bugprone-branch-clone`). golangci-lint: linter names (`staticcheck`, or `staticcheck,govet`) |
 | `fix` | The text shown with each finding |
 | `severity` | `error` (the default) or `warning` |
 | `kind` | `quality` (the default) or `security`. A security rule needs a top-level `owner` |
@@ -261,8 +264,8 @@ approved = "who approved it"
 | `exclude` | Globs the rule leaves out |
 | `kits` | The rule applies only inside the named kits |
 | `outside_kits` | The rule applies everywhere except inside the named kits: "this is named only inside kit Y" |
-| `config` | The engine's own config file, passed to SwiftLint or ruff as written |
-| `params` | Values for the engine: names filled into an ast-grep rule (such as a list of type names), `allow` (lints left out) and `max_nesting` for clippy, `max_complexity` for ruff and swiftlint, `max_lines` for swiftlint, `max_ratio`, `floor` and `test_paths` for git. ShellCheck takes none |
+| `config` | The engine's own config file, passed to SwiftLint, ruff, ShellCheck, pylint, clang-tidy or golangci-lint as written |
+| `params` | Values for the engine: names filled into an ast-grep rule (such as a list of type names), `allow` (lints left out) and `max_nesting` for clippy, `max_complexity` for ruff and swiftlint, `max_lines` for swiftlint, `max_ratio`, `floor` and `test_paths` for git. ShellCheck, pylint, clang-tidy and golangci-lint take none |
 
 `version = 1` is required, and so are a rule's `id`, `engine`, `check` and `fix`. A kit is a named set of paths,
 `[kits.<name>]`, with an optional `owner`. A finding's owner is the owner of the first kit that holds its file, else
@@ -324,22 +327,26 @@ available or not applicable.
 | `swiftlint` | `swiftlint lint` in the rule file's folder | Swift |
 | `ruff` | `ruff check` in the rule file's folder | Python |
 | `ast-grep` | `ast-grep scan` with your rule file, its `params` filled in | Any language ast-grep reads; rules about the shape of code |
-| `shellcheck` | Nothing in this build: a rule's code is looked up in a list of ShellCheck codes built into `tm`, and that list holds no code | Shell scripts (sh, bash, dash, ksh). Not available today |
+| `shellcheck` | `shellcheck` on the shell scripts git lists in the rule file's folder, for a code on `tm`'s list of ShellCheck 0.11.0's codes | Shell scripts (sh, bash, dash, ksh) |
 | `git` | Its own count of the lines a change adds against the `--base` commit, from git's added-line diff and the untracked files git does not ignore (counted whole) | How much test a change adds for its code (`test_ratio`). Needs `--base` |
+| `pylint` | `pylint` in the rule file's folder, with only the rule's message on | Python |
+| `clang-tidy` | `clang-tidy` on the C-family sources git lists that the rule covers, with only the rule's check on; each source needs a `compile_commands.json` or `compile_flags.txt` | C, C++, Objective-C, Objective-C++ |
+| `golangci-lint` | `golangci-lint run` in the rule file's folder, with only the rule's linters on, and go kept from downloading anything | Go |
 | `tessera` | Nothing | Not available today |
-| `golangci-lint`, `pylint`, `clang-tidy`, `oclint`, `vulture`, `periphery`, `gitleaks`, `cargo-audit` | Nothing yet | Accepted in the rule file; not available until each adapter lands |
+| `oclint`, `vulture`, `periphery`, `gitleaks`, `cargo-audit` | Nothing yet | Accepted in the rule file; not available until each adapter lands |
 
 Engines are run as programs. Rules on the same engine with the same `config` and `params` share one run where the
 engine can answer each of them in it, so ten ruff rules for ten codes can be one ruff run; each rule still keeps
 only its own findings. A rule whose params reach the engine through a temporary file or folder runs alone, even with
 identical params: a SwiftLint rule with `max_complexity` or `max_lines`, a clippy rule with `max_nesting`, an
-ast-grep rule with `params`. A ShellCheck rule and a git rule always run alone. Temperare links no engine and takes
+ast-grep rule with `params`. A ShellCheck, git, pylint, clang-tidy or golangci-lint rule always runs alone.
+Temperare links no engine and takes
 its findings only from what the engine prints. The report shows the rule's own `severity` and `fix`; the engine's
 own severity for a finding is not read.
 
-**ShellCheck rules are not available in this build.** ShellCheck has an adapter, but a ShellCheck rule with a
-well-formed code and a script to check is reported "not available" even with ShellCheck installed: its code is not
-on the list built into `tm`, which holds no code.
+**A ShellCheck code is looked up in `tm`'s own list.** ShellCheck never says it does not know a code, so `tm`
+carries the 510 codes of ShellCheck 0.11.0. A rule whose code is not on that list is reported "not available",
+never clean.
 
 **git rules and ast-grep count mode need `--base`.** A git rule counts the lines a change
 adds against the commit `--base` names. An ast-grep rule in count mode (`params.count`) counts each file's setup and
@@ -362,7 +369,8 @@ A rule `tm` can refuse from the rule file alone fails whether or not its engine 
 
 **A rule that covers no file runs nothing, and the report says so.** Before any rule runs, `tm` asks git for the
 files of the rule file's folder: the tracked files in the work tree and the untracked files git does not ignore. A
-rule that covers none of them is not run (nor is a ShellCheck rule that covers no script), and whether its engine is
+rule that covers none of them is not run (nor is a ShellCheck rule that covers no script, or a clang-tidy rule that
+covers no C-family source once clang-tidy is found), and whether its engine is
 installed does not change its result (the engine is still asked its version for the engines list). A rule of your
 own is then listed as `covers nothing: <rule> (<engine>)`, is counted, and makes the exit 6 when nothing ranks
 above it; the `next:` line says to fix its paths or remove it. A baseline set's rule is not applicable instead:
@@ -439,10 +447,8 @@ Temperare runs other programs with your privileges, and the rule file decides wh
   `tm baseline test` on the ready sets, `house@1` and `standard@1`, and in the acceptance record all 89 of their
   rules (36 and 53) hold on their own failing and passing cases.
 - **Platforms:** built and accepted on macOS. The code is written for Unix systems; Linux and Windows are untested.
-- **Not available today:** rules with `engine = "tessera"`; rules naming `golangci-lint`, `pylint`, `clang-tidy`,
-  `oclint`, `vulture`, `periphery`, `gitleaks` or `cargo-audit`, which the rule file accepts before their adapters
-  land; and, in this build, ShellCheck rules (see
-  [Engines](#engines)).
+- **Not available today:** rules with `engine = "tessera"`; and rules naming `oclint`, `vulture`, `periphery`,
+  `gitleaks` or `cargo-audit`, which the rule file accepts before their adapters land (see [Engines](#engines)).
 - **License:** MIT. See [`LICENSE`](LICENSE).
 
 ---
