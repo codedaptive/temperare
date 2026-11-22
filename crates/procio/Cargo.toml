@@ -5,3 +5,7 @@ edition.workspace = true
 publish.workspace = true
 
 [dependencies]
+
+[lints.clippy]
+# A folder holding a file named after the same symbol (git/oid/oid.rs) is this crate's layout, so it is allowed crate-wide.
+module_inception = "allow"
