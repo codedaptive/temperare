@@ -19,8 +19,8 @@ check:
 test:
 	@$(MAKE) --no-print-directory test-group GROUP=$(GROUP)
 
-# The Done list (mission, Done 1-8): the built temperare with the real engines, on throwaway repositories
-# (crates/cli/tests/validation, the orchestrator's; release, as every validation target). scripts/accept.sh runs it
+# The Done list (mission, Done 1-10): the built temperare with the real engines, on throwaway repositories
+# (crates/cli/tests/validation, lane-written; release, as every validation target). scripts/accept.sh runs it
 # and writes the report to ACCEPT_REPORT (S-31); the default is inside the repository, so it names no team path.
 ACCEPT_REPORT ?= $(CURDIR)/target/accept-report.md
 accept:
