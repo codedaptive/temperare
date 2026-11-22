@@ -1,7 +1,8 @@
 //! Validation: tests that run the built `temperare` binary.
 //!
 //! `cli_check` and `cli_tm` run `temperare` with engines stubbed on PATH, except cli_check's `real_ruff_` cases;
-//! `savings_real_engine`, `done_10_shared_run` and those cases run the real ruff.
+//! `savings_real_engine`, `done_10_shared_run` and those cases run the real ruff; `check_text_na_count_real_engines`
+//! runs the real ruff and ast-grep.
 //! `baseline_test_real_ruff` runs `run_baseline_test` with a const test set in a child of this test binary, with HOME
 //! a folder the test made.
 //!
@@ -19,6 +20,7 @@
 
 mod baseline_test_cmd;
 mod baseline_test_real_ruff;
+mod check_text_na_count_real_engines;
 mod cli_check;
 mod cli_tm;
 mod savings_real_engine;
