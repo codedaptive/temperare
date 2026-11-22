@@ -40,16 +40,16 @@ pub(crate) fn judge_case(
         return CaseVerdict::Broken { why: format!("gave no finding; expected {wanted}") };
     }
     let gave: Vec<String> =
-        findings.iter().map(|f| format!("{} at {}:{}", f.rule, f.path.as_str(), f.line)).collect();
+        findings.iter().map(|f| format!("{} at {}:{}", f.rule, f.path.as_str(), f.line().unwrap_or(0))).collect();
     CaseVerdict::Broken { why: format!("gave {}; expected {wanted}", gave.join(", ")) }
 }
 
 /// Whether `finding` is the expected one: same rule, the same path as `path` (the expected path as `case_rel_path`
-/// reads it), same line.
+/// reads it), same line (a finding with no line counts as line 0).
 fn is_expected(finding: &Finding, expected: &ExpectedFinding, path: &str) -> bool {
     finding.rule == expected.rule_id
         && finding.path.as_str() == path
-        && usize::try_from(finding.line) == Ok(expected.line)
+        && usize::try_from(finding.line().unwrap_or(0)) == Ok(expected.line)
 }
 
 /// `the rule failed, exit <code>` or `the rule failed, no exit code`, then `: <line>` for the last non-blank line of

@@ -9,8 +9,8 @@
 //! Acceptance: the mission's Done list (MISSION-temperare-2026-11-16, Done 1-8, SPEC-engines-common's Done 9 for
 //! golangci-lint, pylint and clang-tidy, and Done 10's shared run and baseline test), run against the built
 //! `temperare` with the real engines, each case in a throwaway folder it makes and removes.
-//! Validation, not a unit or integration test: a run of the shipped binary, written by the orchestrator (SPEC-cli,
-//! Tests).
+//! Validation, not a unit or integration test: a run of the shipped binary, written by the cli lane to the
+//! orchestrator's measures (rule 11).
 //! `make accept` runs it.
 //! No codeteam variable reaches `temperare` in any case (Done 6): each case passes only the variables it sets (`env.rs`
 //! for the acceptance cases, `install_temp_home.rs` its own).

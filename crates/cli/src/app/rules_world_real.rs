@@ -7,8 +7,8 @@ use std::path::Path;
 
 impl RulesWorld<'static> {
     /// The world wired to the real git, disk, PATH and clock: `procio::toplevel`, `Path::is_file`, `RuleFile::read`,
-    /// `engines::availability`, `now_secs`, `procio::rev_parse` and `procio::blob_at`. `run` uses it; tests of
-    /// `run_rules` pass closures instead.
+    /// `engines::availability`, `now_secs`, `procio::rev_parse`, `procio::blob_at` and `engines::no_file_rules`. `run`
+    /// uses it; tests of `run_rules` pass closures instead.
     pub fn real() -> RulesWorld<'static> {
         RulesWorld {
             toplevel: &procio::toplevel,
@@ -18,6 +18,7 @@ impl RulesWorld<'static> {
             now: &now_secs,
             rev_parse: &procio::rev_parse,
             blob_at: &procio::blob_at,
+            no_file_rules: &engines::no_file_rules,
         }
     }
 }

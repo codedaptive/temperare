@@ -11,10 +11,10 @@ use serde_json::json;
 use std::io::Write;
 use std::path::Path;
 
-/// Finds the rule file as `run_rules` does, reads it as committed at `rev` (the `--base`) and as it is now, and prints what
-/// now loosened since the base (`rules::loosened`), as text ending in a `next:` line or as one JSON object carrying
-/// `exit` and `next`. Exit 0 when nothing loosened, 1 when something did. A rule file that cannot be found and a
-/// base that cannot be read are usage errors (exit 2, see `write_failure`); the base's problems, labelled
+/// Finds the rule file as `run_rules` does, reads it as committed at `rev` (the `--base`) and as it is now, and prints
+/// what now loosened since the base (`rules::loosened`), as text ending in a `next:` line or as one JSON object
+/// carrying `exit` and `next`. Exit 0 when nothing loosened, 1 when something did. A rule file that cannot be found and
+/// a base that cannot be read are usage errors (exit 2, see `write_failure`); the base's problems, labelled
 /// `<path> (at <rev>)`, and then now's, are exit 2 (see `write_problems`). Write errors are ignored: a closed pipe is
 /// not tm's failure.
 pub(crate) fn run_loosened(
