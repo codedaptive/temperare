@@ -41,7 +41,8 @@ In order:
    those of the run; the letters here stand for them. See [Tokens saved](#tokens-saved).
 1. **One block per finding,** three lines and a blank line:
    - `<path>:<line>:<col>`, two spaces, `<severity> <kind> <rule id>`, then `  owner <owner>` when the file has an
-     owner. `:<col>` is left out when the engine gives no column.
+     owner. `:<col>` is left out when the engine gives no column. A finding with no line, such as cargo-audit's on
+     `Cargo.lock`, starts with `<path>` alone, with no line and no column.
    - the engine's own message;
    - `fix: ` and the rule's fix text.
 2. **One line per rule that was not available:** `not available: <rule id> (<engine>): <why>`.
