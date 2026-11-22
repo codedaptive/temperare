@@ -465,7 +465,8 @@ No engine is run. A rule is listed once, for the first of these that holds:
   ([`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)). Such a rule keeps its own line under `rules (N)` too,
   with its availability. A clang-tidy rule that covers files but no C-family source is not listed: `tm check` finds
   that only when clang-tidy runs. A rule `tm` refuses is not judged here, as `tm check` fails it first. When git
-  cannot list the files, no rule is listed this way.
+  cannot list the files, no rule is listed for its paths or its scripts; a cargo-audit rule is still listed when
+  the rule file's folder is found and has no `Cargo.lock` the rule covers, since `tm` looks for that file on disk.
 
 A rule with `only_with_base = true` is listed only when it covers no file: one that covers files applies whenever
 `tm check` is given a base, and `tm rules` takes none. A rule of your own is never listed here: one that covers no

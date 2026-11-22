@@ -85,7 +85,8 @@ sources.
   paths of each rule that covers nothing above, or remove it from <rule file>" (under --json, "fix the paths of
   each rule in covers_nothing, or remove it from <rule file>"). A baseline set's rule is listed under
   not_applicable instead, with why "its paths match no file in the rule file's folder" (ShellCheck, cargo-audit and
-  clang-tidy: "no file its engine checks"). When git cannot list the files, no rule is settled this way.
+  clang-tidy: "no file its engine checks"). When git cannot list the files, no rule is settled this way except a
+  cargo-audit rule, whose Cargo.lock tm looks for on disk once the rule file's folder is found.
 - --base <rev> keeps only findings on lines added since that commit. A rule with only_with_base = true reports only
   what a change adds: without --base it reports nothing and is listed under not_applicable ("reports only what a
   change adds; run with --base"). not_applicable is never a finding and never "not available". In text, tm check

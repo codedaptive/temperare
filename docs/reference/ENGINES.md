@@ -190,7 +190,9 @@ version and listed, and a missing one is not. In `--json`, `saved.counted` holds
 `tm rules` shows each rule's scope.
 
 When git cannot list the files (the rule file's folder is in no git repository, or git is missing or fails), no
-rule is settled this way, and each goes on to steps 3 to 5.
+rule is settled by its paths or its scripts, and each goes on to steps 3 to 5. A cargo-audit rule is the one
+exception: when the rule file's folder is still found, `tm` looks for its `Cargo.lock` on disk, so a rule whose
+folder has no `Cargo.lock` it covers still settles here.
 
 ## clippy
 
