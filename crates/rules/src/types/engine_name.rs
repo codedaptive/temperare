@@ -14,7 +14,6 @@ impl Engine {
             Engine::GolangciLint => "golangci-lint",
             Engine::Pylint => "pylint",
             Engine::ClangTidy => "clang-tidy",
-            Engine::Oclint => "oclint",
             Engine::ShellCheck => "shellcheck",
             Engine::Git => "git",
             Engine::Vulture => "vulture",

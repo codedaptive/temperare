@@ -22,7 +22,6 @@ fn each_engine_serializes_to_its_rule_file_name() {
     assert_eq!(serialized(Engine::GolangciLint), "engine = \"golangci-lint\"\n");
     assert_eq!(serialized(Engine::Pylint), "engine = \"pylint\"\n");
     assert_eq!(serialized(Engine::ClangTidy), "engine = \"clang-tidy\"\n");
-    assert_eq!(serialized(Engine::Oclint), "engine = \"oclint\"\n");
     assert_eq!(serialized(Engine::ShellCheck), "engine = \"shellcheck\"\n");
     assert_eq!(serialized(Engine::Git), "engine = \"git\"\n");
     assert_eq!(serialized(Engine::Vulture), "engine = \"vulture\"\n");

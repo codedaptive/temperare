@@ -43,7 +43,7 @@ fn an_unknown_engine_is_none_with_a_problem_at_the_value() {
             line: 2,
             col: 10,
             what: "unknown engine \"lint\"".to_string(),
-            fix: "Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck, git, vulture, periphery, gitleaks, cargo-audit."
+            fix: "Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, shellcheck, git, vulture, periphery, gitleaks, cargo-audit."
                 .to_string(),
         }]
     );
