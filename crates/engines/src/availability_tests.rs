@@ -1,7 +1,8 @@
 //! ZUT for availability.rs: engine program lookups, including both Clippy programs and ShellCheck, exact absence
-//! reasons, Tessera never available (settled S-20), and an engine with no adapter in this build (Periphery) not
-//! available whatever is on PATH, from `availability_from`.
+//! reasons, Tessera never available (settled S-20), and an engine with no adapter in this build not available
+//! whatever is on PATH, from `availability_from`.
 
+use crate::an_engine_with_no_adapter::an_engine_with_no_adapter;
 use crate::availability::availability_from;
 use crate::types::Availability;
 use rules::Engine;
@@ -88,9 +89,10 @@ fn clippy_looks_up_both_programs_in_order_when_present() {
 }
 
 #[test]
-fn periphery_has_no_adapter_whatever_is_on_path_and_looks_up_nothing() {
-    let why = not_available("no adapter for periphery in this build");
-    assert_eq!(availability_from(Engine::Periphery, |_| true), why);
-    assert_eq!(availability_from(Engine::Periphery, |_| false), why);
-    assert_eq!(asked_for(Engine::Periphery), Vec::<String>::new());
+fn an_engine_with_no_adapter_is_not_available_whatever_is_on_path_and_looks_up_nothing() {
+    let engine = an_engine_with_no_adapter();
+    let why = not_available(&format!("no adapter for {} in this build", engine.name()));
+    assert_eq!(availability_from(engine, |_| true), why);
+    assert_eq!(availability_from(engine, |_| false), why);
+    assert_eq!(asked_for(engine), Vec::<String>::new());
 }

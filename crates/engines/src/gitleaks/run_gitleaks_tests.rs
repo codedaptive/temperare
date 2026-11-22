@@ -1,6 +1,7 @@
 //! ZUT for run_gitleaks.rs: `run_gitleaks(&GITLEAKS, ..)` on a recording host: the environment removed from the
 //! command, the outcome read from captured gitleaks 8.30.1 output (fixtures/, see fixtures.txt) and literal stderr,
-//! and the raw count left in `raw_chars`. Nothing runs.
+//! and the raw count left in `raw_chars`. Nothing runs. The folder does not exist, so the suppression guard's only
+//! touch of the disk is failing to find files there, and every row reaches the run.
 
 use super::{run_gitleaks, GITLEAKS};
 use crate::host::Host;

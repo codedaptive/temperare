@@ -14,7 +14,8 @@ use std::path::{Path, PathBuf};
 /// The hits of `rule` under `folder` (canonical); a `RunFn`, the flow of `CLANG_TIDY`. The central `refused` has
 /// already settled the rule's refusals and params (clang-tidy takes none). Each step can stop the rule:
 /// 1. the C-family sources `c_files` lists under `folder`, or its `Stop`; when `no_script` finds none the rule
-///    applies to, nothing runs and the rule is its `NoFiles`;
+///    applies to, nothing runs and the rule is its `NoFiles`. `engine_hits_with`'s step 1 (`c_listed`) settles that
+///    before availability; this guard decides only when that listing failed and this one succeeds;
 /// 2. the check run of `clang_tidy_cmd` on the sources the rule applies to, with the rule's config, in `folder`,
 ///    through `check_run` so it is counted;
 /// 3. clang-tidy saying no check is enabled (`entry.unknown`) is `UnknownCheck`: the run enables only the rule's

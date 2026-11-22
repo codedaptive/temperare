@@ -8,11 +8,13 @@ use crate::entry::Entry;
 use crate::git::GIT;
 use crate::gitleaks::GITLEAKS;
 use crate::golangci_lint::GOLANGCI_LINT;
+use crate::periphery::PERIPHERY;
 use crate::pylint::PYLINT;
 use crate::ruff::RUFF;
 use crate::shellcheck::SHELLCHECK;
 use crate::swiftlint::SWIFTLINT;
 use crate::tessera::TESSERA;
+use crate::vulture::VULTURE;
 use rules::Engine;
 
 /// The entry of `engine`, `None` for an engine with no adapter in this build. An adapter for a new engine is its
@@ -31,6 +33,8 @@ pub fn entry_for(engine: Engine) -> Option<&'static Entry> {
         Engine::GolangciLint => Some(&GOLANGCI_LINT),
         Engine::Gitleaks => Some(&GITLEAKS),
         Engine::CargoAudit => Some(&CARGO_AUDIT),
+        Engine::Vulture => Some(&VULTURE),
+        Engine::Periphery => Some(&PERIPHERY),
         // Each variant with no adapter in this build gives None, which callers report as not available with
         // `no_adapter_why`. An adapter adds its arm above.
         _ => None,

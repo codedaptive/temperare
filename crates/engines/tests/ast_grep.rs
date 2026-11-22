@@ -76,7 +76,7 @@ fn assert_embedded_finding(outcomes: Vec<RuleOutcome>) {
     };
     assert_eq!(findings.len(), 1, "{findings:?}");
     assert_eq!(findings[0].path, RelPath::new("example.js"));
-    assert_eq!(findings[0].line, 1);
+    assert_eq!(findings[0].line(), Some(1));
     assert_eq!(findings[0].what, "embedded matched name");
 }
 

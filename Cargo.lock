@@ -44,6 +44,7 @@ dependencies = [
  "rules",
  "serde",
  "serde_json",
+ "toml",
 ]
 
 [[package]]
