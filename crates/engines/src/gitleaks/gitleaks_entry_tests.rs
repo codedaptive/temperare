@@ -11,7 +11,7 @@ use std::cell::Cell;
 use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
 
-const FIXED: [&str; 7] = ["dir", "--no-banner", "--no-color", "--redact", "--report-format=sarif", "--report-path=-", "--enable-rule=aws-access-token"];
+const FIXED: [&str; 8] = ["dir", "--no-banner", "--no-color", "--redact", "--ignore-gitleaks-allow", "--report-format=sarif", "--report-path=-", "--enable-rule=aws-access-token"];
 
 #[test]
 fn the_command_scans_the_folder_redacted_as_sarif() {

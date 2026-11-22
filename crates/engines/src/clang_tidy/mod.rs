@@ -1,9 +1,10 @@
 //! The clang-tidy adapter: its entry (`CLANG_TIDY`) and the flow it runs for one rule, the refusal of a check that is
-//! not one check name, clang-tidy's no-checks and no-compile-database words, the reader of its text output, its
+//! not one check name, its no-file outcome before availability, clang-tidy's no-checks and no-compile-database words, the reader of its text output, its
 //! command, and the listing of the C-family sources in a repository (tracked, and untracked but not ignored; never a
 //! symlink).
 
 mod c_files;
+mod c_listed;
 mod clang_tidy_cmd;
 mod clang_tidy_entry;
 mod clang_tidy_refusal;
@@ -13,6 +14,8 @@ mod parse_clang_tidy;
 mod run_clang_tidy;
 mod unknown_check;
 
+#[cfg(test)]
+mod c_listed_tests;
 #[cfg(test)]
 mod clang_tidy_cmd_tests;
 #[cfg(test)]
@@ -29,6 +32,7 @@ mod parse_clang_tidy_tests;
 mod unknown_check_tests;
 
 pub(crate) use c_files::c_files;
+pub(crate) use c_listed::c_listed;
 pub use clang_tidy_cmd::clang_tidy_cmd;
 pub use clang_tidy_entry::CLANG_TIDY;
 pub(crate) use clang_tidy_refusal::clang_tidy_refusal;

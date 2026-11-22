@@ -6,7 +6,7 @@ use std::os::unix::fs::{symlink, PermissionsExt};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-use engines::{run_rules_versioned_at, NotAvailableCause, RuleRun};
+use engines::{no_file_rules, run_rules_versioned_at, NoFileRule, NotAvailableCause, RuleRun};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
 mod support {
@@ -21,11 +21,15 @@ struct Repo(PathBuf);
 
 impl Repo {
     fn new(case: &str, source: &str, check: &str) -> Self {
+        Self::with_file(case, "a.c", source, check)
+    }
+
+    fn with_file(case: &str, filename: &str, source: &str, check: &str) -> Self {
         let path = std::env::temp_dir().join(format!("engines-zit-{}-clang-tidy-{case}", std::process::id()));
         fs::create_dir(&path).unwrap();
         let repo = Self(fs::canonicalize(path).unwrap());
         support::git::git(&repo.0, &["init", "-q"], b"");
-        fs::write(repo.0.join("a.c"), source).unwrap();
+        fs::write(repo.0.join(filename), source).unwrap();
         fs::write(repo.0.join("temperare.toml"), format!(
             "version = 1\n[[rule]]\nid = \"braces\"\nengine = \"clang-tidy\"\ncheck = \"{check}\"\nkind = \"quality\"\nseverity = \"warning\"\nfix = \"{FIX}\"\n"
         )).unwrap();
@@ -160,6 +164,37 @@ fn missing_clang_tidy_is_not_available() {
     drop(path);
     drop(repo);
     assert_unavailable(runs, "clang-tidy not found on PATH", NotAvailableCause::EngineNotOnPath, true);
+}
+
+#[test]
+fn no_c_file_precedes_missing_engine() {
+    let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let repo = Repo::with_file("no-c-file", "README.txt", "tracked\n", "readability-braces-around-statements");
+    support::git::git(&repo.0, &["add", "README.txt"], b"");
+    let rule_path = repo.0.join("temperare.toml");
+    let mut rule_text = fs::read_to_string(&rule_path).unwrap();
+    rule_text.push_str("paths = [\"**\"]\n");
+    fs::write(&rule_path, rule_text).unwrap();
+    let path = PathGuard(std::env::var_os("PATH"));
+    let git = std::env::split_paths(path.0.as_ref().unwrap()).map(|dir| dir.join("git"))
+        .find(|p| p.metadata().is_ok_and(|m| m.is_file() && m.permissions().mode() & 0o111 != 0)).unwrap();
+    let bin = repo.0.join("bin");
+    fs::create_dir(&bin).unwrap();
+    symlink(fs::canonicalize(Path::new(&git)).unwrap(), bin.join("git")).unwrap();
+    std::env::set_var("PATH", &bin);
+    let file = RuleFile::read(&rule_path).unwrap();
+    let runs = run_rules_versioned_at(&file, &repo.0, &[], None).runs;
+    let no_files = no_file_rules(&file, &repo.0);
+    drop(path);
+    drop(repo);
+
+    assert_eq!(runs.len(), 1, "{runs:?}");
+    assert_eq!(runs[0].rule, "braces");
+    assert_eq!(runs[0].engine, Engine::ClangTidy);
+    assert_eq!(runs[0].outcome, RuleOutcome::Findings(vec![]));
+    assert_eq!(runs[0].not_available_cause, None);
+    assert_eq!(runs[0].no_files.as_deref(), Some("no file its engine checks"));
+    assert_eq!(no_files, vec![NoFileRule { rule: "braces".into(), engine: Engine::ClangTidy, why: "no file its engine checks".into() }]);
 }
 
 #[test]

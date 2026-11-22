@@ -29,7 +29,7 @@ type Flowed = (Result<Vec<Hit>, Stop>, Option<usize>);
 /// apply as when it runs alone; only its `run` is shared. Any other command (clippy's `clippy-driver -W help`,
 /// `cargo locate-project`) runs through `host.run` once per distinct command, replayed to the rest in every pass.
 /// 1. Probe pass: each rule's flow runs until its check run (`pick_at`), which is not run. A rule that stops before
-///    it (no script or Cargo.lock in scope, engine not available, folder unresolved, a clippy lint group or unlisted lint) keeps
+///    it (no script, Cargo.lock or C source in scope, engine not available, folder unresolved, a clippy lint group or unlisted lint) keeps
 ///    that outcome, with no count, exactly as alone. Only the rules that reach their check run put their check
 ///    into the shared run, so a check that would stop before running never changes what the run does for the others.
 /// 2. Run pass: each rule that reached runs its flow again; its check run is replaced by one run over the distinct

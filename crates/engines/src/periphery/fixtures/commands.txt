@@ -1,0 +1,37 @@
+Periphery: 3.8.0
+Swift: swift-driver version: 1.168.6 Apple Swift version 6.4.2 (swiftlang-6.4.2.1.9 clang-2100.4.1.1)
+Target: arm64-apple-macosx27.3.0
+
+T=/var/folders/zc/zl4w__wx2xdfmd5lps9dp2000000gn/T/periphery-fixture.oZrmcRC1fV
+Package.swift declared one source-control dependency at https://example.invalid/dep.git and one local path at ../local-dep.
+swift package --package-path "$T" --scratch-path "$T/build" dump-package > dump_package_remote.json
+Package.swift was replaced with a dependency-free manifest.
+swift package --package-path "$T" --scratch-path "$T/build" dump-package > dump_package_clean.json
+Neither command resolves dependencies. Absolute paths in the JSON are from that temporary package.
+
+Scan fixture workspace: T=/var/folders/zc/zl4w__wx2xdfmd5lps9dp2000000gn/T/periphery-scan-fixture.W5ECgzZMGi
+The package is $T/package; $T/scratch is outside the package. Package.swift contained:
+    // swift-tools-version: 6.0
+    import PackageDescription
+    let package = Package(name: "Probe", targets: [.executableTarget(name: "Probe")])
+Sources/Probe/main.swift contained:
+    func unusedHelper() {}
+    protocol Greeter { func greet() }
+    class Worker: Greeter {
+        var assigned: Int = 0
+        func greet() { print("hello") }
+        func work() { assigned = 42 }
+    }
+    let worker = Worker()
+    worker.greet()
+    worker.work()
+swift package --package-path "$T/package" --scratch-path "$T/scratch/build" dump-package > "$T/scratch/dump.json"
+swift package --package-path "$T/package" --scratch-path "$T/scratch/build" describe --type json > "$T/scratch/describe.json"
+swift build --package-path "$T/package" --build-tests --build-system swiftbuild --scratch-path "$T/scratch/build" --disable-automatic-resolution
+The first build and scan used a struct with `var assigned = 0`, `mutating func work()`, and `var worker`;
+it yielded unused, redundantProtocol and redundantConformance but no assignOnlyProperty. The final class source
+above was then rebuilt with the same swift build command and scanned again.
+From $T/package (the actual invocation set cwd using Python os.chdir before exec):
+/opt/homebrew/bin/periphery scan --skip-build --format json --disable-update-check --quiet --index-store-path "$T/scratch/build/out" --json-package-manifest-path "$T/scratch/describe.json" --config "$T/scratch/periphery.yml" > scan.json
+periphery.yml was empty. scan.json is the second scan's unmodified stdout; its locations are canonical absolute
+paths into the temporary package. The tests use that same path as cwd and folder even after the package is removed.

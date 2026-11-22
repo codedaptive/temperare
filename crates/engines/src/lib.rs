@@ -8,12 +8,14 @@ pub mod entry;
 pub mod git;
 pub mod gitleaks;
 pub mod golangci_lint;
+pub mod periphery;
 pub mod pylint;
 pub mod ruff;
 pub mod sarif;
 pub mod shellcheck;
 pub mod swiftlint;
 pub mod tessera;
+pub mod vulture;
 
 mod availability;
 mod change_of;
@@ -68,6 +70,8 @@ pub use no_file_rules::no_file_rules;
 pub use run_rules_versioned_at::run_rules_versioned_at;
 pub use types::{Availability, CheckedRules, EngineVersion, Hit, NoFileRule, NotAvailableCause, ParamError, ParseError, RuleRun};
 
+#[cfg(test)]
+mod an_engine_with_no_adapter;
 #[cfg(test)]
 mod availability_tests;
 #[cfg(test)]

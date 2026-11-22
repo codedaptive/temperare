@@ -1,7 +1,9 @@
 //! `engine_hits_with`: one rule's hits from its engine's entry, with ShellCheck's no-file outcome (through a given
-//! lister of scripts) and cargo-audit's settled before availability, and a rule that needs a base settled without one.
+//! lister of scripts), cargo-audit's and clang-tidy's settled before availability, and a rule that needs a base settled
+//! without one.
 
 use crate::cargo_audit::{has_lock, lock_listed};
+use crate::clang_tidy::{c_files, c_listed};
 use crate::entry_for::entry_for;
 use crate::host::Host;
 use crate::no_adapter_why::no_adapter_why;
@@ -17,7 +19,9 @@ use std::path::{Path, PathBuf};
 ///    the rule applies to, it is `NoFiles`, nothing is looked up on PATH and the flow never runs. A listing error
 ///    falls through to the steps below (an available ShellCheck's flow lists again and stops with it). Then a
 ///    cargo-audit rule with a resolved folder is `NoFiles` when `lock_listed` finds no Cargo.lock there (`has_lock`
-///    reads the disk) or the rule's paths do not cover it; likewise nothing is looked up and the flow never runs;
+///    reads the disk) or the rule's paths do not cover it; then a clang-tidy rule with a resolved folder is `NoFiles`
+///    when `c_listed` finds no C-family source (`c_files`, which runs git) the rule applies to, a listing error falling
+///    through as ShellCheck's does; likewise nothing is looked up and the flow never runs;
 /// 1b. a rule with `only_with_base` and no `host.base` is `NotAvailable` with `rules::ONLY_WITH_BASE_WHY`, whatever its
 ///    engine and whatever `folder` is: nothing is looked up on PATH and the flow never runs;
 /// 2. an engine with no entry in this build (`entry_for`) is `NotAvailable` with `no_adapter_why`; an engine that
@@ -35,6 +39,9 @@ pub(crate) fn engine_hits_with(
         return Err(stop);
     }
     if let Some(stop) = lock_listed(rule, folder.ok(), &has_lock) {
+        return Err(stop);
+    }
+    if let Some(stop) = c_listed(rule, folder.ok(), &c_files) {
         return Err(stop);
     }
     if rule.only_with_base && host.base.is_none() {

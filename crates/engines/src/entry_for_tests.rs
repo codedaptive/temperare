@@ -1,10 +1,10 @@
 //! ZUT for entry_for.rs: each engine with an adapter maps to the entry serving it, named by the engine's rule-file
-//! name; an engine with no adapter in this build has none.
+//! name, and every other engine has no entry.
 
 use crate::entry_for::entry_for;
 use rules::Engine;
 
-const ENGINES: [(Engine, &str); 12] = [
+const ENGINES: [(Engine, &str); 14] = [
     (Engine::Clippy, "clippy"),
     (Engine::SwiftLint, "swiftlint"),
     (Engine::Ruff, "ruff"),
@@ -17,12 +17,22 @@ const ENGINES: [(Engine, &str); 12] = [
     (Engine::GolangciLint, "golangci-lint"),
     (Engine::Gitleaks, "gitleaks"),
     (Engine::CargoAudit, "cargo-audit"),
+    (Engine::Vulture, "vulture"),
+    (Engine::Periphery, "periphery"),
 ];
 
 #[test]
 fn each_engine_maps_to_the_entry_serving_it() {
     for (engine, _) in ENGINES {
         assert_eq!(entry_for(engine).unwrap().engine, engine, "{engine:?}");
+    }
+}
+
+#[test]
+fn every_engine_outside_the_table_has_no_entry() {
+    for engine in Engine::ALL {
+        let in_table = ENGINES.iter().any(|(listed, _)| *listed == engine);
+        assert_eq!(entry_for(engine).is_some(), in_table, "{engine:?}");
     }
 }
 
@@ -53,7 +63,3 @@ fn git_maps_to_the_git_entry() {
     assert_eq!((entry.name, entry.engine), ("git", Engine::Git));
 }
 
-#[test]
-fn periphery_has_no_entry_in_this_build() {
-    assert!(entry_for(Engine::Periphery).is_none());
-}
