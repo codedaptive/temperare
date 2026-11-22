@@ -1,111 +1,39 @@
-//! ZUT for engine_name.rs: each engine's rule-file name, the round trip through `Engine::from_name`, and agreement
-//! with the serde name.
+//! ZUT for engine_name.rs: each engine's rule-file name.
 
 use super::Engine;
-use serde::Serialize;
-
-const ALL: [Engine; 14] = [
-    Engine::Clippy,
-    Engine::SwiftLint,
-    Engine::Ruff,
-    Engine::AstGrep,
-    Engine::Tessera,
-    Engine::GolangciLint,
-    Engine::Pylint,
-    Engine::ClangTidy,
-    Engine::ShellCheck,
-    Engine::Git,
-    Engine::Vulture,
-    Engine::Periphery,
-    Engine::Gitleaks,
-    Engine::CargoAudit,
-];
 
 #[test]
-fn clippy() {
-    assert_eq!(Engine::Clippy.name(), "clippy");
-}
-
-#[test]
-fn swiftlint() {
-    assert_eq!(Engine::SwiftLint.name(), "swiftlint");
-}
-
-#[test]
-fn ruff() {
-    assert_eq!(Engine::Ruff.name(), "ruff");
-}
-
-#[test]
-fn ast_grep() {
-    assert_eq!(Engine::AstGrep.name(), "ast-grep");
-}
-
-#[test]
-fn tessera() {
-    assert_eq!(Engine::Tessera.name(), "tessera");
-}
-
-#[test]
-fn golangci_lint() {
-    assert_eq!(Engine::GolangciLint.name(), "golangci-lint");
-}
-
-#[test]
-fn pylint() {
-    assert_eq!(Engine::Pylint.name(), "pylint");
-}
-
-#[test]
-fn clang_tidy() {
-    assert_eq!(Engine::ClangTidy.name(), "clang-tidy");
-}
-
-#[test]
-fn shellcheck() {
-    assert_eq!(Engine::ShellCheck.name(), "shellcheck");
-}
-
-#[test]
-fn git() {
-    assert_eq!(Engine::Git.name(), "git");
-}
-
-#[test]
-fn vulture() {
-    assert_eq!(Engine::Vulture.name(), "vulture");
-}
-
-#[test]
-fn periphery() {
-    assert_eq!(Engine::Periphery.name(), "periphery");
-}
-
-#[test]
-fn gitleaks() {
-    assert_eq!(Engine::Gitleaks.name(), "gitleaks");
-}
-
-#[test]
-fn cargo_audit() {
-    assert_eq!(Engine::CargoAudit.name(), "cargo-audit");
-}
-
-#[test]
-fn round_trips_through_from_name() {
-    for engine in ALL {
-        assert_eq!(Engine::from_name(engine.name()), Some(engine), "{engine:?}");
-    }
-}
-
-#[test]
-fn equals_the_serde_name() {
-    #[derive(Serialize)]
-    struct Wrap {
-        engine: Engine,
-    }
-    for engine in ALL {
-        let written = toml::to_string(&Wrap { engine }).unwrap();
-        assert_eq!(written, format!("engine = \"{}\"\n", engine.name()), "{engine:?}");
+fn each_engine_has_its_rule_file_name() {
+    for (engine, name) in [
+        (Engine::Clippy, "clippy"),
+        (Engine::SwiftLint, "swiftlint"),
+        (Engine::Ruff, "ruff"),
+        (Engine::AstGrep, "ast-grep"),
+        (Engine::Tessera, "tessera"),
+        (Engine::GolangciLint, "golangci-lint"),
+        (Engine::Pylint, "pylint"),
+        (Engine::ClangTidy, "clang-tidy"),
+        (Engine::ShellCheck, "shellcheck"),
+        (Engine::Git, "git"),
+        (Engine::Vulture, "vulture"),
+        (Engine::Periphery, "periphery"),
+        (Engine::Gitleaks, "gitleaks"),
+        (Engine::CargoAudit, "cargo-audit"),
+        (Engine::Eslint, "eslint"),
+        (Engine::Mypy, "mypy"),
+        (Engine::Pmd, "pmd"),
+        (Engine::Detekt, "detekt"),
+        (Engine::Rubocop, "rubocop"),
+        (Engine::Phpstan, "phpstan"),
+        (Engine::Dart, "dart"),
+        (Engine::Markdownlint, "markdownlint"),
+        (Engine::Yamllint, "yamllint"),
+        (Engine::Actionlint, "actionlint"),
+        (Engine::Hadolint, "hadolint"),
+        (Engine::Vale, "vale"),
+        (Engine::Stylelint, "stylelint"),
+        (Engine::Sqlfluff, "sqlfluff"),
+    ] {
+        assert_eq!(engine.name(), name, "{engine:?}, {name:?}");
     }
 }

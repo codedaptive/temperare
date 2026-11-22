@@ -28,30 +28,31 @@ fn an_absent_engine_is_none_with_a_problem_at_the_header() {
 
 #[test]
 fn a_known_engine_is_read() {
-    let (engine, out) = read("engine = \"ast-grep\"\n", 0);
-    assert_eq!(engine, Some(Engine::AstGrep));
-    assert_eq!(out, vec![]);
+    for (name, expected) in [
+        ("ast-grep", Engine::AstGrep),
+        ("shellcheck", Engine::ShellCheck),
+        ("sqlfluff", Engine::Sqlfluff),
+    ] {
+        let (engine, out) = read(&format!("engine = \"{name}\"\n"), 0);
+        assert_eq!(engine, Some(expected), "{name:?}, {expected:?}");
+        assert_eq!(out, vec![], "{name:?}, {expected:?}");
+    }
 }
 
 #[test]
 fn an_unknown_engine_is_none_with_a_problem_at_the_value() {
     let (engine, out) = read("id = \"r\"\nengine = \"lint\"\n", 0);
     assert_eq!(engine, None);
+    let fix = format!("Use one of: {}.", Engine::ALL.map(Engine::name).join(", "));
     assert_eq!(
         out,
         vec![Problem {
             line: 2,
             col: 10,
             what: "unknown engine \"lint\"".to_string(),
-            fix: "Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, shellcheck, git, vulture, periphery, gitleaks, cargo-audit."
-                .to_string(),
+            fix,
         }]
     );
-}
-
-#[test]
-fn a_new_engine_name_is_read() {
-    let (engine, out) = read("engine = \"shellcheck\"\n", 0);
-    assert_eq!(engine, Some(Engine::ShellCheck));
-    assert_eq!(out, vec![]);
+    assert!(out[0].fix.starts_with("Use one of: clippy, swiftlint, "), "{:?}", out[0].fix);
+    assert!(out[0].fix.ends_with(", stylelint, sqlfluff."), "{:?}", out[0].fix);
 }
