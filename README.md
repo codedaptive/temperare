@@ -381,7 +381,8 @@ and whether its engine is
 installed does not change its result (the engine is still asked its version for the engines list). A rule of your
 own is then listed as `covers nothing: <rule> (<engine>)`, is counted, and makes the exit 6 when nothing ranks
 above it; the `next:` line says to fix its paths or remove it. A baseline set's rule is not applicable instead:
-the text counts it, and `--json` lists it with its why. When git cannot list the files, no rule is settled this way.
+the text counts it, and `--json` lists it with its why. When git cannot list the files, no rule is settled this way
+except a cargo-audit rule, whose `Cargo.lock` is looked for on disk.
 
 **A `check` the installed engine does not know is "not available".** A clippy lint the toolchain does not list
 (a `rustdoc::` lint is not among these: it fails, exit 5, as above), or a SwiftLint rule identifier or ruff selector
