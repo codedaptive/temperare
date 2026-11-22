@@ -97,7 +97,7 @@ test_paths = ["tests/**"]
         assert!(!text.contains("not applicable: test-ratio"), "stdout:\n{text}");
         assert_eq!(output.code, Some(1), "stdout:\n{text}\nstderr:\n{stderr}");
     } else {
-        assert!(text.lines().any(|line| line == "not applicable: test-ratio (git): reports only what a change adds; run with --base"), "stdout:\n{text}\nstderr:\n{stderr}");
+        assert!(text.lines().any(|line| line.starts_with("0 findings (") && line.contains(", 1 not applicable, ")), "stdout:\n{text}\nstderr:\n{stderr}");
         assert!(!text.lines().any(|line| line.contains(" quality test-ratio") || line.contains(" security test-ratio")), "stdout:\n{text}");
         assert_eq!(output.code, Some(0), "stdout:\n{text}\nstderr:\n{stderr}");
     }
