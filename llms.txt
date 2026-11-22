@@ -84,7 +84,9 @@ sources.
   engine checks"). When git cannot list the files, no rule is settled this way.
 - --base <rev> keeps only findings on lines added since that commit. A rule with only_with_base = true reports only
   what a change adds: without --base it reports nothing and is listed under not_applicable ("reports only what a
-  change adds; run with --base"). not_applicable is never a finding and never "not available".
+  change adds; run with --base"). not_applicable is never a finding and never "not available". In text, tm check
+  gives not-applicable rules only as a count ("P not applicable" on the counts line), with no line per rule; --json
+  lists each with its rule, engine and why.
 - Exit 3 and exit 5 are never clean: the code was not fully checked.
 - A rule fails (exit 5) when its engine gives no answer that can be read, or when its check cannot be matched back
   to findings: a clippy lint group, SwiftLint's custom_rules, a ruff rule name in place of a code, an ast-grep rule
@@ -130,7 +132,8 @@ sources.
   savings_line = false in ~/.config/temperare/config.toml turns the line off.
 - Rules with engine = "tessera" are accepted and, when they cover a file and have no params, are reported "not
   available" today, whether or not Tessera is installed. A Tessera rule with a param fails (exit 5).
-- Rules with engine = "golangci-lint", "pylint", "clang-tidy" or "oclint" are accepted and, when they cover a file,
+- Rules with engine = "golangci-lint", "pylint", "clang-tidy", "oclint", "vulture", "periphery", "gitleaks" or
+  "cargo-audit" are accepted and, when they cover a file,
   reported "not available" (no adapter for <engine> in this build) until each adapter lands, whether or not the
   engine is installed.
 - Rules with engine = "shellcheck" are not available in this build. A rule's code is looked up in a list of
