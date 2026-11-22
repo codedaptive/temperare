@@ -156,6 +156,7 @@ $ tm rules
 rule file: /path/to/tm-first-run/temperare.toml
 rules (1):
   no-none-compare  ruff  quality  error  paths: all files  available
+not applicable (0):
 exceptions in force (0):
 exceptions expired (0):
 next: nothing to do
@@ -207,7 +208,7 @@ The arithmetic, the JSON fields and the log line: [`docs/reference/OUTPUT.md`](d
 | Command | What it does |
 |---|---|
 | `tm check [--rules <path>] [--base <rev>] [--kind quality\|security] [--json] [<path>...]` | Runs every rule's engine and prints the report |
-| `tm rules [--rules <path>] [--json]` | Reads and checks the rule file; lists each rule, whether its engine is available, the exceptions in force and those expired. Runs no engine |
+| `tm rules [--rules <path>] [--json]` | Reads and checks the rule file; lists each rule, whether its engine is available, the baseline rules that are not applicable here with why, the exceptions in force and those expired. Runs no engine |
 | `tm rules --loosened --base <rev> [--rules <path>] [--json]` | Lists how the rule file was loosened since that commit: a rule gone, a severity lowered, paths narrowed, an exception added or its date moved later, a baseline set dropped, and the rest in [`OUTPUT.md`](docs/reference/OUTPUT.md#tm-rules---loosened). Runs no engine |
 | `tm baseline test [--set <name@version>] [--json]` | Tests the rules of the baseline sets built into `tm` on the cases each set carries, each case in a throwaway git repository. With no `--set` it tests the ready sets (`house@1`, then `standard@1`); `--set` tests the one set it names, such as `--set standard@1`. Reads no rule file and checks nothing of yours |
 | `tm install [--no-place] [--short-name] [--target claude,codex,cursor] [--mode skill] [--location local] [-y]` | Places the binary, links `tm`, offers the harness skill (see [Install](#install)) |

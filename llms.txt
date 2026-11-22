@@ -57,9 +57,10 @@ sources.
   not run, not listed), paths, exclude (each in place of the set's) and params (laid over the set's, key by key). One
   [[override]] per rule; one that names no rule of a taken set is a problem. An [[exception]] may name a set rule.
 - A set rule can require params (none of standard@1 does). Until an [[override]] gives each one in its params the
-  rule is not run, tm rules does not list it, and tm check lists it under not_applicable ("required params not
-  given: <names>; give them in the params of an [[override]] for "<rule id>""). A set may type a required param as
-  a string or a list of strings; an [[override]] that gives it as another type is a problem, exit 2.
+  rule is not run, and tm rules and tm check --json list it under not_applicable, not among the rules
+  ("required params not given: <names>; give them in the params of an [[override]] for "<rule id>""). A set may
+  type a required param as a string or a list of strings; an [[override]] that gives it as another type is a
+  problem, exit 2.
 - A set's ast-grep rules carry their YAML inside tm: their check is not a path in the repository and no file is
   read for it.
 - The rules of a set: tm rules on a rule file that takes it, or crates/rules/baseline/<name>/<version>/set.toml.
@@ -89,7 +90,11 @@ sources.
   what a change adds: without --base it reports nothing and is listed under not_applicable ("reports only what a
   change adds; run with --base"). not_applicable is never a finding and never "not available". In text, tm check
   gives not-applicable rules only as a count ("P not applicable" on the counts line), with no line per rule; --json
-  lists each with its rule, engine and why.
+  lists each with its rule, engine and why. tm rules lists them too, without running an engine: "not applicable
+  (P):", one "<rule>  <engine>  <why>" line each (JSON not_applicable and rules_not_applicable). It lists baseline
+  rules only (a repository's own no-file rule covers nothing instead), never a rule an [[override]] turned off,
+  an only_with_base rule only when it covers no file, and not a clang-tidy rule with no C-family source (found only
+  when clang-tidy runs).
 - Exit 3 and exit 5 are never clean: the code was not fully checked.
 - A rule fails (exit 5) when its engine gives no answer that can be read, or when its check cannot be matched back
   to findings: a clippy lint group, SwiftLint's custom_rules, a ruff rule name in place of a code, an ast-grep rule
