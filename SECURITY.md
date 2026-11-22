@@ -123,8 +123,9 @@ rule that covers none of the files git lists in the rule file's folder (the trac
 untracked files git does not ignore) is not run at all: its engine runs no check for it (it is still asked its
 version), and whether the engine is installed does not change the result. One of the repository's own rules is
 then reported as covering nothing, and makes the exit code 6 when nothing ranks above it; a baseline set's rule is
-only counted as not applicable and does not change the exit code. A ShellCheck rule that covers no shell script,
-and a clang-tidy rule that covers no C-family source, are the same. Try a new rule on a file you know breaks it.
+only counted as not applicable and does not change the exit code. A ShellCheck rule that covers no shell script is
+the same. A clang-tidy rule that covers files but no C-family source is the same when clang-tidy is installed;
+without clang-tidy it is not available (exit 3). Try a new rule on a file you know breaks it.
 
 **Engine messages are printed as given.** In the text output a finding's message is the engine's own text. The JSON
 output escapes it.
