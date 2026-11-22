@@ -69,7 +69,7 @@ fn a_finding_without_col_or_owner_leaves_both_out() {
 }
 
 #[test]
-fn a_finding_with_no_line_prints_line_zero() {
+fn a_finding_with_no_line_prints_its_path_alone() {
     let report = Report {
         findings: vec![
             finding_at(None, Severity::Error, Kind::Quality, None, Some(5)),
@@ -77,8 +77,8 @@ fn a_finding_with_no_line_prints_line_zero() {
         ],
         ..empty()
     };
-    let expected = "src/main.rs:0:5  error quality no-unwrap\n  used unwrap\n  fix: return an error\n\n\
-src/main.rs:0  warning quality no-unwrap\n  used unwrap\n  fix: return an error\n\n"
+    let expected = "src/main.rs  error quality no-unwrap\n  used unwrap\n  fix: return an error\n\n\
+src/main.rs  warning quality no-unwrap\n  used unwrap\n  fix: return an error\n\n"
         .to_string()
         + ZERO_COUNTS;
     assert_eq!(render_text(&report), expected);
