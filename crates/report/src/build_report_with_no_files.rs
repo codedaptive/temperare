@@ -10,7 +10,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// (read once from the clock); an exception past its `expires` day silences nothing. The report's `date` is that day's
 /// "YYYY-MM-DD" text; its `expired` lists the exceptions past their `expires` day on that same day, and
 /// `exceptions_in_force` counts the others. With no base every finding is new, except that an `only_with_base` rule's
-/// outcomes are dropped (see `assemble_report`), and nothing else is run or read. With a base,
+/// outcomes are dropped (see `out_of_play`), and nothing else is run or read. With a base,
 /// `(repository, resolved base id)`, only findings on lines added since the base are new: lines git adds against it in
 /// the work tree, untracked files whole, and every path under an untracked nested repository. Finding paths are
 /// relative to the rule file's folder, so the folder is canonicalized (a relative one against the current directory)
@@ -23,7 +23,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// `only_with_base` rule keeps "reports only what a change adds; run with --base", whatever the flag. The outcomes of a
 /// flagged rule of `rules.rules` are dropped, a failed one included, so the caller flags only a rule its engine settled
 /// as having no file (engines tests a refusal first); a flagged rule set aside in `not_applicable_rules` keeps its own
-/// reason and its outcomes; a flagged id naming no rule of the file is ignored (see `assemble_report`).
+/// reason and its outcomes; a flagged id naming no rule of the file is ignored (see `out_of_play`).
 pub fn build_report_with_no_files(
     rules: &RuleFile,
     outcomes: Vec<(String, RuleOutcome)>,

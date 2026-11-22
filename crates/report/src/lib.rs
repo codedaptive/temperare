@@ -13,6 +13,7 @@ mod folder_from_top;
 mod keep_added;
 mod not_applicable;
 mod not_available;
+mod out_of_play;
 mod render_text;
 mod report;
 mod report_error;
@@ -51,6 +52,8 @@ mod keep_added_tests;
 mod not_applicable_tests;
 #[cfg(test)]
 mod not_available_tests;
+#[cfg(test)]
+mod out_of_play_tests;
 #[cfg(test)]
 mod render_text_tests;
 #[cfg(test)]
@@ -96,6 +99,7 @@ pub use failed::Failed;
 pub use keep_added::keep_added;
 pub use not_applicable::NotApplicable;
 pub use not_available::NotAvailable;
+pub use out_of_play::out_of_play;
 pub use render_text::render_text;
 pub use report::Report;
 pub use report_error::ReportError;
