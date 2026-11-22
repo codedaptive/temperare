@@ -44,12 +44,16 @@ fn list<'a>(json: &'a Value, key: &str) -> &'a [Value] {
     json[key].as_array().map_or(&[], Vec::as_slice)
 }
 
-/// `path:line[:col] rule engine kind severity [owner o] what "…" fix "…"`.
+/// `path[:line[:col]] rule engine kind severity [owner o] what "…" fix "…"`; a finding with no line shows its path
+/// alone, since a column without a line means nothing.
 fn finding(f: &Value) -> String {
-    let mut place = format!("{}:{}", text(f, "path"), f["line"]);
-    if let Some(col) = f["col"].as_u64() {
-        place.push_str(&format!(":{col}"));
-    }
+    let place = match f["line"].as_u64() {
+        Some(line) => {
+            let col = f["col"].as_u64().map(|col| format!(":{col}")).unwrap_or_default();
+            format!("{}:{line}{col}", text(f, "path"))
+        }
+        None => text(f, "path").to_string(),
+    };
     let owner = f["owner"].as_str().map_or(String::new(), |o| format!(" owner {o}"));
     format!(
         "{place} {} {} {} {}{owner} what {} fix {}",
