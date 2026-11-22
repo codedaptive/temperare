@@ -227,21 +227,16 @@ fn not_applicable(rule: &str, engine: Engine) -> NotApplicable {
 }
 
 #[test]
-fn a_not_applicable_rule_gets_its_line() {
-    let report = Report { not_applicable: vec![not_applicable("r3", Engine::SwiftLint)], ..empty() };
-    assert_eq!(render_text(&report), "not applicable: r3 (swiftlint): no swift files\n".to_string() + ZERO_COUNTS);
-}
-
-#[test]
-fn not_applicable_lines_keep_report_order() {
+fn a_not_applicable_rule_is_only_counted() {
     let report = Report {
-        not_applicable: vec![not_applicable("zz", Engine::SwiftLint), not_applicable("aa", Engine::AstGrep)],
+        not_applicable: vec![not_applicable("r3", Engine::SwiftLint)],
+        counts: Counts { not_applicable: 1, ..Counts::default() },
         ..empty()
     };
-    let expected = "not applicable: zz (swiftlint): no swift files\nnot applicable: aa (ast-grep): no swift files\n"
-        .to_string()
-        + ZERO_COUNTS;
-    assert_eq!(render_text(&report), expected);
+    assert_eq!(
+        render_text(&report),
+        "0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 1 not applicable, 0 covers nothing, 0 expired\n"
+    );
 }
 
 fn covers_nothing(rule: &str, engine: Engine) -> CoversNothing {
@@ -265,17 +260,18 @@ fn covers_nothing_lines_keep_report_order() {
 }
 
 #[test]
-fn covers_nothing_lines_come_after_failed_lines_and_before_not_applicable_lines() {
+fn covers_nothing_lines_come_after_failed_lines_and_before_the_engines_line() {
     let report = Report {
         failed: vec![failed(Some(2))],
         covers_nothing: vec![covers_nothing("r4", Engine::AstGrep)],
         not_applicable: vec![not_applicable("r3", Engine::SwiftLint)],
         engines: vec![ran(Engine::Ruff, Some("0.6.0"))],
+        counts: Counts { failed: 1, not_applicable: 2, covers_nothing: 3, ..Counts::default() },
         ..empty()
     };
-    let expected = "failed: r2 (ruff), exit 2\ncovers nothing: r4 (ast-grep)\nnot applicable: r3 (swiftlint): no swift files\n\
+    let expected = "failed: r2 (ruff), exit 2\ncovers nothing: r4 (ast-grep)\n\
 engines: ruff 0.6.0\n\
-0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable, 0 covers nothing, 0 expired\n";
+0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 1 failed, 2 not applicable, 3 covers nothing, 0 expired\n";
     assert_eq!(render_text(&report), expected);
 }
 
@@ -297,18 +293,19 @@ fn an_expired_exception_gets_its_line() {
 }
 
 #[test]
-fn expired_lines_come_after_not_applicable_lines_and_before_the_engines_line() {
+fn expired_lines_come_after_covers_nothing_lines_and_before_the_engines_line() {
     let report = Report {
+        covers_nothing: vec![covers_nothing("r4", Engine::AstGrep)],
         not_applicable: vec![not_applicable("r3", Engine::SwiftLint)],
         expired: vec![expired("zz", "b.rs"), expired("aa", "a.rs")],
         engines: vec![ran(Engine::Ruff, Some("0.6.0"))],
+        counts: Counts { not_applicable: 4, covers_nothing: 5, expired: 6, ..Counts::default() },
         ..empty()
     };
-    let expected = "not applicable: r3 (swiftlint): no swift files\n\
+    let expected = "covers nothing: r4 (ast-grep)\n\
 expired: zz b.rs (expired 2026-11-30)\n\
 expired: aa a.rs (expired 2026-11-30)\n\
-engines: ruff 0.6.0\n"
-        .to_string()
-        + ZERO_COUNTS;
+engines: ruff 0.6.0\n\
+0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 4 not applicable, 5 covers nothing, 6 expired\n";
     assert_eq!(render_text(&report), expected);
 }

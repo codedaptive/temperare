@@ -1,13 +1,13 @@
 //! `render_text`: the report as the text a person reads.
 
-use crate::{CoversNothing, EngineVersion, Expired, Failed, NotApplicable, NotAvailable, Report};
+use crate::{CoversNothing, EngineVersion, Expired, Failed, NotAvailable, Report};
 use rules::{Finding, Kind, Severity};
 
 /// The report as text: a three-line block and a blank line per kept finding, one line per not-available rule, one
-/// line per failed rule, one line per covers-nothing rule, one line per not-applicable rule, one line per expired
-/// exception (each list in the report's order), one line of the engines that ran and their versions (none when the list
-/// is empty), then the counts line, ending with the not-applicable, the covers-nothing and then the expired count, all
-/// printed even when 0.
+/// line per failed rule, one line per covers-nothing rule, one line per expired exception (each list in the report's
+/// order), one line of the engines that ran and their versions (none when the list is empty), then the counts line,
+/// ending with the not-applicable, the covers-nothing and then the expired count, all printed even when 0.
+/// A not-applicable rule gets no line of its own: it is counted in the counts line, and `--json` lists it.
 /// Silenced findings are counted, not listed; a failed rule's stderr tail is printed by the caller (cli's
 /// `failed_tails`), and `--json` carries it. Every line ends with '\n'.
 pub fn render_text(report: &Report) -> String {
@@ -16,7 +16,6 @@ pub fn render_text(report: &Report) -> String {
     report.not_available.iter().for_each(|rule| text.push_str(&not_available_line(rule)));
     report.failed.iter().for_each(|rule| text.push_str(&failed_line(rule)));
     report.covers_nothing.iter().for_each(|rule| text.push_str(&covers_nothing_line(rule)));
-    report.not_applicable.iter().for_each(|rule| text.push_str(&not_applicable_line(rule)));
     report.expired.iter().for_each(|exception| text.push_str(&expired_line(exception)));
     text.push_str(&engines_line(&report.engines));
     let counts = &report.counts;
@@ -55,10 +54,6 @@ fn finding_block(finding: &Finding) -> String {
 
 fn not_available_line(rule: &NotAvailable) -> String {
     format!("not available: {} ({}): {}\n", rule.rule, rule.engine.name(), rule.why)
-}
-
-fn not_applicable_line(rule: &NotApplicable) -> String {
-    format!("not applicable: {} ({}): {}\n", rule.rule, rule.engine.name(), rule.why)
 }
 
 fn covers_nothing_line(rule: &CoversNothing) -> String {
