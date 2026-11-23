@@ -1,0 +1,78 @@
+# temperare's list of hadolint codes: the codes a rule may name. A code not listed is not available.
+# source: hadolint 2.15.1 binary (/opt/homebrew/bin/hadolint): one Hadolint.Rule.DLxxxx module per code, each shipped with its rule message
+# version: 2.15.1
+# Format: one code per line as hadolint prints it (DL3006); lines starting with # and blank lines are ignored.
+# Not listed: DL1000, which is hadolint's report that it could not parse a Dockerfile, not a rule; and every SC code:
+# hadolint runs ShellCheck 0.11.0 without its optional checks and leaves out codes of its own, so tm cannot list which
+# SC codes it reports.
+DL1001
+DL3000
+DL3001
+DL3002
+DL3003
+DL3004
+DL3006
+DL3007
+DL3008
+DL3009
+DL3010
+DL3011
+DL3012
+DL3013
+DL3014
+DL3015
+DL3016
+DL3018
+DL3019
+DL3020
+DL3021
+DL3022
+DL3023
+DL3024
+DL3025
+DL3026
+DL3027
+DL3028
+DL3029
+DL3030
+DL3032
+DL3033
+DL3034
+DL3035
+DL3036
+DL3037
+DL3038
+DL3040
+DL3041
+DL3042
+DL3043
+DL3044
+DL3045
+DL3046
+DL3047
+DL3048
+DL3049
+DL3050
+DL3051
+DL3052
+DL3053
+DL3054
+DL3055
+DL3056
+DL3057
+DL3058
+DL3059
+DL3060
+DL3061
+DL3062
+DL3063
+DL3064
+DL3065
+DL3066
+DL3067
+DL4000
+DL4001
+DL4003
+DL4004
+DL4005
+DL4006

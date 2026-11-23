@@ -1,8 +1,6 @@
 //! ZUT for availability.rs: engine program lookups, including both Clippy programs and ShellCheck, exact absence
-//! reasons, Tessera never available (settled S-20), and an engine with no adapter in this build not available
-//! whatever is on PATH, from `availability_from`.
+//! reasons, and Tessera never available (settled S-20), from `availability_from`.
 
-use crate::an_engine_with_no_adapter::an_engine_with_no_adapter;
 use crate::availability::availability_from;
 use crate::types::Availability;
 use rules::Engine;
@@ -86,13 +84,4 @@ fn clippy_looks_up_both_programs_in_order_when_present() {
         true
     });
     assert_eq!(asked.into_inner(), vec!["cargo-clippy", "clippy-driver"]);
-}
-
-#[test]
-fn an_engine_with_no_adapter_is_not_available_whatever_is_on_path_and_looks_up_nothing() {
-    let engine = an_engine_with_no_adapter();
-    let why = not_available(&format!("no adapter for {} in this build", engine.name()));
-    assert_eq!(availability_from(engine, |_| true), why);
-    assert_eq!(availability_from(engine, |_| false), why);
-    assert_eq!(asked_for(engine), Vec::<String>::new());
 }

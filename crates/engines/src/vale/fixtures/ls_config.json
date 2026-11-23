@@ -1,0 +1,61 @@
+{
+  "BlockIgnores": {
+    "*.md": [
+      "(?s)A sentense.*"
+    ]
+  },
+  "Checks": null,
+  "Formats": {},
+  "Asciidoctor": {},
+  "Sphinx": {},
+  "FormatToLang": {},
+  "GBaseStyles": [
+    "Vale"
+  ],
+  "GChecks": {},
+  "IgnoredClasses": null,
+  "IgnoredScopes": null,
+  "MinAlertLevel": 1,
+  "Vocab": [
+    "Proj"
+  ],
+  "Grammars": null,
+  "RuleToLevel": {},
+  "RuleToParams": {},
+  "SBaseStyles": {
+    "*.md": [
+      "Vale",
+      "Other"
+    ]
+  },
+  "SChecks": {
+    "*.md": {}
+  },
+  "SLevels": {
+    "*.md": {}
+  },
+  "SUnsets": {},
+  "SVocab": {},
+  "StyleSources": null,
+  "Vocabularies": {
+    "Proj": {
+      "Accepted": [
+        "sentense"
+      ],
+      "Rejected": null
+    }
+  },
+  "SkippedScopes": null,
+  "Stylesheets": {},
+  "TokenIgnores": {},
+  "CommentDelimiters": {},
+  "WordTemplate": "",
+  "RootINI": "/private/tmp/tm-vale-capture/.vale.ini",
+  "RootDir": "/private/tmp/tm-vale-capture",
+  "Paths": [
+    "/private/tmp/tm-vale-capture/styles"
+  ],
+  "ConfigFiles": [
+    "/private/tmp/tm-vale-capture/.vale.ini"
+  ]
+}

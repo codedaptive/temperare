@@ -1,21 +1,36 @@
 //! engines: one adapter per engine: run it, read its output into findings; "not available" when it is absent. See the Temperare mission (Layout).
+//! Past 150 lines, comments included (small-files rule 3), to carry the seam lines of waves 4-5; engines-lib-internal splits it after wave 5.
 
+pub mod actionlint;
 pub mod ast_grep;
 pub mod cargo_audit;
 pub mod clang_tidy;
 pub mod clippy;
+pub mod dart;
+pub mod detekt;
 pub mod entry;
+pub mod eslint;
 pub mod git;
 pub mod gitleaks;
 pub mod golangci_lint;
+pub mod hadolint;
+pub mod markdownlint_cli2;
+pub mod mypy;
 pub mod periphery;
+pub mod phpstan;
+pub mod pmd;
 pub mod pylint;
+pub mod rubocop;
 pub mod ruff;
 pub mod sarif;
 pub mod shellcheck;
+pub mod sqlfluff;
+pub mod stylelint;
 pub mod swiftlint;
 pub mod tessera;
+pub mod vale;
 pub mod vulture;
+pub mod yamllint;
 
 mod availability;
 mod change_of;
@@ -23,6 +38,7 @@ mod check_host;
 mod check_run;
 mod engine_hits;
 mod engine_hits_with;
+mod engine_listed;
 mod engine_version;
 mod engine_versions;
 mod entry_for;
@@ -47,6 +63,7 @@ mod ran;
 mod refused;
 mod rel_to_folder;
 mod replayed_run;
+mod repo_top;
 mod rule_folder;
 mod rule_host;
 mod rule_run_of;
@@ -58,10 +75,12 @@ mod run_rules_versioned_with;
 mod shared_cmd;
 mod shared_groups;
 mod shares_with;
+mod source_files;
 mod stopped;
 mod types;
 mod unavailable;
 mod union_args;
+mod yaml;
 
 pub use availability::availability;
 pub use entry::{entry_cmd, Entry, ParamArg, Params, Pick, ReadFn, TempFile, VersionProbe};
@@ -70,8 +89,6 @@ pub use no_file_rules::no_file_rules;
 pub use run_rules_versioned_at::run_rules_versioned_at;
 pub use types::{Availability, CheckedRules, EngineVersion, Hit, NoFileRule, NotAvailableCause, ParamError, ParseError, RuleRun};
 
-#[cfg(test)]
-mod an_engine_with_no_adapter;
 #[cfg(test)]
 mod availability_tests;
 #[cfg(test)]
@@ -82,6 +99,8 @@ mod check_run_tests;
 mod engine_hits_tests;
 #[cfg(test)]
 mod engine_hits_with_tests;
+#[cfg(test)]
+mod engine_listed_tests;
 #[cfg(test)]
 mod engine_version_tests;
 #[cfg(test)]

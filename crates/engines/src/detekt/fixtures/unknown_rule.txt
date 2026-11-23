@@ -1,0 +1,3 @@
+Property 'style>NoSuchRule' is misspelled or does not exist.
+[31mRun failed with 1 invalid config property.[0m
+	- [31mProperty 'style>NoSuchRule' is misspelled or does not exist.[0m

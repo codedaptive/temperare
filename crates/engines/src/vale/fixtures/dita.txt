@@ -1,0 +1,8 @@
+W101 grammar "c" is not installed; add 'Grammars = c' to .vale.ini and run 'vale sync'; until then, comments are read by their delimiters
+{
+  "Line": 0,
+  "Path": "",
+  "Text": "dita not found; it's needed to read DITA",
+  "Code": "E100",
+  "Span": 0
+}

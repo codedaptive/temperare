@@ -1,0 +1,2 @@
+[ERROR] Cannot load ruleset category/java/nosuch.xml/Foo: Cannot resolve rule/ruleset reference 'category/java/nosuch.xml/Foo'.  Make sure the resource is a valid file or URL and is on the CLASSPATH. Use --debug (or a fine log level) to see the current classpath.
+[INFO] Found no violations.

@@ -7,7 +7,7 @@ use rules::Engine;
 /// clang-tidy run by its own flow, `run_clang_tidy`, with the command `clang_tidy_cmd` builds:
 /// `clang-tidy --quiet --warnings-as-errors=-* --checks=-*,<check> (--config-file=<config> | --config={}) <files>`,
 /// run in the rule file's folder and read by `parse_clang_tidy`. Each C-family source in the rule's scope is handed
-/// over, absolute (`c_files`, `is_c_source`). A source with no compile_commands.json or compile_flags.txt at or above
+/// over, absolute (`source_files`, `is_c_source`). A source with no compile_commands.json or compile_flags.txt at or above
 /// it makes the rule not available (`no_compile_database`): clang-tidy would otherwise check it without flags and
 /// exit 0. clang-tidy saying "Error: no checks enabled." makes it `UnknownCheck` (`unknown_check`). A check that is
 /// not one check name is refused before anything runs (`clang_tidy_refusal`). A repository `.clang-tidy` is read only

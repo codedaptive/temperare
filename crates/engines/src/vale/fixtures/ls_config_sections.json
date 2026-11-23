@@ -1,0 +1,46 @@
+{
+  "BlockIgnores": {},
+  "Checks": null,
+  "Formats": {},
+  "Asciidoctor": {},
+  "Sphinx": {},
+  "FormatToLang": {},
+  "GBaseStyles": null,
+  "GChecks": {},
+  "IgnoredClasses": null,
+  "IgnoredScopes": null,
+  "MinAlertLevel": 0,
+  "Vocab": null,
+  "Grammars": null,
+  "RuleToLevel": {},
+  "RuleToParams": {},
+  "SBaseStyles": {
+    "*.md": [
+      "Vale",
+      "Gone"
+    ]
+  },
+  "SChecks": {
+    "*.md": {}
+  },
+  "SLevels": {
+    "*.md": {}
+  },
+  "SUnsets": {},
+  "SVocab": {},
+  "StyleSources": null,
+  "Vocabularies": {},
+  "SkippedScopes": null,
+  "Stylesheets": {},
+  "TokenIgnores": {},
+  "CommentDelimiters": {},
+  "WordTemplate": "",
+  "RootINI": "/private/tmp/tm-vale-capture/gone/.vale.ini",
+  "RootDir": "/private/tmp/tm-vale-capture/gone",
+  "Paths": [
+    "/private/tmp/tm-vale-capture/gone/styles"
+  ],
+  "ConfigFiles": [
+    "/private/tmp/tm-vale-capture/gone/.vale.ini"
+  ]
+}

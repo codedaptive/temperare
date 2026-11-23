@@ -1,0 +1,165 @@
+dart --suppress-analytics --version: Dart SDK version: 3.14.1 (stable) (Tue Nov 17 00:01:24 2026 -0800) on "macos_arm64"
+(/opt/homebrew/bin/dart -> /opt/homebrew/Cellar/dart-sdk/3.14.1/libexec/bin/dart; printed on stdout, exit 0.)
+
+machine.txt: T=/var/folders/zc/zl4w__wx2xdfmd5lps9dp2000000gn/T/dartfix.0bPKGrAnVf
+pubspec.yaml:
+    name: probe
+    environment:
+      sdk: ^3.0.0
+analysis_options.yaml:
+    linter:
+      rules:
+        - prefer_single_quotes
+lib/a.dart:
+    void main() {
+      var unused = 1;
+      print("x");
+    }
+lib/pipe|name.dart (the file name holds `|`; the import's URI holds `|` and a backslash):
+    import 'no|such\\file.dart';
+
+    void f() {
+      var spare = 2;
+    }
+From $T: /opt/homebrew/bin/dart --suppress-analytics analyze --format machine . > machine.txt
+Exit 3; stderr empty. machine.txt is the unmodified stdout; its paths are canonical (/private/var/...). Nothing was
+written in $T (no .dart_tool, no pubspec.lock).
+
+missing_packages.txt: T=/var/folders/zc/zl4w__wx2xdfmd5lps9dp2000000gn/T/dartmiss.14xMneQzvh, no .dart_tool folder.
+pubspec.yaml:
+    name: probe
+    environment:
+      sdk: ^3.0.0
+    dependencies:
+      path: ^1.9.0
+analysis_options.yaml:
+    include: package:lints/recommended.yaml
+lib/a.dart:
+    import 'package:path/path.dart' as path;
+
+    void main() {
+      print(path.basename('a/b'));
+    }
+From $T: /opt/homebrew/bin/dart --suppress-analytics analyze --format machine . > missing_packages.txt
+Exit 3; stderr empty. missing_packages.txt is the unmodified stdout. Nothing was written in $T.
+
+Exit with infos only (no fixture kept): T=/var/folders/zc/zl4w__wx2xdfmd5lps9dp2000000gn/T/dartinfo.IwInzkXCmp, the
+same pubspec.yaml and analysis_options.yaml as machine.txt's, lib/a.dart `void main() {\n  print("x");\n}\n`.
+The same command printed one INFO|LINT|PREFER_SINGLE_QUOTES line and exited 0.
+
+All three temporary folders were removed.
+
+probe_unknown.txt, probe_lint.txt, probe_diagnostic.txt: the probe run_dart makes (probe_files), one check each.
+T=/var/folders/zc/zl4w__wx2xdfmd5lps9dp2000000gn/T/dartprobe.uOnaw0Hx4Z, no Dart file in it.
+pubspec.yaml:
+    name: tm_probe
+    environment:
+      sdk: ^3.0.0
+analysis_options.yaml, with <check> no_such_code_xyz, then prefer_single_quotes, then unused_local_variable:
+    analyzer:
+      errors:
+        <check>: warning
+    linter:
+      rules:
+        - <check>
+From $T, for each check: /opt/homebrew/bin/dart --suppress-analytics analyze --format machine . > probe_<kind>.txt
+no_such_code_xyz (probe_unknown.txt): exit 2, an UNRECOGNIZED_ERROR_CODE line and an UNDEFINED_LINT line.
+prefer_single_quotes (probe_lint.txt): exit 0, stdout empty.
+unused_local_variable (probe_diagnostic.txt): exit 2, one UNDEFINED_LINT line.
+stderr empty each time; each file is the unmodified stdout. Nothing was written in $T.
+
+A nested analysis_options.yaml that is a symlink governs as a regular file does (no fixture kept): in the same $T,
+sub/a.dart `void main() {\n  var unused = 1;\n}\n` and sub/analysis_options.yaml a symlink to ../ign.yaml holding
+`analyzer:\n  errors:\n    unused_local_variable: ignore\n`: `dart --suppress-analytics analyze --format machine $T`
+printed nothing; with the symlink removed it printed the UNUSED_LOCAL_VARIABLE line for sub/a.dart and exited 2.
+
+The folder and its files were removed.
+
+Dart does not analyze a folder whose name starts with `.` below the folder it runs in (no fixture kept; this is why
+options_files skips such folders). T=/var/folders/zc/zl4w__wx2xdfmd5lps9dp2000000gn/T/darthidden.w2CPiKFFPN, the same
+pubspec.yaml as machine.txt's, no analysis_options.yaml at the top, and `void main() {\n  var unused = 1;\n}\n` in
+.hidden/a.dart.
+1. From $T: /opt/homebrew/bin/dart --suppress-analytics analyze --format machine . printed nothing, exit 0.
+2. With .hidden/analysis_options.yaml `analyzer:\n  errors:\n    unused_local_variable: ignore\n` and the same source
+   in lib/a.dart, the same command from $T printed the UNUSED_LOCAL_VARIABLE line for lib/a.dart only, exit 2.
+3. The same command from $T/.hidden printed nothing, exit 0; with .hidden/analysis_options.yaml moved out of .hidden,
+   it printed the UNUSED_LOCAL_VARIABLE line for .hidden/a.dart, exit 2: run in the dot-folder itself, dart analyzes
+   it and its options govern.
+4. With the same source in .hidden/sub/b.dart, the command from $T printed the line for lib/a.dart only, exit 2: the
+   whole subtree of a dot-folder is passed over.
+The folder and its files were removed.
+
+Options forms that hide a finding from dart (no fixture kept; measured with dart 3.14.1 by the request's root-cause
+investigation, as it reported them; the setups below are its). With each, dart reported no unused_local_variable
+finding for a source holding one, where a token scan would read the options as clean; forms 1 to 3 are why the options are
+read by a YAML parser (yaml_entries), which decodes each as dart does (form 4 is a folder walk, not YAML):
+1. analysis_options.yaml `analyzer:\n  errors:\n    unused_local_variable: "\x69gnore"\n`: the double-quoted escape
+   is `ignore`.
+2. analysis_options.yaml `"\x69nclude": ign.yaml\n`, with ign.yaml holding
+   `analyzer:\n  errors:\n    unused_local_variable: ignore\n`: the escaped key is `include`.
+3. analysis_options.yaml `analyzer:\n  errors: {x: "a\n    # b", unused_local_variable: ignore}\n`: the quoted scalar
+   runs over two lines, so its second line is no comment.
+4. A symlinked folder whose target, outside the package, holds an analysis_options.yaml
+   `analyzer:\n  errors:\n    unused_local_variable: ignore\n`: dart follows the link, and those options govern the
+   files under it.
+Also measured by the same investigation:
+5. An analysis_options.yaml that is a broken symlink is ignored: dart uses the next options file up.
+6. A gitignored nested analysis_options.yaml is honoured.
+7. The nearest analysis_options.yaml above the package, or above the repository, governs.
+
+YAML forms (no fixture kept; measured with dart 3.14.1 by the request lead on 2026-11-23 in throwaway packages,
+lib/a.dart holding an unused local and a double-quoted print). Each run, from the package:
+dart --suppress-analytics analyze --format machine .
+1. `linter:\n  rules: [prefer_single_quotes]\n`: dart ran the lint, exit 2. tm reads the lint as enabled.
+2. `linter:\n  rules:\n    - "\x70refer_single_quotes"\n`: dart ran the lint, exit 2. tm reads the lint as enabled.
+3. `base: &b\n  errors:\n    unused_local_variable: ignore\nanalyzer:\n  <<: *b\n` printed
+   `UNSUPPORTED_OPTION ... The option '<<' isn't supported by 'analyzer'.` and still reported UNUSED_LOCAL_VARIABLE,
+   exit 2: no merge. tm: Failed (a merge key).
+4. `base: &b\n  prefer_single_quotes: true\nlinter:\n  rules:\n    <<: *b\n` printed
+   `UNDEFINED_LINT ... '<<' isn't a recognized lint rule.` and reported PREFER_SINGLE_QUOTES, exit 2: the merged lint
+   ran. tm: Failed (a merge key), and the lint not enabled.
+5. `linter:` twice in one file, or `prefer_single_quotes: true` then `prefer_single_quotes: false` in one mapping,
+   printed `ERROR|COMPILE_TIME_ERROR|PARSE_ERROR|...|Duplicate mapping key.`, exit 3, and dart dropped every option in
+   the file (neither lint reported). tm: Failed (a duplicate mapping key), and no lint enabled by the file.
+6. A second document (`---`) printed `PARSE_ERROR ... Only expected one document.`, exit 3, and the options file was
+   dropped. tm: Failed (a second YAML document), and no lint enabled by the file.
+7. `linter:\n  rules:\n    &k prefer_single_quotes: true\n    avoid_print: *k\n` printed
+   `The value 'prefer_single_quotes' isn't supported by 'avoid_print'`, and both lints ran, exit 2. tm reads the alias
+   as the anchored key's text: prefer_single_quotes enabled, avoid_print not.
+8. `analyzer:\n  errors:\n    ? [a, b]\n    : warning\n    unused_local_variable: ignore\n` printed
+   `INVALID_SECTION_FORMAT ... Invalid format for the 'errors' section.`, and UNUSED_LOCAL_VARIABLE was not reported,
+   exit 2: the ignore still applied. tm: Failed (a key that is not a scalar).
+9. `linter:\n  rules:\n    - prefer_single_quotes\nx:\n  ~: 1\n  null: 2\n`, and the same with `true: 1` then `True: 2`,
+   each printed `PARSE_ERROR ... Duplicate mapping key.`, exit 3, and the lint was not reported: YAML's null forms are
+   one key, as are a boolean's. tm: Failed (a duplicate mapping key), and no lint enabled by the file.
+10. The same file with each of these pairs of keys under `x:`: `!!bool true: 1` then `true: 2`; `!!null ~: 1` then
+   `null: 2`; `1: a` then `0x1: b`; `1: a` then `1.0: b`; `"a": 1` then `a: 2`. Each printed
+   `PARSE_ERROR ... Duplicate mapping key.`, exit 3, and the lint was not reported: dart compares keys by their core
+   schema value. tm: Failed (a duplicate mapping key), and no lint enabled by the file. With `"1": a` then `1: b`
+   dart printed no error and ran the lint, exit 2: a string and an int are two keys. tm reads two keys, and the lint
+   as enabled.
+11. The same file with these under `x:`. The pairs `! 1: a` then `"1": b`, `!foo a: 1` then `a: 2`, `!foo a: 1` then
+   `!foo a: 2`, and `.nan: 1` then `.nan: 2` each printed `PARSE_ERROR ... Duplicate mapping key.`, exit 3, and the
+   lint was not reported. The pairs `! 1: a` then `1: b`, and `!foo 1: a` then `1: b`, printed no error and ran the
+   lint, exit 2: dart reads a key under a tag outside the core schema, the non-specific `!` included, as the string
+   of its text, and two `.nan` keys as one. tm reads the keys the same way: Failed (a duplicate mapping key) for the
+   first four, two keys and the lint enabled for the last two. `a: !!int abc` printed
+   `PARSE_ERROR ... Invalid int scalar.`, exit 3, and the lint was not reported (the file dropped); so did
+   `a: !!bool maybe` (`Invalid bool scalar.`), `!!int abc: 1` as a key (`Invalid int scalar.`) and `a: !!null abc`
+   (`Invalid null scalar.`). tm: Failed (a core tag on text that does not read as its type), and no lint enabled by
+   the file.
+12. Tags on collections. With the lint listed, `x: !foo {a: 1}`, `x: !foo [a]`, `x: !!map {a: 1}` and `x: !!seq [a]`
+   each printed no error and ran the lint, exit 2; `linter:\n  rules: !foo\n    - prefer_single_quotes\n` and the same
+   with `!!seq` ran the lint, exit 2; `analyzer:\n  errors: !foo\n    unused_local_variable: ignore\n` printed
+   nothing, exit 0 (the ignore applied). dart reads a collection under a tag outside the core schema, or under its
+   own core tag, as the collection. tm reads them the same way: the lint enabled, and the ignore Failed as a
+   suppression.
+
+Where dart reads `include` (no fixture kept; measured with dart 3.14.1 by the request lead on 2026-11-23 in a
+throwaway package): a pubspec.yaml, lib/a.dart `void main() {\n  var unused = 1;\n}\n`, and
+ign.yaml `analyzer:\n  errors:\n    unused_local_variable: ignore\n`. Each run, from the package:
+dart --suppress-analytics analyze --format machine .
+1. analysis_options.yaml `analyzer:\n  include: ign.yaml\n` printed
+   `WARNING|STATIC_WARNING|UNSUPPORTED_OPTION|.../analysis_options.yaml|2|3|7|The option 'include' isn't supported by 'analyzer'.`
+   and the UNUSED_LOCAL_VARIABLE line for lib/a.dart, exit 2: a nested include is not read.
+2. analysis_options.yaml `include: ign.yaml\n` printed nothing, exit 0: the top-level include is read.

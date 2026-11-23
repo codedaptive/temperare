@@ -6,7 +6,7 @@ use crate::types::Stop;
 use rules::Engine;
 
 /// The `Stop` of a rule on `engine` when the engine cannot be run here, from the PATH lookup `on_path` (nothing is
-/// run), read from the engine's entry; None when it can be run. An engine with no entry in this build is
+/// run), read from the engine's entry; None when it can be run. An engine with no entry (`entry_for` gives `None`) is
 /// `NotAvailable` with `no_adapter_why`; an entry that is never available (`never`, Tessera) is `NotAvailable` with
 /// that why and nothing is looked up; otherwise each name the entry `needs` is looked up in order, and the first not
 /// found is `NotOnPath` naming it.

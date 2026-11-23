@@ -4,18 +4,18 @@
 use super::{answered, build_index_cmd, describe_package_cmd, manifest_walk, package_root, periphery_cmd, ScratchDir};
 use crate::check_run::check_run;
 use crate::entry::Entry;
-use crate::git_stop::git_stop;
 use crate::host::Host;
 use crate::parse_failed::parse_failed;
+use crate::repo_top::repo_top;
 use crate::types::{Hit, Stop};
 use rules::Rule;
 use std::path::Path;
 
 /// The hits of `rule` under `folder` (canonical); a `RunFn`, the flow of `PERIPHERY`. The central `refused` has already
 /// settled the rule's refusals. Each step can stop the rule:
-/// 1. the package is the nearest `Package.swift` at or above `folder` and no higher than the repository top (git's
-///    top, `procio::toplevel`, canonicalized to share `folder`'s form) (`package_root`); none is `NotAvailable`, and a
-///    `folder` in no repository is `Failed` with git's error (`git_stop`);
+/// 1. the package is the nearest `Package.swift` at or above `folder` and no higher than the repository top
+///    (`repo_top`) (`package_root`); none is `NotAvailable`, and a `folder` in no repository is `Failed` with git's
+///    error;
 /// 2. a new scratch folder (`ScratchDir`) holds everything the run writes, `<scratch>/build` the build;
 /// 3. `manifest_walk` reads the manifest of the package and of each local package it reaches, before anything is
 ///    built; any of them naming a dependency or a binary target with a url to fetch is `NotAvailable`, since tm never
@@ -30,11 +30,7 @@ use std::path::Path;
 /// A SwiftPM step that exits nonzero is `Failed` with its stderr, or its stdout when stderr is empty. The scratch
 /// folder is dropped last, whichever step ends the flow.
 pub(crate) fn run_periphery(entry: &Entry, rule: &Rule, folder: &Path, host: &Host) -> Result<Vec<Hit>, Stop> {
-    let top = procio::toplevel(folder).map_err(git_stop)?;
-    let top = std::fs::canonicalize(&top).map_err(|err| Stop::Failed {
-        code: None,
-        stderr: format!("cannot resolve the repository top {}: {err}", top.display()),
-    })?;
+    let top = repo_top(folder)?;
     let root = package_root(folder, &top).ok_or_else(|| Stop::NotAvailable {
         why: "no Package.swift at or above the rule file's folder: Periphery builds the project, and tm runs it only on a Swift package".into(),
     })?;

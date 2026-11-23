@@ -1,0 +1,6 @@
+[INFO] An error occurred while executing PMD.
+Run in verbose mode to see a stack-trace.
+If you think this is a bug in PMD, please report this issue at https://github.com/pmd/pmd/issues/new/choose
+If you do so, please include a stack-trace, the code sample
+ causing the issue, and details about your run configuration.
+[INFO] Found no violations. There was 1 processing error.

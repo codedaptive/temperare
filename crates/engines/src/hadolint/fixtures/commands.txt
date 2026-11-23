@@ -1,0 +1,29 @@
+Real hadolint output, captured once on 2026-11-23 with hadolint 2.15.1 (/opt/homebrew/bin/hadolint, `hadolint
+--version`: "Haskell Dockerfile Linter 2.15.1") in a throwaway folder under /tmp (written T below) that was removed
+afterwards. Every run had HOME and XDG_CONFIG_HOME set to an empty folder T/home, so no machine config was read.
+
+Files the runs read:
+    T/findings/Dockerfile        FROM ubuntu
+                                 RUN apt-get update && apt-get install -y curl
+    T/clean/Dockerfile           FROM ubuntu:22.04
+    T/parse/Dockerfile           FROOM x
+    T/parse/good.Dockerfile      FROM ubuntu
+    T/configs/empty.yaml         {}
+    T/configs/strict.yaml        strict-labels: yes
+    T/configs/json.yaml          format: json
+
+findings.sarif (stdout, exit 1, stderr empty), run in T/findings:
+    hadolint --no-color -f sarif --disable-ignore-pragma --error=DL3006 --config=T/configs/empty.yaml -- Dockerfile
+
+clean.sarif (stdout, exit 0, stderr empty), run in T/clean:
+    hadolint --no-color -f sarif --disable-ignore-pragma --error=DL3006 --config=T/configs/empty.yaml -- Dockerfile
+
+parse_error.sarif (stdout, exit 1, stderr empty), run in T/parse:
+    hadolint --no-color -f sarif --disable-ignore-pragma --error=DL3006 --config=T/configs/empty.yaml -- Dockerfile good.Dockerfile
+
+config_error.stderr (stderr, exit 1; stdout was findings.sarif's text again: hadolint ran on its defaults), run in
+T/findings; the stderr names the config by its real /tmp path:
+    hadolint --no-color -f sarif --disable-ignore-pragma --error=DL3006 --config=T/configs/strict.yaml -- Dockerfile
+
+double_format.out (stdout, exit 1, stderr empty: hadolint's JSON list then its SARIF log, glued), run in T/findings:
+    hadolint --no-color -f sarif --disable-ignore-pragma --error=DL3006 --config=T/configs/json.yaml -- Dockerfile

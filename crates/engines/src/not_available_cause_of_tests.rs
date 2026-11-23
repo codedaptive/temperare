@@ -1,6 +1,5 @@
 //! ZUT for mapping a stop to its not-available cause.
 
-use crate::an_engine_with_no_adapter::an_engine_with_no_adapter;
 use crate::not_available_cause_of::not_available_cause_of;
 use crate::types::{NotAvailableCause, Stop};
 use rules::Engine;
@@ -28,7 +27,6 @@ fn each_stop_maps_to_its_cause() {
         ("not listed", Engine::ShellCheck, Stop::NotListed { said: "unlisted".into() }, Some(NotAvailableCause::Other)),
         ("failed", Engine::Ruff, Stop::Failed { code: Some(2), stderr: "failed".into() }, None),
         ("no files", Engine::ShellCheck, Stop::NoFiles { why: "no files".into() }, None),
-        ("a program run for an engine with no entry", an_engine_with_no_adapter(), not_on_path("x"), helper),
     ];
     for (name, engine, stop, expected) in cases {
         assert_eq!(not_available_cause_of(&stop, engine), expected, "{name}");

@@ -5,6 +5,7 @@
 use super::{read_head, shell_files_with};
 use crate::git_stop::git_stop;
 use crate::is_regular_file::is_regular_file;
+use crate::repo_top::repo_top;
 use crate::types::Stop;
 use std::path::{Path, PathBuf};
 
@@ -13,16 +14,12 @@ use std::path::{Path, PathBuf};
 /// unmerged file once, as it is in the work tree), then the untracked files git does not ignore. The untracked
 /// listing covers the whole work tree, so the folder filter keeps only what is under `folder`. No path reached through
 /// a symlink is kept: `is_regular_file` follows no component below the repository's top, the file itself included, so
-/// neither a symlinked script nor a script under a symlinked folder reaches shellcheck. The top is canonicalized so it
+/// neither a symlinked script nor a script under a symlinked folder reaches shellcheck. The top is `repo_top`'s, so it
 /// shares `folder`'s form and holds no link. The listing runs git through procio, not the host, so it is not counted;
 /// a git error is `git_stop`'s `Stop`. Off unix `read_head` reads nothing, so a file with no extension is left out
 /// there.
 pub(crate) fn shell_files(folder: &Path) -> Result<Vec<PathBuf>, Stop> {
-    let top = procio::toplevel(folder).map_err(git_stop)?;
-    let top = std::fs::canonicalize(&top).map_err(|err| Stop::Failed {
-        code: None,
-        stderr: format!("cannot resolve the repository top {}: {err}", top.display()),
-    })?;
+    let top = repo_top(folder)?;
     let mut listed = procio::tracked_files::<&str>(folder, &[]).map_err(git_stop)?;
     listed.extend(procio::untracked_files(folder).map_err(git_stop)?);
     Ok(shell_files_with(folder, &top, &listed, &|full: &Path| is_regular_file(&top, full), &read_head))

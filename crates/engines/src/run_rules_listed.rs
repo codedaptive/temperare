@@ -18,8 +18,13 @@ use std::path::Path;
 ///    `rule_run_of`, with no count and no `no_files` flag, whatever its files: no run could make it clean;
 /// 2. with a listing, a rule that `no_file_match` says matches none of the files: no findings, no count, `no_files`
 ///    set to `NO_FILE_MATCH_WHY`; with no listing no rule is settled so. Inside `hits`, `engine_hits` then settles
-///    a ShellCheck rule with no script in its paths, a cargo-audit rule with no Cargo.lock in them, or a clang-tidy
-///    rule with no C-family source in them, as `Stop::NoFiles`, before availability;
+///    a ShellCheck rule with no script in its paths, a cargo-audit rule with no Cargo.lock in them, a clang-tidy rule
+///    with no C-family source in them, a PMD rule with no Java file in them, a mypy rule with no Python file in them,
+///    a detekt rule with no Kotlin source in them, a dart rule with no .dart file in them, a phpstan rule with no
+///    PHP file in them, an actionlint rule with no workflow in them, a sqlfluff rule with no SQL file in them, a
+///    hadolint rule with no Dockerfile in them, a yamllint rule with no YAML file in them, a vale rule with no file
+///    in a format Vale reads in them, a stylelint rule with no CSS file in them, or a markdownlint rule with no
+///    Markdown file in them, as `Stop::NoFiles`, before availability;
 /// 2b. inside `hits`, a rule with `only_with_base` and no `host.base`: `engine_hits` gives it `Stop::NotAvailable`
 ///    with `rules::ONLY_WITH_BASE_WHY`, so its run is `NotAvailable` with cause `Other` and no count;
 /// 3. an engine that is not available, inside `hits`;
@@ -27,7 +32,11 @@ use std::path::Path;
 ///
 /// Nothing runs or is looked up for a rule settled by 1 or by `no_file_match`, not even its engine's availability,
 /// and it joins no shared group, so no shared run's union holds its check. A rule settled inside `hits` before
-/// its check runs (ShellCheck's no script, cargo-audit's no Cargo.lock, clang-tidy's no C source, 2b, 3) never runs its check, and its check is never put in a shared run:
+/// its check runs (ShellCheck's no script, cargo-audit's no Cargo.lock, clang-tidy's no C source, PMD's no Java file,
+/// mypy's no Python file, detekt's no Kotlin source, dart's no .dart file, PHPStan's no PHP file, actionlint's no
+/// workflow, sqlfluff's no SQL file, hadolint's no Dockerfile, yamllint's no YAML file, Vale's no file it reads,
+/// stylelint's no CSS file, markdownlint's no Markdown file, 2b, 3) never runs its check, and its check is never put
+/// in a shared run:
 /// `run_group`'s probe pass stops it before its check run. The other rules are split into groups that
 /// can share one engine run (`shared_groups`): a group of one runs alone through `hits` with `host`, its count read
 /// from `host.raw_chars`, cleared before it runs; a larger group runs through `run_group`, which gives `hits` each

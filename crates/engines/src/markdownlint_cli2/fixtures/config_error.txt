@@ -1,0 +1,10 @@
+Error: Unable to parse '/private/tmp/tm-mdl-capture/bad/.markdownlint.json'; Parser 0: Unable to parse JSONC content, ValueExpected (offset 10, length 0), CloseBraceExpected (offset 10, length 0); Parser 1: Invalid TOML document: illegal character in key
+
+1:  {"MD013": 
+    ^
+; Parser 2: unexpected end of the stream within a flow collection (1:11)
+
+ 1 | {"MD013": 
+---------------^
+    at ReadFileContext.callback (file:///opt/homebrew/lib/node_modules/markdownlint-cli2/node_modules/markdownlint/lib/markdownlint.mjs:1120:16)
+    at ReadFileJob.readFileAfterOneShot [as ondone] (node:fs:516:11)

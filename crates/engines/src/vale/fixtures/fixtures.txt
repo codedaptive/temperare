@@ -1,0 +1,119 @@
+Real Vale output captured in a throwaway folder, /private/tmp/tm-vale-capture (a git repository), removed afterwards.
+Version: /opt/homebrew/bin/vale; `vale --version` prints exactly this line on stdout, exit 0:
+vale version 3.28.1
+Nothing was fetched: no `vale sync`. The folder's styles/ held only config/vocabularies/Proj/accept.txt (the word
+`sentense`), so the only style is Vale's built-in `Vale`.
+
+ls-config probes (stdout is JSON; Vale writes its own errors to stderr):
+
+ls_config.json (stdout), exit 0, run in /private/tmp/tm-vale-capture with this .vale.ini:
+StylesPath = styles
+MinAlertLevel = warning
+Vocab = Proj
+
+[*]
+BasedOnStyles = Vale
+
+[*.md]
+BasedOnStyles = Vale, Other
+BlockIgnores = (?s)A sentense.*
+vale --no-global ls-config
+
+ls_config_sections.json (stdout), exit 0, run in /private/tmp/tm-vale-capture/gone (git init there; styles/ empty)
+with this .vale.ini (no Vocab, no [*] section, a style `Gone` that is not on the StylesPath):
+StylesPath = styles
+[*.md]
+BasedOnStyles = Vale, Gone
+vale --no-global ls-config
+
+load_error.txt (stderr; stdout empty), exit 2, run in /private/tmp/tm-vale-capture/bad (git init there, no styles/)
+with this .vale.ini, so the StylesPath does not exist:
+StylesPath = styles
+BasedOnStyles = Vale
+vale --no-global ls-config
+
+no_config.txt (stderr; stdout empty), exit 2, run in /private/tmp/tm-vale-capture-none (git init there, no config
+in it or above it; removed afterwards):
+vale --no-global ls-config
+
+Check runs, in /private/tmp/tm-vale-capture with .vale.ini `StylesPath = styles` / `[*.md]` / `BasedOnStyles = Vale`
+and the wrapper wrap/.vale.ini written as `vale_wrapper` writes it:
+StylesPath = /private/tmp/tm-vale-capture/styles
+MinAlertLevel = suggestion
+
+[*]
+BasedOnStyles = Vale
+The files: doc.md `A sentense here.` / `` / `This is is mispeled text.`; sub/other.md `Another sentense.`;
+clean.md `A sentence here.`; code.c `int x;` / `// A sentense in a comment.`;
+topic.dita `<topic id="t"><title>A sentense</title></topic>`.
+FILTER(C) below is the one argument `vale_filter` builds:
+--filter=.Name == "C" || (none(Rules, {.Name == "C"}) && int("unknown") == 0)
+
+findings.json (stdout; stderr empty), exit 1, no filter, so two rules (Vale.Spelling, Vale.Repetition) report:
+vale --no-global --output=JSON --config=wrap/.vale.ini -- doc.md sub/other.md
+
+clean.json (stdout; stderr empty), exit 0:
+vale --no-global --output=JSON FILTER(Vale.Spelling) --config=wrap/.vale.ini -- clean.md
+
+unknown.txt (stderr; stdout empty), exit 2, a rule no loaded style has:
+vale --no-global --output=JSON FILTER(Vale.Speling) --config=wrap/.vale.ini -- doc.md
+
+dita.json (stdout) and dita.txt (stderr), exit 2: Vale reports the files it read and an error object for the DITA file,
+which needs the `dita` program (not installed), after a W101 warning line for the C file:
+vale --no-global --output=JSON FILTER(Vale.Spelling) --config=wrap/.vale.ini -- doc.md code.c topic.dita
+
+missing_style.txt (stderr; stdout empty), exit 2, run in /private/tmp/tm-vale-capture/gone (above) with its wrapper
+wrap/.vale.ini naming the style that is not on the StylesPath:
+StylesPath = /private/tmp/tm-vale-capture/gone/styles
+MinAlertLevel = suggestion
+
+[*]
+BasedOnStyles = Gone
+vale --no-global --output=JSON FILTER(Gone.Rule) --config=wrap/.vale.ini -- doc.md
+
+Formats (the source of `is_vale_source`'s table; no fixture kept, the run is recorded here). In
+/private/tmp/tm-vale-capture with the wrapper above, one file per extension, each holding the lines
+`plainsentense here`, `# hashsentense here`, `// slashsentense here` and `/* blocksentense here */` (markup files held
+`A plainsentense here.` only):
+vale --no-global --output=JSON --config=wrap/.vale.ini -- f.* noext
+- read as markup (the prose line reported): md markdown mdown mkd mkdn mdx rst adoc asciidoc asc html htm xhtml org
+  txt text (none of asciidoctor, rst2html or dita is installed: Vale 3.28.1 reads rst and AsciiDoc itself).
+- comments only (only a comment line reported): c h cc cpp hpp cs go java js jsx ts tsx kt kts php pl proto py r rb
+  rs scala scss less swift.
+- whole file read as plain text (every line reported): sh bash json yaml yml toml ini cfg sql tex rtf dart, an
+  unknown extension (foo) and no extension.
+- an error object on stderr and nothing read: dita (`dita not found; it's needed to read DITA`) and xml (`no XSLT
+  transform provided; set Transform in this file's section`).
+A second run with multi-line block comments: f.css (`/*` / ` * blocksentense here` / ` */` / `plainsentense here`)
+reports only blocksentense; f.lua (`-- dashsentense here` / `local plainsentense = 1` / `--[[ longsentense here ]]`)
+only dashsentense and longsentense; f.bash and f.sh (`#!/bin/...` / `# hashsentense here` / `echo plainsentense`) both
+hashsentense and plainsentense, so bash is plain text like sh. Vale wrote W101 lines (a tree-sitter grammar not
+installed, comments read by their delimiters) to stderr in the first run for c, cpp, csharp, css, go, java,
+javascript, kotlin, lua, php, bash, proto, python, ruby, rust, typescript and tsx; the second run wrote none for bash,
+and both read f.bash as plain text.
+
+Filter and config precedence (Vale 3.28.1; no fixture kept, the runs are recorded here). In a throwaway repository
+with `StylesPath = styles` and `[*.md]` / `BasedOnStyles = Vale`, a.md holding `This is a sentense with a mispeled
+word.`:
+- the plain filter, no guard: vale --no-global --output=JSON --filter='.Name=="Vale.Speling"' a.md
+  printed `{}`, exit 0 (a misspelt check read as clean), while `.Name=="Vale.Spelling"` reported both words, exit 1.
+- config precedence: VALE_CONFIG_PATH=<an ini whose [*.md] BasedOnStyles is empty> vale --no-global
+  --config=.vale.ini --minAlertLevel=suggestion --output=JSON . reported Vale.Spelling: the `--config` file was read,
+  not VALE_CONFIG_PATH's. VALE_STYLES_PATH=/nonexistent with the same `--config` also reported it: the config's
+  StylesPath stood.
+
+BlockIgnores hides the alert in Vale's own run (the config tests/vale.rs's block-ignores-off row writes). In a
+throwaway repository, doc.md holding `A sentense here.`, .vale.ini `StylesPath = styles` / `[*.md]` /
+`BasedOnStyles = Vale` / `BlockIgnores = (?s)A sentense.*`:
+vale --no-global --minAlertLevel=suggestion --output=JSON doc.md
+printed `{}`, exit 0; the same without the BlockIgnores line reported one Vale.Spelling alert. So a wrapper that
+copied the key would fail that row.
+
+Extension case (the source of `is_vale_source` matching as written). With the wrapper above, `[*]` and
+`BasedOnStyles = Vale`:
+vale --no-global --output=JSON --config=wrap/.vale.ini -- README.MD lower.md Notes.Md DOC.RST
+each file holding `plainsentense here`, a blank line and a fenced block holding `fencesentense here`: lower.md
+reported only plainsentense (Markdown skips the fence); README.MD, Notes.Md and DOC.RST reported both, read as plain
+text. In a second run SCRIPT.PY (`plainsentense here` / `# hashsentense here`) reported both lines and lower.py only
+hashsentense. So Vale 3.28.1 knows a format only by its extension as written; an upper- or mixed-case extension is
+the plain-text fallback, which tm does not give Vale.

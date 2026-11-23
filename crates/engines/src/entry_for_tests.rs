@@ -1,10 +1,10 @@
 //! ZUT for entry_for.rs: each engine with an adapter maps to the entry serving it, named by the engine's rule-file
-//! name, and every other engine has no entry.
+//! name, and the table lists exactly the engines with an entry.
 
 use crate::entry_for::entry_for;
 use rules::Engine;
 
-const ENGINES: [(Engine, &str); 14] = [
+const ENGINES: [(Engine, &str); 28] = [
     (Engine::Clippy, "clippy"),
     (Engine::SwiftLint, "swiftlint"),
     (Engine::Ruff, "ruff"),
@@ -19,6 +19,20 @@ const ENGINES: [(Engine, &str); 14] = [
     (Engine::CargoAudit, "cargo-audit"),
     (Engine::Vulture, "vulture"),
     (Engine::Periphery, "periphery"),
+    (Engine::Rubocop, "rubocop"),
+    (Engine::Pmd, "pmd"),
+    (Engine::Mypy, "mypy"),
+    (Engine::Detekt, "detekt"),
+    (Engine::Eslint, "eslint"),
+    (Engine::Dart, "dart"),
+    (Engine::Phpstan, "phpstan"),
+    (Engine::Actionlint, "actionlint"),
+    (Engine::Sqlfluff, "sqlfluff"),
+    (Engine::Hadolint, "hadolint"),
+    (Engine::Yamllint, "yamllint"),
+    (Engine::Vale, "vale"),
+    (Engine::Stylelint, "stylelint"),
+    (Engine::Markdownlint, "markdownlint"),
 ];
 
 #[test]
@@ -29,7 +43,7 @@ fn each_engine_maps_to_the_entry_serving_it() {
 }
 
 #[test]
-fn every_engine_outside_the_table_has_no_entry() {
+fn an_engine_has_an_entry_exactly_when_the_table_lists_it() {
     for engine in Engine::ALL {
         let in_table = ENGINES.iter().any(|(listed, _)| *listed == engine);
         assert_eq!(entry_for(engine).is_some(), in_table, "{engine:?}");
@@ -62,4 +76,3 @@ fn git_maps_to_the_git_entry() {
     let entry = entry_for(Engine::Git).unwrap();
     assert_eq!((entry.name, entry.engine), ("git", Engine::Git));
 }
-

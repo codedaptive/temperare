@@ -1,0 +1,4 @@
+Rakefile
+a.rb
+legacy/d.rb
+lib/b.rb

@@ -1,0 +1,12 @@
+{
+  "rules": {
+    "color-no-invalid-hex": [
+      true
+    ],
+    "color-named": null,
+    "color-hex-length": [
+      "short"
+    ],
+    "color-no-invalid-hexx": []
+  }
+}

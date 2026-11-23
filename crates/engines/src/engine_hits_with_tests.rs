@@ -1,9 +1,8 @@
 //! ZUT for engine_hits_with: ShellCheck's script scope settles first, then a base-marked rule's missing base, both
 //! before availability.
 //! The base-present, no-script, and unmarked rows are regression guards; the off-path row guards that the missing base
-//! settles before the PATH lookup, and the no-adapter row that it settles before the adapter check.
+//! settles before the PATH lookup.
 
-use crate::an_engine_with_no_adapter::an_engine_with_no_adapter;
 use crate::engine_hits_with::engine_hits_with;
 use crate::host::Host;
 use crate::types::Stop;
@@ -20,7 +19,6 @@ fn base_contract_engine_hits() {
         ("unmarked", "ruff", "E711", "", None, true, Ok(vec![]), vec!["lookup ruff", "run ruff"]),
         ("base missing", "ruff", "E711", "only_with_base = true", None, true, Err(Stop::NotAvailable { why: "reports only what a change adds; run with --base".into() }), vec![]),
         ("base missing, off path", "ruff", "E711", "only_with_base = true", None, false, Err(Stop::NotAvailable { why: "reports only what a change adds; run with --base".into() }), vec![]),
-        ("base missing, no adapter", an_engine_with_no_adapter().name(), "unused", "only_with_base = true", None, true, Err(Stop::NotAvailable { why: "reports only what a change adds; run with --base".into() }), vec![]),
     ];
     let mut wrong = Vec::new();
     for (name, engine, check, mark, base, found, expected, calls) in cases {
