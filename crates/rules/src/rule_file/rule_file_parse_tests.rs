@@ -34,7 +34,7 @@ fn check_1_unknown_key_at_top_level_in_a_kit_in_a_rule_and_in_an_exception() {
 
 #[test]
 fn check_2_unknown_engine_at_the_value() {
-    only("version = 1\n[[rule]]\nid = \"r\"\nengine = \"eslint\"\ncheck = \"c\"\nfix = \"f\"\n", 4, 10, "eslint");
+    only("version = 1\n[[rule]]\nid = \"r\"\nengine = \"nolint\"\ncheck = \"c\"\nfix = \"f\"\n", 4, 10, "nolint");
 }
 
 #[test]

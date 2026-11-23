@@ -6,15 +6,17 @@ use std::path::Path;
 
 /// The rule file, its rules, its exceptions in force on `day` (`exceptions`, counted in `exceptions_in_force`) and
 /// those expired by `day` (`expired`, each with its `expires` as "YYYY-MM-DD", counted in `exceptions_expired`), each
-/// list in file order; `rf.exceptions_expired(day)` alone decides which are expired. Engine, kind and severity take
-/// their serde names, which are the rule-file names. Each rule carries `available`, whether `availability` says its
-/// engine can be run here, and `why` (the reason when not available, null when available); `outside_kits` is always
-/// present, [] when the rule has none. An exception's `what` is present only when the exception names one.
+/// list in file order, and `not_applicable` in the given order (each `{"rule", "engine", "why"}`, counted in
+/// `rules_not_applicable`); `rf.exceptions_expired(day)` alone decides which are expired. Engine, kind and severity
+/// take their serde names, which are the rule-file names. Each rule carries `available`, whether `availability` says
+/// its engine can be run here, and `why` (the reason when not available, null when available); `outside_kits` is
+/// always present, [] when the rule has none. An exception's `what` is present only when the exception names one.
 pub fn rules_json(
     file: &Path,
     rf: &rules::RuleFile,
     availability: &dyn Fn(rules::Engine) -> engines::Availability,
     day: rules::Date,
+    not_applicable: &[report::NotApplicable],
 ) -> Value {
     let rules: Vec<Value> = rf
         .rules
@@ -49,15 +51,15 @@ pub fn rules_json(
         "exceptions": exceptions,
         "exceptions_expired": expired.len(),
         "expired": expired,
+        "rules_not_applicable": not_applicable.len(),
+        "not_applicable": not_applicable,
     })
 }
 
-/// An expired exception: `exception_fields` with `expires` as "YYYY-MM-DD" added.
-fn expired_json(e: &rules::Exception) -> Value {
+/// An expired exception: `exception_fields` with its `expires` date as "YYYY-MM-DD" added.
+fn expired_json((e, expires): (&rules::Exception, rules::Date)) -> Value {
     let mut object = exception_fields(e);
-    if let Some(expires) = e.expires {
-        object.insert("expires".to_string(), json!(expires.to_string()));
-    }
+    object.insert("expires".to_string(), json!(expires.to_string()));
     Value::Object(object)
 }
 

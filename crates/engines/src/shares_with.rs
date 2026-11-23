@@ -44,7 +44,7 @@ pub(crate) fn shares_with(a: &Rule, b: &Rule) -> bool {
         Engine::ShellCheck => false,
         Engine::Git => false,
         Engine::Tessera => false,
-        // An engine with no arm here (one with no adapter in this build) runs alone.
+        // An engine with no arm here runs alone.
         _ => false,
     }
 }

@@ -1,0 +1,83 @@
+[
+  {
+    "name" : "unusedHelper()",
+    "modifiers" : [
+
+    ],
+    "attributes" : [
+
+    ],
+    "hints" : [
+      "unused"
+    ],
+    "modules" : [
+      "Probe"
+    ],
+    "location" : "/private/var/folders/zc/zl4w__wx2xdfmd5lps9dp2000000gn/T/periphery-scan-fixture.W5ECgzZMGi/package/Sources/Probe/main.swift:1:6",
+    "ids" : [
+      "s:5Probe12unusedHelperyyF"
+    ],
+    "kind" : "function.free",
+    "accessibility" : "internal"
+  },
+  {
+    "hints" : [
+      "redundantProtocol"
+    ],
+    "modifiers" : [
+
+    ],
+    "name" : "Greeter",
+    "attributes" : [
+
+    ],
+    "modules" : [
+      "Probe"
+    ],
+    "accessibility" : "internal",
+    "location" : "/private/var/folders/zc/zl4w__wx2xdfmd5lps9dp2000000gn/T/periphery-scan-fixture.W5ECgzZMGi/package/Sources/Probe/main.swift:2:10",
+    "kind" : "protocol",
+    "ids" : [
+      "s:5Probe7GreeterP"
+    ]
+  },
+  {
+    "name" : "Greeter",
+    "kind" : "protocol",
+    "modifiers" : [
+
+    ],
+    "accessibility" : "",
+    "location" : "/private/var/folders/zc/zl4w__wx2xdfmd5lps9dp2000000gn/T/periphery-scan-fixture.W5ECgzZMGi/package/Sources/Probe/main.swift:3:15",
+    "attributes" : [
+
+    ],
+    "ids" : [
+      "s:5Probe7GreeterP"
+    ],
+    "hints" : [
+      "redundantConformance"
+    ]
+  },
+  {
+    "name" : "assigned",
+    "modules" : [
+      "Probe"
+    ],
+    "attributes" : [
+
+    ],
+    "kind" : "var.instance",
+    "ids" : [
+      "s:5Probe6WorkerC8assignedSivp"
+    ],
+    "hints" : [
+      "assignOnlyProperty"
+    ],
+    "modifiers" : [
+
+    ],
+    "accessibility" : "internal",
+    "location" : "/private/var/folders/zc/zl4w__wx2xdfmd5lps9dp2000000gn/T/periphery-scan-fixture.W5ECgzZMGi/package/Sources/Probe/main.swift:4:9"
+  }
+]

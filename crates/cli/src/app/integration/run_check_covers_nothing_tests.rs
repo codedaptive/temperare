@@ -14,7 +14,7 @@ fn run_check_reports_rules_with_no_files() {
         (
             "own-scripts",
             6,
-            "covers nothing: own-scripts (shellcheck)",
+            Some("covers nothing: own-scripts (shellcheck)"),
             json!([{"rule": "own-scripts", "engine": "shellcheck"}]),
             json!([]),
             (0, 1),
@@ -23,7 +23,8 @@ fn run_check_reports_rules_with_no_files() {
         (
             "tm-house-shell",
             0,
-            "not applicable: tm-house-shell (shellcheck): no file its engine checks",
+            // No printed line is asserted for it; the counts tail pins it: 1 not applicable.
+            None,
             json!([]),
             json!([{"rule": "tm-house-shell", "engine": "shellcheck", "why": "no file its engine checks"}]),
             (1, 0),
@@ -43,7 +44,9 @@ fn run_check_reports_rules_with_no_files() {
 
         let (code, out, err) = check(&CheckArgs::default(), &w);
         assert_eq!((code, err.as_str()), (exit, ""), "{id}: {out}");
-        assert!(out.lines().any(|printed| printed == line), "{id}: {out}");
+        if let Some(line) = line {
+            assert!(out.lines().any(|printed| printed == line), "{id}: {out}");
+        }
         assert_counts_tail(&out, na_count, cn_count);
         assert!(out.lines().any(|printed| printed.starts_with("0 findings (")), "{id}: {out}");
 

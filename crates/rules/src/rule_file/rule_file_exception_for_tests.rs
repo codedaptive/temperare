@@ -28,7 +28,7 @@ fn finding(rule: &str, path: &str, what: &str) -> Finding {
         severity: Severity::Error,
         owner: None,
         path: RelPath::new(path),
-        line: 3,
+        line: Some(3),
         col: Some(9),
         what: what.to_string(),
         fix: "Return a typed error.".to_string(),

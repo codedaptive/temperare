@@ -1,7 +1,8 @@
 //! Cross-crate integration tests for rules_world_real.rs: the Tessera seam of RulesWorld::real() is the real `engines::availability`, which
 //! answers "not available" without a PATH lookup (`engines::availability` gives `availability_from` a `procio::which`
 //! lookup; `availability_from` answers Tessera from its entry's `never` before any lookup). The other seams are tested
-//! in tests/world/rules_world_real.rs (cross-crate integration tests, and zone integration tests for `exists`) and tests/world/rules_loosened_real.rs.
+//! in tests/world/rules_world_real.rs (cross-crate integration, and zone integration for `exists`), tests/world/rules_loosened_real.rs and
+//! tests/world/rules_not_applicable_real.rs.
 
 use super::super::RulesWorld;
 use engines::Availability;

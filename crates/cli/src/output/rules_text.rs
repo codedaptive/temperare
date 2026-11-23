@@ -6,15 +6,16 @@ use std::fmt::Write;
 use std::path::Path;
 
 /// The rule file's path, each rule with its engine, kind, severity, scope and whether `availability` says its engine
-/// can be run here (`available`, or `not available: <why>`), then the exceptions in force on `day`, then those
-/// expired by `day` with their `expires` date, each list in file order and every line ending in a newline.
-/// `rf.exceptions_expired(day)` alone decides which are expired. All three header lines print with their count, (0)
-/// included.
+/// can be run here (`available`, or `not available: <why>`), then each of `not_applicable` in the given order as
+/// `<rule>  <engine>  <why>`, then the exceptions in force on `day`, then those expired by `day` with their `expires`
+/// date, the rules and exceptions in file order and every line ending in a newline. `rf.exceptions_expired(day)` alone
+/// decides which are expired. All four header lines print with their count, (0) included.
 pub fn rules_text(
     file: &Path,
     rf: &rules::RuleFile,
     availability: &dyn Fn(rules::Engine) -> engines::Availability,
     day: rules::Date,
+    not_applicable: &[report::NotApplicable],
 ) -> String {
     let mut text = format!("rule file: {}\nrules ({}):\n", file.display(), rf.rules.len());
     for r in &rf.rules {
@@ -28,14 +29,17 @@ pub fn rules_text(
         };
         let _ = writeln!(text, "  {}  {engine}  {kind}  {severity}  paths: {}  {available}", r.id, scope(r));
     }
+    let _ = writeln!(text, "not applicable ({}):", not_applicable.len());
+    for n in not_applicable {
+        let _ = writeln!(text, "  {}  {}  {}", n.rule, serde_name(serde_json::to_value(n.engine)), n.why);
+    }
     let (in_force, expired) = split_exceptions(rf, day);
     let _ = writeln!(text, "exceptions in force ({}):", in_force.len());
     for e in in_force {
         let _ = writeln!(text, "{}approved: {}  reason: {}", head(e), e.approved, e.reason);
     }
     let _ = writeln!(text, "exceptions expired ({}):", expired.len());
-    // An exception with no `expires` is never expired, so every one here has a date.
-    for (e, expires) in expired.into_iter().filter_map(|e| e.expires.map(|d| (e, d))) {
+    for (e, expires) in expired {
         let _ = writeln!(text, "{}expires: {expires}  approved: {}  reason: {}", head(e), e.approved, e.reason);
     }
     text

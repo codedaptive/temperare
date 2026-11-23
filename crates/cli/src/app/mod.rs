@@ -19,6 +19,7 @@ mod read_base_rule_file;
 mod report_engines;
 mod resolve_base;
 mod rule_counts;
+mod rules_not_applicable;
 mod rules_world;
 mod rules_world_real;
 mod run;
@@ -63,6 +64,8 @@ mod read_base_rule_file_tests;
 mod report_engines_tests;
 #[cfg(test)]
 mod resolve_base_tests;
+#[cfg(test)]
+mod rules_not_applicable_tests;
 #[cfg(test)]
 mod rules_world_tests;
 #[cfg(test)]

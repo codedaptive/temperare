@@ -110,7 +110,7 @@ the owner of the findings in its files.
 | Key | Required | Meaning |
 |---|---|---|
 | `id` | yes | The rule's name in every report. One or more of `a-z`, `0-9` and `-`. No two rules share an id. It may not start with `tm-`, which is kept for the rules of baseline sets |
-| `engine` | yes | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`, `git`, `tessera`, `golangci-lint`, `pylint`, `clang-tidy` or `oclint`, exactly as written here. The last four are accepted, and their rules are "not available" until Temperare has an adapter for each ([`ENGINES.md`](ENGINES.md#engines-with-no-adapter-yet)). `shellcheck` has an adapter, and its rules are not available in this build for another reason ([`ENGINES.md`](ENGINES.md#shellcheck)); a `git` rule needs `--base` ([`ENGINES.md`](ENGINES.md#git)) |
+| `engine` | yes | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`, `git`, `tessera`, `golangci-lint`, `pylint`, `clang-tidy`, `vulture`, `periphery`, `gitleaks`, `cargo-audit`, `eslint`, `mypy`, `pmd`, `detekt`, `rubocop`, `phpstan`, `dart`, `markdownlint`, `yamllint`, `actionlint`, `hadolint`, `vale`, `stylelint` or `sqlfluff`, exactly as written here. The fourteen from `eslint` to `sqlfluff` are accepted, and their rules are "not available" until Temperare has an adapter for each ([`ENGINES.md`](ENGINES.md#engines-with-no-adapter-yet)). A `git` rule needs `--base` ([`ENGINES.md`](ENGINES.md#git)) |
 | `check` | yes | What the engine is asked. See below |
 | `fix` | yes | The text shown with each finding of this rule |
 | `severity` | no | `error` (the default) or `warning` |
@@ -119,7 +119,7 @@ the owner of the findings in its files.
 | `exclude` | no | Globs. The rule never covers a file that matches one |
 | `kits` | no | Kit names. The rule covers only files held by one of these kits |
 | `outside_kits` | no | Kit names. The rule never covers a file held by one of these kits |
-| `config` | no | The engine's own config file. Passed to `swiftlint` and `ruff` as written, and it is a ShellCheck rule's `--rcfile` ([`ENGINES.md`](ENGINES.md#shellcheck)); the other engines do not take one |
+| `config` | no | The engine's own config file, passed as written: to `swiftlint`, `ruff`, `golangci-lint` and `gitleaks` as `--config`, to `pylint` and `shellcheck` as `--rcfile`, and to `clang-tidy` as `--config-file` ([`ENGINES.md`](ENGINES.md)); the other engines do not take one, and `vulture` and `periphery` read no config of the repository's |
 | `params` | no | A table of values for the engine. See below |
 | `only_with_base` | no | `true` or `false` (the default). With `true` the rule reports only what a change adds, so it needs `--base`. Without `--base` the rule reports nothing, not even a failure, and is listed under `not_applicable` ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)) |
 | `enforces` | no | Text: the practice the rule enforces. Read and checked to be a string; no report prints it |
@@ -137,18 +137,32 @@ Any other key is a problem.
 | `ast-grep` | The path of an ast-grep rule file (YAML) inside the rule file's folder. Every match of that file is a finding |
 | `shellcheck` | One ShellCheck code, `SC` then digits, such as `SC2086`. Not a list of codes |
 | `git` | `test_ratio`, the only check git has |
+| `pylint` | One pylint message id, a letter `C`, `R`, `W`, `E`, `F` or `I` and four digits, such as `C0121`. Not a symbol such as `singleton-comparison`, and not an old id pylint renamed |
+| `clang-tidy` | One clang-tidy check name, such as `bugprone-branch-clone`. Not a glob, a list or a name starting with `-` |
+| `golangci-lint` | golangci-lint linter names: one (`staticcheck`), or several joined by commas with no spaces (`staticcheck,govet`). Not a linter's own check such as `SA1019`, and not `typecheck` |
+| `gitleaks` | gitleaks rule ids: one (`aws-access-token`), or several joined by commas with no spaces. Not `ALL` |
+| `cargo-audit` | An advisory id (`RUSTSEC-2023-0071`) or a kind: `vulnerability`, `unmaintained`, `unsound`, `notice`, or `all` for every advisory. Not `yanked` |
+| `vulture` | One vulture code: `V101` to `V107` or `V201`, such as `V104` for an unused import. Not flake8's `F401` or `F841` |
+| `periphery` | One Periphery result hint, written as Periphery writes it (`unused`, `assignOnlyProperty`, `redundantProtocol`, `redundantConformance`, `redundantPublicAccessibility`, `superfluousIgnoreCommand`), or `all` for every result |
 | `tessera` | Required like any other, and not used today: nothing is run |
-| `golangci-lint`, `pylint`, `clang-tidy`, `oclint` | Required like any other, and not used yet: nothing is run |
+| `eslint`, `mypy`, `pmd`, `detekt`, `rubocop`, `phpstan`, `dart`, `markdownlint`, `yamllint`, `actionlint`, `hadolint`, `vale`, `stylelint`, `sqlfluff` | Required like any other, and not used yet: nothing is run |
 
-A finding is kept only when it can be matched back to `check`: for clippy and SwiftLint the engine reports exactly
-that lint or identifier, and for ruff the diagnostic's code starts with one of the parts of `check`.
+A finding is kept only when it can be matched back to `check`: for clippy, SwiftLint, pylint and clang-tidy the
+engine reports exactly that lint, identifier, message id or check; for ruff the diagnostic's code starts with one of
+the parts of `check`; for golangci-lint the issue comes from one of its linters; for gitleaks the result's rule id
+is one of the parts of `check`; for cargo-audit the advisory has that id or kind (any, for `all`); for vulture the
+message is of that code's kind; for Periphery the result carries that hint (any, for `all`); for ShellCheck the
+comment has that code.
 
 These are checked when the rule runs, not when the rule file is read. A `check` that cannot be matched (a clippy
 lint group, `custom_rules`, a ruff rule name, an ast-grep file outside the rule file's folder, a ShellCheck `check`
-that is not one code, a git `check` other than `test_ratio`) makes the rule
-"failed", exit 5, with the reason in the report. A `check` the installed clippy, SwiftLint or ruff does not know
-(a misspelt name, or one newer than that engine) makes the rule "not available", exit 3, with a reason naming the
-engine, its version and the check. Neither reads as clean, and `tm rules` reports neither, since it runs no
+that is not one code, a git `check` other than `test_ratio`, a pylint symbol or old id, a clang-tidy glob or list,
+a golangci-lint check code, a gitleaks `ALL`, a cargo-audit `yanked`, a vulture code it does not have, a Periphery
+hint it does not print) makes the rule
+"failed", exit 5, with the reason in the report. A `check` the installed clippy, SwiftLint, ruff, pylint,
+clang-tidy, golangci-lint or gitleaks does not know (a misspelt name, or one newer than that engine), an advisory id
+cargo-audit's local advisory database does not hold, and a ShellCheck code not on `tm`'s list of ShellCheck 0.11.0's
+codes, make the rule "not available", exit 3, with a reason naming the engine, its version and the check. Neither reads as clean, and `tm rules` reports neither, since it runs no
 engine. [`ENGINES.md`](ENGINES.md) has each case.
 
 ### `params`
@@ -173,8 +187,10 @@ engine. [`ENGINES.md`](ENGINES.md) has each case.
 - **git:** `max_ratio`, a number from 0.1 to 100; `floor`, a whole number from 0 to 100000; and `test_paths`, a list
   of globs with at least one item. All three are required; a missing one, a value out of range and any other param
   fail the rule ([`ENGINES.md`](ENGINES.md#git)).
+- **pylint, clang-tidy, golangci-lint, gitleaks, cargo-audit, vulture, periphery:** none; any param fails the rule.
 - **tessera:** none; any param fails the rule.
-- **golangci-lint, pylint, clang-tidy, oclint:** not read.
+- **eslint, mypy, pmd, detekt, rubocop, phpstan, dart, markdownlint, yamllint, actionlint, hadolint, vale,
+  stylelint, sqlfluff:** not read.
 
 ### Which files a rule covers
 
@@ -277,8 +293,8 @@ cannot limit it to kits. Each rule takes at most one `[[override]]`.
 
 A set's rule can name params the repository must give. The rule file gives each one in the `params` of an
 `[[override]]` for that rule; a value in the set's own `params` does not count. Until every one is given the rule
-is not applicable: it is not run, `tm rules` does not list it, and `tm check` lists it under `not_applicable` with
-the why `required params not given: <names>; give them in the params of an [[override]] for "<rule id>"`.
+is not applicable: it is not run, `tm check` counts it in text, and `tm rules` (text and `--json`) and
+`tm check --json` list it under not applicable, not among the rules, with the why `required params not given: <names>; give them in the params of an [[override]] for "<rule id>"`.
 
 No rule of `standard@1` requires a param. Five rules of `house@1` do: four require `entity_types` and one
 `own_package`, and the set declares each as a list of strings, such as `params = { entity_types = ["Order",
@@ -365,7 +381,7 @@ A rule file with a `security` rule must have a top-level `owner`, so a security 
 ```
 /path/to/temperare.toml:3:1  [[rule]] is missing `fix`  Add `fix = "..."` to this [[rule]].
 /path/to/temperare.toml:4:6  malformed id "No_None": an id is one or more of a-z, 0-9 and '-'  Write the id in lower-case letters, digits and dashes, e.g. "no-stored-bool".
-/path/to/temperare.toml:5:10  unknown engine "pylnit"  Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck, git.
+/path/to/temperare.toml:5:10  unknown engine "pylnit"  Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, shellcheck, git, vulture, periphery, gitleaks, cargo-audit, eslint, mypy, pmd, detekt, rubocop, phpstan, dart, markdownlint, yamllint, actionlint, hadolint, vale, stylelint, sqlfluff.
 next: fix each problem listed for /path/to/temperare.toml
 ```
 

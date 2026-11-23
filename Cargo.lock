@@ -23,7 +23,7 @@ dependencies = [
 
 [[package]]
 name = "cli"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "engines",
  "libc",
@@ -36,7 +36,7 @@ dependencies = [
 
 [[package]]
 name = "engines"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "libc",
  "procio",
@@ -44,6 +44,7 @@ dependencies = [
  "rules",
  "serde",
  "serde_json",
+ "toml",
 ]
 
 [[package]]
@@ -116,7 +117,7 @@ dependencies = [
 
 [[package]]
 name = "procio"
-version = "0.3.0"
+version = "0.4.0"
 
 [[package]]
 name = "quote"
@@ -146,7 +147,7 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "report"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "procio",
  "rules",
@@ -155,7 +156,7 @@ dependencies = [
 
 [[package]]
 name = "rules"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "globset",
  "serde",

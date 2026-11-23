@@ -1,6 +1,6 @@
 //! Regular file checks against real temporary filesystem entries.
 
-use crate::shellcheck::is_regular_file;
+use crate::is_regular_file::is_regular_file;
 use std::fs;
 use std::os::unix::fs::symlink;
 use std::path::PathBuf;

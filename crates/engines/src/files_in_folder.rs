@@ -1,6 +1,7 @@
 //! `files_in_folder`: the files git lists for a rule file's folder, tracked plus untracked files git does not
-//! ignore, relative to it. It runs git, so its test is the zone integration test tests/no_file_flag.rs and it has no
-//! unit-test sibling; `folder_files`, which shapes the listing, has its own.
+//! ignore, relative to it, for its callers `run_rules_counted_with` and `no_file_rules`. It runs git, so its tests are
+//! the zone integration tests tests/no_file_flag.rs and tests/no_file_rules.rs and it has no unit-test sibling;
+//! `folder_files`, which shapes the listing, has its own.
 
 use crate::folder_files::folder_files;
 use rules::RelPath;

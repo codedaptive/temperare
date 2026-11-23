@@ -1,0 +1,65 @@
+How each fixture in this folder was made: real cargo-audit output (stdout), saved unedited.
+
+Version (`cargo-audit --version`): cargo-audit 0.23.0
+Program: /opt/homebrew/bin/cargo-audit
+Database: $HOME/.cargo/advisory-db (1555 advisories), read with --no-fetch, never fetched.
+Root: /private/tmp/cargo-audit-fixtures.Ls2692 (made with `mktemp -d /tmp/cargo-audit-fixtures.XXXXXX`; /tmp is a
+link to /private/tmp). Each run had CARGO_HOME=<root>/cargo-home, an empty folder (still empty afterwards), so no
+global audit.toml applied. Each run was wrapped in `sandbox-exec -p '(version 1)(allow default)(deny network*)'`,
+so nothing could reach the network. stderr was empty for every run.
+
+Command, run in cwd <root>/<name> for each fixture <name>.json:
+  sandbox-exec -p '(version 1)(allow default)(deny network*)' cargo-audit audit --no-fetch --no-yanked --json --db $HOME/.cargo/advisory-db --file <root>/<name>/Cargo.lock
+
+vulnerable.json: exit 1.
+  cwd: <root>/vulnerable
+  Cargo.lock:
+    version = 3
+
+    [[package]]
+    name = "demo"
+    version = "0.1.0"
+    dependencies = [
+     "smallvec",
+    ]
+
+    [[package]]
+    name = "smallvec"
+    version = "1.6.0"
+    source = "registry+https://github.com/rust-lang/crates.io-index"
+  audit.toml: none
+
+unmaintained.json: exit 0.
+  cwd: <root>/unmaintained
+  Cargo.lock:
+    version = 3
+
+    [[package]]
+    name = "ansi_term"
+    version = "0.12.1"
+    source = "registry+https://github.com/rust-lang/crates.io-index"
+
+    [[package]]
+    name = "demo"
+    version = "0.1.0"
+    dependencies = [
+     "ansi_term",
+    ]
+  audit.toml: none
+
+clean.json: exit 0.
+  cwd: <root>/clean
+  Cargo.lock:
+    version = 3
+
+    [[package]]
+    name = "demo"
+    version = "0.1.0"
+  audit.toml: none
+
+ignored.json: exit 0.
+  cwd: <root>/ignored
+  Cargo.lock: the same text as vulnerable.json's
+  audit.toml: <root>/ignored/.cargo/audit.toml
+    [advisories]
+    ignore = ["RUSTSEC-2021-0003"]

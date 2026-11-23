@@ -1,0 +1,18 @@
+Real gitleaks output, captured once with gitleaks 8.30.1 (/opt/homebrew/bin/gitleaks) in a throwaway folder under
+/tmp that was removed afterwards. Each command is GITLEAKS's argv with its check, but without `--ignore-gitleaks-allow`, which GITLEAKS
+adds (no fixture line carries a `gitleaks:allow` comment); stdout or stderr went to the fixture as named. No fixture holds a key: the runs used --redact, and gitleaks wrote "REDACTED" in place of the match.
+
+The leak folder held config.py, one line:
+    aws_key = "<a fake AWS access key id: AKIA followed by 16 characters of A-Z and 2-7>"
+The key was built from parts when the file was written, so it is written nowhere here.
+
+aws_access_token.sarif (stdout, exit 1), run in the leak folder:
+    gitleaks dir --no-banner --no-color --redact --report-format=sarif --report-path=- --enable-rule=aws-access-token .
+
+unknown_rule.txt (stderr, exit 1, stdout empty), run in the leak folder:
+    gitleaks dir --no-banner --no-color --redact --report-format=sarif --report-path=- --enable-rule=no-such-rule .
+
+clean.sarif (stdout, exit 0), run in a folder holding only config.py, one line:
+    VALUE = 1
+with:
+    gitleaks dir --no-banner --no-color --redact --report-format=sarif --report-path=- --enable-rule=aws-access-token .

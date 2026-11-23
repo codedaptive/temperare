@@ -51,7 +51,6 @@ mod read_set_cases;
 mod required_string;
 mod resolve_baseline;
 mod resolved_baseline;
-#[allow(clippy::module_inception)]
 mod rule_file;
 mod rule_file_exception_for;
 mod rule_file_exception_on;
@@ -78,6 +77,10 @@ mod baseline_set_tests;
 mod baseline_sets_tests;
 #[cfg(test)]
 mod baseline_set_case_for_tests;
+#[cfg(test)]
+mod baseline_set_digest;
+#[cfg(test)]
+mod baseline_set_digest_tests;
 #[cfg(test)]
 mod baseline_set_yaml_for_tests;
 #[cfg(test)]

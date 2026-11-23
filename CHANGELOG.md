@@ -2,6 +2,34 @@
 
 All notable changes to Temperare are recorded here, newest first.
 
+## 0.4.0
+
+Built from source; there are no release downloads yet. MIT licensed.
+
+### Added
+
+- Adapters for seven more engines, each proven by the acceptance checks against the real program: golangci-lint 2.15.0,
+  pylint 4.1.4, clang-tidy 23.1.6, vulture 2.16, Periphery 3.8.0, gitleaks 8.30.1 and cargo-audit 0.23.0. Each is
+  reported with its rule, place, fix and version, and is "not available" when its program is off `PATH`. Their limits
+  are in `docs/reference/ENGINES.md`: vulture leaves git-ignored Python paths out of its scan, Periphery runs on Swift
+  packages only and refuses anything it would fetch, gitleaks never prints a secret, and cargo-audit reads the local
+  advisory database without fetching.
+- Fourteen more engine names are accepted in a rule file: eslint, mypy, pmd, detekt, rubocop, phpstan, dart,
+  markdownlint, yamllint, actionlint, hadolint, vale, stylelint and sqlfluff. They have no adapter yet, so a rule that
+  names one is reported "not available" when it covers a file.
+- `tm rules` lists the rules that do not apply (text, and `not_applicable` in `--json`), judged the way `tm check`
+  judges them.
+
+### Changed
+
+- A finding's `line` is `null` in `--json` when the finding has none (cargo-audit's finding on `Cargo.lock`), where it
+  was `0`; text output prints its path alone. A finding that has a line is unchanged. Programs that read `line` must
+  accept `null`.
+- `oclint` is no longer an engine name: a rule that names it is an unknown engine, like any other unknown name.
+- A clang-tidy rule with no C-family source in its paths is judged to cover no file before the engine is looked up,
+  as a ShellCheck rule with no script already was. A failed git listing stops only the judgement that needs the
+  listing, not cargo-audit's check for a `Cargo.lock`.
+
 ## 0.3.0
 
 Built from source; there are no release downloads yet. MIT licensed.

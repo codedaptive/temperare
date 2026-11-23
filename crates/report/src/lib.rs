@@ -13,12 +13,14 @@ mod folder_from_top;
 mod keep_added;
 mod not_applicable;
 mod not_available;
+mod out_of_play;
 mod render_text;
 mod report;
 mod report_error;
 mod report_error_display;
 mod report_error_source;
 mod rule_count;
+mod set_aside_why;
 mod silenced;
 mod silenced_by_rule;
 mod split_by_exceptions;
@@ -51,6 +53,8 @@ mod not_applicable_tests;
 #[cfg(test)]
 mod not_available_tests;
 #[cfg(test)]
+mod out_of_play_tests;
+#[cfg(test)]
 mod render_text_tests;
 #[cfg(test)]
 mod report_error_display_tests;
@@ -62,6 +66,8 @@ mod report_error_tests;
 mod report_tests;
 #[cfg(test)]
 mod rule_count_tests;
+#[cfg(test)]
+mod set_aside_why_tests;
 #[cfg(test)]
 mod silenced_by_rule_tests;
 #[cfg(test)]
@@ -93,10 +99,12 @@ pub use failed::Failed;
 pub use keep_added::keep_added;
 pub use not_applicable::NotApplicable;
 pub use not_available::NotAvailable;
+pub use out_of_play::out_of_play;
 pub use render_text::render_text;
 pub use report::Report;
 pub use report_error::ReportError;
 pub use rule_count::RuleCount;
+pub use set_aside_why::set_aside_why;
 pub use silenced::Silenced;
 pub use split_by_exceptions::split_by_exceptions;
 pub use utc_date::utc_date;

@@ -1,0 +1,59 @@
+{
+  "cLanguageStandard" : null,
+  "cxxLanguageStandard" : null,
+  "defaultLocalization" : null,
+  "dependencies" : [
+    {
+      "fileSystem" : [
+        {
+          "identity" : "first",
+          "path" : "/tmp/periphery-local-fixture/package/First",
+          "productFilter" : null,
+          "traits" : [
+            {
+              "name" : "default"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "fileSystem" : [
+        {
+          "identity" : "second",
+          "path" : "/tmp/periphery-local-fixture/package/Second",
+          "productFilter" : null,
+          "traits" : [
+            {
+              "name" : "default"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "name" : "Probe",
+  "packageKind" : {
+    "root" : [
+      "/tmp/periphery-local-fixture/package"
+    ]
+  },
+  "pkgConfig" : null,
+  "platforms" : [
+
+  ],
+  "products" : [
+
+  ],
+  "providers" : null,
+  "swiftLanguageVersions" : null,
+  "targets" : [
+
+  ],
+  "toolsVersion" : {
+    "_version" : "6.0.0"
+  },
+  "traits" : [
+
+  ]
+}

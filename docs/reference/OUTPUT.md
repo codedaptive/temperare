@@ -41,7 +41,8 @@ In order:
    those of the run; the letters here stand for them. See [Tokens saved](#tokens-saved).
 1. **One block per finding,** three lines and a blank line:
    - `<path>:<line>:<col>`, two spaces, `<severity> <kind> <rule id>`, then `  owner <owner>` when the file has an
-     owner. `:<col>` is left out when the engine gives no column.
+     owner. `:<col>` is left out when the engine gives no column. A finding with no line, such as cargo-audit's on
+     `Cargo.lock`, starts with `<path>` alone, with no line and no column.
    - the engine's own message;
    - `fix: ` and the rule's fix text.
 2. **One line per rule that was not available:** `not available: <rule id> (<engine>): <why>`.
@@ -50,36 +51,37 @@ In order:
 4. **One line per rule that covers nothing:** `covers nothing: <rule id> (<engine>)`. Such a rule is one of the
    repository's own, and it ran nothing because no file it checks is in its scope
    ([`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)).
-5. **One line per rule that is not applicable:** `not applicable: <rule id> (<engine>): <why>`, such as a rule with
-   `only_with_base = true` run without `--base`, or a baseline set's rule that covers no file. A not-applicable rule
-   checked nothing, so it is shown here as well as in `--json`.
-6. **One line per expired exception:** `expired: <rule id> <path> (expired <YYYY-MM-DD>)`, such as
+5. **One line per expired exception:** `expired: <rule id> <path> (expired <YYYY-MM-DD>)`, such as
    `expired: no-unwrap src/main.rs (expired 2026-11-30)`, the date being the exception's `expires`. An expired
    exception silences nothing ([`RULE_FILE.md`](RULE_FILE.md#an-exception-exception)).
-7. **The engines line:** `engines: <engine> <version>, ...`, one entry per engine that ran, in the order the rule
+6. **The engines line:** `engines: <engine> <version>, ...`, one entry per engine that ran, in the order the rule
    file first names each. An engine that ran is one `tm` found and asked its version, whatever its rules came to: a
    rule refused before its engine ran, a rule that covered no file, or a check the installed engine does not know,
    still counts. An engine that is absent (not on `PATH`, or with no adapter in this build) is left out, and its
-   rules appear only on their `not available:`, `covers nothing:` or `not applicable:` lines, or on a `failed:` line
-   when the rule was refused. A rule with `only_with_base` run with no `--base` is on a
-   `not applicable:` line whatever its engine's state. Tessera is never listed today, since `tm` does not look for it.
+   rules appear only on their `not available:` or `covers nothing:` lines, on a `failed:` line when the rule was
+   refused, or in the not-applicable count. A rule with `only_with_base` run with no `--base` is counted as not
+   applicable whatever its engine's state. Tessera is never listed today, since `tm` does not look for it.
    `<engine> (version unknown)` when a found engine gave no version. No line when no engine ran.
-8. **The counts line,** ending with the number of not-applicable rules, then the number of rules that cover
+7. **The counts line,** ending with the number of not-applicable rules, then the number of rules that cover
    nothing, then the number of expired exceptions, `0` included. `exceptions in force` counts the exceptions that
-   have not expired on the report's day.
-9. **Why each failed rule failed:** `stderr of <rule id> (<engine>):`, then the lines of its `stderr_tail`, each
+   have not expired on the report's day. A not-applicable rule gets no line of its own in text: it is counted here,
+   and `--json` lists each one with its why (`not_applicable`). A repository that takes a baseline set has a rule
+   that is not applicable for each language it does not hold, and a line for each could make the text longer
+   than the engines' own output.
+8. **Why each failed rule failed:** `stderr of <rule id> (<engine>):`, then the lines of its `stderr_tail`, each
    indented two spaces. When there is nothing to show, the one line `stderr of <rule id> (<engine>): (empty)`.
    A run with no failed rule prints none of this.
-10. **The `next:` line.**
+9. **The `next:` line.**
 
 Findings are sorted by path, line, column and rule id; not-available and failed rules by rule id; rules that cover
-nothing, not-applicable rules and expired exceptions in rule-file order. The same results from the
+nothing and expired exceptions in rule-file order. The same results from the
 engines give the same output. A silenced finding is counted on the counts line and not listed.
 
 A rule that ran nothing because no file it checks is in its scope is on a `covers nothing:` line when it is one of
-the repository's own, and on a `not applicable:` line when it comes from a baseline set, with the why `its paths
-match no file in the rule file's folder` (or, for a ShellCheck rule, `no file its engine checks`). A rule with
-`only_with_base = true` run without `--base` is not applicable for want of `--base` whatever it covers
+the repository's own, and is counted as not applicable when it comes from a baseline set; `--json` gives its why,
+`its paths match no file in the rule file's folder` (or, for a ShellCheck or clang-tidy rule, `no file its engine
+checks`). A
+rule with `only_with_base = true` run without `--base` is not applicable for want of `--base` whatever it covers
 ([`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)).
 
 ## `tm check --json`
@@ -164,7 +166,7 @@ The run above, as `--json` prints it (on one line; wrapped here to read):
 | `expired` | Each exception past its `expires` day on `date`, in rule-file order: `rule`, `path`, `what` (`null` when the exception has none), `expires` (`YYYY-MM-DD`), `reason`, `approved`. Such an exception silences nothing. Always present, `[]` when empty |
 | `not_available` | Each rule that could not be checked: `rule`, `engine`, `why` |
 | `covers_nothing` | Each of the repository's own rules that ran nothing because no file it checks is in its scope: `rule`, `engine`. Always present, `[]` when empty, in rule-file order. Never a finding, "not available" or clean: such a rule makes the exit 6 when nothing ranks above it |
-| `not_applicable` | Each rule the check does not apply: `rule`, `engine`, `why`. Always present, `[]` when empty, in rule-file order. Listed: each not-applicable rule of the rule file (`why` is its reason, or "no reason given"); with no `--base`, each rule with `only_with_base` (`why`: "reports only what a change adds; run with --base"); and each baseline set's rule that covers no file (`why`: "its paths match no file in the rule file's folder", or "no file its engine checks" for ShellCheck). Never a finding and never "not available" |
+| `not_applicable` | Each rule the check does not apply: `rule`, `engine`, `why`. Always present, `[]` when empty, in rule-file order. Listed: each not-applicable rule of the rule file (`why` is its reason, or "no reason given"); with no `--base`, each rule with `only_with_base` (`why`: "reports only what a change adds; run with --base"); and each baseline set's rule that covers no file (`why`: "its paths match no file in the rule file's folder", or "no file its engine checks" for ShellCheck and clang-tidy). Never a finding and never "not available" |
 | `failed` | Each rule that failed: `rule`, `engine`, `code` (the engine's exit code, or `null` when it had none or was not run), `stderr_tail` (the last 20 lines of what explains the failure: the engine's stderr, or Temperare's own reason when the engine printed none or was not run) |
 | `base` | The full id of the commit `--base` named. Present only with `--base` |
 | `date` | The day of the check in UTC, as `YYYY-MM-DD`. Always present |
@@ -189,7 +191,7 @@ in the text; `saved.counted` names it, with `chars` 0 ([`ENGINES.md`](ENGINES.md
 | `severity` | `error` or `warning`, from the rule |
 | `owner` | Who owns the file, from the rule file. Left out when it names none |
 | `path` | The file, relative to the rule file's folder, with `/` between its parts |
-| `line` | The line, counted from 1 |
+| `line` | The line, counted from 1. Always present: `null` for a finding with no line, such as cargo-audit's on `Cargo.lock` (where earlier versions wrote `0`) |
 | `col` | The column, counted from 1. Left out when the engine gives none |
 | `what` | The engine's own message |
 | `fix` | The rule's fix text |
@@ -352,7 +354,8 @@ for exit 6:
 | 6 | `fix the paths of each rule that covers nothing above, or remove it from <rule file>`; under `--json`, `next` is `fix the paths of each rule in covers_nothing, or remove it from <rule file>` |
 
 For exit 3 the engines are named as a rule file names them (`clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`,
-`git`), each once.
+`git`, `pylint`, `clang-tidy`, `golangci-lint`), each once. A golangci-lint rule with `go` missing names
+golangci-lint to install.
 Tessera is never among the engines to install, because installing it changes nothing today:
 
 - only Tessera rules were not available: `Tessera's checks are not available yet (run without those rules)`;
@@ -364,7 +367,9 @@ file's folder, so put the rule file inside the Cargo project it checks (or run w
 `not available:` line of that rule keeps the reason. A `check` the installed engine does not know gives
 ``ruff: ruff 0.17.4 does not know the check `ZZZ999`: <ruff's own line> (or run without those rules)``. The fix is a
 newer engine or a check it knows. A ShellCheck code that is not on `tm`'s list gives
-`shellcheck: shellcheck 0.11.0: SC2086 is not in temperare's list of shellcheck codes (taken from shellcheck pending) (or run without those rules)`,
+`shellcheck: shellcheck 0.11.0: SC9999 is not in temperare's list of shellcheck codes (taken from shellcheck 0.11.0) (or run without those rules)`,
+a clang-tidy source with no compile database gives
+`clang-tidy: no compile database (compile_commands.json) or compile flags (compile_flags.txt) for <file> or any folder above it, so clang-tidy would check it without flags (or run without those rules)`,
 and a git rule or an ast-grep rule in count mode, run without `--base` with its engine on `PATH`, gives
 `git: reports only what a change adds; run with --base (or run without those rules)` (`ast-grep:` for ast-grep)
 ([`ENGINES.md`](ENGINES.md#git), [`ENGINES.md`](ENGINES.md#ast-grep)).
@@ -384,7 +389,7 @@ A finding on an older line is dropped before exceptions are applied, so it is ne
 counted. A `--base` that names no commit is exit 2, never an empty result.
 
 A rule with `only_with_base = true` reports only what a change adds. Without `--base` it reports nothing and is
-listed as not applicable (a `not applicable:` line in text, `not_applicable` in JSON), with the why
+not applicable (counted on the counts line in text, listed in `not_applicable` in JSON), with the why
 `reports only what a change adds; run with --base`.
 
 Two kinds of rule use the commit `--base` names: a rule with `engine = "git"`, which counts the lines a change adds,
@@ -405,7 +410,7 @@ the rule file's folder, a `--base` that names no commit) prints the two lines on
 A rule file with problems prints, with `--json`:
 
 ```json
-{"exit":2,"next":"fix each problem listed for /path/to/temperare.toml","problems":[{"col":10,"fix":"Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, oclint, shellcheck, git.","line":5,"what":"unknown engine \"pylnit\""}],"rule_file":"/path/to/temperare.toml"}
+{"exit":2,"next":"fix each problem listed for /path/to/temperare.toml","problems":[{"col":10,"fix":"Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, shellcheck, git, vulture, periphery, gitleaks, cargo-audit, eslint, mypy, pmd, detekt, rubocop, phpstan, dart, markdownlint, yamllint, actionlint, hadolint, vale, stylelint, sqlfluff.","line":5,"what":"unknown engine \"pylnit\""}],"rule_file":"/path/to/temperare.toml"}
 ```
 
 Without `--json` it prints one line per problem, `file:line:col  what  fix`, then the `next:` line. See
@@ -419,6 +424,7 @@ rules (3):
   no-none-compare  ruff  quality  error  paths: all files  available
   git-only-in-deploy  ast-grep  quality  error  paths: **/*.rs  exclude: **/generated/**  outside kits: deploy  available
   file-erosion  tessera  quality  error  paths: all files  not available: Tessera's slop records are not defined yet
+not applicable (0):
 exceptions in force (1):
   no-none-compare  legacy.py  what: Comparison to  approved: who approved it  reason: the legacy module is rewritten in 2.0
 exceptions expired (1):
@@ -434,15 +440,36 @@ when the exception has one, who approved it and the reason.
 The exceptions are judged on today's date in UTC, as `tm check` judges them: in force are those that have not
 expired, an exception still counting on its `expires` day; expired are those whose `expires` day has passed, each
 line with `expires:` before who approved it. Each exception is in one list, never both, and each list keeps the
-file's order. Both headers are always printed with their count, `(0)` included. An expired exception does not
-change the exit code: `tm rules` lists, it does not check.
+file's order. All four headers, `rules`, `not applicable` and the two exception lists, are always printed with their
+count, `(0)` included. An expired exception does not change the exit code: `tm rules` lists, it does not check.
 
 When the rule file takes a baseline set ([`RULE_FILE.md`](RULE_FILE.md#baseline-sets)), the set's rules are listed
 first, in `baseline` order and then each set's own order, with the file's overrides applied; the file's own rules
 follow, and `rules (N)` counts both. This is also the rule-file order of a `tm check` report. A set's rule is a
 line like any other, such as `  tm-rust-dead-code  clippy  quality  warning  paths: **/*.rs  available`: nothing
-names its set, and its id starts with `tm-`. Two kinds of set rule are not listed, as text or as JSON: one an
-`[[override]]` turned off, and one that is not applicable because a required param is not given.
+names its set, and its id starts with `tm-`. A set rule an `[[override]]` turned off is not listed anywhere, as
+text or as JSON, and a set rule that waits for a required param is not under `rules (N)`.
+
+Under `not applicable (P)` come the set rules that do not apply here, in rule-file order, one line each:
+`<rule id>  <engine>  <why>`, such as
+`  tm-rust-dead-code  clippy  its paths match no file in the rule file's folder`. The why is the one
+`tm check --json` gives the rule under `not_applicable`, since `tm check`'s text gives these rules only as a count.
+No engine is run. A rule is listed once, for the first of these that holds:
+
+- **It waits for a required param:** the why is `required params not given: <names>; give them in the params of an
+  [[override]] for "<rule id>"` ([`RULE_FILE.md`](RULE_FILE.md#required-params)). This is the only place
+  `tm rules` names it.
+- **It covers no file in the rule file's folder,** judged as `tm check` judges it before any engine runs, from the
+  files git lists: the why is `its paths match no file in the rule file's folder`, or `no file its engine checks`
+  for a ShellCheck rule with no script, a cargo-audit rule with no `Cargo.lock` and a clang-tidy rule with no
+  C-family source ([`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)). Such a rule keeps its own line under
+  `rules (N)` too, with its availability. A rule `tm` refuses is not judged here, as `tm check` fails it first. When
+  git cannot list the files, no rule is listed for its paths, its scripts or its C-family sources; a cargo-audit rule is still listed when
+  the rule file's folder is found and has no `Cargo.lock` the rule covers, since `tm` looks for that file on disk.
+
+A rule with `only_with_base = true` is listed only when it covers no file: one that covers files applies whenever
+`tm check` is given a base, and `tm rules` takes none. A rule of your own is never listed here: one that covers no
+file is one `tm check` reports as covering nothing (exit 6), not as not applicable.
 
 `tm rules --json` prints one object:
 
@@ -454,6 +481,8 @@ names its set, and its id starts with `tm-`. Two kinds of set rule are not liste
 | `exceptions_in_force` | How many exceptions are in force, as `tm check` counts them: those not expired today (UTC) |
 | `expired` | Each expired exception: the same fields, and `expires` as `"YYYY-MM-DD"` |
 | `exceptions_expired` | How many exceptions have expired |
+| `not_applicable` | Each set rule that does not apply here, as the text lists it: `rule`, `engine` and `why`, the shape of `tm check --json`'s `not_applicable` |
+| `rules_not_applicable` | How many rules `not_applicable` lists |
 | `exit`, `next` | As for `tm check` |
 
 ## `tm rules --loosened`

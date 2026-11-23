@@ -1,0 +1,26 @@
+Real vulture output captured in a throwaway /tmp folder, removed afterwards.
+Version: vulture 2.16
+Command: PYTHONWARNINGS=ignore vulture --config=/dev/null .
+Exit: 3
+
+example.py:
+import math
+
+class Ghost:
+    def __init__(self):
+        self.abandoned = 1
+
+    def dormant(self):
+        pass
+
+    @property
+    def forgotten(self):
+        return 1
+
+def dead(argument):
+    unused_local = 1
+    return 1
+    print("never")
+
+if False:
+    print("impossible")

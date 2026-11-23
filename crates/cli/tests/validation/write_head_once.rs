@@ -49,20 +49,70 @@ check = "rules/head.yml"
 fix = "none"
 
 [[rule]]
+id = "head-golangci-lint"
+engine = "golangci-lint"
+check = "staticcheck"
+fix = "none"
+
+[[rule]]
+id = "head-pylint"
+engine = "pylint"
+check = "C0121"
+fix = "none"
+
+[[rule]]
+id = "head-clang-tidy"
+engine = "clang-tidy"
+check = "readability-braces-around-statements"
+fix = "none"
+
+[[rule]]
+id = "head-vulture"
+engine = "vulture"
+check = "V103"
+fix = "none"
+
+[[rule]]
+id = "head-periphery"
+engine = "periphery"
+check = "unused"
+fix = "none"
+
+[[rule]]
+id = "head-gitleaks"
+engine = "gitleaks"
+check = "aws-access-token"
+fix = "none"
+
+[[rule]]
+id = "head-cargo-audit"
+engine = "cargo-audit"
+check = "all"
+fix = "none"
+
+[[rule]]
 id = "head-tessera"
 engine = "tessera"
 check = "erosion"
 fix = "none"
 "#;
 
-/// For each of `temperare`'s five engines, by its rule-file name: the program it runs as (engines' `program`) and the
-/// arguments that print its version. Tessera's is asked only once `temperare` says Tessera is available, which it does not
-/// yet.
-const VERSIONS: [(&str, &str, &[&str]); 5] = [
+/// For each engine RULES names, by its rule-file name: the program it runs as (engines' `program`) and the
+/// arguments that print its version. `temperare rules` lists only RULES' engines, so an engine it lists must be
+/// here; one added to RULES is added here too. Tessera's is asked only once `temperare` says
+/// Tessera is available, which it does not yet.
+const VERSIONS: [(&str, &str, &[&str]); 12] = [
     ("clippy", "cargo", &["clippy", "--version"]),
     ("swiftlint", "swiftlint", &["version"]),
     ("ruff", "ruff", &["--version"]),
     ("ast-grep", "ast-grep", &["--version"]),
+    ("golangci-lint", "golangci-lint", &["--version"]),
+    ("pylint", "pylint", &["--version"]),
+    ("clang-tidy", "clang-tidy", &["--version"]),
+    ("vulture", "vulture", &["--version"]),
+    ("periphery", "periphery", &["version"]),
+    ("gitleaks", "gitleaks", &["version"]),
+    ("cargo-audit", "cargo-audit", &["--version"]),
     ("tessera", "ts", &["--version"]),
 ];
 
@@ -101,7 +151,7 @@ fn engine_line(rule: &Value) -> String {
     let (_, program, args) = VERSIONS
         .iter()
         .find(|(name, ..)| *name == engine)
-        .unwrap_or_else(|| panic!("tm listed engine {engine}, which is not one of its five"));
+        .unwrap_or_else(|| panic!("tm listed engine {engine}, which VERSIONS does not name"));
     format!("- {engine}: {}", version(program, args))
 }
 

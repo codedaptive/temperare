@@ -1,10 +1,87 @@
-# Temperare's own rule file: the repository is checked by itself.
+# Temperare's own rule file: the repository is checked by itself. It takes standard@1, the first repository on the
+# baseline.
 version = 1
 owner = "maintainers"
+baseline = ["standard@1"]
 
 [kits.procio]
 paths = ["crates/procio/**"]
 owner = "procio"
+
+# The baseline sets' cases (crates/rules/baseline/<set>/<version>/cases) are example code that fails on purpose,
+# frozen as released. Each standard@1 rule that finds one of them leaves them out.
+
+[[override]]
+rule = "tm-rust-suppression"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-swift-suppression"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-python-suppression"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-javascript-suppression"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-typescript-suppression"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-go-suppression"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-c-suppression"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-cpp-suppression"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-swift-blanket-disable"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-python-blanket-noqa"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-python-unused-import"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-python-unused-variable"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-python-complexity"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-swift-complexity"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-python-print"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-python-bare-except"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-python-blind-except"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-python-commented-out-code"
+exclude = ["crates/rules/baseline/**"]
 
 [[rule]]
 id = "programs-run-only-in-procio"

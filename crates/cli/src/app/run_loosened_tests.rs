@@ -75,6 +75,10 @@ fn loosened(base: Base, now: Option<&'static str>) -> (u8, String, String) {
         now: &|| 0,
         rev_parse: &rev_parse,
         blob_at: &blob_at,
+        // --loosened never judges no-file rules.
+        no_file_rules: &|_: &RuleFile, _: &Path| -> Vec<engines::NoFileRule> {
+            panic!("no_file_rules must not be called")
+        },
     };
     let args = RulesArgs { loosened: true, base: Some("v1".to_string()), ..RulesArgs::default() };
     let (mut out, mut err) = (Vec::new(), Vec::new());

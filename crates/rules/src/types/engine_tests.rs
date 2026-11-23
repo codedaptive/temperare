@@ -1,38 +1,48 @@
-//! Unit tests for engine.rs: each variant serializes to its rule-file name.
+//! Unit tests for engine.rs: each variant uses its rule-file name for serde.
 
 use super::Engine;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 struct Wrap {
     engine: Engine,
 }
 
-fn serialized(engine: Engine) -> String {
-    toml::to_string(&Wrap { engine }).unwrap()
-}
-
 #[test]
 fn each_engine_serializes_to_its_rule_file_name() {
-    assert_eq!(serialized(Engine::Clippy), "engine = \"clippy\"\n");
-    assert_eq!(serialized(Engine::SwiftLint), "engine = \"swiftlint\"\n");
-    assert_eq!(serialized(Engine::Ruff), "engine = \"ruff\"\n");
-    assert_eq!(serialized(Engine::AstGrep), "engine = \"ast-grep\"\n");
-    assert_eq!(serialized(Engine::Tessera), "engine = \"tessera\"\n");
-    assert_eq!(serialized(Engine::GolangciLint), "engine = \"golangci-lint\"\n");
-    assert_eq!(serialized(Engine::Pylint), "engine = \"pylint\"\n");
-    assert_eq!(serialized(Engine::ClangTidy), "engine = \"clang-tidy\"\n");
-    assert_eq!(serialized(Engine::Oclint), "engine = \"oclint\"\n");
-    assert_eq!(serialized(Engine::ShellCheck), "engine = \"shellcheck\"\n");
-    assert_eq!(serialized(Engine::Git), "engine = \"git\"\n");
-}
-
-#[test]
-fn engine_reads_back_from_its_rule_file_name() {
-    #[derive(serde::Deserialize)]
-    struct Read {
-        engine: Engine,
+    for (engine, name) in [
+        (Engine::Clippy, "clippy"),
+        (Engine::SwiftLint, "swiftlint"),
+        (Engine::Ruff, "ruff"),
+        (Engine::AstGrep, "ast-grep"),
+        (Engine::Tessera, "tessera"),
+        (Engine::GolangciLint, "golangci-lint"),
+        (Engine::Pylint, "pylint"),
+        (Engine::ClangTidy, "clang-tidy"),
+        (Engine::ShellCheck, "shellcheck"),
+        (Engine::Git, "git"),
+        (Engine::Vulture, "vulture"),
+        (Engine::Periphery, "periphery"),
+        (Engine::Gitleaks, "gitleaks"),
+        (Engine::CargoAudit, "cargo-audit"),
+        (Engine::Eslint, "eslint"),
+        (Engine::Mypy, "mypy"),
+        (Engine::Pmd, "pmd"),
+        (Engine::Detekt, "detekt"),
+        (Engine::Rubocop, "rubocop"),
+        (Engine::Phpstan, "phpstan"),
+        (Engine::Dart, "dart"),
+        (Engine::Markdownlint, "markdownlint"),
+        (Engine::Yamllint, "yamllint"),
+        (Engine::Actionlint, "actionlint"),
+        (Engine::Hadolint, "hadolint"),
+        (Engine::Vale, "vale"),
+        (Engine::Stylelint, "stylelint"),
+        (Engine::Sqlfluff, "sqlfluff"),
+    ] {
+        let text = format!("engine = \"{name}\"\n");
+        assert_eq!(toml::to_string(&Wrap { engine }).unwrap(), text, "{engine:?}, {name:?}");
+        let read: Wrap = toml::from_str(&text).unwrap();
+        assert_eq!(read.engine, engine, "{engine:?}, {name:?}");
     }
-    let read: Read = toml::from_str("engine = \"ast-grep\"").unwrap();
-    assert_eq!(read.engine, Engine::AstGrep);
 }

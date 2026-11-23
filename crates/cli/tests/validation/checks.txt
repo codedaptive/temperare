@@ -17,5 +17,19 @@
 70|a_security_finding_is_reported_with_severity_place_and_owner_and_never_refuses|a security rule
 80|a_command_named_only_inside_one_kit_is_reported_in_another_and_passes_inside|named only inside
 90|clippy_line_reports_test_code_not_allowed_lints|A clippy check line: test code reported, allowed lints not
+92|a_golangci_lint_finding_is_reported_with_its_rule_place_fix_and_version|golangci-lint through a rule file
+92|golangci_lint_off_path_is_not_available|golangci-lint through a rule file
+94|a_pylint_message_is_reported_with_its_rule_place_fix_and_version|pylint through a rule file
+94|pylint_off_path_is_not_available|pylint through a rule file
+96|a_clang_tidy_warning_is_reported_with_its_rule_place_fix_and_version|clang-tidy through a rule file
+96|clang_tidy_off_path_is_not_available|clang-tidy through a rule file
+97|a_vulture_finding_is_reported_with_its_rule_place_fix_and_version|vulture through a rule file
+97|vulture_off_path_is_not_available|vulture through a rule file
+98|a_periphery_result_is_reported_with_its_rule_place_fix_and_version|Periphery through a rule file
+98|periphery_off_path_is_not_available|Periphery through a rule file
+99|a_gitleaks_secret_is_reported_with_its_rule_place_fix_and_version|gitleaks through a rule file
+99|gitleaks_off_path_is_not_available|gitleaks through a rule file
+99|a_cargo_audit_advisory_is_reported_on_cargo_lock_with_no_line|cargo-audit through a rule file
+99|cargo_audit_off_path_is_not_available|cargo-audit through a rule file
 100|two_ruff_rules_share_one_engine_run|the baseline
 100|the_shipped_baseline_sets_hold|the baseline

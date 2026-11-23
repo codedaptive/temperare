@@ -1,13 +1,20 @@
 //! `entry_for`: the registry of engines, each engine's entry.
 
 use crate::ast_grep::AST_GREP;
+use crate::cargo_audit::CARGO_AUDIT;
+use crate::clang_tidy::CLANG_TIDY;
 use crate::clippy::CLIPPY;
 use crate::entry::Entry;
 use crate::git::GIT;
+use crate::gitleaks::GITLEAKS;
+use crate::golangci_lint::GOLANGCI_LINT;
+use crate::periphery::PERIPHERY;
+use crate::pylint::PYLINT;
 use crate::ruff::RUFF;
 use crate::shellcheck::SHELLCHECK;
 use crate::swiftlint::SWIFTLINT;
 use crate::tessera::TESSERA;
+use crate::vulture::VULTURE;
 use rules::Engine;
 
 /// The entry of `engine`, `None` for an engine with no adapter in this build. An adapter for a new engine is its
@@ -21,6 +28,13 @@ pub fn entry_for(engine: Engine) -> Option<&'static Entry> {
         Engine::Tessera => Some(&TESSERA),
         Engine::ShellCheck => Some(&SHELLCHECK),
         Engine::Git => Some(&GIT),
+        Engine::Pylint => Some(&PYLINT),
+        Engine::ClangTidy => Some(&CLANG_TIDY),
+        Engine::GolangciLint => Some(&GOLANGCI_LINT),
+        Engine::Gitleaks => Some(&GITLEAKS),
+        Engine::CargoAudit => Some(&CARGO_AUDIT),
+        Engine::Vulture => Some(&VULTURE),
+        Engine::Periphery => Some(&PERIPHERY),
         // Each variant with no adapter in this build gives None, which callers report as not available with
         // `no_adapter_why`. An adapter adds its arm above.
         _ => None,

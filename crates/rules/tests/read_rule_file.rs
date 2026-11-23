@@ -76,7 +76,7 @@ fn finding(path: &str, what: &str) -> Finding {
         severity: Severity::Warning,
         owner: None,
         path: RelPath::new(path),
-        line: 7,
+        line: Some(7),
         col: Some(3),
         what: what.to_string(),
         fix: "Store a bitmap field.".to_string(),

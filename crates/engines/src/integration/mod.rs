@@ -3,6 +3,8 @@
 
 mod change_of_tests;
 mod engine_hits_tests;
+#[cfg(unix)]
+mod is_regular_file_tests;
 mod rule_folder_tests;
 mod ruff_unknown_selector_tests;
 mod run_rules_counted_tests;

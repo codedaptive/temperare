@@ -214,7 +214,7 @@ impl ser::SerializeStructVariant for Compound<'_> {
     }
 }
 
-fn one_finding() -> RuleOutcome {
+fn one_finding(line: Option<u32>) -> RuleOutcome {
     RuleOutcome::Findings(vec![Finding {
         rule: "no-bool".to_string(),
         engine: Engine::AstGrep,
@@ -222,7 +222,7 @@ fn one_finding() -> RuleOutcome {
         severity: Severity::Warning,
         owner: None,
         path: RelPath::new("src/a.rs"),
-        line: 7,
+        line,
         col: None,
         what: "stored Bool".to_string(),
         fix: "Store a bitmap field.".to_string(),
@@ -243,10 +243,12 @@ fn failed(code: Option<i32>) -> RuleOutcome {
 
 #[test]
 fn findings_serializes_as_a_findings_tag_over_the_list() {
-    assert_eq!(
-        to_json(&one_finding()),
-        r#"{"findings":[{"rule":"no-bool","engine":"ast-grep","kind":"quality","severity":"warning","path":"src/a.rs","line":7,"what":"stored Bool","fix":"Store a bitmap field."}]}"#
-    );
+    for (line, expected) in [
+        (Some(7), r#"{"findings":[{"rule":"no-bool","engine":"ast-grep","kind":"quality","severity":"warning","path":"src/a.rs","line":7,"what":"stored Bool","fix":"Store a bitmap field."}]}"#),
+        (None, r#"{"findings":[{"rule":"no-bool","engine":"ast-grep","kind":"quality","severity":"warning","path":"src/a.rs","line":null,"what":"stored Bool","fix":"Store a bitmap field."}]}"#),
+    ] {
+        assert_eq!(to_json(&one_finding(line)), expected, "line {line:?}");
+    }
 }
 
 #[test]
@@ -280,7 +282,7 @@ fn failed_without_an_exit_code_serializes_code_as_null() {
 
 #[test]
 fn every_variant_reads_back_equal_through_toml() {
-    for outcome in [one_finding(), RuleOutcome::Findings(Vec::new()), not_available(), failed(Some(2)), failed(None)] {
+    for outcome in [one_finding(Some(7)), one_finding(None), RuleOutcome::Findings(Vec::new()), not_available(), failed(Some(2)), failed(None)] {
         let text = toml::to_string(&outcome).unwrap();
         let read: RuleOutcome = toml::from_str(&text).unwrap_or_else(|e| panic!("{e}\n{text}"));
         assert_eq!(read, outcome, "{text}");

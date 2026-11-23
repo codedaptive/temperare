@@ -38,7 +38,7 @@ fn version_prints_temperare_the_workspace_version_and_the_commit() {
     let (code, out, err) = run_with(&["--version"]);
     assert_eq!(code, 0);
     let commit = env!("TEMPERARE_COMMIT");
-    assert_eq!(out, format!("temperare 0.3.0 ({commit})\n"));
+    assert_eq!(out, format!("temperare 0.4.0 ({commit})\n"));
     if env!("TEMPERARE_CHECKOUT") == "yes" {
         assert_eq!(commit.len(), 12, "{commit}");
         assert!(commit.chars().all(|ch| matches!(ch, '0'..='9' | 'a'..='f')), "{commit}");

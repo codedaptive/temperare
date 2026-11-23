@@ -1,14 +1,21 @@
 //! engines: one adapter per engine: run it, read its output into findings; "not available" when it is absent.
 
 pub mod ast_grep;
+pub mod cargo_audit;
+pub mod clang_tidy;
 pub mod clippy;
 pub mod entry;
 pub mod git;
+pub mod gitleaks;
+pub mod golangci_lint;
+pub mod periphery;
+pub mod pylint;
 pub mod ruff;
 pub mod sarif;
 pub mod shellcheck;
 pub mod swiftlint;
 pub mod tessera;
+pub mod vulture;
 
 mod availability;
 mod change_of;
@@ -22,9 +29,14 @@ mod entry_for;
 mod files_in_folder;
 mod findings_from;
 mod folder_files;
+mod git_stop;
 mod host;
+mod is_regular_file;
 mod no_adapter_why;
 mod no_file_match;
+mod no_file_rules;
+mod no_file_rules_listed;
+mod no_script;
 mod not_available_cause_of;
 mod not_on_path_why;
 mod parse_failed;
@@ -54,9 +66,12 @@ mod union_args;
 pub use availability::availability;
 pub use entry::{entry_cmd, Entry, ParamArg, Params, Pick, ReadFn, TempFile, VersionProbe};
 pub use entry_for::entry_for;
+pub use no_file_rules::no_file_rules;
 pub use run_rules_versioned_at::run_rules_versioned_at;
-pub use types::{Availability, CheckedRules, EngineVersion, Hit, NotAvailableCause, ParamError, ParseError, RuleRun};
+pub use types::{Availability, CheckedRules, EngineVersion, Hit, NoFileRule, NotAvailableCause, ParamError, ParseError, RuleRun};
 
+#[cfg(test)]
+mod an_engine_with_no_adapter;
 #[cfg(test)]
 mod availability_tests;
 #[cfg(test)]
@@ -78,6 +93,8 @@ mod findings_from_tests;
 #[cfg(test)]
 mod folder_files_tests;
 #[cfg(test)]
+mod git_stop_tests;
+#[cfg(test)]
 mod host_tests;
 #[cfg(test)]
 mod integration;
@@ -85,6 +102,10 @@ mod integration;
 mod no_adapter_why_tests;
 #[cfg(test)]
 mod no_file_match_tests;
+#[cfg(test)]
+mod no_file_rules_listed_tests;
+#[cfg(test)]
+mod no_script_tests;
 #[cfg(test)]
 mod not_available_cause_of_tests;
 #[cfg(test)]

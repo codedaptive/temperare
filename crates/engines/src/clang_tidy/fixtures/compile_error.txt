@@ -1,0 +1,3 @@
+/private/tmp/clang-tidy-fixtures.H87jA4/broken/a.c:1:27: error: use of undeclared identifier 'undefined_name' [clang-diagnostic-error]
+    1 | int f(int a) { return a + undefined_name; }
+      |                           ^~~~~~~~~~~~~~

@@ -1,4 +1,5 @@
-//! Unit tests for split_exceptions.rs: which exceptions are in force and which expired on a pinned day, in file order.
+//! Unit tests for split_exceptions.rs: which exceptions are in force and which expired on a pinned day, in file order, the
+//! expired ones with their own `expires` date.
 
 use super::split_exceptions::split_exceptions;
 use rules::{Date, RuleFile};
@@ -30,7 +31,17 @@ fn rule_file() -> RuleFile {
 fn in_force_and_expired_on_the_day_in_file_order() {
     let rf = rule_file();
     let (in_force, expired) = split_exceptions(&rf, Date::new(2026, 11, 21).unwrap());
-    let paths = |list: Vec<&rules::Exception>| list.iter().map(|e| e.path.as_str().to_string()).collect::<Vec<_>>();
-    assert_eq!(paths(in_force), ["f.rs", "d.rs", "e.rs"]);
-    assert_eq!(paths(expired), ["b.rs", "a.rs", "c.rs"]);
+    let in_force: Vec<String> = in_force.iter().map(|e| e.path.as_str().to_string()).collect();
+    let expired: Vec<(String, String)> =
+        expired.iter().map(|(e, date)| (e.path.as_str().to_string(), date.to_string())).collect();
+    assert_eq!(in_force, ["f.rs", "d.rs", "e.rs"]);
+    // Kills: an expired exception paired with another's date (or the day's) instead of its own `expires`.
+    assert_eq!(
+        expired,
+        [
+            ("b.rs".to_string(), "2026-06-01".to_string()),
+            ("a.rs".to_string(), "2026-11-20".to_string()),
+            ("c.rs".to_string(), "2026-01-02".to_string()),
+        ]
+    );
 }

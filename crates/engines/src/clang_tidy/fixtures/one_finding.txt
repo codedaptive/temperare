@@ -1,0 +1,4 @@
+/private/tmp/clang-tidy-fixtures.H87jA4/find/a.c:1:22: warning: statement should be inside braces [readability-braces-around-statements]
+    1 | int f(int a) { if (a) return 1; return 0; }
+      |                      ^
+      |                       {

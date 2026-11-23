@@ -10,7 +10,8 @@ use rules::{ExpectedFinding, Finding, RuleOutcome};
 /// is broken, naming its exit code (or that it had none) and the last non-blank line of its stderr when there is
 /// one. The expected path is read by `case_rel_path`, the rule the case file was written by, so `./a.py`,
 /// `src//./a.py` and `src/a.py` name the files `a.py` and `src/a.py`; an expected path `case_rel_path` refuses never
-/// matches, and is printed as written.
+/// matches, and is printed as written. A finding given is printed `<rule> at <path>:<line>`, or `<rule> at <path>`
+/// when it has no line.
 pub(crate) fn judge_case(
     failing: bool,
     outcome: &RuleOutcome,
@@ -39,17 +40,22 @@ pub(crate) fn judge_case(
     if findings.is_empty() {
         return CaseVerdict::Broken { why: format!("gave no finding; expected {wanted}") };
     }
-    let gave: Vec<String> =
-        findings.iter().map(|f| format!("{} at {}:{}", f.rule, f.path.as_str(), f.line)).collect();
+    let gave: Vec<String> = findings
+        .iter()
+        .map(|f| match f.line() {
+            Some(line) => format!("{} at {}:{line}", f.rule, f.path.as_str()),
+            None => format!("{} at {}", f.rule, f.path.as_str()),
+        })
+        .collect();
     CaseVerdict::Broken { why: format!("gave {}; expected {wanted}", gave.join(", ")) }
 }
 
 /// Whether `finding` is the expected one: same rule, the same path as `path` (the expected path as `case_rel_path`
-/// reads it), same line.
+/// reads it), same line (a finding with no line counts as line 0).
 fn is_expected(finding: &Finding, expected: &ExpectedFinding, path: &str) -> bool {
     finding.rule == expected.rule_id
         && finding.path.as_str() == path
-        && usize::try_from(finding.line) == Ok(expected.line)
+        && usize::try_from(finding.line().unwrap_or(0)) == Ok(expected.line)
 }
 
 /// `the rule failed, exit <code>` or `the rule failed, no exit code`, then `: <line>` for the last non-blank line of

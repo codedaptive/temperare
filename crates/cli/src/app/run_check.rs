@@ -24,12 +24,13 @@ use std::path::Path;
 /// commit when `--base` is given, and prints the report, which carries only the engines found here and probed for a
 /// version, each with its version or none; the report is given each rule the engines found no file for, as (rule id,
 /// the engines' why). As text it is report's text: the kept findings, one line per not-available rule, one per failed
-/// rule, one per covers-nothing rule, then one per not-applicable rule, then the `engines:` line listing those engines
-/// (absent when there are none), then the counts line, which ends with the not-applicable and then the covers-nothing
-/// count; then each failed rule's stderr tail and a `next:` line. As JSON it is one object (the `engines` field)
-/// carrying `exit` and `next` (the tails are its failed rules' `stderr_tail`). Either way it returns the report's exit
-/// code. The text opens with the tokens-saved line when at least one engine run was counted and the switch under HOME
-/// is on; the JSON object always carries `saved`. When at least one engine run was counted, text or JSON, the switch is
+/// rule, one per covers-nothing rule, one per expired exception, then the `engines:` line listing those engines
+/// (absent when there are none), then the counts line, which ends with the not-applicable, the covers-nothing and then
+/// the expired count (a not-applicable rule gets no line, only that count); then each failed rule's stderr tail and
+/// a `next:` line. As JSON it is one object (the `engines` field) carrying `exit` and `next` (the tails are its
+/// failed rules' `stderr_tail`). Either way it returns the report's exit code. The text opens with the tokens-saved
+/// line when at least one engine run was counted and the switch under HOME is on; the JSON object always carries
+/// `saved`. When at least one engine run was counted, text or JSON, the switch is
 /// read, so a config it cannot use warns once on `err` (under `--json` the switch's value changes nothing), and one
 /// line goes to the savings log under HOME, naming the rule file's folder as an absolute path. A rule file that cannot
 /// be found, a path outside its folder, a base that does not resolve or a report that cannot be built is a usage error

@@ -1,0 +1,32 @@
+{
+  "cLanguageStandard" : null,
+  "cxxLanguageStandard" : null,
+  "defaultLocalization" : null,
+  "dependencies" : [
+
+  ],
+  "name" : "Probe",
+  "packageKind" : {
+    "root" : [
+      "/private/var/folders/zc/zl4w__wx2xdfmd5lps9dp2000000gn/T/periphery-fixture.oZrmcRC1fV"
+    ]
+  },
+  "pkgConfig" : null,
+  "platforms" : [
+
+  ],
+  "products" : [
+
+  ],
+  "providers" : null,
+  "swiftLanguageVersions" : null,
+  "targets" : [
+
+  ],
+  "toolsVersion" : {
+    "_version" : "6.0.0"
+  },
+  "traits" : [
+
+  ]
+}
