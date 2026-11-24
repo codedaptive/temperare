@@ -1,0 +1,1 @@
+Level config file phar:///opt/homebrew/Cellar/phpstan/2.3.7/bin/phpstan/conf/config.level11.neon was not found.

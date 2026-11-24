@@ -1,0 +1,4 @@
+(node:3164) [stylelint:101] ExperimentalWarning: The suppressions feature is experimental.
+See https://stylelint.io/user-guide/suppressions for more information.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[{"source":"/private/tmp/tm-stylelint-fixtures/syn/broken.css","deprecations":[],"invalidOptionWarnings":[],"parseErrors":[],"errored":true,"warnings":[{"line":1,"column":1,"rule":"CssSyntaxError","severity":"error","text":"Unclosed block (CssSyntaxError)"}]}]

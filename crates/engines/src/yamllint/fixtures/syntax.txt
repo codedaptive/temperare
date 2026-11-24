@@ -1,0 +1,2 @@
+bad.yaml:1:1: [warning] missing document start "---" (document-start)
+bad.yaml:2:1: [error] syntax error: expected ',' or ']', but got '<stream end>' (syntax)

@@ -1,0 +1,71 @@
+Real actionlint output captured in a throwaway git repository, /tmp/tm-actionlint-capture (`git init -q`, nothing
+committed), removed afterwards. Nothing reached the network.
+Version: /opt/homebrew/bin/actionlint; `actionlint -version` prints exactly these lines on stdout, exit 0:
+1.7.12
+installed from Homebrew
+built with go1.27.1 compiler for darwin/arm64
+ShellCheck on PATH: /opt/homebrew/bin/shellcheck, `version: 0.11.0`. pyflakes is not installed.
+Every run was made in /tmp/tm-actionlint-capture with SHELLCHECK_OPTS removed (`env -u SHELLCHECK_OPTS`) and the
+format template TEMPLATE = {"kinds":{{json allKinds}},"errors":{{json .}}}. `filepath` is the path as passed, relative
+to the working folder.
+
+findings.json (stdout), exit 1:
+actionlint -no-color -format TEMPLATE -config-file=/dev/null -shellcheck= -pyflakes= -- .github/workflows/ci.yml .github/workflows/release.yml
+
+clean.json (stdout), exit 0:
+actionlint -no-color -format TEMPLATE -config-file=/dev/null -shellcheck= -pyflakes= -- .github/workflows/clean.yml
+
+shellcheck.json (stdout), exit 1, with PATH=/opt/homebrew/bin:/usr/bin:/bin:
+actionlint -no-color -format TEMPLATE -config-file=/dev/null -shellcheck=shellcheck -pyflakes= -- .github/workflows/shell.yml
+
+A config actionlint cannot parse (quoted in parse_actionlint_tests.rs, not kept as a file), exit 3, stdout empty:
+actionlint -no-color -format TEMPLATE -config-file=bad-config.yaml -shellcheck= -pyflakes= -- .github/workflows/clean.yml
+stderr, exactly:
+could not parse config file "bad-config.yaml": yaml: line 1: did not find expected ',' or ']'
+
+The files, each ending in a newline:
+.github/workflows/ci.yml:
+name: CI
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          nonexistent-input: value
+      - run: echo "${{ unknown.x }}"
+
+.github/workflows/release.yml:
+name: Release
+on: push
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-versio: 20
+      - run: echo "${{ github.nope }}"
+
+.github/workflows/clean.yml:
+name: Clean
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hello
+
+.github/workflows/shell.yml:
+name: Shell
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo $FOO
+
+bad-config.yaml:
+self-hosted-runner:
+  labels: [a

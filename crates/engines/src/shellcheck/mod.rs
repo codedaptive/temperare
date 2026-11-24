@@ -6,7 +6,6 @@
 
 mod code_list;
 mod is_shell_shebang;
-mod no_script_listed;
 mod parse_shellcheck;
 mod read_code_list;
 mod read_head;
@@ -23,8 +22,6 @@ mod shellcheck_version;
 mod integration;
 #[cfg(test)]
 mod is_shell_shebang_tests;
-#[cfg(test)]
-mod no_script_listed_tests;
 #[cfg(test)]
 mod parse_shellcheck_tests;
 #[cfg(test)]
@@ -46,7 +43,6 @@ mod shellcheck_version_tests;
 
 pub(crate) use code_list::CodeList;
 pub(crate) use is_shell_shebang::is_shell_shebang;
-pub(crate) use no_script_listed::no_script_listed;
 pub use parse_shellcheck::parse_shellcheck;
 pub(crate) use read_code_list::read_code_list;
 pub(crate) use read_head::read_head;

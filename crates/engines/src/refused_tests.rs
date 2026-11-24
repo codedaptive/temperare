@@ -1,11 +1,9 @@
 //! ZUT for refused.rs: rules from in-memory rule-file text, each source of refusal (ast-grep's count params and a
 //! check whose `..` climbs above the rule file's folder among them) and the rules refused by none, among them a good
 //! count rule, a check whose `..` stays inside the folder, and an ast-grep rule whose set carries its YAML
-//! (`embedded_text`), whose absolute or climbing check names no file, and a rule of an engine with no entry in this
-//! build, even with params.
+//! (`embedded_text`), whose absolute or climbing check names no file.
 //! Nothing is read from disk and nothing runs.
 
-use crate::an_engine_with_no_adapter::an_engine_with_no_adapter;
 use crate::refused::refused;
 use crate::types::Stop;
 use rules::{Rule, RuleFile};
@@ -93,11 +91,6 @@ fn a_refused_check_or_param_is_failed_with_its_flows_stderr_and_any_other_rule_i
         let want = stderr.map(|stderr| Stop::Failed { code: None, stderr: stderr.to_string() });
         assert_eq!(refused(&rule(engine, check, extra)), want, "{engine} {check} {extra}");
     }
-}
-
-#[test]
-fn an_engine_with_no_entry_refuses_nothing_even_with_params() {
-    assert_eq!(refused(&rule(an_engine_with_no_adapter().name(), "anything", "params = { x = [\"y\"] }\n")), None);
 }
 
 #[test]

@@ -13,16 +13,22 @@ use std::path::Path;
 /// otherwise findings are cut to the files and folders it lists, a folder keeping what lies under it (engines still
 /// run over the folder). A rule tm refuses (its check or params, ast-grep's `{{name}}` params apart) is `Failed`
 /// first, whatever its engine; a ShellCheck rule with no script in its paths, a cargo-audit rule with no Cargo.lock in
-/// its folder or paths, or a clang-tidy rule with no C-family source in its paths, is no findings with the `no_files` flag, even if its engine is absent; any other rule with `only_with_base` and no `base`, whose paths match a listed file
-/// or where no listing is made, is `NotAvailable` with `rules::ONLY_WITH_BASE_WHY`, whatever its engine, and its check
-/// never runs; an absent engine is `NotAvailable` with `availability`'s why; a check the engine does not know is
-/// `NotAvailable` with a why naming the engine, its version
-/// and the check; an engine that ran but gave no answer is `Failed`; otherwise `Findings`, empty when clean. A run's
-/// `raw_chars` is what its check run printed, `None` when no run was counted for it; its `Some` values count the check
-/// runs, not the rules. `engines` is each
-/// distinct engine the rules name, once, in first-appearance order, with the version its probe read (`None` when the
-/// engine is not available, has no probe, the folder cannot be resolved, or the probe gave none). Each available
-/// engine is probed once per check, before the rules run; no `raw_chars` counts a probe.
+/// its folder or paths, a clang-tidy rule with no C-family source in its paths, a PMD rule with no Java file in them,
+/// a mypy rule with no Python file in them, a detekt rule with no Kotlin source in them, a dart rule with no .dart
+/// file in them, a phpstan rule with no PHP file in them, an actionlint rule with no workflow in them, a sqlfluff
+/// rule with no SQL file in them, a hadolint rule with no Dockerfile in them, a yamllint rule with no YAML file in
+/// them, a vale rule with no file in a format Vale reads in them, a stylelint rule with no CSS file in them, or a
+/// markdownlint rule with no Markdown file in them, is no findings with the `no_files` flag, even if its engine is
+/// absent; any other rule with `only_with_base` and no `base`, whose paths match a listed file or where no listing
+/// is made, is `NotAvailable` with `rules::ONLY_WITH_BASE_WHY`, whatever its engine, and its check never runs; an
+/// absent engine is `NotAvailable` with `availability`'s why; a check the engine does not know is `NotAvailable`
+/// with a why naming the engine, its version and the check; an engine that ran but gave no answer is `Failed`;
+/// otherwise `Findings`, empty when clean. A run's `raw_chars` is what its check run printed, `None` when no run was
+/// counted for it; its `Some` values count the check runs, not the rules. `engines` is each distinct engine the
+/// rules name, once, in
+/// first-appearance order, with the version its probe read (`None` when the engine is not available, has no probe,
+/// the folder cannot be resolved, or the probe gave none). Each available engine is probed once per check, before
+/// the rules run; no `raw_chars` counts a probe.
 ///
 /// `base` is the commit the check compares against (cli's `--base`), as cli gives it, `None` without one. It goes into
 /// the check's host (`check_host`), and every rule's run is given it there (`Host::base`), a rule of a shared group

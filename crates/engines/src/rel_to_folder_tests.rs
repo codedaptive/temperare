@@ -1,4 +1,5 @@
-//! ZUT for rel_to_folder.rs: absolute and relative engine paths made relative to the rule file's folder.
+//! ZUT for rel_to_folder.rs: absolute and relative engine paths made relative to the rule file's folder, with `.`
+//! dropped and `..` folded before the folder check.
 
 use crate::rel_to_folder::rel_to_folder;
 use rules::RelPath;
@@ -35,4 +36,19 @@ fn an_absolute_path_outside_the_folder_is_none() {
 #[test]
 fn a_sibling_folder_sharing_the_name_prefix_is_outside() {
     assert_eq!(rel_to_folder(Path::new("/w"), Path::new("/w/repo"), "/w/repo2/a.rs"), None);
+}
+
+#[test]
+fn dot_dot_is_folded_before_the_folder_check() {
+    let rows: [(&str, &str, &str, &str, Option<&str>); 5] = [
+        ("relative_dot_dot_leaves_the_folder", "/w/crate", "/w/crate/sub", "sub/../../x/lib.rs", None),
+        ("leading_dot_dot_from_the_folder", "/w/repo", "/w/repo", "../x.rs", None),
+        ("absolute_dot_dot_leaves_the_folder", "/w/repo", "/w/repo", "/w/repo/sub/../../other/x.h", None),
+        ("absolute_dot_dot_stays_inside", "/w/repo", "/w/repo", "/w/repo/src/../include/x.h", Some("include/x.h")),
+        ("cwd_below_the_folder_dot_dot_back_in", "/w/repo/sub", "/w/repo", "../a.rs", Some("a.rs")),
+    ];
+    for (name, cwd, folder, raw, want) in rows {
+        let got = rel_to_folder(Path::new(cwd), Path::new(folder), raw);
+        assert_eq!(got, want.map(RelPath::new), "row {name}");
+    }
 }

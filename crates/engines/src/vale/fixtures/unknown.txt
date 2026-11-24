@@ -1,0 +1,7 @@
+{
+  "Line": 0,
+  "Path": "",
+  "Text": "invalid operation: int(unknown) (1:86)\n | filter(Rules, {.Name == \"Vale.Speling\" || (none(Rules, {.Name == \"Vale.Speling\"}) \u0026\u0026 int(\"unknown\") == 0)})\n | .....................................................................................^",
+  "Code": "E100",
+  "Span": 0
+}

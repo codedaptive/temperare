@@ -1,0 +1,405 @@
+How each fixture in this folder was made: real detekt output, saved unedited.
+
+Version (`detekt --version`): 1.23.8
+Program: /opt/homebrew/bin/detekt (a script that sets JAVA_HOME to Homebrew's openjdk@21 when unset, then runs the jar)
+Root: /private/tmp/tm-detekt-fix (/tmp is a link to /private/tmp; each command ran with the /private/tmp form, and
+detekt wrote that form in its URIs). Removed afterwards.
+
+<layer> is <root>/layer/magic_number.yml, tm's config layer for the check `MagicNumber`, written by hand to match
+detekt_layer's output:
+    config:
+      validation: true
+      excludes: ''
+    output-reports:
+      active: true
+    style:
+      active: true
+      excludes: []
+      includes: []
+      MagicNumber:
+        active: true
+        excludes: []
+        includes: []
+        ignoreAnnotated: []
+
+magic_number.sarif: the report file, exit 2 (console findings on stdout, stderr empty).
+  cwd: <root>/magic
+  files:
+    src/Demo.kt: package demo / fun area(r: Double): Double { return r * r * 3.14159 } (five lines)
+  command: detekt --input src/Demo.kt --config <layer> --report sarif:<root>/magic_number.sarif
+
+clean.sarif: the report file, exit 0 (stdout held the complexity report, stderr empty).
+  cwd: <root>/clean
+  files:
+    src/Clean.kt: package demo / const val ONE = 1
+  command: detekt --input src/Clean.kt --config <layer> --report sarif:<root>/clean.sarif
+
+unknown_rule.txt: stdout, exit 3 (stderr empty, no report file written).
+  cwd: <root>/unknown
+  files:
+    src/Demo.kt: as in magic_number.sarif
+    detekt.yml: style: / NoSuchRule: / active: true
+  command: detekt --input src/Demo.kt --config <root>/unknown/detekt.yml,<layer> --report sarif:<root>/unknown.sarif
+
+Facts measured without saving a fixture. Same detekt (`detekt --version`: 1.23.8), each in a throwaway folder
+<m> = /private/tmp/tm-detekt-kong, removed afterwards.
+
+The baseline id of the ZIT's MagicNumber finding (tests/detekt.rs, repo_baseline_is_not_applied): exit 0.
+  cwd: <m>/base
+  files:
+    src/Demo.kt: the ZIT's DEMO text, as in magic_number.sarif
+  command: detekt --input <m>/base/src --create-baseline --baseline <m>/base/b.xml
+  b.xml's CurrentIssues (no config, so detekt's in-code defaults):
+    <ID>InvalidPackageDeclaration:Demo.kt$package demo</ID>
+    <ID>MagicNumber:Demo.kt$3.14159</ID>
+
+AbsentOrWrongFileLicense with no license template: exit 1, stdout empty, no report file written.
+  cwd: <m>/lic
+  files:
+    src/Demo.kt: as above
+    layer.yml: tm's layer for the check `AbsentOrWrongFileLicense`, as detekt_layer writes it (the MagicNumber layer
+      above with `comments:` in place of `style:` and `AbsentOrWrongFileLicense:` in place of `MagicNumber:`)
+  command: detekt --input src/Demo.kt --config <m>/lic/layer.yml --report sarif:<m>/lic/r.sarif
+  stderr, its first two lines (a Java stack trace follows, from LicenceHeaderLoaderExtension.onStart):
+    java.lang.IllegalArgumentException: Rule 'AbsentOrWrongFileLicense': License template file not found at `/private/tmp/tm-detekt-kong/lic/license.template`.
+    Create file license header file or check your running path.
+
+A Kotlin file that does not parse is still analysed: exit 2, MagicNumber found at 4:13, stderr empty.
+  cwd: <m>/broken
+  files:
+    src/Broken.kt: package demo / (blank) / fun broken( { / val x = 3.14159 (four lines, the brace never closed)
+    layer.yml: the MagicNumber layer above
+  command: detekt --input src/Broken.kt --config <m>/broken/layer.yml --report sarif:<m>/broken/r.sarif
+  stdout: "1 kotlin file was analyzed." and
+    /private/tmp/tm-detekt-kong/broken/src/Broken.kt:4:13: This expression contains a magic number. Consider defining it to a well named constant. [MagicNumber]
+  report: one result, ruleId detekt.style.MagicNumber, startLine 4, startColumn 13.
+
+Layer probes: the claims in detekt_layer.rs's doc. Same detekt (`detekt --version`: 1.23.8), run fresh in
+<root> = /private/tmp/tm-detekt-layer, left in place, by /private/tmp/tm-detekt-scripts/layer_probes.sh (also left).
+Every case folder holds the same two files:
+  src/Demo.kt: package demo / (blank) / annotation class Mark / (blank) / fun area(r: Int): Int { / return r * 42 /
+    } / (blank) / @Mark / fun other(x: Int): Int { / return x * 77 / } (twelve lines; the numbers on lines 6 and 11)
+  src/Other.kt: package demo / (blank) / fun twice(r: Int): Int { / return r * 55 / } (five lines; the number on line 4)
+<root>/layer.yml is tm's layer for MagicNumber, the same text as <layer> above. Each case runs its repo.yml alone,
+then repo.yml followed by the layer. "MagicNumber hits" are the report's detekt.style.MagicNumber results, file:line;
+"output" lines are the run's stdout and stderr lines naming a property.
+
+control: repo.yml:
+    style:
+      active: true
+      MagicNumber:
+        active: true
+  command (cwd <root>/control): detekt --config <root>/control/repo.yml --input src --report sarif:<root>/control/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Demo.kt:6, Demo.kt:11, Other.kt:4
+  command (cwd <root>/control): detekt --config <root>/control/repo.yml,<root>/layer.yml --input src --report sarif:<root>/control/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Demo.kt:6, Demo.kt:11, Other.kt:4
+
+validation-off: repo.yml:
+    config:
+      validation: false
+    style:
+      active: true
+      MagicNumber:
+        active: true
+        bogusKey: 3
+  command (cwd <root>/validation-off): detekt --config <root>/validation-off/repo.yml --input src --report sarif:<root>/validation-off/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Demo.kt:6, Demo.kt:11, Other.kt:4
+  command (cwd <root>/validation-off): detekt --config <root>/validation-off/repo.yml,<root>/layer.yml --input src --report sarif:<root>/validation-off/r.sarif
+    exit 3; no SARIF file written
+    output: Property 'style>MagicNumber>bogusKey' is misspelled or does not exist.
+    output: Run failed with 1 invalid config property.
+    output: 	- Property 'style>MagicNumber>bogusKey' is misspelled or does not exist.
+
+validation-excluded: repo.yml:
+    config:
+      validation: true
+      excludes: 'style>.*>bogusKey'
+    style:
+      active: true
+      MagicNumber:
+        active: true
+        bogusKey: 3
+  command (cwd <root>/validation-excluded): detekt --config <root>/validation-excluded/repo.yml --input src --report sarif:<root>/validation-excluded/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Demo.kt:6, Demo.kt:11, Other.kt:4
+  command (cwd <root>/validation-excluded): detekt --config <root>/validation-excluded/repo.yml,<root>/layer.yml --input src --report sarif:<root>/validation-excluded/r.sarif
+    exit 3; no SARIF file written
+    output: Property 'style>MagicNumber>bogusKey' is misspelled or does not exist.
+    output: Run failed with 1 invalid config property.
+    output: 	- Property 'style>MagicNumber>bogusKey' is misspelled or does not exist.
+
+reports-off: repo.yml:
+    output-reports:
+      active: false
+    style:
+      active: true
+      MagicNumber:
+        active: true
+  command (cwd <root>/reports-off): detekt --config <root>/reports-off/repo.yml --input src --report sarif:<root>/reports-off/r.sarif
+    exit 2; no SARIF file written
+  command (cwd <root>/reports-off): detekt --config <root>/reports-off/repo.yml,<root>/layer.yml --input src --report sarif:<root>/reports-off/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Demo.kt:6, Demo.kt:11, Other.kt:4
+
+reports-exclude: repo.yml:
+    output-reports:
+      exclude: ['SarifOutputReport']
+    style:
+      active: true
+      MagicNumber:
+        active: true
+  command (cwd <root>/reports-exclude): detekt --config <root>/reports-exclude/repo.yml --input src --report sarif:<root>/reports-exclude/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Demo.kt:6, Demo.kt:11, Other.kt:4
+
+set-inactive: repo.yml:
+    style:
+      active: false
+      MagicNumber:
+        active: true
+  command (cwd <root>/set-inactive): detekt --config <root>/set-inactive/repo.yml --input src --report sarif:<root>/set-inactive/r.sarif
+    exit 0; SARIF written; MagicNumber hits: none
+  command (cwd <root>/set-inactive): detekt --config <root>/set-inactive/repo.yml,<root>/layer.yml --input src --report sarif:<root>/set-inactive/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Demo.kt:6, Demo.kt:11, Other.kt:4
+
+rule-inactive: repo.yml:
+    style:
+      active: true
+      MagicNumber:
+        active: false
+  command (cwd <root>/rule-inactive): detekt --config <root>/rule-inactive/repo.yml --input src --report sarif:<root>/rule-inactive/r.sarif
+    exit 0; SARIF written; MagicNumber hits: none
+  command (cwd <root>/rule-inactive): detekt --config <root>/rule-inactive/repo.yml,<root>/layer.yml --input src --report sarif:<root>/rule-inactive/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Demo.kt:6, Demo.kt:11, Other.kt:4
+
+rule-excludes: repo.yml:
+    style:
+      active: true
+      MagicNumber:
+        active: true
+        excludes: ['**/Demo.kt']
+  command (cwd <root>/rule-excludes): detekt --config <root>/rule-excludes/repo.yml --input src --report sarif:<root>/rule-excludes/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Other.kt:4
+  command (cwd <root>/rule-excludes): detekt --config <root>/rule-excludes/repo.yml,<root>/layer.yml --input src --report sarif:<root>/rule-excludes/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Demo.kt:6, Demo.kt:11, Other.kt:4
+
+rule-includes: repo.yml:
+    style:
+      active: true
+      MagicNumber:
+        active: true
+        includes: ['**/Other.kt']
+  command (cwd <root>/rule-includes): detekt --config <root>/rule-includes/repo.yml --input src --report sarif:<root>/rule-includes/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Other.kt:4
+  command (cwd <root>/rule-includes): detekt --config <root>/rule-includes/repo.yml,<root>/layer.yml --input src --report sarif:<root>/rule-includes/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Demo.kt:6, Demo.kt:11, Other.kt:4
+
+rule-ignore-annotated: repo.yml:
+    style:
+      active: true
+      MagicNumber:
+        active: true
+        ignoreAnnotated: ['Mark']
+  command (cwd <root>/rule-ignore-annotated): detekt --config <root>/rule-ignore-annotated/repo.yml --input src --report sarif:<root>/rule-ignore-annotated/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Demo.kt:6, Other.kt:4
+  command (cwd <root>/rule-ignore-annotated): detekt --config <root>/rule-ignore-annotated/repo.yml,<root>/layer.yml --input src --report sarif:<root>/rule-ignore-annotated/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Demo.kt:6, Demo.kt:11, Other.kt:4
+
+set-excludes: repo.yml:
+    style:
+      active: true
+      excludes: ['**/Demo.kt']
+      MagicNumber:
+        active: true
+  command (cwd <root>/set-excludes): detekt --config <root>/set-excludes/repo.yml --input src --report sarif:<root>/set-excludes/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Other.kt:4
+  command (cwd <root>/set-excludes): detekt --config <root>/set-excludes/repo.yml,<root>/layer.yml --input src --report sarif:<root>/set-excludes/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Demo.kt:6, Demo.kt:11, Other.kt:4
+
+set-includes: repo.yml:
+    style:
+      active: true
+      includes: ['**/Other.kt']
+      MagicNumber:
+        active: true
+  command (cwd <root>/set-includes): detekt --config <root>/set-includes/repo.yml --input src --report sarif:<root>/set-includes/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Other.kt:4
+  command (cwd <root>/set-includes): detekt --config <root>/set-includes/repo.yml,<root>/layer.yml --input src --report sarif:<root>/set-includes/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Demo.kt:6, Demo.kt:11, Other.kt:4
+
+set-ignore-annotated: repo.yml:
+    style:
+      active: true
+      ignoreAnnotated: ['Mark']
+      MagicNumber:
+        active: true
+  command (cwd <root>/set-ignore-annotated): detekt --config <root>/set-ignore-annotated/repo.yml --input src --report sarif:<root>/set-ignore-annotated/r.sarif
+    exit 3; no SARIF file written
+    output: Property 'style>ignoreAnnotated' is misspelled or does not exist.
+    output: Run failed with 1 invalid config property.
+    output: 	- Property 'style>ignoreAnnotated' is misspelled or does not exist.
+  command (cwd <root>/set-ignore-annotated): detekt --config <root>/set-ignore-annotated/repo.yml,<root>/layer.yml --input src --report sarif:<root>/set-ignore-annotated/r.sarif
+    exit 3; no SARIF file written
+    output: Property 'style>ignoreAnnotated' is misspelled or does not exist.
+    output: Run failed with 1 invalid config property.
+    output: 	- Property 'style>ignoreAnnotated' is misspelled or does not exist.
+
+layer-alone: no repository config
+  command (cwd <root>/layer-alone): detekt --config <root>/layer.yml --input src --report sarif:<root>/layer-alone/r.sarif
+    exit 2; SARIF written; MagicNumber hits: Demo.kt:6, Demo.kt:11, Other.kt:4
+
+Rule-list probes: the claims in detekt_rules.txt's header; a baseline the engine is not given; what detekt's --help
+says of exit codes. Same detekt, run fresh in <root> = /private/tmp/tm-detekt-list, left in place. src/Demo.kt in
+each folder is the five-line Demo.kt of magic_number.sarif.
+
+gen: cwd <root>/gen
+  command: detekt --generate-config --config <root>/gen/gen.yml
+    exit 0; stdout: Successfully copied default config to <root>/gen/gen.yml
+  command: grep -cE '^  [A-Z][A-Za-z]*:$' <root>/gen/gen.yml
+    output: 210
+
+sarif-rules: cwd <root>/sarif (src/Demo.kt: the five-line Demo.kt of magic_number.sarif), no config
+  command: detekt --input src --report sarif:<root>/sarif/r.sarif
+    exit 0
+  command: python3 -I <counts> <root>/sarif/r.sarif <root>/gen/gen.yml, where <counts> reads runs[0].tool.driver.rules[].id,
+  cuts `detekt.`, and compares with the two-space keys under each rule set of gen.yml (the script that ran every
+  probe in this section, <counts> included, is /private/tmp/tm-detekt-scripts/list_probes.sh, left in place)
+    rules: 214 distinct: 214 rule sets: 9 {'comments': 10, 'complexity': 15, 'coroutines': 7, 'empty-blocks': 15, 'exceptions': 14, 'naming': 21, 'performance': 6, 'potential-bugs': 38, 'style': 88}
+    rule names in two sets: []
+    in the SARIF, not in gen.yml: ['potential-bugs.DuplicateCaseInWhenExpression', 'potential-bugs.MissingWhenCase', 'potential-bugs.RedundantElseInWhen', 'style.OptionalWhenBraces']
+    in gen.yml, not in the SARIF: []
+
+deprecated: cwd <root>/deprecated (src/Demo.kt as above); layer.yml is tm's layer as detekt_layer writes it for
+the check DuplicateCaseInWhenExpression,MissingWhenCase,RedundantElseInWhen,OptionalWhenBraces:
+    config:
+      validation: true
+      excludes: ''
+    output-reports:
+      active: true
+    potential-bugs:
+      active: true
+      excludes: []
+      includes: []
+      DuplicateCaseInWhenExpression:
+        active: true
+        excludes: []
+        includes: []
+        ignoreAnnotated: []
+      MissingWhenCase:
+        active: true
+        excludes: []
+        includes: []
+        ignoreAnnotated: []
+      RedundantElseInWhen:
+        active: true
+        excludes: []
+        includes: []
+        ignoreAnnotated: []
+    style:
+      active: true
+      excludes: []
+      includes: []
+      OptionalWhenBraces:
+        active: true
+        excludes: []
+        includes: []
+        ignoreAnnotated: []
+  command: detekt --config <root>/deprecated/layer.yml --input src --report sarif:<root>/deprecated/r.sarif
+    exit 0; SARIF written; stderr bytes: 0
+    output (a line containing "is deprecated"): Property 'style>OptionalWhenBraces' is deprecated. Same functionality is implemented in BracesOnWhenStatements.
+    output (a line containing "is deprecated"): Property 'potential-bugs>MissingWhenCase' is deprecated. Rule deprecated as compiler performs this check by default.
+    output (a line containing "is deprecated"): Property 'potential-bugs>RedundantElseInWhen' is deprecated. Rule deprecated as compiler performs this check by default.
+    output (a line containing "is deprecated"): Property 'potential-bugs>DuplicateCaseInWhenExpression' is deprecated. Rule deprecated as compiler performs this check by default.
+
+baseline: cwd <root>/baseline (src/Demo.kt as above); layer.yml is tm's layer for MagicNumber (above)
+  command: detekt --config layer.yml --input src --create-baseline --baseline detekt-baseline.xml
+    exit 0; detekt-baseline.xml CurrentIssues:
+      <ID>MagicNumber:Demo.kt$3.14159</ID>
+  command: detekt --config layer.yml --input src --report sarif:<root>/baseline/with.sarif --baseline detekt-baseline.xml
+    exit 0; MagicNumber hits: none
+  command (the folder still holds detekt-baseline.xml): detekt --config layer.yml --input src --report sarif:<root>/baseline/without.sarif
+    exit 2; MagicNumber hits: Demo.kt:4
+
+help: detekt --help, exit 0
+  command: grep -n -i -A2 -e '--max-issues' -e 'exit' <help>
+    69:    --max-issues
+    70:      Return exit code 0 only when found issues count does not exceed 
+    71-      specified issues count.
+    72-    --parallel
+  command: grep -c -i 'exit' <help>
+    output: 1
+
+In-code suppression and usage-error probes (detekt 1.23.8, a throwaway <root>)
+suppress: <root>/src/Demo.kt is
+    package demo
+
+    @Suppress("MagicNumber")
+    fun area(r: Double): Double {
+        return r * r * 3.14159
+    }
+
+    fun other(r: Double): Double {
+        return r * 2.71828
+    }
+  layer.yml is tm's layer for MagicNumber (above).
+  command: detekt --input src/Demo.kt --config layer.yml --report sarif:<root>/out.sarif
+    exit 2; MagicNumber hits: Demo.kt:9 only (line 5, under @Suppress, is not reported even with tm's layer)
+usage: an option detekt does not take in that form
+  command: detekt --input src/Demo.kt --config=layer.yml
+    exit 1; first line: Was passed main parameter '--config=layer.yml' but no main parameter was defined in your arg class
+
+Type resolution probes: the claims in detekt_typed_rules.txt's header and typed_why.rs. Same detekt (`detekt
+--version`: 1.23.8), in a throwaway <root> = /private/tmp/tm-detekt-tr (the listing run again, with the same files, in
+/private/tmp/tm-detekt-tr2, to save its output below), both removed afterwards. tm passes no --classpath.
+  files:
+    src/Dep.kt: the ZIT's type_resolution_rule_is_not_available text:
+      package demo / @Deprecated("use newer") / fun older(): Int = 1 / fun caller(): Int = older()
+    dep.yml: tm's layer for the check `Deprecation`, as detekt_layer writes it (`potential-bugs:` with
+      `Deprecation:` under it, each active with empty excludes, includes and, for the rule, ignoreAnnotated)
+    all.yml: first `config:` with `validation: true` and `excludes: ''`; then each of the 9 sets of
+      detekt_rules.txt with `active: true`, and under it each of its rules with `active: true` and no other key: 213
+      rules, all of detekt_rules.txt but comments.AbsentOrWrongFileLicense, which all.yml does not name (with it active
+      detekt exits 1 when there is no license template; see AbsentOrWrongFileLicense above)
+Deprecation, no --debug: exit 0, stderr empty, the report's results empty; stdout says nothing of type resolution.
+  command: detekt --input src/Dep.kt --config <root>/dep.yml --report sarif:<root>/dep.sarif
+Deprecation, --debug: exit 0, stderr empty, the report's results empty; stdout holds the line
+    .The rule 'Deprecation' requires type resolution but it was run without it.
+  command: detekt --input src/Dep.kt --config <root>/dep.yml --debug --report sarif:<root>/depd.sarif
+The listing: exit 2, stderr empty; stdout holds one such line per rule that needs type resolution, 67 lines.
+  command: detekt --input src/Dep.kt --config <root>/all.yml --debug --report sarif:<root>/all.sarif > all.out
+  names: grep 'requires type resolution but it was run without it' all.out | sed -E "s/.*rule '([^']+)'.*/\1/" | sort
+    printed these 67 names, one per line (here 4 to a line); detekt_typed_rules.txt is each written as <set>.<Rule>
+    from detekt_rules.txt:
+      ArrayPrimitive AvoidReferentialEquality BooleanPropertyNaming CanBeNonNullable
+      CastNullableToNonNullableType CouldBeSequence Deprecation DontDowncastCollectionTypes
+      DoubleMutabilityForCollection ElseCaseInsteadOfExhaustiveWhen ExitOutsideMain ExplicitCollectionElementAccessMethod
+      ForbiddenAnnotation ForbiddenMethodCall ForbiddenVoid HasPlatformType
+      IgnoredReturnValue ImplicitUnitReturnType InjectDispatcher MaxChainedCallsOnSameLine
+      MissingWhenCase MultilineLambdaItParameter NamedArguments NestedScopeFunctions
+      NoNameShadowing NonBooleanPropertyPrefixedWithIs NullCheckOnMutableProperty NullableBooleanCheck
+      NullableToStringCall ObjectExtendsThrowable ObjectLiteralToLambda PreferToOverPairSyntax
+      PropertyUsedBeforeDeclaration RedundantElseInWhen RedundantExplicitType RedundantHigherOrderMapUsage
+      RedundantSuspendModifier ReplaceSafeCallChainWithRun ReturnFromFinally SleepInsteadOfDelay
+      SuspendFunSwallowedCancellation SuspendFunWithCoroutineScopeReceiver SuspendFunWithFlowReturnType UnnecessaryAbstractClass
+      UnnecessaryApply UnnecessaryBracesAroundTrailingLambda UnnecessaryFilter UnnecessaryInnerClass
+      UnnecessaryLet UnnecessaryNotNullCheck UnnecessaryNotNullOperator UnnecessarySafeCall
+      UnreachableCatchBlock UnreachableCode UnsafeCallOnNullableType UnsafeCast
+      UnusedUnaryOperator UseAnyOrNoneInsteadOfFind UseCheckNotNull UseEmptyCounterpart
+      UseIfEmptyOrIfBlank UseIsNullOrEmpty UseOrEmpty UseRequireNotNull
+      UseSumOfInsteadOfFlatMapSize UselessCallOnNotNull VarCouldBeVal
+The 214th rule, AbsentOrWrongFileLicense, which the listing leaves out: exit 2, stderr empty, no stdout line saying
+"requires type resolution", one result. So 213 rules from the listing plus this one: 67 of the 214 need type
+resolution. Run in a throwaway <lic> = /private/tmp/tm-detekt-r2/lic, removed afterwards.
+  files:
+    src/One.kt: package demo / (blank) / fun one(): Int = 1
+    license.template: /* demo licence */
+    layer.yml: tm's layer for the check `AbsentOrWrongFileLicense`, as detekt_layer writes it, plus
+      `licenseTemplateFile: 'license.template'` under the rule
+  command: detekt --input src/One.kt --config layer.yml --debug --report sarif:out.sarif
+  result: detekt.comments.AbsentOrWrongFileLicense at 1:1, "Expected license not found or incorrect in the file:
+    /private/tmp/tm-detekt-r2/lic/src/One.kt."
+
+A set with no typed rule runs as a set (`empty-blocks`): exit 2, stderr empty, one result. Run in a throwaway
+<empty> = /private/tmp/tm-detekt-r2/empty, removed afterwards.
+  files:
+    src/Empty.kt: package demo / (blank) / fun nothing() { / }
+    layer.yml: tm's layer for the check `empty-blocks`, as detekt_layer writes it (the set and its 15 rules)
+  command: detekt --input src/Empty.kt --config layer.yml --report sarif:out.sarif
+  result: detekt.empty-blocks.EmptyFunctionBlock at 3:15, "This empty block of code can be removed."

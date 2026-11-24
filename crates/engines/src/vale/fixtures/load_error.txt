@@ -1,0 +1,8 @@
+E201 Invalid value [/private/tmp/tm-vale-capture/bad/.vale.ini:1:14]:
+
+   1* StylesPath = styles
+   2  BasedOnStyles = Vale
+
+The StylesPath '/private/tmp/tm-vale-capture/bad/styles' doesn't exist.
+
+Execution stopped with code 2.

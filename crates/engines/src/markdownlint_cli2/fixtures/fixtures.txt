@@ -1,0 +1,39 @@
+markdownlint-cli2 fixtures: real output of the installed engine, captured once, saved verbatim.
+
+markdownlint-cli2: /opt/homebrew/bin/markdownlint-cli2 (npm, /opt/homebrew/lib/node_modules/markdownlint-cli2).
+`markdownlint-cli2 --help` (exit 2) printed as its first stdout line:
+  markdownlint-cli2 v0.24.2 (markdownlint v0.42.2)
+Every case ran under /tmp/tm-mdl-capture (canonical /private/tmp/tm-mdl-capture), removed after, with tm's options
+module, the text `tm_options` gives, written as /tmp/tm-mdl-capture/opts/tm.markdownlint-cli2.cjs:
+  OPTS = --no-globs --config /tmp/tm-mdl-capture/opts/tm.markdownlint-cli2.cjs
+
+findings.json (stdout; exit 1; stderr empty)
+  folder /tmp/tm-mdl-capture, no .markdownlint* file in it
+    findings.md, lines 1-7:
+      # Title
+      (blank)
+      <!-- markdownlint-disable-next-line MD013 -->
+      word x19, then wordswords (105 characters)
+      Trailing spaces here.   (three trailing spaces)
+      (blank)
+      #Missing space
+    clean.md: `# Clean`, a blank line, `A clean line.`
+  command: markdownlint-cli2 OPTS :findings.md :clean.md
+  (the inline disable is not honoured: the options module sets noInlineConfig)
+
+notes.json (stdout; exit 1; stderr empty)
+  folder /tmp/tm-mdl-capture
+    sub/notes.markdown: `Not a heading.`
+  command: markdownlint-cli2 OPTS :clean.md :sub/notes.markdown
+
+clean.json (stdout `[]`; exit 0; stderr empty)
+  folder /tmp/tm-mdl-capture
+  command: markdownlint-cli2 OPTS :clean.md
+
+config_error.txt (stderr; exit 2)
+  folder /tmp/tm-mdl-capture/bad
+    .markdownlint.json: {"MD013":   (cut short: no value, no closing brace)
+    a.md: `# Bad`
+  command: markdownlint-cli2 OPTS :a.md
+  stdout, verbatim (the banner: the options module was not applied yet), one line:
+    markdownlint-cli2 v0.24.2 (markdownlint v0.42.2)

@@ -5,6 +5,7 @@
 use crate::git_stop::git_stop;
 use crate::is_regular_file::is_regular_file;
 use crate::rel_to_folder::rel_to_folder;
+use crate::repo_top::repo_top;
 use crate::types::Stop;
 use rules::RelPath;
 use std::ops::Range;
@@ -27,18 +28,16 @@ const BINARY_SPAN: usize = 8000;
 /// anything else (a symlink, dangling or not, a path under a symlinked folder, a FIFO, a folder git lists as one entry
 /// such as an untracked nested repository `inner/`) is skipped, not an error.
 ///
-/// git keys both listings from the repository's top, which is canonicalized so it shares `folder`'s form before
-/// `rel_to_folder` cuts it off; a file outside `folder` is dropped. git runs through procio, not the host, so nothing
-/// is counted. A git error is `git_stop`'s `Stop`; a kept regular untracked file that cannot be read is `Failed` with
+/// git keys both listings from the repository's top (`repo_top`), which `rel_to_folder` cuts off; a file outside
+/// `folder` is dropped. git runs through procio, not the host, so nothing is counted. A git error is `git_stop`'s
+/// `Stop`; a kept regular untracked file that cannot be read is `Failed` with
 /// no exit code, naming it.
 pub(crate) fn change_of(
     folder: &Path,
     base: &str,
     keep: &dyn Fn(&RelPath) -> bool,
 ) -> Result<Vec<(RelPath, Vec<Range<u32>>)>, Stop> {
-    let top = procio::toplevel(folder).map_err(git_stop)?;
-    let top = std::fs::canonicalize(&top)
-        .map_err(|err| failed(format!("cannot resolve the repository top {}: {err}", top.display())))?;
+    let top = repo_top(folder)?;
     let mut change: Vec<(RelPath, Vec<Range<u32>>)> = procio::added_lines(folder, base, &[])
         .map_err(git_stop)?
         .into_iter()

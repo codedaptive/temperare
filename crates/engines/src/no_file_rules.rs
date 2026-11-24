@@ -14,8 +14,11 @@ use std::path::Path;
 /// settles as no-file before any engine runs, each with the why its `RuleRun::no_files` carries. A rule tm refuses
 /// is left out; a rule with `only_with_base` is included as tm check includes it. The folder and its listings are
 /// the ones tm check makes, so outside a git repository, or when the rule file's folder does not resolve, the list is
-/// empty. Runs no engine; it runs git to list the folder's files, scripts and a clang-tidy rule's C-family sources,
-/// and reads the disk for a cargo-audit rule's Cargo.lock.
+/// empty. Runs no engine; it runs git to list the folder's files, scripts, a clang-tidy rule's C-family sources, a
+/// PMD rule's Java files, a mypy rule's Python sources, a detekt rule's Kotlin sources, a dart rule's .dart files, a
+/// phpstan rule's PHP files, an actionlint rule's workflows, a sqlfluff rule's SQL files, a hadolint rule's
+/// Dockerfiles, a yamllint rule's YAML files, a vale rule's files in a format Vale reads, a stylelint rule's CSS
+/// files and a markdownlint rule's Markdown files, and reads the disk for a cargo-audit rule's Cargo.lock.
 pub fn no_file_rules(file: &RuleFile, repo: &Path) -> Vec<NoFileRule> {
     let folder = rule_folder(file, repo).ok();
     let files = folder.as_deref().and_then(files_in_folder);

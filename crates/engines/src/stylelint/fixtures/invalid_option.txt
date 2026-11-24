@@ -1,0 +1,4 @@
+(node:3970) [stylelint:101] ExperimentalWarning: The suppressions feature is experimental.
+See https://stylelint.io/user-guide/suppressions for more information.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[{"source":"/private/tmp/tm-stylelint-fixtures/inv/a.css","deprecations":[],"invalidOptionWarnings":[{"text":"Invalid option value \"medium\" for rule \"color-hex-length\""}],"parseErrors":[],"errored":true,"warnings":[]}]

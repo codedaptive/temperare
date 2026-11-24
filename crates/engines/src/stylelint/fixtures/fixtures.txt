@@ -1,0 +1,89 @@
+Stylelint fixtures: real output of the installed stylelint, captured once, saved verbatim.
+
+stylelint: /opt/homebrew/bin/stylelint, `stylelint --version` printed `18.1.0` (stdout, exit 0).
+Each case ran in its own folder under /tmp/tm-stylelint-fixtures (canonical /private/tmp/tm-stylelint-fixtures),
+removed after. ARGS below is the entry's fixed arguments; SUP is the suppressions file the flow appends, here
+/tmp/tm-stylelint-fixtures/empty-suppressions.json holding `{}`:
+  ARGS = --formatter json --ignore-disables --ignore-path=/dev/null --disable-default-ignores --allow-empty-input --no-cache
+  SUP  = --suppress-location=/tmp/tm-stylelint-fixtures/empty-suppressions.json
+Every run given SUP that prints a report prints NODE_WARNING (below) on stderr before it, with its own pid. The report is one
+line with no newline after it. Stdout was empty in every check run.
+
+findings.txt (stderr; exit 2)
+  folder /tmp/tm-stylelint-fixtures/two
+    .stylelintrc.json: {"rules":{"color-no-invalid-hex":true,"color-hex-length":"short"}}
+    a.css:             a { color: #fff1az; }
+    b.css:             b { color: #ffffff; }
+                       a { color: #12345g; }
+  command: stylelint ARGS SUP ./a.css ./b.css
+
+clean.txt (stderr; exit 0)
+  folder /tmp/tm-stylelint-fixtures/clean
+    .stylelintrc.json: {"rules":{"color-no-invalid-hex":true}}
+    a.css:             a { color: #fff; }
+  command: stylelint ARGS SUP ./a.css
+
+report_alone.txt (stderr; exit 0): the report with no Node warning before it
+  folder /tmp/tm-stylelint-fixtures/clean (as clean.txt)
+  command: stylelint ARGS ./a.css   (no SUP)
+
+unknown.txt (stderr; exit 2)
+  folder /tmp/tm-stylelint-fixtures/unk
+    .stylelintrc.json: {"rules":{"color-no-invalid-hexx":true,"color-no-invalid-hex":true}}
+    a.css:             a { color: #fff1az; }
+  command: stylelint ARGS SUP ./a.css
+
+syntax_error.txt (stderr; exit 2)
+  folder /tmp/tm-stylelint-fixtures/syn
+    .stylelintrc.json: {"rules":{"color-no-invalid-hex":true}}
+    broken.css:        a { color: red;
+  command: stylelint ARGS SUP ./broken.css
+
+invalid_option.txt (stderr; exit 2)
+  folder /tmp/tm-stylelint-fixtures/inv
+    .stylelintrc.json: {"rules":{"color-hex-length":"medium"}}
+    a.css:             a { color: #FFF; }
+  command: stylelint ARGS SUP ./a.css
+
+ignored.txt (stderr; exit 0)
+  folder /tmp/tm-stylelint-fixtures/ign
+    .stylelintrc.json: {"ignoreFiles":["a.css"],"rules":{"color-no-invalid-hex":true}}
+    a.css:             a { color: #fff1az; }
+  command: stylelint ARGS SUP ./a.css
+
+autofixed.txt (stderr; exit 0); a.css read `a { color: #FFFFFF; }` after the run
+  folder /tmp/tm-stylelint-fixtures/fix
+    .stylelintrc.json: {"fix":true,"rules":{"color-hex-length":"long"}}
+    a.css:             a { color: #FFF; }
+  command: stylelint ARGS SUP ./a.css
+
+config_error.txt (stderr; exit 78): a ConfigurationError, text with a stack, not JSON
+  folder /tmp/tm-stylelint-fixtures/cfgerr
+    .stylelintrc.json: {"extends":"nope-config","rules":{"color-no-invalid-hex":true}}
+    a.css:             a { color: #fff; }
+  command: stylelint ARGS SUP ./a.css
+
+print_config_rules.json (stdout; exit 0; stderr empty): a rule on, a rule null, an option, an unknown rule
+  folder /tmp/tm-stylelint-fixtures/pc
+    .stylelintrc.json: {"rules":{"color-no-invalid-hex":true,"color-named":null,"color-hex-length":"short","color-no-invalid-hexx":{"x":1}}}
+    a.css:             a { color: #fff; }
+  command: stylelint --print-config ./a.css
+
+print_config_fix.json (stdout; exit 0; stderr empty)
+  folder /tmp/tm-stylelint-fixtures/fix (as autofixed.txt; run after it, with the config unchanged)
+  command: stylelint --print-config ./a.css
+
+print_config_quiet.json (stdout; exit 0; stderr empty)
+  folder /tmp/tm-stylelint-fixtures/quiet
+    .stylelintrc.json: {"quiet":true,"rules":{"color-no-invalid-hex":[true,{"severity":"warning"}]}}
+    a.css:             a { color: #fff; }
+  command: stylelint --print-config ./a.css
+
+print_config_error.txt (stderr; exit 78; stdout empty)
+  folder /tmp/tm-stylelint-fixtures/cfgerr (as config_error.txt)
+  command: stylelint --print-config ./a.css
+
+NODE_WARNING: what Node prints on stderr before a report when SUP is given (any exit with a report; a ConfigurationError run prints none):
+(node:<pid>) [stylelint:101] ExperimentalWarning: The suppressions feature is experimental.
+See https://stylelint.io/user-guide/suppressions for more information.
+(Use `node --trace-warnings ...` to show where the warning was created)

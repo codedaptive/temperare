@@ -1,0 +1,87 @@
+How each fixture in this folder was made: real sqlfluff output (stdout, or stderr where said), saved unedited.
+
+Version (`sqlfluff --version`): sqlfluff, version 4.5.0
+Program: /opt/homebrew/bin/sqlfluff
+Root: /tmp/sqlfluff-fixtures.E2gbEN (made with `mktemp -d /tmp/sqlfluff-fixtures.XXXXXX`, removed afterwards), one
+folder per fixture, each the run's cwd. Every run had HOME set to the root and XDG_CONFIG_HOME, PYTHONPATH and
+PYTHONUSERBASE removed, as `sqlfluff_cmd` sets them. No config at the root.
+
+Command, in each folder (SQLFLUFF's command as `sqlfluff_cmd` builds it with no config):
+  sqlfluff lint --format json --nocolor --disable-progress-bar --disable-noqa --disregard-sqlfluffignores
+    --exclude-rules= --ignore= --rules=<check> -- <files>
+<check> is LT01 unless said.
+
+Unless said, a folder's .sqlfluff is:
+  [sqlfluff]
+  dialect = ansi
+
+findings.json: stdout, exit 1, stderr empty.
+  cwd: <root>/findings
+  files: a.sql clean.sql sub/b.sql
+  a.sql:
+    SELECT a  FROM t
+  clean.sql:
+    SELECT a FROM t
+  sub/b.sql:
+    SELECT
+        a  +  b
+    FROM t
+
+clean.json: stdout, exit 0, stderr empty.
+  cwd: <root>/clean
+  files: a.sql
+  a.sql:
+    SELECT a FROM t
+
+unparsable.json: stdout, exit 1, stderr empty.
+  cwd: <root>/unparsable
+  files: a.sql b.sql
+  a.sql:
+    SELECT FROM WHERE (((
+  b.sql:
+    SELECT a  FROM t
+
+warnings.json: stdout, exit 0, stderr empty.
+  cwd: <root>/warnings
+  files: a.sql
+  .sqlfluff:
+    [sqlfluff]
+    dialect = ansi
+    warnings = LT01
+  a.sql:
+    SELECT a  FROM t
+
+unknown_rule.txt: STDERR, exit 0. <check> is NOPE99.
+  cwd: <root>/unknown
+  files: a.sql
+  a.sql:
+    SELECT a  FROM t
+  stdout: the JSON array with a.sql and "violations": [] (no rule ran).
+
+no_dialect.txt: STDERR, exit 2, stdout empty.
+  cwd: <root>/nodialect
+  files: a.sql
+  no .sqlfluff
+  a.sql:
+    SELECT a  FROM t
+
+large_file.txt: STDERR, exit 0. stdout was `[]` and a newline: the file is absent from the report.
+  cwd: <root>/large
+  files: big.sql
+  big.sql: the line `SELECT a FROM t;` 1500 times (25500 bytes, over the default large_file_skip_byte_limit 20000)
+
+dbt: STDOUT and STDERR below, exit 2; no fixture file (nothing reads it).
+  Root: /tmp/sqlfluff-fixtures.SxW6Qa (made and removed as above, with the same environment).
+  cwd: <root>/dbt
+  files: .sqlfluff a.sql
+  .sqlfluff:
+    [sqlfluff]
+    dialect = ansi
+    templater = dbt
+  a.sql:
+    SELECT a  FROM t
+  command: /opt/homebrew/bin/sqlfluff lint --format json --nocolor --disable-progress-bar --disable-noqa --disregard-sqlfluffignores --exclude-rules= --ignore= --rules=LT01 -- a.sql
+  stdout:
+    Error loading config: Requested templater 'dbt' which is not currently available. Try one of raw, jinja, python, placeholder
+  stderr:
+    Starting in sqlfluff version 0.7.0 the dbt templater is distributed as a separate python package. Please pip install sqlfluff-templater-dbt to use it.

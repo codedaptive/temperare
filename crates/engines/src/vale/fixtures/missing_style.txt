@@ -1,0 +1,7 @@
+{
+  "Line": 5,
+  "Path": "wrap/.vale.ini",
+  "Text": "Style 'Gone' isn't on the StylesPath (/private/tmp/tm-vale-capture/gone/styles).",
+  "Code": "E201",
+  "Span": 17
+}

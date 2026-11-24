@@ -1,0 +1,14 @@
+
+Oops! Something went wrong! :(
+
+ESLint: 10.15.0
+
+A configuration object specifies rule "@typescript-eslint/no-explicit-any", but could not find plugin "@typescript-eslint".
+
+Common causes of this problem include:
+
+1. The "@typescript-eslint" plugin is not defined in your configuration file.
+2. The "@typescript-eslint" plugin is not defined within the same configuration object in which the "@typescript-eslint/no-explicit-any" rule is applied.
+
+(node:1279) ESLintEmptyConfigWarning: Running ESLint with an empty config (from /private/tmp/tm-eslint-fixtures/uc/eslint.config.mjs). Please double-check that this is what you want. If you want to run ESLint with an empty config, export [{}] to remove this warning.
+(Use `node --trace-warnings ...` to show where the warning was created)

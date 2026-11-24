@@ -1,0 +1,2 @@
+{"file": "a.py", "line": 1, "column": 0, "end_line": 1, "end_column": 1, "message": "Cannot find implementation or library stub for module named \"nosuchmodule\"", "hint": "See https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-imports", "code": "import-not-found", "severity": "error"}
+{"file": "a.py", "line": 8, "column": 2, "end_line": 8, "end_column": 5, "message": "Argument 1 to \"f\" has incompatible type \"str\"; expected \"int\"", "hint": null, "code": "arg-type", "severity": "error"}

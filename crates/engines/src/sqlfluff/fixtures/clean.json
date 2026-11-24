@@ -1,0 +1,1 @@
+[{"filepath": "a.sql", "violations": [], "statistics": {"source_chars": 16, "templated_chars": 16, "segments": 24, "raw_segments": 13}, "timings": {"templating": 0.0004152500187046826, "lexing": 0.008000582980457693, "parsing": 0.003016500035300851, "linting": 0.0006097909645177424, "LT01": 0.000514333019964397}}]

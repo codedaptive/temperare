@@ -1,0 +1,89 @@
+{
+  "doc.md": [
+    {
+      "Action": {
+        "Name": "suggest",
+        "Params": [
+          "spellings"
+        ]
+      },
+      "Suggestions": [],
+      "Span": [
+        3,
+        10
+      ],
+      "Check": "Vale.Spelling",
+      "Description": "",
+      "Link": "",
+      "Message": "Did you really mean 'sentense'?",
+      "Severity": "error",
+      "Match": "sentense",
+      "Line": 1
+    },
+    {
+      "Action": {
+        "Name": "edit",
+        "Params": [
+          "truncate",
+          " "
+        ]
+      },
+      "Suggestions": [
+        "is"
+      ],
+      "Span": [
+        6,
+        10
+      ],
+      "Check": "Vale.Repetition",
+      "Description": "",
+      "Link": "",
+      "Message": "'is' is repeated!",
+      "Severity": "error",
+      "Match": "is is",
+      "Line": 3
+    },
+    {
+      "Action": {
+        "Name": "suggest",
+        "Params": [
+          "spellings"
+        ]
+      },
+      "Suggestions": [],
+      "Span": [
+        12,
+        19
+      ],
+      "Check": "Vale.Spelling",
+      "Description": "",
+      "Link": "",
+      "Message": "Did you really mean 'mispeled'?",
+      "Severity": "error",
+      "Match": "mispeled",
+      "Line": 3
+    }
+  ],
+  "sub/other.md": [
+    {
+      "Action": {
+        "Name": "suggest",
+        "Params": [
+          "spellings"
+        ]
+      },
+      "Suggestions": [],
+      "Span": [
+        9,
+        16
+      ],
+      "Check": "Vale.Spelling",
+      "Description": "",
+      "Link": "",
+      "Message": "Did you really mean 'sentense'?",
+      "Severity": "error",
+      "Match": "sentense",
+      "Line": 1
+    }
+  ]
+}

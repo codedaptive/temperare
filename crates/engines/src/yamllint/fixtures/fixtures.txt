@@ -1,0 +1,65 @@
+Real yamllint output captured in a throwaway folder, /tmp/tm-yamllint-capture, removed afterwards.
+Version: /opt/homebrew/bin/yamllint; `yamllint --version` prints exactly this line on stdout:
+yamllint 1.38.0
+Every run was made in /tmp/tm-yamllint-capture unless a probe below names another folder.
+
+findings.txt (stdout; stderr empty), exit 1 (an error-level finding is in it):
+yamllint -f parsable -d '{extends: default, rules: {"truthy": {ignore-from-file: []}}}' -- a.yaml b.yml c:3.yaml
+
+syntax.txt (stdout; stderr empty), exit 1:
+yamllint -f parsable -d '{extends: default, rules: {"truthy": {ignore-from-file: []}}}' -- bad.yaml
+
+no_such_rule.txt (stderr; stdout empty), exit 255:
+yamllint -f parsable -d '{extends: default, rules: {"nosuch": {ignore-from-file: []}}}' -- a.yaml
+
+Probes, no fixture kept:
+- the findings.txt flags given only c.yaml and b.yml (warnings only) print b.yml's truthy line and exit 0.
+- `rules: {"yes": {ignore-from-file: []}}` prints `invalid config: no such rule: "yes"` on stderr and exits 255:
+  the quoted key reaches yamllint as the string `yes`, not a boolean.
+- `extends: "/tmp/tm-yamllint-capture/missing.yaml"` prints a Python traceback ending
+  `FileNotFoundError: [Errno 2] No such file or directory: '/tmp/tm-yamllint-capture/missing.yaml'` on stderr and
+  exits 1, the same code as "errors found".
+- a copy of .yamllint in a folder named `sp "q\b<TAB>t`, given as
+  `extends: "/tmp/tm-yamllint-capture/sp \"q\\b\x09t/.yamllint"` with `--list-files -- a.yaml b.yml c.yaml`, prints
+  a.yaml and c.yaml and exits 0: the double-quoted scalar with `\"`, `\\` and `\x09` escapes names that file.
+- in a second throwaway folder, /tmp/tm-yamllint-probe, a raw U+007F in the extends path prints
+  `invalid config: unacceptable character #x007f: special characters are not allowed` and exits 255; so does a raw
+  U+0080 (`#x0080`); written `\x7F` the same path loads. A raw U+2028 in the path loads. U+FFFE is refused raw and
+  as `￾` alike (`#xfffe`), and macOS cannot make a file name holding it.
+- in a third throwaway folder, /tmp/tm-yamllint-ignore-probe (removed afterwards), with a.yaml `key: yes`, b.yml
+  `---` / `other: on`, and a .yamllint the same as below (its top-level `ignore` names b.yml):
+  yamllint -f parsable -d '{extends: "/tmp/tm-yamllint-ignore-probe/.yamllint", ignore: [], rules: {"truthy": {ignore-from-file: []}}}' -- a.yaml b.yml
+  prints a.yaml's document-start and truthy lines and `b.yml:2:8: [warning] truthy value should be one of [false,
+  true] (truthy)`, stderr empty, exit 0: the `-d` text's `ignore: []` replaces the base's, so b.yml's finding comes
+  back. The same command without `ignore: []` prints a.yaml's two lines only (b.yml dropped), exit 0. The same text
+  with the base at `.../sp \"q\\b\x09t/.yamllint` (a copy of that .yamllint) prints the same three lines, exit 0.
+- in /tmp/tm-yamllint-inherited-4pwzzlgq (removed afterwards), .yamllint is `extends: base.yaml`, base.yaml is
+  `extends: default` / `ignore: |` / `  a.yaml`, and a.yaml is `key: yes`:
+  yamllint -f parsable -d '{extends: "/tmp/tm-yamllint-inherited-4pwzzlgq/.yamllint", ignore: [], rules: {"truthy": {ignore-from-file: []}}}' -- a.yaml
+  prints `a.yaml:1:1: [warning] missing document start "---" (document-start)` and
+  `a.yaml:1:6: [warning] truthy value should be one of [false, true] (truthy)`, stderr empty, exit 0. Without
+  `ignore: []` stdout and stderr are empty, exit 0: the `-d` text's `ignore: []` replaces the inherited `ignore`.
+
+a.yaml:
+key: yes
+long: "this value is written out long enough that the line runs past eighty characters"
+
+b.yml:
+---
+other: on
+plain: true
+
+c:3.yaml:
+flag: no
+
+bad.yaml:
+a: [1, 2
+
+c.yaml:
+---
+flag: false
+
+.yamllint:
+extends: default
+ignore: |
+  b.yml

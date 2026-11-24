@@ -1,0 +1,55 @@
+ESLint fixtures: real output of the installed eslint, captured once, saved verbatim.
+
+eslint: /opt/homebrew/bin/eslint, `eslint --version` printed `v10.15.0`.
+Each case ran in its own folder under /tmp/tm-eslint-fixtures (canonical /private/tmp/tm-eslint-fixtures), removed
+after. ARGS below is the entry's fixed arguments:
+  ARGS = --format json --no-inline-config --no-ignore --pass-on-unpruned-suppressions --no-error-on-unmatched-pattern
+The `--rule` value is the one run_eslint_with inserts, `{"<check>":"error"}`, passed as one argument.
+
+no_var_and_unused.json (stdout; exit 1; stderr empty)
+  folder /tmp/tm-eslint-fixtures/nv
+    eslint.config.mjs: export default [{ rules: { "no-unused-vars": "error" } }];
+    example.js:        var x = 1;
+                       let y = 2;
+  command: eslint ARGS --rule {"no-var":"error"} .
+
+suppressed.json (stdout; exit 0)
+  folder /tmp/tm-eslint-fixtures/sup
+    eslint.config.mjs: export default [];
+    example.js:        var x = 1;
+                       console.log(x);
+  first: eslint --suppress-rule no-var --rule no-var:error .   (exit 0) wrote eslint-suppressions.json:
+    {"example.js": {"no-var": {"count": 1}}}
+  command: eslint ARGS --rule {"no-var":"error"} .
+  stderr: EMPTY_CONFIG_WARNING (below), with `(node:451)` and this folder's config path.
+
+fatal.json (stdout; exit 1)
+  folder /tmp/tm-eslint-fixtures/fat
+    eslint.config.mjs: export default [];
+    broken.js:         var = ;
+  command: eslint ARGS --rule {"no-var":"error"} .
+  stderr, verbatim:
+(node:898) ESLintEmptyConfigWarning: Running ESLint with an empty config (from /private/tmp/tm-eslint-fixtures/fat/eslint.config.mjs). Please double-check that this is what you want. If you want to run ESLint with an empty config, export [{}] to remove this warning.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+no_files.json (stdout `[]`; exit 0)
+  folder /tmp/tm-eslint-fixtures/nf/src, config outside it (a rule's `config`, which the entry passes as --config=)
+    src/notes.txt:         no JavaScript here
+    cfg/eslint.config.mjs: export default [];
+  command: eslint ARGS --config=/tmp/tm-eslint-fixtures/nf/cfg/eslint.config.mjs --rule {"no-var":"error"} .
+  stderr: EMPTY_CONFIG_WARNING, with `(node:999)` and the config path as given.
+
+unknown_core.txt (stderr; exit 2; stdout empty)
+  folder /tmp/tm-eslint-fixtures/uc
+    eslint.config.mjs: export default [];
+    example.js:        const x = 1;
+                       console.log(x);
+  command: eslint ARGS --rule {"no-such-rule-xyz":"error"} .
+
+unknown_plugin.txt (stderr; exit 2; stdout empty)
+  folder /tmp/tm-eslint-fixtures/uc (as unknown_core, no plugin loaded)
+  command: eslint ARGS --rule {"@typescript-eslint/no-explicit-any":"error"} .
+
+EMPTY_CONFIG_WARNING: what Node prints on stderr when the config is `export default [];` (any exit):
+(node:<pid>) ESLintEmptyConfigWarning: Running ESLint with an empty config (from <config path>). Please double-check that this is what you want. If you want to run ESLint with an empty config, export [{}] to remove this warning.
+(Use `node --trace-warnings ...` to show where the warning was created)

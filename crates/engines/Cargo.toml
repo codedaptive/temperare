@@ -10,6 +10,7 @@ rules = { path = "../rules" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 regex-syntax = "0.8"
+saphyr-parser = { version = "0.4", default-features = false }
 toml = "1"
 
 [target.'cfg(unix)'.dependencies]
