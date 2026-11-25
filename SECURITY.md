@@ -12,7 +12,11 @@ These are properties of the code, not of how it is deployed.
   command line are never passed to git or to an engine: they only cut the result.
 - **A rule's value is passed as a value, not as an option.** A `check`, `config` or `params.allow` value that
   begins with `-` is a problem in the rule file, and nothing runs. Each value reaches its engine joined to its own
-  flag, as in `--select=<check>`.
+  flag, as in `--select=<check>`. Where an engine has no such flag, the `check` goes inside text `tm` writes
+  (ESLint's `--rule` JSON, yamllint's `-d` config, Vale's `--filter` expression and wrapper config, detekt's config
+  layer, the options of dart's probe package), and it is held to a narrow set of characters first, so it cannot end
+  that text. A `config` path written into such text is quoted there (PHPStan's wrapper config, yamllint's `-d`
+  config), and a PHPStan config path that holds `'`, `%` or a line break fails the rule.
 - **An ast-grep rule file is read only from inside the rule file's folder.** A `check` that is an absolute path, or
   that resolves outside the folder through `..` or a symlink, fails the rule and ast-grep is not run. On Unix the
   file is opened one path component at a time from that folder, following no symlink, and a file with a second
@@ -25,10 +29,17 @@ These are properties of the code, not of how it is deployed.
 - **The sources listed for a clang-tidy rule never include a symlink.** `tm` picks them among the files git lists
   in the rule file's folder by their extension, keeps only regular files that are not symlinks, and reads none of
   them itself.
+- **The files handed to mypy, PMD, detekt, PHPStan, actionlint, sqlfluff, hadolint, yamllint, Vale, stylelint and
+  markdownlint-cli2 never include a symlink.** `tm` picks them by name or extension among the files git lists in
+  the rule file's folder (the tracked files, and the untracked files git does not ignore), keeps only regular
+  files that are not symlinks, and reads none of them itself. A file's name is kept apart from the options: the
+  files come after `--` for mypy, PHPStan, actionlint, sqlfluff, hadolint, yamllint and Vale, as `./<file>` for
+  stylelint, as `:<file>` for markdownlint-cli2, in a list file for PMD, and as the value of `--input` for detekt.
+  ESLint, RuboCop and dart are handed the folder instead, and their own config decides which files they read.
 - **One place starts programs.** Everything Temperare runs, git included, goes through one small crate, `procio`.
   The repository's own rule file holds that line: a rule reports any other code that starts a process.
 - **It does not edit what it checks.** `tm check` and `tm rules` write to stdout and stderr. `tm check` creates
-  temporary files in the system's temporary folder for four kinds of rule, and only for them:
+  temporary files in the system's temporary folder for twelve kinds of rule, and only for them:
   - an ast-grep rule that gets as far as its scan (each one, with or without `params`): a copy of its rule file
     with its params filled in, `tm-ast-grep-<pid>-<n>.yml`;
   - a SwiftLint rule with `max_complexity` or `max_lines`: the threshold as a SwiftLint config,
@@ -38,19 +49,46 @@ These are properties of the code, not of how it is deployed.
   - a Periphery rule that gets as far as its run: a new folder `tm-periphery-<pid>-<n>` holding the package's
     build and its index, a scratch path for each local package's manifest reading, SwiftPM's description of the
     package and an empty Periphery config. Nothing is built in
-    the repository or in DerivedData.
+    the repository or in DerivedData;
+  - a PMD rule that gets as far as its run: the list of the files PMD is to read, `tm-pmd-files-<pid>-<n>.txt`;
+  - a detekt rule that gets as far as its run: a config layer, `tm-detekt-<pid>-<n>.yml`, and an empty file,
+    `tm-detekt-report-<pid>-<n>.sarif`, which detekt is told to write its report to;
+  - a PHPStan rule that gets as far as its run: a new folder `tm-phpstan-<pid>-<n>` holding a wrapper config
+    `tm.neon`, and beside it the `cache` folder PHPStan is told to keep its own temporary files in;
+  - a dart rule that gets as far as its probe: a new folder `tm-dart-probe-<pid>-<n>` holding a `pubspec.yaml` and
+    an `analysis_options.yaml`, a package of Temperare's own that dart is run in once to learn what the check is;
+  - a hadolint rule that gets as far as its run with no `config` of its own and no `.hadolint.yaml` or
+    `.hadolint.yml` in the rule file's folder: an empty config, `tm-hadolint-config-<pid>-<n>.yaml`;
+  - a Vale rule that gets as far as its check run: a new folder `tm-vale-<pid>-<n>` holding a wrapper config
+    `.vale.ini`;
+  - a stylelint rule that gets as far as its check run: an empty suppressions file,
+    `tm-stylelint-suppressions-<pid>-<n>.json`;
+  - a markdownlint rule that gets as far as its run: a new folder `tm-markdownlint-<pid>-<n>` holding an options
+    module `tm.markdownlint-cli2.cjs`, a few lines of JavaScript of Temperare's own that markdownlint-cli2 loads.
 
-  Each is created new, never opened over an existing file or folder, and removed when the run of that rule ends. If
-  `tm` is killed in between, it is left there. No config file of the repository is written. A ruff threshold is
-  passed as an argument, and a ShellCheck, git, pylint, clang-tidy, golangci-lint, gitleaks, cargo-audit or vulture
-  rule writes no file. A
+  Each is created new, never opened over an existing file or folder, and removed when the run of that rule ends
+  (the dart package as soon as its probe has run). A folder is removed with the files Temperare wrote in it;
+  PHPStan's `cache` and everything in the Periphery folder are removed too. If an engine left anything else in one
+  of the other folders, that folder stays, with what the engine left. If `tm` is killed in between, it is left
+  there. No config file of the repository is written. A ruff threshold is passed as an argument, and a ShellCheck,
+  git, pylint, clang-tidy, golangci-lint, gitleaks, cargo-audit, vulture, ESLint, mypy, RuboCop, actionlint,
+  sqlfluff or yamllint rule writes no file. The runs are told to write no cache: mypy with
+  `--cache-dir=/dev/null`, PMD with `--no-cache`, RuboCop with `--cache false` (and `--no-server`, so it starts no
+  server) and stylelint with `--no-cache`. What an engine keeps for itself outside the repository, as dart keeps
+  its analysis cache under `~/.dartServer`, is that engine's own. A
   golangci-lint run passes `--fix=false`, so a repository config that asks golangci-lint to fix cannot edit the
-  code, and runs go with `GOFLAGS` removed, so go does not rewrite `go.mod` or `go.sum`. A rule that is refused, or
+  code, and runs go with `GOFLAGS` removed, so go does not rewrite `go.mod` or `go.sum`. A stylelint config that
+  turns on `fix` would make stylelint rewrite the files it checks, so `tm` asks stylelint for the config of each
+  file first and fails the rule before the check runs. markdownlint-cli2 is run with fixing off in Temperare's
+  options module, and a markdownlint-cli2 options file of the repository's, which could turn it back on, fails the
+  rule before the check runs. A RuboCop rule fails before its check runs when the rule file's folder holds a
+  `.rubocop` file, which RuboCop reads as more options, and `RUBOCOP_OPTS` is set empty for the check and the runs
+  after it, so neither can add an option to them, such as one that writes a file. A rule that is refused, or
   that covers no file, writes none either. Besides these, `tm check` appends one line to its savings log,
   `~/.local/state/temperare/savings.jsonl`, when an engine ran, making that folder when it is missing.
   The line holds the time, the rule file's folder as an absolute path, the verb and two token counts; no code and no
   finding.
-- **No network code.** Temperare opens no connection. Its dependencies are parsers (TOML, JSON, globs,
+- **No network code.** Temperare opens no connection. Its dependencies are parsers (TOML, JSON, YAML, globs,
   regular-expression syntax) and their support crates, and on Unix `libc`, for the calls that open a file without
   following a symlink: an ast-grep rule file, the first bytes of a file that may be a shell script, and the savings
   log.
@@ -73,14 +111,63 @@ Limits, as plainly as possible.
 **The rule file is trusted input.** `temperare.toml` decides which engines run, what each is asked, and which config
 file each is given. Temperare keeps a rule's value from being read as an engine option and keeps an ast-grep rule
 file inside the rule file's folder, as above. It does not judge what a value asks for. A `config` is handed to
-SwiftLint, ruff, ShellCheck, pylint, clang-tidy, golangci-lint or gitleaks as written and may name any file, inside the
-repository or not. An ast-grep rule file is the
+SwiftLint, ruff, ShellCheck, pylint, clang-tidy, golangci-lint, gitleaks, ESLint, RuboCop, sqlfluff or stylelint as
+written, and to mypy, detekt, PHPStan, actionlint, hadolint or yamllint as a path taken from the rule file's
+folder. Either way it may name any file, inside the repository or not, and Temperare itself opens the one given to
+mypy, actionlint or hadolint, to look for a setting that would hide findings. A Vale `config` is the exception:
+one outside the repository makes the rule not available. PMD and dart are given no `config`, and a markdownlint
+rule that names one fails. An ast-grep rule file is the
 repository's own, and ast-grep runs whatever it holds over the code. Running `tm check` in a repository is running
 that repository's instructions.
 
-**The engines are trusted programs.** Temperare finds git, cargo, SwiftLint, ruff, ast-grep, ShellCheck, pylint,
-clang-tidy, golangci-lint, go, gitleaks, cargo-audit, vulture, Periphery and swift on your `PATH` and runs whatever is there, with your environment and your privileges. Whoever controls `PATH` controls what runs.
-There is no sandbox.
+**The engines are trusted programs.** Temperare finds each engine's program on your `PATH` and runs whatever is
+there, with your privileges: git, cargo (with `cargo-clippy` and `clippy-driver`), SwiftLint, ruff, ast-grep,
+ShellCheck, pylint, clang-tidy, golangci-lint and go, gitleaks, cargo-audit, vulture, Periphery and swift, ESLint,
+mypy, PMD, detekt, RuboCop, PHPStan and php, dart, actionlint, sqlfluff, hadolint, yamllint, Vale, stylelint and
+markdownlint-cli2 (the program of the engine `markdownlint`). Some of them start programs of their own, found the
+same way: the `phpstan` launcher is run by `php`, and actionlint runs `shellcheck` or `pyflakes` for a rule whose
+check is that name, and neither for any other check. PMD and detekt each start a Java they find for themselves;
+`tm` looks for none. The `eslint`, `stylelint` and `markdownlint-cli2` it runs are the ones on `PATH`: it does not
+look in the repository's `node_modules/.bin`. Whoever controls `PATH` controls what runs. There is no sandbox. The
+twenty-eighth engine, Tessera, is the exception: a rule that names it is reported not available, and `tm` neither
+looks for it nor runs it.
+
+**The engines get your environment, with a few variables changed.** Temperare sets and removes the variables
+listed here and no others, so every other variable reaches the engine as you set it:
+
+- git: the twelve `GIT_*` variables that could point it at another repository, index or object store, or change
+  how it reads paths, are removed; `GIT_TERMINAL_PROMPT=0` and `GIT_OPTIONAL_LOCKS=0` are set, so it asks for no
+  credentials and takes no index lock; and `LC_ALL=C` is set, so its messages read the same in every locale;
+- clippy, for a rule with `max_nesting`: `CLIPPY_CONF_DIR` is set to Temperare's temporary folder, which holds the
+  `clippy.toml` clippy then reads;
+- ShellCheck: `SHELLCHECK_OPTS` is removed, since ShellCheck reads it as more options, which could silence a rule;
+- golangci-lint: `GOTOOLCHAIN=local`, `GOPROXY=off` and `GOSUMDB=off` are set and `GOFLAGS` is removed, which
+  keeps go local and its module files unwritten, and `PWD` is set to the folder golangci-lint runs in, which it
+  makes its paths from;
+- gitleaks: `GITLEAKS_CONFIG` and `GITLEAKS_CONFIG_TOML` are removed, so a config named there cannot take the
+  place of the rule's or the folder's;
+- vulture: `PYTHONWARNINGS=ignore` is set, so a warning Python prints for a file vulture read is not taken for a
+  failure, and a `PYTHONWARNINGS=error` of yours does not turn one into an error;
+- PMD: `CLASSPATH` is removed, since PMD's launcher would put it ahead of PMD's own rulesets;
+- detekt: `JAVA_TOOL_OPTIONS`, `JDK_JAVA_OPTIONS` and `_JAVA_OPTIONS` are removed, since each could load an agent
+  into detekt's JVM or change what it prints; `JAVA_HOME` is kept;
+- RuboCop, for the check and the runs after it that ask what the config holds: `RUBOCOP_OPTS` is set empty, since
+  RuboCop reads it as more options; `http_proxy`, `https_proxy`, `HTTP_PROXY` and `HTTPS_PROXY` are set to
+  `http://127.0.0.1:9`, where nothing listens, and `no_proxy` and `NO_PROXY` are set empty;
+- actionlint: `SHELLCHECK_OPTS` is removed, for the ShellCheck it may start;
+- sqlfluff: `HOME` is set to the top of the repository, so what sqlfluff reads from `~` it reads from the
+  repository: the configs there, and in the folders between `~` and each file, are the repository's own.
+  `XDG_CONFIG_HOME`, `PYTHONPATH` and `PYTHONUSERBASE` are removed, so no user config and no Python package is
+  taken from where they point;
+- hadolint: thirteen `HADOLINT_*` variables are removed by name, the ones hadolint 2.15.1 reads,
+  `HADOLINT_IGNORE` and `HADOLINT_DISABLE_IGNORE_PRAGMA` among them. A variable a later hadolint adds is not on
+  that list;
+- Vale: the run that reads the repository's config (`vale ls-config`) has `PWD` removed, so Vale takes its folder
+  from the system. The check run's environment is not changed.
+
+ESLint, mypy, PHPStan, dart, yamllint, stylelint and markdownlint-cli2 run with your environment as it is, and so
+do the engines not named above; no `NODE_PATH` is set for the three that run on Node. The question each engine is
+asked for its version is put with your environment as it is, too: none of these changes is made for it.
 
 **A clippy rule builds the code.** `cargo clippy` compiles the crate. A build runs that crate's build scripts and
 procedural macros, and cargo may download its dependencies. That is code from the repository running as you.
@@ -97,6 +184,24 @@ makes the rule not available before anything is built.
 **A golangci-lint rule loads the code with go.** go runs with `GOTOOLCHAIN=local`, `GOPROXY=off` and `GOSUMDB=off`,
 so it downloads no toolchain and no module and looks up no checksum; code that needs a module not already on the
 machine fails its rule.
+
+**A RuboCop config is not fetched from the network.** The RuboCop runs that read the repository's config have
+their proxy variables pointed at an address where nothing listens (above), so a config whose `inherit_from` names
+a URL fails its rule instead of being fetched. RuboCop's version is asked with `--force-default-config`, which
+reads no config file. Other single doors are shut in the same way: a PMD `check` that is a ruleset file or a URL
+is refused, mypy is never passed `--install-types`, dart runs with `--suppress-analytics`, and Temperare never
+runs `dart pub get` or `vale sync`. A Dart package whose dependencies were never fetched is reported not
+available where dart needs them, and a Vale style must already be on the repository's `StylesPath`, or be Vale's
+built-in one. None of this is a sandbox: an engine that reaches the network some other way is not stopped.
+
+**An engine's config can name code, and the engine runs it.** ESLint's config is a JavaScript module that ESLint
+loads. A stylelint config can name plugins, a PHPStan config bootstrap files, a sqlfluff config a templater, and
+each engine loads what its config names, as you. Temperare passes no flag that stops this and does not read a
+config for what it would load. It sets no `NODE_PATH`, so the plugins an ESLint or stylelint config names are
+resolved as they are when you run that engine yourself. Two cases are refused: a markdownlint rule fails before
+its check runs when a `.markdownlint.cjs` or `.mjs` config applies to one of its files, or when a
+markdownlint-cli2 options file is where markdownlint-cli2 would read it; and for sqlfluff, `PYTHONPATH` and
+`PYTHONUSERBASE` are removed, as above.
 
 **A cargo-audit rule is as current as its advisory database.** cargo-audit runs with `--no-fetch` and
 `--no-yanked`, so it reaches no network: it reads the RustSec advisory database already at
@@ -135,13 +240,105 @@ reports. The exceptions:
 - a vulture run passes `--config=/dev/null`, so the `[tool.vulture]` table of the repository's `pyproject.toml` is
   not read;
 - a Periphery run passes `--config` naming an empty file Temperare writes, so the package's `.periphery.yml` is not
-  read.
+  read;
+- an ESLint run passes `--no-inline-config` and `--no-ignore`, so an `eslint-disable` comment and the config's
+  `ignores` silence nothing; a finding that an `eslint-suppressions.json` hides is read from ESLint's output and
+  reported like any other;
+- a mypy run always names its config with `--config-file=`: the rule's `config`, else the one Temperare finds
+  from the rule file's folder up to the top of the repository (`mypy.ini`, `.mypy.ini`, a `pyproject.toml` with a
+  `[tool.mypy]` table, a `setup.cfg` with a `[mypy]` section), else none, so mypy makes no search of its own and
+  reads no config from your home folder. The rule fails before mypy runs when that config sets `ignore_errors`
+  true in any section, lists the check under `disable_error_code` in a per-module section, or sets
+  `ignore_missing_imports` true when the check is `import-not-found` or `import-untyped`;
+- a PMD run reads no ruleset file: a rule's `config` does not reach PMD, and `--suppress-marker` renames PMD's
+  `// NOPMD` marker to a text no code carries, so that comment silences nothing;
+- a detekt run is given, after the rule's `config` or the folder's `detekt.yml`, a config layer Temperare writes,
+  which wins key by key: it turns the rule's checks and their rule sets on and empties their `excludes` and
+  `includes`, and each check's `ignoreAnnotated`. No `--baseline` is passed;
+- a RuboCop run passes `--ignore-disable-comments`, so `# rubocop:disable` and `# rubocop:todo` comments silence
+  nothing. The rule fails when a `.rubocop_todo.yml` the config reads names a cop of the check, when the config
+  gives such a cop an `Exclude` entry RuboCop's stock config does not have, or when its `AllCops` `Exclude` or
+  `Include` leaves out a file the rule covers that the stock config inspects;
+- a PHPStan run is pointed at a wrapper config Temperare writes, which includes the repository's own (the rule's
+  `config`, else the first PHPStan config file in the rule file's folder) and empties its `ignoreErrors`, a
+  baseline's entries with them, and its `excludePaths`;
+- a dart rule fails when an `analysis_options.yaml` that governs its folder, or a file one of them includes, holds
+  an `exclude` key or an `ignore` value, or is read from outside the repository (a `package:` include apart),
+  since dart cannot be told to pass over any of these;
+- an actionlint run always names its config with `-config-file=`: the rule's `config`, else
+  `.github/actionlint.yaml` or `.github/actionlint.yml` at the top of the repository, else `/dev/null`. The rule
+  fails when that config holds an `ignore`, which actionlint would apply whatever it is told;
+- a sqlfluff run passes `--disable-noqa` and `--disregard-sqlfluffignores`, and empty `--exclude-rules=` and
+  `--ignore=`, so `-- noqa` comments, `.sqlfluffignore` files and a config's `exclude_rules` and `ignore` silence
+  nothing;
+- a hadolint run always names its config with `--config=`: the rule's `config`, else the rule file's folder's
+  `.hadolint.yaml` or `.hadolint.yml`, else an empty file Temperare writes, so no hadolint config elsewhere on
+  your machine is read. It passes `--disable-ignore-pragma`, so `# hadolint ignore=` comments silence nothing, and
+  the rule fails before hadolint runs when the config lists anything under `ignored`;
+- a yamllint run is given its whole config as text with `-d`, in place of yamllint's own search. The text extends
+  the rule's `config`, else the nearest `.yamllint`, `.yamllint.yaml` or `.yamllint.yml` from the rule file's
+  folder up to the top of the repository, else yamllint's `default`; it turns the check on and empties the
+  config's `ignore` and `ignore-from-file`, and the check's own;
+- a Vale run passes `--no-global` and is pointed at a wrapper config Temperare writes, which takes only the
+  `StylesPath` and the `Vocab` from the repository's config, so that config's skip keys, its sections and their
+  `Style.Rule = NO` lines do not apply. A config Vale would read from outside the repository makes the rule not
+  available;
+- a stylelint run passes `--ignore-disables`, `--ignore-path=/dev/null` and `--disable-default-ignores` and is
+  pointed at an empty suppressions file Temperare writes, so `stylelint-disable` comments, a `.stylelintignore`
+  and a `stylelint-suppressions.json` silence nothing. The rule fails when the config turns the check off for
+  some of its files, turns on `quiet` or `fix`, or leaves one of its files out through `ignoreFiles`;
+- a markdownlint-cli2 run is given an options module Temperare writes, which turns inline config off, so
+  `<!-- markdownlint-disable -->` comments and their other forms silence nothing. The rule fails when the
+  repository has an options file of its own (`.markdownlint-cli2.jsonc`, `.yaml`, `.cjs` or `.mjs`) in the rule
+  file's folder or between it and one of the rule's files, or a config that applies to those files and that
+  Temperare cannot read (a `.jsonc`, `.cjs` or `.mjs` one, or one with `extends`). A config that turns the rule
+  off makes it not available.
+
+For some of these engines Temperare reads the repository's config itself, as data and never as code, to find a
+setting that would hide findings: the mypy, actionlint and hadolint config it names, dart's
+`analysis_options.yaml` files and what they include, markdownlint's `.markdownlint.json`, `.yaml` and `.yml`, and
+for RuboCop the `.rubocop` file and each `.rubocop_todo.yml` the config reads. For RuboCop, Vale and stylelint it
+asks the engine what the config says (`rubocop --show-cops`, `vale ls-config`, `stylelint --print-config`).
 
 **Some suppressions written in the code cannot be turned off.** vulture honours a `# noqa` comment on an item's
 line, and reads a whitelist module the repository keeps as ordinary code that uses names. Periphery honours
 `// periphery:ignore` (with `:all` or `:parameters`) and `// periphery:override`. Neither engine has a switch for
 these, so a finding they silence is not reported and not counted. A repository that takes `standard@1` gets each
 `# noqa` reported by `tm-python-suppression`; no released set reports the Periphery comments.
+
+The same holds for these, which their engines still honour and Temperare cannot turn off:
+
+- mypy: `# type: ignore` comments, the inline `# mypy: ignore-errors` and `# mypy: disable-error-code=` comments,
+  and `@typing.no_type_check`;
+- PMD: `@SuppressWarnings` naming `"PMD"`, `"PMD.<Rule>"`, `"all"` or `"unused"`;
+- detekt: `@Suppress`;
+- PHPStan: `@phpstan-ignore`, `@phpstan-ignore-line` and `@phpstan-ignore-next-line` comments;
+- dart: `// ignore: <code>` and `// ignore_for_file: <code>` comments, and their `type=lint` form;
+- actionlint and hadolint: a `# shellcheck disable=` comment inside a workflow's `run:` script or a Dockerfile's
+  `RUN` script;
+- sqlfluff: `-- sqlfluff:` directives written in a file, such as `-- sqlfluff:exclude_rules:` and
+  `-- sqlfluff:rules:`;
+- yamllint: `# yamllint disable`, `disable-line` and `disable-file` comments;
+- Vale: `<!-- vale off -->` and `<!-- vale Style.Rule = NO -->` comments.
+
+`tm-python-suppression` reports each `# type: ignore`; no released set reports the others. The comments of
+ESLint, RuboCop, stylelint and markdownlint are turned off, as above, and so are PMD's `// NOPMD`, sqlfluff's
+`-- noqa` and hadolint's `# hadolint ignore=`.
+
+**Some settings in a repository's config are still applied.** Each is a stated limit and does not fail the rule:
+
+- RuboCop: a `.rubocop.yml` in a subfolder applies its own todo file and `Exclude` lists to the files under it,
+  and only the config of the rule file's folder is examined. A cop's `Include` can narrow it to fewer files than
+  RuboCop's stock one, and only `Exclude` lists are compared;
+- PHPStan: a config's `stubFiles` that names a file handed over keeps that file from being analysed, and a service
+  the config tags `phpstan.ignoreErrorExtension` can drop errors;
+- Vale: the repository's `Vocab` still applies;
+- yamllint: a config above the rule file's folder has its relative `extends` and `ignore-from-file` resolved from
+  the rule file's folder, where yamllint runs, not from beside the config;
+- sqlfluff, yamllint and stylelint: `tm` picks the files by the engine's stock names, so a file a config adds
+  through `sql_file_exts` or `yaml-files` is not checked, and stylelint is handed `.css` files only;
+- ESLint: `--no-ignore` turns the config's `ignores` off, and ESLint's own defaults still leave out
+  `node_modules`.
 
 **There is no time limit.** Temperare waits for an engine for as long as it runs. An engine that hangs, hangs the
 check.
@@ -168,7 +365,14 @@ then reported as covering nothing, and makes the exit code 6 when nothing ranks 
 only counted as not applicable and does not change the exit code. A ShellCheck rule that covers no shell script is
 the same, and so is a cargo-audit rule whose folder has no `Cargo.lock` it covers (only the rule file's folder's own
 `Cargo.lock` is read), and so is a clang-tidy rule that covers files but no C-family source, whether or not
-clang-tidy is installed. Try a new rule on a file you know breaks it.
+clang-tidy is installed. So is a mypy, PMD, detekt, PHPStan, dart, actionlint, sqlfluff, hadolint, yamllint, Vale,
+stylelint or markdownlint rule that covers files but none of the kind its engine reads. ESLint and RuboCop
+differ: their own config decides which files they read, so a rule that covers files, none of which the engine
+read, is settled after the engine has run, and with the engine missing it is not available. A check an engine
+would run nothing for is not available either, never clean: a detekt, hadolint or markdownlint name that is not on
+the list built into `tm`, a detekt rule that needs a classpath, a dart lint that an `analysis_options.yaml`
+governing the folder does not enable, a stylelint rule its config does not turn on, a markdownlint rule its config
+turns off. Try a new rule on a file you know breaks it.
 
 **Engine messages are printed as given.** In the text output a finding's message is the engine's own text
 (gitleaks' apart, as above). The JSON output escapes it.
@@ -176,6 +380,8 @@ clang-tidy is installed. Try a new rule on a file you know breaks it.
 ## Running it on code you do not trust
 
 - Read `temperare.toml` first, and the files it names: each ast-grep rule file and each `config`.
+- Read the engines' own config files in the repository too. An engine loads the code its config names: an ESLint
+  config and its plugins, a stylelint plugin, a PHPStan bootstrap file, a sqlfluff templater.
 - Expect a clippy or Periphery rule to build the code. If you would not build the repository, do not check it with
   either.
 - Use a rule file of your own with `--rules <path>` when you want your rules and not the repository's.
