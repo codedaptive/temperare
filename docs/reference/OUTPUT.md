@@ -57,7 +57,7 @@ In order:
 6. **The engines line:** `engines: <engine> <version>, ...`, one entry per engine that ran, in the order the rule
    file first names each. An engine that ran is one `tm` found and asked its version, whatever its rules came to: a
    rule refused before its engine ran, a rule that covered no file, or a check the installed engine does not know,
-   still counts. An engine that is absent (not on `PATH`, or with no adapter in this build) is left out, and its
+   still counts. An engine that is absent (a program it needs is not on `PATH`) is left out, and its
    rules appear only on their `not available:` or `covers nothing:` lines, on a `failed:` line when the rule was
    refused, or in the not-applicable count. A rule with `only_with_base` run with no `--base` is counted as not
    applicable whatever its engine's state. Tessera is never listed today, since `tm` does not look for it.
@@ -79,8 +79,9 @@ engines give the same output. A silenced finding is counted on the counts line a
 
 A rule that ran nothing because no file it checks is in its scope is on a `covers nothing:` line when it is one of
 the repository's own, and is counted as not applicable when it comes from a baseline set; `--json` gives its why,
-`its paths match no file in the rule file's folder` (or, for a ShellCheck or clang-tidy rule, `no file its engine
-checks`). A
+`its paths match no file in the rule file's folder` (or `no file its engine checks`, for a rule of an engine `tm`
+picks the files for, such as ShellCheck, clang-tidy or mypy, that covers files but none of that engine's kind; an
+ESLint or RuboCop rule settled after its run has a why of its own). A
 rule with `only_with_base = true` run without `--base` is not applicable for want of `--base` whatever it covers
 ([`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)).
 
@@ -166,7 +167,7 @@ The run above, as `--json` prints it (on one line; wrapped here to read):
 | `expired` | Each exception past its `expires` day on `date`, in rule-file order: `rule`, `path`, `what` (`null` when the exception has none), `expires` (`YYYY-MM-DD`), `reason`, `approved`. Such an exception silences nothing. Always present, `[]` when empty |
 | `not_available` | Each rule that could not be checked: `rule`, `engine`, `why` |
 | `covers_nothing` | Each of the repository's own rules that ran nothing because no file it checks is in its scope: `rule`, `engine`. Always present, `[]` when empty, in rule-file order. Never a finding, "not available" or clean: such a rule makes the exit 6 when nothing ranks above it |
-| `not_applicable` | Each rule the check does not apply: `rule`, `engine`, `why`. Always present, `[]` when empty, in rule-file order. Listed: each not-applicable rule of the rule file (`why` is its reason, or "no reason given"); with no `--base`, each rule with `only_with_base` (`why`: "reports only what a change adds; run with --base"); and each baseline set's rule that covers no file (`why`: "its paths match no file in the rule file's folder", or "no file its engine checks" for ShellCheck and clang-tidy). Never a finding and never "not available" |
+| `not_applicable` | Each rule the check does not apply: `rule`, `engine`, `why`. Always present, `[]` when empty, in rule-file order. Listed: each not-applicable rule of the rule file (`why` is its reason, or "no reason given"); with no `--base`, each rule with `only_with_base` (`why`: "reports only what a change adds; run with --base"); and each baseline set's rule that covers no file (`why`: "its paths match no file in the rule file's folder"; or "no file its engine checks" for a rule that covers files but none of the kind its engine checks, as ShellCheck, cargo-audit, clang-tidy, mypy, PMD, detekt, dart, PHPStan, actionlint, sqlfluff, hadolint, yamllint, Vale, stylelint and markdownlint rules can; or, for an ESLint or RuboCop rule whose engine read none of its files, the why in [`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)). Never a finding and never "not available" |
 | `failed` | Each rule that failed: `rule`, `engine`, `code` (the engine's exit code, or `null` when it had none or was not run), `stderr_tail` (the last 20 lines of what explains the failure: the engine's stderr, or Temperare's own reason when the engine printed none or was not run) |
 | `base` | The full id of the commit `--base` named. Present only with `--base` |
 | `date` | The day of the check in UTC, as `YYYY-MM-DD`. Always present |
@@ -353,9 +354,12 @@ for exit 6:
 | 5 | `see the engine output above` |
 | 6 | `fix the paths of each rule that covers nothing above, or remove it from <rule file>`; under `--json`, `next` is `fix the paths of each rule in covers_nothing, or remove it from <rule file>` |
 
-For exit 3 the engines are named as a rule file names them (`clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`,
-`git`, `pylint`, `clang-tidy`, `golangci-lint`), each once. A golangci-lint rule with `go` missing names
-golangci-lint to install.
+For exit 3 the engines are named as a rule file names them (`clippy`, `golangci-lint`, `markdownlint`, and so
+on), each once, not by the program that is missing. A golangci-lint rule with `go` missing names
+golangci-lint to install, a PHPStan rule with `php` missing names phpstan, and a markdownlint rule, whose program
+is `markdownlint-cli2`, names markdownlint. A program an engine needs only as a helper is not named to install:
+its reason is given as below, as `actionlint: shellcheck not found on PATH` for an actionlint rule whose check is
+`shellcheck`, or `mypy: git not found on PATH`.
 Tessera is never among the engines to install, because installing it changes nothing today:
 
 - only Tessera rules were not available: `Tessera's checks are not available yet (run without those rules)`;
@@ -461,10 +465,13 @@ No engine is run. A rule is listed once, for the first of these that holds:
   `tm rules` names it.
 - **It covers no file in the rule file's folder,** judged as `tm check` judges it before any engine runs, from the
   files git lists: the why is `its paths match no file in the rule file's folder`, or `no file its engine checks`
-  for a ShellCheck rule with no script, a cargo-audit rule with no `Cargo.lock` and a clang-tidy rule with no
-  C-family source ([`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)). Such a rule keeps its own line under
+  for a ShellCheck rule with no script, a cargo-audit rule with no `Cargo.lock`, a clang-tidy rule with no
+  C-family source, and a mypy, PMD, detekt, dart, PHPStan, actionlint, sqlfluff, hadolint, yamllint, Vale, stylelint
+  or markdownlint rule with no file of its engine's kind
+  ([`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)). An ESLint or RuboCop rule is judged by its paths alone
+  here, since only a run of the engine says which files it reads. Such a rule keeps its own line under
   `rules (N)` too, with its availability. A rule `tm` refuses is not judged here, as `tm check` fails it first. When
-  git cannot list the files, no rule is listed for its paths, its scripts or its C-family sources; a cargo-audit rule is still listed when
+  git cannot list the files, no rule is listed for its paths, its scripts, its C-family sources or the other files `tm` picks for an engine; a cargo-audit rule is still listed when
   the rule file's folder is found and has no `Cargo.lock` the rule covers, since `tm` looks for that file on disk.
 
 A rule with `only_with_base = true` is listed only when it covers no file: one that covers files applies whenever
