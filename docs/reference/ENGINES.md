@@ -1796,5 +1796,9 @@ engine: ESLint 10.15.0, mypy 2.4.1, PMD 7.29.0, detekt 1.23.8, RuboCop 1.92.3, P
 actionlint 1.7.12, sqlfluff 4.5.0, hadolint 2.15.1, yamllint 1.38.0, Vale 3.28.1, stylelint 18.1.0 and
 markdownlint-cli2 0.24.2 (which carries markdownlint 0.42.2).
 
+ShellCheck, git and Tessera are not among them either. ShellCheck is tested on output recorded from ShellCheck
+0.11.0, whose 510 codes `tm` carries as its list. The git engine has no version of its own to accept: it is the
+`git` that `tm` uses to list files. Tessera's checks are not available yet, so there is nothing to accept.
+
 Temperare reads each engine's own output, so another version of an engine may print something it reads
 differently. If a rule stops reporting after an engine upgrade, try it on a file you know breaks it.
