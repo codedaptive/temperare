@@ -110,7 +110,7 @@ the owner of the findings in its files.
 | Key | Required | Meaning |
 |---|---|---|
 | `id` | yes | The rule's name in every report. One or more of `a-z`, `0-9` and `-`. No two rules share an id. It may not start with `tm-`, which is kept for the rules of baseline sets |
-| `engine` | yes | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`, `git`, `tessera`, `golangci-lint`, `pylint`, `clang-tidy`, `vulture`, `periphery`, `gitleaks`, `cargo-audit`, `eslint`, `mypy`, `pmd`, `detekt`, `rubocop`, `phpstan`, `dart`, `markdownlint`, `yamllint`, `actionlint`, `hadolint`, `vale`, `stylelint` or `sqlfluff`, exactly as written here. The fourteen from `eslint` to `sqlfluff` are accepted, and their rules are "not available" until Temperare has an adapter for each ([`ENGINES.md`](ENGINES.md#engines-with-no-adapter-yet)). A `git` rule needs `--base` ([`ENGINES.md`](ENGINES.md#git)) |
+| `engine` | yes | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`, `git`, `tessera`, `golangci-lint`, `pylint`, `clang-tidy`, `vulture`, `periphery`, `gitleaks`, `cargo-audit`, `eslint`, `mypy`, `pmd`, `detekt`, `rubocop`, `phpstan`, `dart`, `markdownlint`, `yamllint`, `actionlint`, `hadolint`, `vale`, `stylelint` or `sqlfluff`, exactly as written here. What each runs: [`ENGINES.md`](ENGINES.md). `markdownlint` runs the program `markdownlint-cli2`. A `tessera` rule is "not available" today ([`ENGINES.md`](ENGINES.md#tessera)). A `git` rule needs `--base` ([`ENGINES.md`](ENGINES.md#git)) |
 | `check` | yes | What the engine is asked. See below |
 | `fix` | yes | The text shown with each finding of this rule |
 | `severity` | no | `error` (the default) or `warning` |
@@ -119,7 +119,7 @@ the owner of the findings in its files.
 | `exclude` | no | Globs. The rule never covers a file that matches one |
 | `kits` | no | Kit names. The rule covers only files held by one of these kits |
 | `outside_kits` | no | Kit names. The rule never covers a file held by one of these kits |
-| `config` | no | The engine's own config file, passed as written: to `swiftlint`, `ruff`, `golangci-lint` and `gitleaks` as `--config`, to `pylint` and `shellcheck` as `--rcfile`, and to `clang-tidy` as `--config-file` ([`ENGINES.md`](ENGINES.md)); the other engines do not take one, and `vulture` and `periphery` read no config of the repository's |
+| `config` | no | The engine's own config file, passed as written: to `swiftlint`, `ruff`, `golangci-lint`, `gitleaks`, `eslint`, `rubocop`, `sqlfluff` and `stylelint` as `--config`, to `pylint` and `shellcheck` as `--rcfile`, and to `clang-tidy` as `--config-file`. For `mypy`, `detekt`, `phpstan`, `actionlint`, `hadolint`, `yamllint` and `vale` it is the config the run is built on, taken from the rule file's folder, in place of the one `tm` would find in the repository; each engine's section of [`ENGINES.md`](ENGINES.md) says how it reaches the engine. The other engines do not take one: `vulture` and `periphery` read no config of the repository's, `pmd` and `dart` are not given it, and a `markdownlint` rule that names one fails |
 | `params` | no | A table of values for the engine. See below |
 | `only_with_base` | no | `true` or `false` (the default). With `true` the rule reports only what a change adds, so it needs `--base`. Without `--base` the rule reports nothing, not even a failure, and is listed under `not_applicable` ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)) |
 | `enforces` | no | Text: the practice the rule enforces. Read and checked to be a string; no report prints it |
@@ -144,25 +144,45 @@ Any other key is a problem.
 | `cargo-audit` | An advisory id (`RUSTSEC-2023-0071`) or a kind: `vulnerability`, `unmaintained`, `unsound`, `notice`, or `all` for every advisory. Not `yanked` |
 | `vulture` | One vulture code: `V101` to `V107` or `V201`, such as `V104` for an unused import. Not flake8's `F401` or `F841` |
 | `periphery` | One Periphery result hint, written as Periphery writes it (`unused`, `assignOnlyProperty`, `redundantProtocol`, `redundantConformance`, `redundantPublicAccessibility`, `superfluousIgnoreCommand`), or `all` for every result |
+| `eslint` | One ESLint rule id, such as `no-var` or `@typescript-eslint/no-explicit-any`. Not a list |
+| `mypy` | One mypy error code, lower-case words joined by `-`, such as `arg-type`. Not a list |
+| `pmd` | PMD Java rule references: one rule (`category/java/bestpractices.xml/UnusedPrivateField`), a whole category (`category/java/design.xml`), or several joined by commas with no spaces. Not a ruleset file or URL, and not another language |
+| `detekt` | detekt rule names and rule-set names from `tm`'s list of detekt 1.23.8's rules: one (`MagicNumber`), or several joined by commas with no spaces. Not a rule that needs type resolution, so of the rule sets only `comments` and `empty-blocks` |
+| `rubocop` | Full cop names: one (`Lint/UselessAssignment`), or several joined by commas with no spaces. Not a department such as `Style` |
+| `phpstan` | A PHPStan level: `0` to `10`, or `max`. Not one of PHPStan's own rules |
+| `dart` | One diagnostic code or lint name, in lower case, such as `unused_local_variable`. A lint must be enabled in the `analysis_options.yaml` |
+| `actionlint` | One actionlint kind, such as `expression` or `shellcheck` |
+| `sqlfluff` | One sqlfluff rule code (`LT01`), name (`layout.spacing`), group (`layout`) or alias. Not a list |
+| `hadolint` | One `DL` code from `tm`'s list of hadolint 2.15.1's codes, such as `DL3006`. Not an `SC` code |
+| `yamllint` | One yamllint rule id, such as `line-length` |
+| `vale` | One Vale rule, written `Style.Rule`, such as `Vale.Spelling`, of a style the repository's Vale config uses |
+| `stylelint` | One stylelint rule name, such as `color-no-invalid-hex`, that the repository's stylelint config turns on |
+| `markdownlint` | One markdownlint rule from `tm`'s list of markdownlint 0.42.2's rules, by its id (`MD013`) or an alias (`line-length`). Not a tag such as `headings` |
 | `tessera` | Required like any other, and not used today: nothing is run |
-| `eslint`, `mypy`, `pmd`, `detekt`, `rubocop`, `phpstan`, `dart`, `markdownlint`, `yamllint`, `actionlint`, `hadolint`, `vale`, `stylelint`, `sqlfluff` | Required like any other, and not used yet: nothing is run |
 
 A finding is kept only when it can be matched back to `check`: for clippy, SwiftLint, pylint and clang-tidy the
 engine reports exactly that lint, identifier, message id or check; for ruff the diagnostic's code starts with one of
 the parts of `check`; for golangci-lint the issue comes from one of its linters; for gitleaks the result's rule id
 is one of the parts of `check`; for cargo-audit the advisory has that id or kind (any, for `all`); for vulture the
 message is of that code's kind; for Periphery the result carries that hint (any, for `all`); for ShellCheck the
-comment has that code.
+comment has that code. For ESLint, mypy, dart, actionlint, hadolint, yamllint, Vale, stylelint and markdownlint the
+finding carries that rule id, error code, code, kind or rule; for RuboCop its cop is one of the check's; for detekt
+its rule is one the check picks. PMD, PHPStan and sqlfluff are run with the check alone, and everything they report
+is kept.
 
 These are checked when the rule runs, not when the rule file is read. A `check` that cannot be matched (a clippy
 lint group, `custom_rules`, a ruff rule name, an ast-grep file outside the rule file's folder, a ShellCheck `check`
 that is not one code, a git `check` other than `test_ratio`, a pylint symbol or old id, a clang-tidy glob or list,
 a golangci-lint check code, a gitleaks `ALL`, a cargo-audit `yanked`, a vulture code it does not have, a Periphery
-hint it does not print) makes the rule
+hint it does not print, and for each engine from `eslint` to `markdownlint` a `check` that is not shaped as the
+table says, such as a list where one name is asked for, a PMD ruleset file, a RuboCop department or a PHPStan
+`check` that is not a level) makes the rule
 "failed", exit 5, with the reason in the report. A `check` the installed clippy, SwiftLint, ruff, pylint,
-clang-tidy, golangci-lint or gitleaks does not know (a misspelt name, or one newer than that engine), an advisory id
-cargo-audit's local advisory database does not hold, and a ShellCheck code not on `tm`'s list of ShellCheck 0.11.0's
-codes, make the rule "not available", exit 3, with a reason naming the engine, its version and the check. Neither reads as clean, and `tm rules` reports neither, since it runs no
+clang-tidy, golangci-lint, gitleaks, ESLint, mypy, PMD, detekt, RuboCop, PHPStan, dart, actionlint, sqlfluff,
+yamllint, Vale or stylelint does not know (a misspelt name, or one newer than that engine), an advisory id
+cargo-audit's local advisory database does not hold, and a ShellCheck code, detekt name, hadolint code or
+markdownlint rule not on `tm`'s list for that engine,
+make the rule "not available", exit 3, with a reason naming the engine, its version and the check. Neither reads as clean, and `tm rules` reports neither, since it runs no
 engine. [`ENGINES.md`](ENGINES.md) has each case.
 
 ### `params`
@@ -188,9 +208,9 @@ engine. [`ENGINES.md`](ENGINES.md) has each case.
   of globs with at least one item. All three are required; a missing one, a value out of range and any other param
   fail the rule ([`ENGINES.md`](ENGINES.md#git)).
 - **pylint, clang-tidy, golangci-lint, gitleaks, cargo-audit, vulture, periphery:** none; any param fails the rule.
+- **eslint, mypy, pmd, detekt, rubocop, phpstan, dart, actionlint, sqlfluff, hadolint, yamllint, vale, stylelint,
+  markdownlint:** none; any param fails the rule.
 - **tessera:** none; any param fails the rule.
-- **eslint, mypy, pmd, detekt, rubocop, phpstan, dart, markdownlint, yamllint, actionlint, hadolint, vale,
-  stylelint, sqlfluff:** not read.
 
 ### Which files a rule covers
 

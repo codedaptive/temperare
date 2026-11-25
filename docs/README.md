@@ -22,8 +22,9 @@ is worked out, kits and owners, exceptions, and every problem `tm` reports in a 
 exit codes and the order they win in, and the `next:` line.
 
 **A rule says "not available" or "failed", or an engine does not behave as you expect.**
-[`reference/ENGINES.md`](reference/ENGINES.md) gives the exact command line run for clippy, SwiftLint, ruff and
-ast-grep, what `check`, `config` and `params` mean to each, and what Tessera rules do today.
+[`reference/ENGINES.md`](reference/ENGINES.md) gives the exact command line run for each engine, what `check`,
+`config` and `params` mean to each, which of an engine's own exceptions are turned off or fail the rule, and what
+Tessera rules do today.
 
 **You want to run it on code you do not trust, or report a vulnerability.**
 [`SECURITY.md`](../SECURITY.md) says what Temperare runs, what the rule file can make it do, and how to report.

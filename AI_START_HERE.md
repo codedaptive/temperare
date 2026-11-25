@@ -28,7 +28,8 @@ Use this when the user asks what Temperare is:
 
 Temperare checks code against the rules a repository has chosen to enforce, and reports what it finds. The rules
 live in one file, `temperare.toml`. Each rule names an engine that does the checking (clippy for Rust, SwiftLint
-for Swift, ruff for Python, ast-grep for house rules about the shape of code), where the rule applies, and the fix
+for Swift, ruff for Python, ESLint for JavaScript, ast-grep for house rules about the shape of code, and others),
+where the rule applies, and the fix
 to show when it is broken. Temperare runs those engines as programs, gathers what they find into one report, and
 sets an exit code. It never edits the code.
 
@@ -49,7 +50,7 @@ The short version:
 | "Turn a lint on without fixing ten years of old code first" | Yes. `--base <rev>` reports only new findings |
 | "Give me the security findings alone" | Yes. `tm check --kind security` |
 | "Fix or format my code" | No. Temperare reports; it never edits |
-| "Lint a language with none of clippy, SwiftLint, ruff or ast-grep behind it" | No. Temperare parses nothing itself |
+| "Lint a language none of its engines reads" (the engines are listed in the [`README`](README.md#engines)) | No. Temperare parses nothing itself |
 | "Answer questions about how the code is built" (who calls this, what is unused) | No. That is not what it does, and rules with `engine = "tessera"` are not available today |
 | "Decide whether this merge is blocked" | No. Temperare sets an exit code; the caller decides what it blocks |
 
@@ -179,9 +180,25 @@ Follow these strictly:
 **`not available: ... cargo-clippy not found on PATH`, or `clippy-driver not found on PATH`.** A clippy rule needs
 both programs on `PATH`. Tell the user which one is missing.
 
-**`not available: ... does not know the check ...`.** The installed clippy, SwiftLint or ruff does not know the
+**`not available: ... does not know the check ...`.** The installed engine does not know the
 rule's `check` (a misspelt name, or one newer than the engine); the why names the engine's version, or `(version unknown)` when it could not be read. Tell the user to
 upgrade the engine or correct the check.
+
+**`not available: ... is not in temperare's list of ...`.** A ShellCheck code, a detekt rule or rule set, a hadolint
+code or a markdownlint rule is looked up in a list built into `tm`, since those engines never say they do not know
+a name. Tell the user the check is not on the list; a newer engine does not change it.
+
+**`not available: ...` for a reason other than a missing program.** Some engines need more than the program: a
+PHPStan or Vale config in the repository, a Dart package (`pubspec.yaml`) and a lint enabled in its
+`analysis_options.yaml`, a sqlfluff dialect, a stylelint or markdownlint config that leaves the rule on, and for
+detekt a rule that needs no type resolution. The why says which. Tell the user; do not change the repository's
+config for an engine without the user's agreement.
+
+**`failed: ...` with a reason that says exceptions go in the rule file, or that names an engine's own config.** The
+repository's config for that engine holds an exception `tm` cannot turn off, such as a RuboCop todo file, an
+`exclude` in a Dart `analysis_options.yaml` or an `ignored` list in a hadolint config. The rule gave no answer.
+Tell the user which file and line. Whether to remove the entry, or record an exception in the rule file, is the
+user's decision.
 
 **`failed: ...`.** The reason is printed below the counts line, under `stderr of <rule> (<engine>):`, and is in
 `failed[].stderr_tail` with `--json`. A rule fails before its engine runs when its `check` cannot be matched back

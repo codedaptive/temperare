@@ -2,7 +2,8 @@
 
 Temperare checks code against the rules a repository has chosen to enforce, and reports what it finds. It is a
 command-line program, `temperare`, short name `tm`. It runs clippy, SwiftLint, ruff, ast-grep, ShellCheck, pylint,
-clang-tidy, golangci-lint, gitleaks, cargo-audit, vulture and Periphery as programs, reads
+clang-tidy, golangci-lint, gitleaks, cargo-audit, vulture, Periphery, ESLint, mypy, PMD, detekt, RuboCop, PHPStan,
+dart, actionlint, sqlfluff, hadolint, yamllint, Vale, stylelint and markdownlint-cli2 as programs, reads
 their output into one report, and never edits code. This file routes people and AI agents to the maintained
 sources.
 
@@ -78,15 +79,22 @@ sources.
 - A rule that covers none of the files git lists in the rule file's folder (tracked files in the work tree, and
   untracked files git does not ignore), or a ShellCheck rule that covers none of the scripts there, or a
   cargo-audit rule whose folder has no Cargo.lock it covers, or a clang-tidy rule that covers none of the C-family
-  sources there, runs nothing,
+  sources there, or a mypy, pmd, detekt, dart, phpstan, actionlint, sqlfluff, hadolint, yamllint, vale, stylelint
+  or markdownlint rule that covers none of the files of that engine's kind there (docs/reference/ENGINES.md lists
+  each kind), runs nothing,
   and whether its engine is installed does not change its result (the engine is still asked its version for the
   engines list). One of the repository's own rules is then listed as covers nothing: a "covers nothing: <rule>
   (<engine>)" line, covers_nothing in JSON ({rule, engine}), counts.covers_nothing, and exit 6, with next "fix the
   paths of each rule that covers nothing above, or remove it from <rule file>" (under --json, "fix the paths of
   each rule in covers_nothing, or remove it from <rule file>"). A baseline set's rule is listed under
-  not_applicable instead, with why "its paths match no file in the rule file's folder" (ShellCheck, cargo-audit and
-  clang-tidy: "no file its engine checks"). When git cannot list the files, no rule is settled this way except a
-  cargo-audit rule, whose Cargo.lock tm looks for on disk once the rule file's folder is found.
+  not_applicable instead, with why "its paths match no file in the rule file's folder" (ShellCheck, cargo-audit,
+  clang-tidy and the twelve engines just named: "no file its engine checks"). When git cannot list the files, no
+  rule is settled this way except a cargo-audit rule, whose Cargo.lock tm looks for on disk once the rule file's
+  folder is found.
+- eslint and rubocop decide their own files from their config, so a rule of theirs that covers some file git lists
+  is run (its engine must be on PATH) and covers nothing when the engine read none of the rule's files: why "ESLint
+  linted no file in the rule's paths that git lists (its config decides which files it lints)" or "no file rubocop
+  inspects is in the rule's paths".
 - --base <rev> keeps only findings on lines added since that commit. A rule with only_with_base = true reports only
   what a change adds: without --base it reports nothing and is listed under not_applicable ("reports only what a
   change adds; run with --base"). not_applicable is never a finding and never "not available". In text, tm check
@@ -102,7 +110,9 @@ sources.
   a pylint check that is not one message id or is an old id pylint renamed, a clang-tidy check that is not one
   check name, a golangci-lint check with a part that is not a linter name or is typecheck, a gitleaks check with an
   empty or ALL part, a cargo-audit check that is not an advisory id or a kind, or is yanked, a vulture check that is
-  not one vulture code, a periphery check that is not a Periphery result hint or all. A cargo-audit rule also
+  not one vulture code, a periphery check that is not a Periphery result hint or all, and a check of eslint, mypy,
+  pmd, detekt, rubocop, phpstan, dart, actionlint, sqlfluff, hadolint, yamllint, vale, stylelint or markdownlint
+  that is not shaped as the "check, by engine" line below says. A cargo-audit rule also
   fails when cargo-audit applied an audit.toml (its report's settings differ from the defaults), and a gitleaks rule
   before gitleaks runs when the config gitleaks reads (or a file it extends) declares an allowlist or does not parse,
   or the folder's .gitleaksignore lists anything: exceptions live in the rule file only.
@@ -111,18 +121,20 @@ sources.
   (1-1000) with check cyclomatic_complexity, or max_lines (1-100000) with check file_length; ruff takes
   max_complexity (1-1000) with check C901; ast-grep takes the names its YAML has as {{name}}, and count
   ("setup-vs-tests") with shared_setup (a list of globs); git takes max_ratio (0.1-100), floor (0-100000) and
-  test_paths (a list of globs), all three required; shellcheck, pylint, clang-tidy, golangci-lint, gitleaks,
-  cargo-audit, vulture, periphery and tessera take none. A threshold wins
+  test_paths (a list of globs), all three required; every other engine takes none. A threshold wins
   over the rule's config, and no config file of the repository is changed. The reason is in failed[].stderr_tail.
 - A rule tm can refuse from the rule file alone fails whether or not its engine is installed: every check and param
   above, except the clippy lint group, an ast-grep rule file that is missing, cannot be read, or leads out of the
   folder through a symlink, and ast-grep's {{name}} params, which are refused only in the run. An ast-grep check that
   is absolute or whose .. climbs above the rule file's folder is refused from the text alone. The order a rule
   settles in: refused, then covers no file, then needs a base, then not available, then the run (docs/reference/ENGINES.md).
-- A check the installed clippy, swiftlint, ruff, pylint, clang-tidy, golangci-lint or gitleaks does not know (a
+- A check the installed clippy, swiftlint, ruff, pylint, clang-tidy, golangci-lint, gitleaks, eslint, mypy, pmd,
+  detekt, rubocop, phpstan, dart, actionlint, sqlfluff, yamllint, vale or stylelint does not know (a
   misspelt name, or one newer than the engine), or an advisory id cargo-audit's local advisory database does not
   hold, is not available (exit 3), with a why naming the engine, its version and the check. ShellCheck is not asked: a shellcheck code not on tm's built-in list of ShellCheck 0.11.0's 510 codes is
-  not available ("<check> is not in temperare's list of shellcheck codes (taken from shellcheck 0.11.0)").
+  not available ("<check> is not in temperare's list of shellcheck codes (taken from shellcheck 0.11.0)"). The same
+  holds for a detekt name not among detekt 1.23.8's 214 rules and 9 rule sets, a hadolint code not among hadolint
+  2.15.1's 71 DL codes (an SC code never is), and a markdownlint rule not among markdownlint 0.42.2's 53 rules.
 - check, by engine: clippy, one lint or warnings; swiftlint, one rule identifier; ruff, a rule code, a code prefix,
   ALL, or several joined by commas; ast-grep, the path of a rule file inside the rule file's folder; shellcheck, one
   code such as SC2086; git, test_ratio; pylint, one message id such as C0121; clang-tidy, one check name such as
@@ -130,11 +142,62 @@ sources.
   such as aws-access-token, one or several joined by commas; cargo-audit, an advisory id such as RUSTSEC-2023-0071
   or a kind: vulnerability, unmaintained, unsound, notice or all; vulture, one code V101 to V107 or V201; periphery,
   one result hint (unused, assignOnlyProperty, redundantProtocol, redundantConformance,
-  redundantPublicAccessibility, superfluousIgnoreCommand) or all.
+  redundantPublicAccessibility, superfluousIgnoreCommand) or all; eslint, one rule id such as no-var; mypy, one
+  error code such as arg-type; pmd, Java rule or category references such as
+  category/java/bestpractices.xml/UnusedPrivateField, one or several joined by commas, never a ruleset file or URL;
+  detekt, rule or rule-set names such as MagicNumber, one or several joined by commas; rubocop, full cop names such
+  as Lint/UselessAssignment, one or several joined by commas, never a department; phpstan, a level, 0 to 10 or max;
+  dart, one lower-case diagnostic code or lint name such as unused_local_variable; actionlint, one kind such as
+  expression; sqlfluff, one rule code, name, group or alias such as LT01; hadolint, one DL code such as DL3006;
+  yamllint, one rule id such as line-length; vale, one rule as Style.Rule such as Vale.Spelling; stylelint, one rule
+  name such as color-no-invalid-hex; markdownlint, one rule id or alias such as MD013, never a tag.
 - A clippy rule needs cargo-clippy and clippy-driver on PATH; a golangci-lint rule needs golangci-lint and go; a
   shellcheck or clang-tidy rule needs git too, which lists the files; a periphery rule needs periphery and swift,
   and a Package.swift at or above the rule file's folder (an Xcode project is not available: "no Package.swift at or
   above the rule file's folder: Periphery builds the project, and tm runs it only on a Swift package").
+- Programs for the other engines: eslint (the one on PATH, never node_modules/.bin), mypy, pmd, detekt, rubocop,
+  phpstan and php, dart, actionlint (and shellcheck or pyflakes for a rule whose check is that kind), sqlfluff,
+  hadolint, yamllint, vale, stylelint, and markdownlint-cli2 for engine markdownlint. All of these but eslint and
+  rubocop need git too and a rule file inside a git repository. tm sets no NODE_PATH.
+- What else those engines need, each not available without it and never clean: phpstan, a config in the rule file's
+  folder (phpstan.neon, phpstan.neon.dist, phpstan.dist.neon or a dot-prefixed form) or the rule's config; dart, a
+  pubspec.yaml at or above the rule file's folder, no higher than the git top, and for a lint, every
+  analysis_options.yaml that governs the folder enabling it; sqlfluff, a dialect set in the repository's config (tm
+  passes no --dialect); vale, a Vale config inside the repository (or the rule's config) whose BasedOnStyles names
+  the check's style; stylelint, a config that turns the check on for the rule's files; markdownlint, a config that
+  does not turn the rule off.
+- detekt gets no classpath from tm, so a check that picks any of the 67 rules that need type resolution, by name or
+  through its rule set, is not available ("detekt needs type resolution for <rules>, which needs a classpath that
+  tm does not give detekt, so they would report nothing"). Of the rule sets only comments and empty-blocks can be
+  named; Deprecation is one of the 67, so deprecated Kotlin calls are not covered.
+- Exceptions outside the rule file, for these engines. Turned off: eslint-disable comments, the ESLint config's
+  ignores and eslint-suppressions.json; // NOPMD; rubocop:disable and rubocop:todo comments; a PHPStan config's
+  ignoreErrors (baselines included) and excludePaths; -- noqa, .sqlfluffignore and a sqlfluff config's
+  exclude_rules and ignore; # hadolint ignore= pragmas; a yamllint config's ignore and ignore-from-file; Vale's skip
+  keys and Style.Rule = NO lines; stylelint-disable comments, .stylelintignore and stylelint-suppressions.json;
+  markdownlint-disable and markdownlint-configure-file comments; a detekt config's active: false, excludes,
+  includes and ignoreAnnotated for the picked rules, and any detekt baseline.
+- The rule fails (exit 5), naming the file, where the engine has no switch: a mypy config with ignore_errors, a
+  per-module disable_error_code naming the check, or ignore_missing_imports for an import check; a .rubocop file, a
+  .rubocop_todo.yml naming a cop of the check, a cop Exclude beyond RuboCop's stock one, or an AllCops Exclude or
+  Include that leaves out a file of the rule; a Dart analysis_options.yaml with an exclude key or an ignore value, one
+  read from outside the repository, or one in a YAML form tm does not read (a second document, a repeated key, a
+  merge key <<, a non-scalar key, a !! tag it does not read); an actionlint config with an ignore key; a hadolint
+  config with anything under ignored; a stylelint config that turns the check off for some files, turns on fix or
+  quiet, or ignores a file through ignoreFiles; a .markdownlint-cli2.{jsonc,yaml,cjs,mjs} options file, a
+  .markdownlint.jsonc, .cjs or .mjs config, a markdownlint config with extends, or a markdownlint rule that names a
+  config.
+- Still honoured, since nothing turns them off: # type: ignore and # mypy: comments, and @typing.no_type_check
+  (mypy); @SuppressWarnings naming PMD (pmd); @Suppress (detekt); @phpstan-ignore comments, a config's stubFiles
+  naming a checked file, and phpstan.ignoreErrorExtension services (phpstan); // ignore: and // ignore_for_file:
+  comments (dart); # shellcheck disable= inside a run: script (actionlint) or a RUN script (hadolint); -- sqlfluff:
+  file directives (sqlfluff); # yamllint disable comments (yamllint); <!-- vale off --> comments and the
+  repository's Vocab (vale).
+- vale runs with a wrapper .vale.ini tm writes in a temporary folder, never in the repository, built from the
+  repository's StylesPath and Vocab; only git-listed files in a format Vale reads are passed; a rule's config stands
+  in for the repository's .vale.ini; nothing is fetched (never vale sync). phpstan runs through a wrapper config in a
+  temporary folder too. markdownlint-cli2 gets an options module tm writes in a temporary folder. All are removed
+  after the run.
 - A clang-tidy rule needs a compile_commands.json or compile_flags.txt at or above each source; without one it is
   not available. Without a config, clang-tidy reads no .clang-tidy and ShellCheck no .shellcheckrc.
 - golangci-lint runs with GOTOOLCHAIN=local, GOPROXY=off and GOSUMDB=off and GOFLAGS removed: go downloads
@@ -187,9 +250,9 @@ sources.
   savings_line = false in ~/.config/temperare/config.toml turns the line off.
 - Rules with engine = "tessera" are accepted and, when they cover a file and have no params, are reported "not
   available" today, whether or not Tessera is installed. A Tessera rule with a param fails (exit 5).
-- Rules with engine = "eslint", "mypy", "pmd", "detekt", "rubocop", "phpstan", "dart", "markdownlint", "yamllint",
-  "actionlint", "hadolint", "vale", "stylelint" or "sqlfluff" are accepted and, when they cover a file, reported "not available" (no adapter for <engine> in this build) until each adapter lands, whether
-  or not the engine is installed.
+- The acceptance checks for 0.1.0 did not run eslint, mypy, pmd, detekt, rubocop, phpstan, dart, actionlint,
+  sqlfluff, hadolint, yamllint, vale, stylelint or markdownlint. tm runs each of them; docs/reference/ENGINES.md
+  names the engine version each is tested against.
 - Rules with engine = "git" (check test_ratio) count the lines a change adds against the commit tm check --base
   names; ast-grep rules with params.count count each file's setup and test lines whole, reporting the files the
   change adds lines to. Without --base such a rule is "not available" ("reports only what a change adds; run with
