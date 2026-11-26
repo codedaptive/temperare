@@ -1,4 +1,5 @@
 use std::ffi::OsString;
+#[cfg(unix)]
 use std::os::unix::ffi::OsStringExt;
 use std::path::{Path, PathBuf};
 
@@ -48,6 +49,8 @@ fn empty_output_is_no_paths() {
     assert_eq!(untracked_files_answer(&cmd(), out(0, b"", b"")).unwrap(), Vec::<PathBuf>::new());
 }
 
+// Unix only: it expects the exact non-UTF-8 bytes back, which only unix keeps in a path.
+#[cfg(unix)]
 #[test]
 fn non_utf8_path_bytes_are_kept() {
     let got = untracked_files_answer(&cmd(), out(0, b"bin\xffary\0", b"")).unwrap();

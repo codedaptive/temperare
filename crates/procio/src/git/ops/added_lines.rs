@@ -13,7 +13,8 @@ use crate::{run, Cmd, Output};
 /// 1-based half-open ranges of line numbers in the working-tree file. A file with only removed lines is present
 /// with no ranges. Absent: deleted files, and those git shows without a text diff (binary, mode-only, new and
 /// empty). Keys are relative to the top of the repository. Empty `paths` covers the whole repository; otherwise
-/// only those paths are compared.
+/// only those paths are compared. Off unix, non-UTF-8 paths that read the same after U+FFFD merge their ranges
+/// under one key.
 pub fn added_lines(
     repo: &Path,
     base: &str,

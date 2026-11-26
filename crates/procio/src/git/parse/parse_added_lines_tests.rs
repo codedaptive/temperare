@@ -1,13 +1,11 @@
 use std::collections::BTreeMap;
-use std::ffi::OsStr;
 use std::ops::Range;
-use std::os::unix::ffi::OsStrExt;
 use std::path::PathBuf;
 
 use super::parse_added_lines;
 
 fn files(entries: &[(&[u8], &[Range<u32>])]) -> BTreeMap<PathBuf, Vec<Range<u32>>> {
-    entries.iter().map(|(path, ranges)| (PathBuf::from(OsStr::from_bytes(path)), ranges.to_vec())).collect()
+    entries.iter().map(|(path, ranges)| (PathBuf::from(std::str::from_utf8(path).unwrap()), ranges.to_vec())).collect()
 }
 
 #[test]

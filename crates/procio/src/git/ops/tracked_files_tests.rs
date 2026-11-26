@@ -1,4 +1,5 @@
 use std::ffi::OsString;
+#[cfg(unix)]
 use std::os::unix::ffi::OsStringExt;
 use std::path::{Path, PathBuf};
 
@@ -41,6 +42,8 @@ fn args_put_pathspecs_after_double_dash_in_order() {
     );
 }
 
+// Unix only: it builds a non-UTF-8 pathspec from raw bytes, which only unix's OsString allows.
+#[cfg(unix)]
 #[test]
 fn args_take_os_string_pathspecs() {
     assert_eq!(
@@ -107,6 +110,8 @@ fn an_entry_without_a_tag_and_space_is_dropped() {
     assert_eq!(got, paths(&["ok"]));
 }
 
+// Unix only: it expects the exact non-UTF-8 bytes back, which only unix keeps in a path.
+#[cfg(unix)]
 #[test]
 fn non_utf8_path_bytes_are_kept() {
     let got = tracked_files_answer(&cmd(), out(0, b"H bin\xffary\0", b"")).unwrap();
