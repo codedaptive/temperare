@@ -119,16 +119,21 @@ fn clean_cmd(program: &OsStr, args: &[&str], cwd: &Path, home: &Path, path: Opti
 }
 
 fn availability_listing(json: bool) -> Output {
-    use std::os::unix::fs::PermissionsExt;
-
     let tmp = TempFolder::new("availability");
     tmp.init_git();
     tmp.write_rules(AVAILABILITY_RULES);
     let stub_dir = tmp.0.join("stubs");
     fs::create_dir(&stub_dir).unwrap();
-    let ruff = stub_dir.join("ruff");
-    fs::write(&ruff, "#!/bin/sh\nexit 0\n").unwrap();
-    fs::set_permissions(&ruff, fs::Permissions::from_mode(0o755)).unwrap();
+    // An executable sh script on unix; on Windows a .cmd, which procio's which finds through PATHEXT.
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let ruff = stub_dir.join("ruff");
+        fs::write(&ruff, "#!/bin/sh\nexit 0\n").unwrap();
+        fs::set_permissions(&ruff, fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    #[cfg(windows)]
+    fs::write(stub_dir.join("ruff.cmd"), "@exit /b 0\n").unwrap();
     let args: &[&str] = if json {
         &["rules", "--rules", "temperare.toml", "--json"]
     } else {

@@ -6,23 +6,28 @@
 //! the text prints the path alone. engines runs cargo-audit with `--no-fetch` and `--no-yanked`, which keep it off the
 //! network: `temperare` runs with HOME a folder the test made, whose .cargo/advisory-db links to the real HOME's, and
 //! no CARGO_HOME, so engines finds the database from HOME and the test writes nothing to the real HOME. tm runs with
-//! PATH the folder that gives it cargo-audit (`tm_path_folder`) then /usr/bin:/bin. The reported case is NOT RUN, with
-//! `temperare`'s reason, never PASS, when cargo-audit is not on the PATH `temperare` gets (`on_tm_path`, which runs
-//! nothing) or the real database has no `crates` folder; `temperare` must then report the rule not available.
+//! PATH the folder that gives it cargo-audit (`tm_path_folder`) then /usr/bin:/bin. The reported case runs on unix
+//! only, where it makes that link. It is NOT RUN, with `temperare`'s reason, never PASS, when cargo-audit is not on
+//! the PATH `temperare` gets (`on_tm_path`, which runs nothing) or the real database has no `crates` folder;
+//! `temperare` must then report the rule not available.
 
-use std::path::Path;
-
-use serde_json::{json, Value};
-
-use crate::absent_engine_reason::absent_engine_reason;
 use crate::check::Check;
-use crate::env::tm_env;
-use crate::probed_version::probed_version;
 use crate::repo::Repo;
-use crate::run_clean::run_clean;
-use crate::temp_home::TempHome;
-use crate::tm::{tm_with_path, Answer};
-use crate::tm_path_folder::tm_path_folder;
+use crate::tm::tm_with_path;
+
+// Unix only: what the advisory case alone uses (it links the advisory database into HOME with a unix symlink).
+#[cfg(unix)]
+use {
+    crate::absent_engine_reason::absent_engine_reason,
+    crate::env::tm_env,
+    crate::probed_version::probed_version,
+    crate::run_clean::run_clean,
+    crate::temp_home::TempHome,
+    crate::tm::Answer,
+    crate::tm_path_folder::tm_path_folder,
+    serde_json::{json, Value},
+    std::path::Path,
+};
 
 const RULE: &str = "no-vulnerable-crate";
 const FIX: &str = "Upgrade smallvec to 1.6.1 or later.";
@@ -52,11 +57,15 @@ fn lock_repo() -> Repo {
 }
 
 /// `temperare <args>` in `repo` with HOME `home` and no CARGO_HOME, so engines' database is `<home>/.cargo/advisory-db`.
+// Unix only: its one caller is the advisory case.
+#[cfg(unix)]
 fn run_tm(repo: &Repo, args: &[&str], path: &str, home: &Path) -> procio::Output {
     let env = tm_env(Some(path), home).into_iter().filter(|(k, _)| k != "CARGO_HOME").collect();
     run_clean(env!("CARGO_BIN_EXE_temperare"), args, repo.path(), env)
 }
 
+// Unix only: it links the real advisory database into the test HOME with a unix symlink.
+#[cfg(unix)]
 #[test]
 fn a_cargo_audit_advisory_is_reported_on_cargo_lock_with_no_line() {
     let mut check = Check::new(

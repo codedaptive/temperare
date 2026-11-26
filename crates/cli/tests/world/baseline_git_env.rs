@@ -3,6 +3,8 @@
 use cli::BaselineWorld;
 use std::ffi::OsString;
 use std::fs;
+// Unix only: the hook needs its execute bit there; Windows has none to set.
+#[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -124,9 +126,12 @@ fn global_hooks_never_run_in_case_repositories() {
         fs::create_dir(&hooks).unwrap();
         let hook = hooks.join(name);
         fs::write(&hook, format!("#!/bin/sh\necho {name} >> \"$HOME/marker\"\nexit 1\n")).unwrap();
+        // Unix only: the hook needs its execute bit; Windows has none to set.
+        #[cfg(unix)]
         fs::set_permissions(&hook, fs::Permissions::from_mode(0o755)).unwrap();
         let config = root.0.join("gitconfig");
-        fs::write(&config, format!("[core]\n\thooksPath = {}\n", hooks.display())).unwrap();
+        // Forward slashes: a backslash is an escape in git config.
+        fs::write(&config, format!("[core]\n\thooksPath = {}\n", hooks.display().to_string().replace('\\', "/"))).unwrap();
         let mut cmd = clean_command(std::env::current_exe().unwrap(), &root.0);
         cmd.args = vec!["--exact".into(), "baseline_git_env::global_hooks_never_run_in_case_repositories".into(), "--nocapture".into()];
         cmd.env.push((CHILD.into(), "1".into()));

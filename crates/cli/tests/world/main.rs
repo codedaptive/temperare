@@ -12,6 +12,9 @@ mod baseline_git_env;
 mod baseline_world_real;
 mod check_base_real;
 mod check_world_real;
+// Unix only: engines take node_modules/.bin/eslint only as that extensionless file and procio runs a path as given,
+// so a Windows `.cmd` stub cannot stand in.
+#[cfg(unix)]
 mod local_eslint_real;
 mod rules_loosened_real;
 mod rules_not_applicable_real;

@@ -24,6 +24,8 @@
 mod baseline_test_cmd;
 mod baseline_test_real_ruff;
 mod check_text_na_count_real_engines;
+// Unix only: its engine stubs are sh scripts and its PATH is the stubs folder alone.
+#[cfg(unix)]
 mod cli_check;
 mod cli_tm;
 mod savings_real_engine;
@@ -84,6 +86,8 @@ mod done_10_shared_run;
 mod done_10_baseline_test;
 
 // The install on the built binary, into a throwaway HOME.
+// Unix only: it checks the install's symlink and file modes.
+#[cfg(unix)]
 mod install_temp_home;
 
 // A clippy check line with allowed lints, on the built temperare.
