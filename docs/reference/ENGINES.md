@@ -19,10 +19,10 @@ The engines, in the order of this page: [clippy](#clippy), [swiftlint](#swiftlin
 ## What holds for every engine
 
 - **Found on `PATH`.** An engine is available when the programs it needs are in the absolute entries of the `PATH`
-  that `tm` was started with; an empty or relative entry is skipped. ESLint is the exception: `tm check` first
-  looks for `node_modules/.bin/eslint` in the rule file's folder ([eslint](#eslint)). ESLint, stylelint and
-  markdownlint-cli2 also need `node` on `PATH`. `tm rules` shows the answer per rule without running anything, from
-  `PATH` alone.
+  that `tm` was started with; an empty or relative entry is skipped. ESLint is the exception: `tm` first looks for
+  `node_modules/.bin/eslint` in the rule file's folder ([eslint](#eslint)). ESLint, stylelint and
+  markdownlint-cli2 also need `node` on `PATH`. `tm check`, its engines line and `tm rules` all give the same
+  answer, for the rule file's folder; `tm rules` gives it per rule without running anything.
 - **Run as a program, never through a shell.** Each argument is passed as one argument, as written.
 - **A rule's value is passed as a value, not as an option.** A `check`, `config` or `params.allow` value that
   begins with `-` is a problem in the rule file, and nothing runs. Each value reaches the engine joined to its own
@@ -66,8 +66,10 @@ The engines, in the order of this page: [clippy](#clippy), [swiftlint](#swiftlin
   on `tm`'s list (below).
 - **No time limit.** `tm` waits for an engine as long as it runs. The git questions `tm` asks through `ccvcslib`
   (the top of the repository, the files git lists, the lines a change adds) are the exception: git is stopped once
-  it is stuck for 10 seconds or has run for 60, and the rule that asked fails. The list of untracked files has no
-  limit.
+  it is stuck for 10 seconds or has run for 60, and the question fails. The rule that asked fails, or `tm` stops
+  with an error, with one exception: a failed list of the rule file's folder's files is as if git could not list
+  them, so no rule is settled by its paths ([below](#a-rule-that-covers-no-file)). The list of untracked files has
+  no limit.
 - **The engine's environment is yours.** Temperare changes it only as listed here: for git, asked through
   `ccvcslib`, it removes the variables that could point git at another repository or give it config for one run,
   and sets `LC_ALL=C`, `GIT_TERMINAL_PROMPT=0` and `GIT_OPTIONAL_LOCKS=0`
@@ -220,9 +222,9 @@ Each rule is settled by the first of these that applies:
    files they read, so a rule of theirs that covers some file is settled at step 5, from what the engine says it
    read.
 3. **Needs a base.** A rule with `only_with_base = true`, run without `--base`, settles here, whatever its engine.
-   Its engine is not looked up on `PATH` and runs no check for it, and when it shares a run with other rules its
+   Its engine is not looked up for it and runs no check for it, and when it shares a run with other rules its
    check is left out of that run. It is not applicable: counted in the text, listed under `not_applicable` in JSON
-   ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)). An engine found on `PATH` is still asked its version for
+   ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)). An engine that is found is still asked its version for
    the engines line.
 4. **Not available.** A program the engine needs is not on `PATH` (for ESLint's own program, not in the rule
    file's folder's `node_modules/.bin` either), or it is Tessera. (What else an engine needs
@@ -317,14 +319,14 @@ as any such rule is. A check whose only rule is one of its own and covers no fil
 `0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable, 1 covers nothing, 0 expired`
 and `next: fix the paths of each rule that covers nothing above, or remove it from <rule file>`, and exits 6. (The
 example line shows no exceptions in force; a rule file with exceptions shows their count.) That is so whether its
-engine is installed or not. The one difference is the engines line: an engine found on `PATH` is still asked its
+engine is installed or not. The one difference is the engines line: an engine that is found is still asked its
 version and listed, and a missing one is not. In `--json`, `saved.counted` holds the rule with `chars` 0.
 
 `tm rules` shows each rule's scope. It runs no engine, so it never lists an ESLint or RuboCop rule as covering no
 file unless the rule covers none of the files git lists.
 
-When git cannot list the files (the rule file's folder is in no git repository, or git is missing or fails), no
-rule is settled by its paths, its scripts, its C-family sources or the other files `tm` picks for an engine, and
+When git cannot list the files (the rule file's folder is in no git repository, or git is missing, fails or is
+stopped at its time limit), no rule is settled by its paths, its scripts, its C-family sources or the other files `tm` picks for an engine, and
 each goes on to steps 3 to 5. A cargo-audit rule is the one
 exception: when the rule file's folder is still found, `tm` looks for its `Cargo.lock` on disk, so a rule whose
 folder has no `Cargo.lock` it covers still settles here.
@@ -1022,8 +1024,8 @@ only the version question, `git --version`, is run by `tm` itself.
   `node` missing the rule is not available, with the reason `node not found on PATH`. `tm` sets nothing in ESLint's
   environment, `NODE_PATH` included, so the plugins a config names must resolve as they do when you run that
   `eslint` yourself.
-- **`tm rules` and the engines line look on `PATH` only.** With `eslint` only in `node_modules/.bin`, `tm check`
-  runs the rule, while `tm rules` shows it not available and the `engines:` line of `tm check` leaves ESLint out.
+- **`tm rules` and the engines line look in the folder too.** With `eslint` only in `node_modules/.bin`, `tm check`
+  runs the rule, `tm rules` shows it available and the `engines:` line of `tm check` lists ESLint.
 - **Where:** the rule file's folder.
 - **What runs:**
 
