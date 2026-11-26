@@ -1,11 +1,14 @@
 //! `which`: where a program would be found on PATH. Looks at files only; runs nothing.
 
 use std::env;
-use std::ffi::{OsStr, OsString};
-use std::path::{Path, PathBuf};
+use std::ffi::OsStr;
+use std::path::PathBuf;
 
+use crate::first_in_dir::first_in_dir;
 use crate::has_path_separator::has_path_separator;
+use crate::is_executable::is_executable;
 use crate::names_to_try::names_to_try;
+use crate::pathext::pathext;
 
 /// The executable file `program` names, looked up on this process's PATH (on Windows with PATHEXT's extensions too);
 /// `None` when there is none.
@@ -41,31 +44,5 @@ pub(crate) fn which_in(program: &OsStr, path_var: Option<&OsStr>) -> Option<Path
     let names = names_to_try(program, pathext().as_deref());
     env::split_paths(path_var?)
         .filter(|dir| dir.is_absolute())
-        .flat_map(|dir| names.iter().map(move |name| dir.join(name)))
-        .find(|candidate| is_executable(candidate))
-}
-
-/// This process's PATHEXT, read on Windows only; unset reads as empty, which `names_to_try` maps to its default.
-#[cfg(windows)]
-fn pathext() -> Option<OsString> {
-    Some(env::var_os("PATHEXT").unwrap_or_default())
-}
-
-/// No PATHEXT rules off Windows: the variable is not read, and a name is tried as given.
-#[cfg(not(windows))]
-fn pathext() -> Option<OsString> {
-    None
-}
-
-/// A regular file with an execute bit set for anyone.
-#[cfg(unix)]
-fn is_executable(path: &Path) -> bool {
-    use std::os::unix::fs::PermissionsExt;
-    path.metadata().is_ok_and(|meta| meta.is_file() && meta.permissions().mode() & 0o111 != 0)
-}
-
-/// A regular file: outside unix there is no execute bit to read.
-#[cfg(not(unix))]
-fn is_executable(path: &Path) -> bool {
-    path.is_file()
+        .find_map(|dir| first_in_dir(&dir, &names))
 }
