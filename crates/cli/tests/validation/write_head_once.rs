@@ -91,6 +91,90 @@ check = "all"
 fix = "none"
 
 [[rule]]
+id = "head-eslint"
+engine = "eslint"
+check = "no-var"
+fix = "none"
+
+[[rule]]
+id = "head-mypy"
+engine = "mypy"
+check = "arg-type"
+fix = "none"
+
+[[rule]]
+id = "head-pmd"
+engine = "pmd"
+check = "category/java/bestpractices.xml/UnusedPrivateField"
+fix = "none"
+
+[[rule]]
+id = "head-detekt"
+engine = "detekt"
+check = "MagicNumber"
+fix = "none"
+
+[[rule]]
+id = "head-rubocop"
+engine = "rubocop"
+check = "Lint/UselessAssignment"
+fix = "none"
+
+[[rule]]
+id = "head-phpstan"
+engine = "phpstan"
+check = "5"
+fix = "none"
+
+[[rule]]
+id = "head-dart"
+engine = "dart"
+check = "unused_local_variable"
+fix = "none"
+
+[[rule]]
+id = "head-markdownlint"
+engine = "markdownlint"
+check = "MD013"
+fix = "none"
+
+[[rule]]
+id = "head-yamllint"
+engine = "yamllint"
+check = "truthy"
+fix = "none"
+
+[[rule]]
+id = "head-actionlint"
+engine = "actionlint"
+check = "expression"
+fix = "none"
+
+[[rule]]
+id = "head-hadolint"
+engine = "hadolint"
+check = "DL3006"
+fix = "none"
+
+[[rule]]
+id = "head-vale"
+engine = "vale"
+check = "Vale.Spelling"
+fix = "none"
+
+[[rule]]
+id = "head-stylelint"
+engine = "stylelint"
+check = "color-no-invalid-hex"
+fix = "none"
+
+[[rule]]
+id = "head-sqlfluff"
+engine = "sqlfluff"
+check = "LT01"
+fix = "none"
+
+[[rule]]
 id = "head-tessera"
 engine = "tessera"
 check = "erosion"
@@ -101,7 +185,7 @@ fix = "none"
 /// arguments that print its version. `temperare rules` lists only RULES' engines, so an engine it lists must be
 /// here; one added to RULES is added here too. Tessera's is asked only once `temperare` says
 /// Tessera is available, which it does not yet (S-20).
-const VERSIONS: [(&str, &str, &[&str]); 12] = [
+const VERSIONS: [(&str, &str, &[&str]); 26] = [
     ("clippy", "cargo", &["clippy", "--version"]),
     ("swiftlint", "swiftlint", &["version"]),
     ("ruff", "ruff", &["--version"]),
@@ -113,6 +197,20 @@ const VERSIONS: [(&str, &str, &[&str]); 12] = [
     ("periphery", "periphery", &["version"]),
     ("gitleaks", "gitleaks", &["version"]),
     ("cargo-audit", "cargo-audit", &["--version"]),
+    ("eslint", "eslint", &["--version"]),
+    ("mypy", "mypy", &["--version"]),
+    ("pmd", "pmd", &["--version"]),
+    ("detekt", "detekt", &["--version"]),
+    ("rubocop", "rubocop", &["--force-default-config", "--version"]),
+    ("phpstan", "phpstan", &["--version"]),
+    ("dart", "dart", &["--suppress-analytics", "--version"]),
+    ("markdownlint", "markdownlint-cli2", &["--help"]),
+    ("yamllint", "yamllint", &["--version"]),
+    ("actionlint", "actionlint", &["-version"]),
+    ("hadolint", "hadolint", &["--version"]),
+    ("vale", "vale", &["--version"]),
+    ("stylelint", "stylelint", &["--version"]),
+    ("sqlfluff", "sqlfluff", &["--version"]),
     ("tessera", "ts", &["--version"]),
 ];
 
@@ -156,8 +254,10 @@ fn engine_line(rule: &Value) -> String {
 }
 
 /// The first line `program args` prints (stdout, else stderr), run in the temp folder and the environment `temperare`
-/// gets; "no version printed" when it prints nothing; "not installed" when procio finds no such program; procio's
-/// error when it gives no answer otherwise; the exit code when the program fails.
+/// gets; for pmd, the first line starting `PMD ` (`PMD 7.29.0 (...)`), since an ASCII-art banner comes before it;
+/// "no version printed" when it prints no such line; "not installed" when procio finds no such program; procio's
+/// error when it gives no answer otherwise; the exit code when the program fails. markdownlint-cli2's probe, `--help`,
+/// exits 2 after its version line (`markdownlint-cli2 v0.24.2 (markdownlint v0.42.2)`), so exit 2 is its answer.
 fn version(program: &str, args: &[&str]) -> String {
     let home = TempHome::new();
     let cmd = Cmd {
@@ -167,9 +267,11 @@ fn version(program: &str, args: &[&str]) -> String {
     match run(&cmd) {
         Err(ProcError::NotFound { .. }) => "not installed".to_string(),
         Err(e) => format!("no answer: {e}"),
-        Ok(out) if out.code == Some(0) => {
+        Ok(out) if out.code == Some(0) || (program == "markdownlint-cli2" && out.code == Some(2)) => {
             let printed = if out.stdout.is_empty() { &out.stderr } else { &out.stdout };
-            let first = String::from_utf8_lossy(printed).lines().next().unwrap_or("").trim().to_string();
+            let text = String::from_utf8_lossy(printed);
+            let line = text.lines().find(|line| program != "pmd" || line.starts_with("PMD "));
+            let first = line.unwrap_or("").trim().to_string();
             if first.is_empty() {
                 "no version printed".to_string()
             } else {
