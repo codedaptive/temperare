@@ -11,4 +11,4 @@ publish = false
 # The Code Chi VCS library, pinned by tag: every git question goes through it. A crate that asks one names it with
 # `ccvcslib.workspace = true`; moving the pin is a new tag here.
 [workspace.dependencies]
-ccvcslib = { git = "https://github.com/codedaptive/ccvcslib", tag = "v0.1.0" }
+ccvcslib = { git = "https://github.com/codedaptive/ccvcslib", tag = "v0.2.0" }
