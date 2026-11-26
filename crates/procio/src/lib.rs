@@ -8,6 +8,7 @@ mod git;
 mod has_path_separator;
 #[cfg(unix)]
 mod kill_group_cmd;
+mod names_to_try;
 mod output;
 mod proc_error;
 mod proc_error_display;
@@ -38,6 +39,8 @@ mod effective_path_tests;
 mod has_path_separator_tests;
 #[cfg(all(test, unix))]
 mod kill_group_cmd_tests;
+#[cfg(test)]
+mod names_to_try_tests;
 #[cfg(test)]
 mod output_tests;
 #[cfg(test)]
