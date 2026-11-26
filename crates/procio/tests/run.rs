@@ -1,10 +1,13 @@
 //! procio's integration tests for the runner: `run` and `which` on real programs, with a throwaway dir
-//! where a test needs files.
+//! where a test needs files. Most run unix programs (`sh`, `true`, `cat`, ...) and are unix-only; the
+//! not-found and which-miss tests run everywhere.
 
 use std::ffi::OsString;
 use std::fs;
 use std::path::PathBuf;
+#[cfg(unix)]
 use std::process::{Command, Stdio};
+#[cfg(unix)]
 use std::time::Duration;
 
 use procio::{run, which, Cmd, ProcError};
@@ -18,10 +21,14 @@ fn scratch(test: &str) -> PathBuf {
     dir
 }
 
+// Only the unix-gated tests call it.
+#[cfg(unix)]
 fn sh(script: &str) -> Cmd {
     Cmd { args: vec!["-c".into(), script.into()], ..Cmd::new("sh") }
 }
 
+// Needs the unix program `true`.
+#[cfg(unix)]
 #[test]
 fn true_exits_zero_with_empty_output() {
     let out = run(&Cmd::new("true")).unwrap();
@@ -30,6 +37,8 @@ fn true_exits_zero_with_empty_output() {
     assert_eq!(out.stderr, b"");
 }
 
+// Needs the unix program `false`.
+#[cfg(unix)]
 #[test]
 fn false_is_an_answer_not_an_error() {
     let out = run(&Cmd::new("false")).unwrap();
@@ -82,6 +91,8 @@ fn missing_absolute_path_is_not_found() {
     }
 }
 
+// Needs the unix program `true`.
+#[cfg(unix)]
 #[test]
 fn missing_cwd_with_existing_program_is_spawn() {
     // Never created: the program exists, so the failure is the spawn, not NotFound.
@@ -92,6 +103,8 @@ fn missing_cwd_with_existing_program_is_spawn() {
     }
 }
 
+// Needs the unix program `cat`.
+#[cfg(unix)]
 #[test]
 fn stdin_is_echoed_through_cat() {
     let out = run(&Cmd { stdin: b"hello\nprocio\n".to_vec(), ..Cmd::new("cat") }).unwrap();
@@ -99,6 +112,8 @@ fn stdin_is_echoed_through_cat() {
     assert_eq!(out.stdout, b"hello\nprocio\n");
 }
 
+// Needs `sh`, `head` and `/dev/zero`.
+#[cfg(unix)]
 #[test]
 fn large_output_on_both_pipes_does_not_deadlock() {
     // 1 MiB on each pipe is far past a pipe buffer: reading one pipe after the other would block the child.
@@ -113,6 +128,8 @@ fn large_output_on_both_pipes_does_not_deadlock() {
     assert_eq!(out.stderr.len(), 1_048_576);
 }
 
+// Needs `sh`, `sleep` and `kill`.
+#[cfg(unix)]
 #[test]
 fn timeout_kills_and_reaps_the_child() {
     let dir = scratch("timeout_kills_and_reaps");
@@ -137,12 +154,16 @@ fn timeout_kills_and_reaps_the_child() {
 
 /// True when `pid` no longer runs: `ps` finds no such process, or finds a zombie. A grandchild killed with the
 /// child's group is reparented to init and stays a zombie until init reaps it, so a zombie counts as gone.
+// Only the unix-gated tests call it.
+#[cfg(unix)]
 fn is_gone(pid: &str) -> bool {
     let out = Command::new("ps").args(["-o", "stat=", "-p", pid]).output().unwrap();
     let stat = String::from_utf8_lossy(&out.stdout);
     !out.status.success() || stat.trim().is_empty() || stat.trim_start().starts_with('Z')
 }
 
+// Needs `sh`, `sleep`, `ps`, `kill` and the timed child's process group, which only unix gives (src/run.rs:126-127).
+#[cfg(unix)]
 #[test]
 fn timeout_kills_a_grandchild_holding_stdout() {
     let dir = scratch("timeout_kills_a_grandchild");
@@ -174,6 +195,8 @@ fn timeout_kills_a_grandchild_holding_stdout() {
     assert!(gone, "grandchild {pid} still running after TimedOut");
 }
 
+// Needs `sh` and `pwd`.
+#[cfg(unix)]
 #[test]
 fn cwd_env_add_and_env_remove_apply() {
     let dir = scratch("cwd_env");
@@ -192,6 +215,8 @@ fn cwd_env_add_and_env_remove_apply() {
     assert_eq!(String::from_utf8(out.stdout).unwrap(), expected);
 }
 
+// Needs `sh` on PATH.
+#[cfg(unix)]
 #[test]
 fn which_finds_sh() {
     let found = which("sh").unwrap();

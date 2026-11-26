@@ -64,6 +64,10 @@ fn inherited_git_dir_and_work_tree_do_not_leak() {
     std::env::set_var("GIT_DIR", b.dir.join(".git"));
     std::env::set_var("GIT_WORK_TREE", &b.dir);
 
+    // git for Windows prints `/` separators and no `\\?\` prefix, so both sides are canonicalized;
+    // the exact form holds only on unix.
+    assert_eq!(fs::canonicalize(toplevel(&a.dir).unwrap()).unwrap(), fs::canonicalize(&a.dir).unwrap());
+    #[cfg(unix)]
     assert_eq!(toplevel(&a.dir).unwrap(), fs::canonicalize(&a.dir).unwrap());
     assert_eq!(rev_parse(&a.dir, "HEAD").unwrap().unwrap().as_str(), a_head);
 }

@@ -80,8 +80,15 @@ fn toplevel_of_root_and_subdir_is_the_canonical_root() {
     let s = repo("toplevel_root_subdir");
     write(&s.dir, "sub/deeper/x.txt", b"x\n");
     let root = fs::canonicalize(&s.dir).unwrap();
-    assert_eq!(toplevel(&s.dir).unwrap(), root);
-    assert_eq!(toplevel(&s.dir.join("sub/deeper")).unwrap(), root);
+    // git for Windows prints `/` separators and no `\\?\` prefix, so both sides are canonicalized;
+    // the exact form holds only on unix.
+    assert_eq!(fs::canonicalize(toplevel(&s.dir).unwrap()).unwrap(), root);
+    assert_eq!(fs::canonicalize(toplevel(&s.dir.join("sub/deeper")).unwrap()).unwrap(), root);
+    #[cfg(unix)]
+    {
+        assert_eq!(toplevel(&s.dir).unwrap(), root);
+        assert_eq!(toplevel(&s.dir.join("sub/deeper")).unwrap(), root);
+    }
 }
 
 #[test]
