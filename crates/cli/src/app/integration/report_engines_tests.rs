@@ -1,7 +1,7 @@
 //! ZIT for report_engines.rs, in cli's integration group, with engines' real entries: report_engines keeps an engine
-//! only when `engines::entry_for` gives it an entry with a version probe, so these cases hold only while the entries
-//! of ruff, SwiftLint, Clippy and ast-grep have a probe and Tessera's has none (Tessera has an entry; it is left out
-//! for having no probe). The availability is a closure; no engine runs and no PATH lookup.
+//! only when its entry (`engines::entry_of`, which gives every engine one) has a version probe, so these cases hold
+//! only while the entries of ruff, SwiftLint, Clippy and ast-grep have a probe and Tessera's has none. The
+//! availability is a closure; no engine runs and no PATH lookup.
 
 use super::super::report_engines::report_engines;
 use engines::Availability;

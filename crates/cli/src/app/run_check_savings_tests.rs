@@ -81,7 +81,7 @@ pub(super) fn world() -> CheckWorld<'static> {
     CheckWorld {
         toplevel: &top, exists: &|_| true, read: &read, rev_parse: &|_, _| unreachable!(),
         run_rules: &|_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| checked(vec![]),
-        availability: &|_| engines::Availability::Available, build_report: &clean,
+        availability: &|_, _| engines::Availability::Available, build_report: &clean,
         home: &|| None, now: &|| 0,
     }
 }

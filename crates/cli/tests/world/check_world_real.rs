@@ -1,7 +1,8 @@
 //! Tests of crates/cli/src/app/check_world_real.rs: six of the nine seams of `CheckWorld::real()` (toplevel, exists,
 //! read, rev_parse, run_rules, build_report) are wired to their real functions. `availability`, `home` and `now` have
-//! no case here: `availability` would look at the real PATH, `home` would read the real HOME and `now` the real
-//! clock. The file mixes kinds, each case marked: RITs (cli→ccvcslib/procio/rules/engines/report, kept beside their
+//! no case here: `availability` (wired to `availability_at`) is told in tests/world/local_eslint_real.rs and
+//! src/app/integration/availability_at_tests.rs, `home` would read the real HOME and `now` the real clock. The file
+//! mixes kinds, each case marked: RITs (cli→ccvcslib/procio/rules/engines/report, kept beside their
 //! caller) and a std disk seam. `exists` and `read` are told from stubs on
 //! a file the tests write in a throwaway folder under the system temp folder, removed on drop; `run_rules` (wired to
 //! `engines::run_rules_versioned_at`) and `build_report` (wired to `report::build_report_with_no_files`) on a rule file

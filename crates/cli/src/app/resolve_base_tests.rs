@@ -21,7 +21,7 @@ fn world<'a>(
         read: &|_| unreachable!("read"),
         rev_parse,
         run_rules: &|_, _, _, _| unreachable!("run_rules"),
-        availability: &|_| unreachable!("availability"),
+        availability: &|_, _| unreachable!("availability"),
         build_report: &|_, _, _, _| unreachable!("build_report"),
         home: &|| unreachable!("home"),
         now: &|| unreachable!("now"),

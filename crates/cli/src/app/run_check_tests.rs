@@ -61,7 +61,7 @@ fn world() -> CheckWorld<'static> {
         read: &read,
         rev_parse: &|_, _| unreachable!("rev_parse"),
         run_rules: &no_runs,
-        availability: &|_| engines::Availability::Available,
+        availability: &|_, _| engines::Availability::Available,
         build_report: &clean,
         home: &|| None,
         now: &|| 0,

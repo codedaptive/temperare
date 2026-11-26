@@ -4,8 +4,8 @@
 //! rule file's name for markdownlint-cli2), `check = "MD013"` (line length, 80 by default; the repository has no
 //! markdownlint config); example.md has a 100-character line 3, clean.md none over 80. tm runs with PATH the folders
 //! that give it markdownlint-cli2 and node (`tm_path_for`) then /usr/bin:/bin: markdownlint-cli2 is a
-//! `#!/usr/bin/env node` script, so node's folder is put on that PATH, but node is not something tm checks (the entry
-//! needs markdownlint-cli2 only). Only when markdownlint-cli2 is not on the PATH `temperare` gets (`on_tm_path`, which
+//! `#!/usr/bin/env node` script, and the entry needs both markdownlint-cli2 and node, so tm looks for each on that
+//! PATH. Only when markdownlint-cli2 is not on the PATH `temperare` gets (`on_tm_path`, which
 //! runs nothing) is the reported case NOT RUN, with `temperare`'s reason, never PASS; `temperare` must then report the
 //! rule not available.
 

@@ -6,10 +6,11 @@ use std::fmt::Write;
 use std::path::Path;
 
 /// The rule file's path, each rule with its engine, kind, severity, scope and whether `availability` says its engine
-/// can be run here (`available`, or `not available: <why>`), then each of `not_applicable` in the given order as
-/// `<rule>  <engine>  <why>`, then the exceptions in force on `day`, then those expired by `day` with their `expires`
-/// date, the rules and exceptions in file order and every line ending in a newline. `rf.exceptions_expired(day)` alone
-/// decides which are expired. All four header lines print with their count, (0) included.
+/// can be run for the rule file's folder (`available`, or `not available: <why>`), then each of `not_applicable` in
+/// the given order as `<rule>  <engine>  <why>`, then the exceptions in force on `day`, then those expired by `day`
+/// with their `expires` date, the rules and exceptions in file order and every line ending in a newline.
+/// `rf.exceptions_expired(day)` alone decides which are expired. All four header lines print with their count, (0)
+/// included.
 pub fn rules_text(
     file: &Path,
     rf: &rules::RuleFile,

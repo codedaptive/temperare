@@ -3,11 +3,11 @@
 //! off the PATH, the same rule reports "not available" (exit 3). One rule, `engine = "eslint"`, `check = "no-var"`,
 //! over the repository's own eslint.config.mjs (`export default [{}];`, no rule of its own); example.js declares
 //! with `var` on line 2, clean.js with `const`. tm runs with PATH the folders that give it eslint and node
-//! (`tm_path_for`) then /usr/bin:/bin: eslint is a `#!/usr/bin/env node` script, so node's folder is put on that PATH,
-//! but node is not something tm checks (the entry needs eslint only). Only when eslint is not on the PATH
+//! (`tm_path_for`) then /usr/bin:/bin: eslint is a `#!/usr/bin/env node` script, and the entry needs both eslint and
+//! node, so tm looks for each on that PATH. Only when eslint is not on the PATH
 //! `temperare` gets (`on_tm_path`, which runs nothing) is the reported case NOT RUN, with `temperare`'s reason, never
 //! PASS; `temperare` must then report the rule not available. eslint found in the repository's node_modules/.bin is
-//! not covered here.
+//! not covered here; tests/world/local_eslint_real.rs covers it.
 
 use serde_json::json;
 

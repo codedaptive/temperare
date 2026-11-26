@@ -1,5 +1,6 @@
 //! `CheckWorld::real`: the world wired to the real git, disk, engines, report, HOME and clock.
 
+use super::availability_at::availability_at;
 use super::git_rev_parse::git_rev_parse;
 use super::git_toplevel::git_toplevel;
 use super::now_secs::now_secs;
@@ -9,7 +10,7 @@ use std::path::{Path, PathBuf};
 
 impl CheckWorld<'static> {
     /// The real world: `git_toplevel`, `Path::is_file`, `RuleFile::read`, `git_rev_parse` (git through ccvcslib),
-    /// `engines::run_rules_versioned_at`, `engines::availability`, `report::build_report_with_no_files`, HOME (`home`)
+    /// `engines::run_rules_versioned_at`, `availability_at`, `report::build_report_with_no_files`, HOME (`home`)
     /// and the clock (`now_secs`). Tests pass closures.
     pub fn real() -> CheckWorld<'static> {
         CheckWorld {
@@ -18,7 +19,7 @@ impl CheckWorld<'static> {
             read: &RuleFile::read,
             rev_parse: &git_rev_parse,
             run_rules: &engines::run_rules_versioned_at,
-            availability: &engines::availability,
+            availability: &availability_at,
             build_report: &report::build_report_with_no_files,
             home: &home,
             now: &now_secs,
