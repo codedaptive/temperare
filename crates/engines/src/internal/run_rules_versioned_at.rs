@@ -21,7 +21,7 @@ use std::path::Path;
 /// markdownlint rule with no Markdown file in them, is no findings with the `no_files` flag, even if its engine is
 /// absent; any other rule with `only_with_base` and no `base`, whose paths match a listed file or where no listing
 /// is made, is `NotAvailable` with `rules::ONLY_WITH_BASE_WHY`, whatever its engine, and its check never runs; an
-/// absent engine is `NotAvailable` with `availability`'s why; a check the engine does not know is `NotAvailable`
+/// absent engine is `NotAvailable` with `availability_in`'s why; a check the engine does not know is `NotAvailable`
 /// with a why naming the engine, its version and the check; an engine that ran but gave no answer is `Failed`;
 /// otherwise `Findings`, empty when clean. A run's `raw_chars` is what its check run printed, `None` when no run was
 /// counted for it; its `Some` values count the check runs, not the rules. `engines` is each distinct engine the

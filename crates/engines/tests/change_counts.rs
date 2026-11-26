@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::ffi::OsString;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use engines::{availability, run_rules_versioned_at, Availability};
+use engines::{availability_in, run_rules_versioned_at, Availability};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
 static NEXT_FOLDER: AtomicUsize = AtomicUsize::new(0);
@@ -43,6 +43,7 @@ enum Expected {
 
 fn check_change(code_lines: usize, tracked_test_lines: usize, untracked_test_lines: usize, params: &str, with_base: bool, expected: Expected, setup: impl FnOnce(&Path) -> Option<(PathBuf, fs::Permissions)>) {
     let repo = TempFolder::new();
+    assert_eq!(availability_in(Engine::Git, &repo.0), Availability::Available);
     git(&repo.0, &["init", "-q"]);
     fs::create_dir(repo.0.join("src")).unwrap();
     fs::create_dir(repo.0.join("tests")).unwrap();
@@ -108,7 +109,6 @@ macro_rules! change_case {
     ($name:ident, $code:expr, $tracked:expr, $untracked:expr, $params:expr, $base:expr, $expected:expr) => {
         #[test]
         fn $name() {
-            assert_eq!(availability(Engine::Git), Availability::Available);
             check_change($code, $tracked, $untracked, $params, $base, $expected, |_| None);
         }
     };

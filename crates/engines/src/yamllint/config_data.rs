@@ -12,8 +12,8 @@ use std::path::Path;
 /// - naming the check under `rules` enables it even where the base disables it: a base `false` or `disable` is
 ///   replaced, so the check runs with its own option defaults at level error; a base table keeps its options and its
 ///   level (both measured, fixtures/fixtures.txt).
-/// - `ignore-from-file: []` clears the check's own `ignore` and `ignore-from-file` (S-67 (1)), so a path the
-///   repository's config hides from that rule is still checked (tests/yamllint.rs, "check-ignore-from-file").
+/// - `ignore-from-file: []` clears the check's own `ignore-from-file` (S-67 (1)), so a path the repository's config
+///   hides from that rule is still checked (tests/yamllint.rs, "check-ignore-from-file").
 ///
 /// The check key is double-quoted too, so PyYAML, which reads YAML 1.1, takes `yes` or `on` as the string, not a
 /// boolean. The check is a rule id already (`yamllint_refusal`), so it needs no escaping. Err(why) when `base` is not

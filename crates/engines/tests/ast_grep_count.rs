@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use engines::{availability, run_rules_versioned_at, Availability};
+use engines::{availability_in, run_rules_versioned_at, Availability};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
 const YAML: &str = r#"id: root
@@ -91,8 +91,8 @@ fn assert_finding(outcomes: Vec<RuleOutcome>, path: &str, line: u32, what: &str)
 
 #[test]
 fn base_reports_only_changed_non_shared_heavy_test_file() {
-    assert_eq!(availability(Engine::AstGrep), Availability::Available);
     let (repo, base) = Repo::new("count-changed");
+    assert_eq!(availability_in(Engine::AstGrep, &repo.0), Availability::Available);
     fs::write(repo.0.join("tests/a_tests.rs"), CHANGED).unwrap();
     fs::write(repo.0.join("tests/common/mod.rs"), format!("{HEAVY}const E: i32 = 5;\n")).unwrap();
     let outcomes = repo.run(Some(&base));
@@ -103,8 +103,8 @@ fn base_reports_only_changed_non_shared_heavy_test_file() {
 
 #[test]
 fn base_reports_untracked_heavy_test_file_at_line_one() {
-    assert_eq!(availability(Engine::AstGrep), Availability::Available);
     let (repo, base) = Repo::new("count-untracked");
+    assert_eq!(availability_in(Engine::AstGrep, &repo.0), Availability::Available);
     fs::write(repo.0.join("tests/new_tests.rs"), HEAVY).unwrap();
     let outcomes = repo.run(Some(&base));
     drop(repo);
@@ -114,8 +114,8 @@ fn base_reports_untracked_heavy_test_file_at_line_one() {
 
 #[test]
 fn count_without_base_is_not_available() {
-    assert_eq!(availability(Engine::AstGrep), Availability::Available);
     let (repo, _base) = Repo::new("count-no-base");
+    assert_eq!(availability_in(Engine::AstGrep, &repo.0), Availability::Available);
     fs::write(repo.0.join("tests/a_tests.rs"), CHANGED).unwrap();
     let outcomes = repo.run(None);
     drop(repo);

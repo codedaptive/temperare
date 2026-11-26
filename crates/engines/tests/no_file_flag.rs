@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use engines::{availability, run_rules_versioned_at, Availability};
+use engines::{availability_in, run_rules_versioned_at, Availability};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
 #[path = "support/git.rs"]
@@ -29,8 +29,8 @@ fn git(repo: &Path, args: &[&str]) {
 
 #[test]
 fn no_file_flag_counts_untracked_but_not_ignored_files() {
-    assert_eq!(availability(Engine::Ruff), Availability::Available);
     let repo = TempFolder::new();
+    assert_eq!(availability_in(Engine::Ruff, &repo.0), Availability::Available);
     git(&repo.0, &["init", "-q"]);
     for dir in ["src", "docs", "lib", "build", "inner"] {
         fs::create_dir(repo.0.join(dir)).unwrap();

@@ -1,6 +1,6 @@
 //! The actionlint adapter: its entry (`ACTIONLINT`) and the flow it runs for one rule, the refusal of a check that is
 //! not an actionlint kind's form, which files are workflows (`is_workflow`) and the no-file outcome before
-//! availability (settled by `engine_listed`, in `engine_hits_with`'s step 1), the config tm passes and the `ignore`
+//! availability (settled by `no_file_listed`, in `engine_hits_with`'s step 1), the config tm passes and the `ignore`
 //! in it tm cannot turn off (read with `yaml_entries`), the ShellCheck and pyflakes integrations a check turns on, a
 //! kind the run did not define, and the reader of its JSON.
 

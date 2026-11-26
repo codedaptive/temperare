@@ -33,10 +33,8 @@ pub mod yamllint;
 
 mod internal;
 
-pub use availability::availability;
 pub use availability_in::availability_in;
 pub use entry::{entry_cmd, Entry, ParamArg, Params, Pick, ReadFn, TempFile, VersionProbe};
-pub use entry_for::entry_for;
 pub use entry_of::entry_of;
 pub use no_file_rules::no_file_rules;
 pub use run_rules_versioned_at::run_rules_versioned_at;

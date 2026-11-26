@@ -2,7 +2,7 @@
 //! no unit-test sibling. The zone integration test in integration/eslint_local_bin_tests.rs calls it with the real
 //! PATH, and tests its body, one call to `availability_from`, with PATH given.
 
-use crate::availability::availability_from;
+use crate::availability_from::availability_from;
 use crate::types::Availability;
 use rules::Engine;
 use std::path::Path;
