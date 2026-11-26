@@ -5,7 +5,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use procio::{changed_files, rev_parse, toplevel};
+use procio::{rev_parse, toplevel};
 
 /// A scratch dir under the temp dir, unique to this process and name; removed when the guard drops.
 struct Scratch {
@@ -61,12 +61,9 @@ fn inherited_git_dir_and_work_tree_do_not_leak() {
     let b = repo("b", "b.txt", b"b\n");
     let a_head = head(&a.dir);
     assert_ne!(a_head, head(&b.dir));
-    fs::write(a.dir.join("a.txt"), b"a changed\n").unwrap();
-    fs::write(b.dir.join("b.txt"), b"b changed\n").unwrap();
     std::env::set_var("GIT_DIR", b.dir.join(".git"));
     std::env::set_var("GIT_WORK_TREE", &b.dir);
 
     assert_eq!(toplevel(&a.dir).unwrap(), fs::canonicalize(&a.dir).unwrap());
     assert_eq!(rev_parse(&a.dir, "HEAD").unwrap().unwrap().as_str(), a_head);
-    assert_eq!(changed_files(&a.dir, &a_head).unwrap(), vec![PathBuf::from("a.txt")]);
 }

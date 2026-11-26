@@ -9,7 +9,7 @@ use std::ops::Range;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use procio::{added_lines, blob_at, changed_files, rev_parse, toplevel, tracked_files, untracked_files, GitError, Oid};
+use procio::{added_lines, blob_at, rev_parse, toplevel, tracked_files, untracked_files, GitError, Oid};
 
 /// A scratch dir under the temp dir, unique to this process and test; removed when the guard drops.
 struct Scratch {
@@ -128,46 +128,6 @@ fn rev_parse_of_an_option_shaped_rev_is_none() {
     write(&s.dir, "f.txt", b"one\n");
     commit_all(&s.dir, "first");
     assert_eq!(rev_parse(&s.dir, "--help").unwrap(), None);
-}
-
-#[test]
-fn changed_files_lists_tracked_changes_against_base() {
-    let s = repo("changed_files_tracked");
-    write(&s.dir, "a.txt", b"a\n");
-    write(&s.dir, "b.txt", b"b\n");
-    write(&s.dir, "dir/c d.txt", b"c\n");
-    commit_all(&s.dir, "base");
-    let base = head(&s.dir);
-    write(&s.dir, "a.txt", b"a changed\n");
-    fs::remove_file(s.dir.join("b.txt")).unwrap();
-    write(&s.dir, "new.txt", b"new\n");
-    git(&s.dir, &["add", "new.txt"]);
-    write(&s.dir, "untracked.txt", b"u\n");
-    let mut files = changed_files(&s.dir, &base).unwrap();
-    files.sort();
-    assert_eq!(files, vec![p("a.txt"), p("b.txt"), p("new.txt")]);
-}
-
-#[test]
-fn changed_files_of_a_clean_tree_is_empty() {
-    let s = repo("changed_files_clean");
-    write(&s.dir, "a.txt", b"a\n");
-    commit_all(&s.dir, "base");
-    assert_eq!(changed_files(&s.dir, &head(&s.dir)).unwrap(), Vec::<PathBuf>::new());
-}
-
-#[test]
-fn changed_files_with_a_missing_base_is_exit_128() {
-    let s = repo("changed_files_missing_base");
-    write(&s.dir, "a.txt", b"a\n");
-    commit_all(&s.dir, "base");
-    match changed_files(&s.dir, "no-such-base") {
-        Err(GitError::Exit { args, code, .. }) => {
-            assert_eq!(code, Some(128));
-            assert!(args.iter().any(|a| a == "--end-of-options"), "args {args:?} lack --end-of-options");
-        }
-        other => panic!("expected Exit, got {other:?}"),
-    }
 }
 
 /// Base: f.txt "one".."five"; g.txt "a b c"; "dir/c d.txt" "x"; gone.txt.

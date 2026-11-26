@@ -10,6 +10,6 @@ mod parse;
 pub use command::git_cmd;
 pub use error::GitError;
 pub use oid::Oid;
-pub use ops::{added_lines, blob_at, changed_files, rev_parse, toplevel, tracked_files, untracked_files};
+pub use ops::{added_lines, blob_at, rev_parse, toplevel, tracked_files, untracked_files};
 
 pub(crate) use command::git_checked;
