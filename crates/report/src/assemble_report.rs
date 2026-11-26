@@ -4,7 +4,7 @@ use crate::{
     out_of_play, silenced_by_rule, split_by_exceptions, stderr_tail, Counts, Expired, Failed, NotAvailable, Report,
     Silenced,
 };
-use procio::Oid;
+use crate::Oid;
 use rules::{Date, Exception, Finding, RuleFile, RuleOutcome};
 
 /// The report of `outcomes`. Their findings go through `keep_new` first, so a finding it drops is neither kept nor

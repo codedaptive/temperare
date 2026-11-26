@@ -4,7 +4,7 @@
 
 use crate::test_json::to_json;
 use crate::{Counts, CoversNothing, EngineVersion, Expired, NotApplicable, Report, RuleCount};
-use procio::Oid;
+use crate::Oid;
 use rules::{Engine, RelPath};
 
 const COUNTS: &str = r#"{"findings":0,"errors":0,"warnings":0,"quality":0,"security":0,"silenced":0,"not_available":0,"failed":0,"not_applicable":0,"covers_nothing":0,"expired":0}"#;

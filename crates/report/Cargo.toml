@@ -6,6 +6,8 @@ publish.workspace = true
 
 [dependencies]
 ccvcslib.workspace = true
-procio = { path = "../procio" }
 rules = { path = "../rules" }
 serde = { version = "1", features = ["derive"] }
+
+[dev-dependencies]
+procio = { path = "../procio" }

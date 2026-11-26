@@ -2,7 +2,7 @@
 
 use crate::{assemble_report, fold_untracked, folder_from_top, keep_added, utc_date, Report, ReportError};
 use ccvcslib::{AddedLines, GitVcs, Revision, Vcs};
-use procio::Oid;
+use crate::Oid;
 use rules::{Date, RuleFile, RuleOutcome};
 use std::collections::BTreeMap;
 use std::ops::Range;

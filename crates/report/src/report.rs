@@ -1,7 +1,7 @@
 //! `Report`: what a check came to, the `--json` body.
 
 use crate::{Counts, CoversNothing, EngineVersion, Expired, Failed, NotApplicable, NotAvailable, RuleCount, Silenced};
-use procio::Oid;
+use crate::Oid;
 use rules::Finding;
 use serde::{Serialize, Serializer};
 
@@ -38,7 +38,7 @@ pub struct Report {
     pub counts: Counts,
 }
 
-/// The id's hex text: `procio::Oid` has no `Serialize`.
+/// The id's hex text: `Oid` has no `Serialize`.
 fn oid_text<S: Serializer>(base: &Option<Oid>, serializer: S) -> Result<S::Ok, S::Error> {
     match base {
         Some(oid) => serializer.serialize_str(oid.as_str()),

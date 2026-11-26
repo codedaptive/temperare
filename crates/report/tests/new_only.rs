@@ -40,7 +40,7 @@ fn git(dir: &Path, args: &[&str]) -> Vec<u8> {
     output.stdout
 }
 
-fn repo(name: &str, initial_file: &str) -> (Scratch, procio::Oid) {
+fn repo(name: &str, initial_file: &str) -> (Scratch, report::Oid) {
     let dir = std::env::temp_dir().join(format!("report-zit-{}-{name}", std::process::id()));
     fs::create_dir(&dir).unwrap();
     let scratch = Scratch { dir };
@@ -52,7 +52,7 @@ fn repo(name: &str, initial_file: &str) -> (Scratch, procio::Oid) {
     git(&scratch.dir, &["add", "-A"]);
     git(&scratch.dir, &["commit", "-q", "-m", "base"]);
     let rev = GitVcs::default().resolve_revision(&scratch.dir, "HEAD").unwrap().unwrap();
-    let base = procio::Oid::parse(&rev.0).unwrap();
+    let base = report::Oid::parse(&rev.0).unwrap();
     (scratch, base)
 }
 
