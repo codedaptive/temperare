@@ -1,6 +1,7 @@
 //! `parse_sarif`: a SARIF 2.1 log, read into the hits of one rule.
 
 use super::sarif_path::sarif_path;
+use super::strip_verbatim_disk::strip_verbatim_disk;
 use crate::printed_start::printed_start;
 use crate::rel_to_folder::rel_to_folder;
 use crate::types::{Hit, ParseError};
@@ -74,19 +75,23 @@ struct Region {
 /// absent) and its first location's `physicalLocation.artifactLocation.uri` and `region.startLine`/`startColumn`
 /// (line and column None when there is no region). A result is kept when its rule id equals one comma-separated part
 /// of `check`, or `check` is `ALL`; one with no rule id never is. The URI is read by `sarif_path` and made relative
-/// to `folder` with `cwd` as the engine's working directory; a result with no location, or in a file outside
-/// `folder`, is not a hit. Any exit code with a SARIF log on stdout is an answer; stdout that is not one (not JSON,
-/// or no `runs` array) is a `ParseError` quoting the start of what the engine printed. An entry whose
-/// engine prints SARIF sets its reader to `parse_sarif`, or to a reader that calls it (`parse_gitleaks` does).
+/// to `folder` with `cwd` as the engine's working directory (on Windows, the URI read as a Windows path and `cwd` and
+/// `folder` read by `strip_verbatim_disk`); a result with no location, or in a file outside `folder`, is not a hit.
+/// Any exit code with a SARIF log on stdout is an answer; stdout that is not one (not JSON, or no `runs` array) is a
+/// `ParseError` quoting the start of what the engine printed. An entry whose engine prints SARIF sets its reader to
+/// `parse_sarif`, or to a reader that calls it (`parse_gitleaks` does).
 pub fn parse_sarif(out: &Output, check: &str, cwd: &Path, folder: &Path) -> Result<Vec<Hit>, ParseError> {
     let log: Log = serde_json::from_slice(&out.stdout)
         .map_err(|_| ParseError { why: format!("SARIF output is not a SARIF log: {}", printed_start(out)) })?;
+    let windows = cfg!(windows);
+    let (cwd, folder) =
+        if windows { (strip_verbatim_disk(cwd), strip_verbatim_disk(folder)) } else { (cwd.into(), folder.into()) };
     Ok(log
         .runs
         .into_iter()
         .flat_map(|run| run.results)
         .filter(|result| rule_id(result).is_some_and(|id| check == "ALL" || check.split(',').any(|part| part == id)))
-        .filter_map(|result| hit(result, cwd, folder))
+        .filter_map(|result| hit(result, &cwd, &folder, windows))
         .collect())
 }
 
@@ -96,11 +101,11 @@ fn rule_id(result: &SarifResult) -> Option<&str> {
 }
 
 /// The hit for `result`; None when it has no location or its file is outside `folder`.
-fn hit(result: SarifResult, cwd: &Path, folder: &Path) -> Option<Hit> {
+fn hit(result: SarifResult, cwd: &Path, folder: &Path, windows: bool) -> Option<Hit> {
     let physical = result.locations.into_iter().next()?.physical_location?;
     let uri = physical.artifact_location?.uri?;
     Some(Hit {
-        path: rel_to_folder(cwd, folder, &sarif_path(&uri))?,
+        path: rel_to_folder(cwd, folder, &sarif_path(&uri, windows))?,
         line: physical.region.as_ref().and_then(|region| region.start_line),
         col: physical.region.as_ref().and_then(|region| region.start_column),
         what: result.message.and_then(|message| message.text).unwrap_or_default(),

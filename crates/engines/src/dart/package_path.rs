@@ -1,6 +1,6 @@
 //! `package_path`: the file a `package:` URI names, through a package's `.dart_tool/package_config.json`.
 
-use super::windows_path;
+use crate::windows_path::windows_path;
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 

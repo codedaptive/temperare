@@ -1,10 +1,11 @@
-//! ZUT for parse_sarif.rs: hand-written SARIF 2.1 logs, read into hits.
+//! ZUT for parse_sarif.rs: SARIF 2.1 hits, and Windows drive URIs under a verbatim folder.
 //!
 //! regions.sarif: two runs. Run 1: R1 in src/a.py at 3:5 ("first", with a second location that is not read); R2 by
 //! `rule.id` in relative src/b.py at line 7, no column ("second"); R1 in `my%20dir/c.py` at 1:2 ("spaced"); R1 outside
 //! the folder; R3 with no location; a result with no rule id. Run 2: R2 in z.py at 9:1 with no message.
 //! no_region.sarif: R1 in f.py with no region. empty_run.sarif: one run with `"results": []`.
-//! Every path is under `/work/project`, passed as `cwd` and (unless a test says otherwise) `folder`.
+//! Except in the verbatim-folder test (Windows only), every path is under `/work/project`, passed as `cwd` and (unless
+//! a test says otherwise) `folder`.
 
 use super::parse_sarif;
 use crate::types::{Hit, ParseError};
@@ -118,5 +119,19 @@ fn output_that_is_not_json_is_a_parse_error_quoting_stderr() {
     assert_eq!(
         parse_sarif(&out, "ALL", Path::new(DIR), Path::new(DIR)),
         Err(ParseError { why: "SARIF output is not a SARIF log: engine: no such option\n".to_string() })
+    );
+}
+
+#[cfg(windows)]
+#[test]
+fn windows_drive_uris_under_a_verbatim_folder_are_kept_in_order() {
+    let out = output(0, br#"{"runs":[{"results":[
+        {"ruleId":"R1","locations":[{"physicalLocation":{"artifactLocation":{"uri":"file:///C:/work/project/src/a.py"}}}]},
+        {"ruleId":"R1","locations":[{"physicalLocation":{"artifactLocation":{"uri":"file:///c:/work/project/src/b.py"}}}]}
+    ]}]}"#, b"");
+    let folder = Path::new(r"\\?\C:\work\project");
+    assert_eq!(
+        parse_sarif(&out, "R1", folder, folder),
+        Ok(vec![hit("src/a.py", None, None, ""), hit("src/b.py", None, None, "")])
     );
 }
