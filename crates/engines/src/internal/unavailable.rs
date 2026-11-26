@@ -10,7 +10,8 @@ use std::path::Path;
 /// None when it can be run. Nothing is run. An entry that is never available (`never`, Tessera) is `NotAvailable` with
 /// that why and nothing is looked up. Otherwise each name the entry `needs` is checked in order, and the first not
 /// found is `NotOnPath` naming it: the entry's own program counts as found with no lookup when `program_for` gives a
-/// local one in `folder` (ESLint's `node_modules/.bin/eslint`); every other name (node) is looked up with `on_path`.
+/// local one in `folder` (ESLint's executable `eslint` in `node_modules/.bin`); every other name (node) is looked up
+/// with `on_path`.
 pub(crate) fn unavailable(engine: Engine, folder: Option<&Path>, on_path: impl Fn(&str) -> bool) -> Option<Stop> {
     let entry = entry_of(engine);
     if let Some(why) = entry.never {

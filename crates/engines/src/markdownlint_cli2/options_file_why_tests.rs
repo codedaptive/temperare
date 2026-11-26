@@ -9,13 +9,14 @@ const FOLDER: &str = "/w/repo";
 
 #[test]
 fn options_file_why_cases() {
+    let cjs = Path::new("docs").join(".markdownlint-cli2.cjs").display().to_string();
+    let api = Path::new("docs/api").join(".markdownlint-cli2.yaml").display().to_string();
     let rows: [(&str, &[&str], &[&str], Option<&str>); 9] = [
         ("none", &["a.md"], &[], None),
         ("in the folder", &["a.md"], &[".markdownlint-cli2.jsonc"], Some(".markdownlint-cli2.jsonc")),
         ("first name in order", &["a.md"], &[".markdownlint-cli2.mjs", ".markdownlint-cli2.yaml"], Some(".markdownlint-cli2.yaml")),
-        ("on the way down", &["docs/a.md"], &["docs/.markdownlint-cli2.cjs"], Some("docs/.markdownlint-cli2.cjs")),
-        ("two levels down", &["a.md", "docs/api/x.md"], &["docs/api/.markdownlint-cli2.yaml"],
-            Some("docs/api/.markdownlint-cli2.yaml")),
+        ("on the way down", &["docs/a.md"], &["docs/.markdownlint-cli2.cjs"], Some(cjs.as_str())),
+        ("two levels down", &["a.md", "docs/api/x.md"], &["docs/api/.markdownlint-cli2.yaml"], Some(api.as_str())),
         ("folder before below", &["docs/a.md"], &["docs/.markdownlint-cli2.jsonc", ".markdownlint-cli2.mjs"],
             Some(".markdownlint-cli2.mjs")),
         ("in a sibling folder", &["docs/a.md"], &["other/.markdownlint-cli2.jsonc"], None),

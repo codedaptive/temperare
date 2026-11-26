@@ -19,21 +19,35 @@ fn why(why: &str) -> Result<Vec<Hit>, ParseError> {
     Err(ParseError { why: why.to_string() })
 }
 
+/// An absolute folder on this platform: `/w` is not absolute on Windows, where the parser would refuse it.
+const W: &str = if cfg!(windows) { "C:/w" } else { "/w" };
+const ELSEWHERE: &str = if cfg!(windows) { "C:/elsewhere" } else { "/elsewhere" };
+
+// The capture's paths are macOS absolute paths.
+#[cfg(unix)]
+#[test]
+fn parse_clang_tidy_capture_cases() {
+    let out = Output { code: Some(0), stdout: include_bytes!("fixtures/one_finding.txt").to_vec(), stderr: Vec::new() };
+    let expected = Ok(vec![hit("a.c", 1, 22, "statement should be inside braces")]);
+    assert_eq!(parse_clang_tidy(&out, BRACES, Path::new(FIND), Path::new(FIND)), expected);
+}
+
 #[test]
 fn parse_clang_tidy_cases() {
-    let one_finding: &[u8] = include_bytes!("fixtures/one_finding.txt");
-    let braces = "statement should be inside braces";
-    let rows: [(&str, i32, &[u8], &[u8], &str, &str, Result<Vec<Hit>, ParseError>); 10] = [
-        ("the finding in a.c, none in the clean b.c", 0, one_finding, b"", BRACES, FIND, Ok(vec![hit("a.c", 1, 22, braces)])),
-        ("a check not in the tag", 0, one_finding, b"", "readability-else-after-return", FIND, Ok(vec![])),
-        ("a tag of two names, one the check", 0, b"/w/s/a.c:3:5: warning: two [misc-x,readability-braces-around-statements]\n", b"", BRACES, "/w", Ok(vec![hit("s/a.c", 3, 5, "two")])),
-        ("an error line on exit 0", 0, b"/w/a.c:4:2: error: bad [readability-braces-around-statements]\n", b"", BRACES, "/w", Ok(vec![hit("a.c", 4, 2, "bad")])),
-        ("a note line and snippet lines", 0, b"/w/a.c:2:1: note: see [readability-braces-around-statements]\n    2 | x: warning: y [readability-braces-around-statements]\n      | ^\n", b"", BRACES, "/w", Ok(vec![])),
-        ("a path outside the folder", 0, b"/elsewhere/a.c:1:22: warning: w [readability-braces-around-statements]\n", b"", BRACES, "/w", Ok(vec![])),
-        ("a relative path", 0, b"src/a.c:1:22: warning: w [readability-braces-around-statements]\n", b"", BRACES, "/w", why(
+    let two_names = format!("{W}/s/a.c:3:5: warning: two [misc-x,readability-braces-around-statements]\n");
+    let error_line = format!("{W}/a.c:4:2: error: bad [readability-braces-around-statements]\n");
+    let note = format!("{W}/a.c:2:1: note: see [readability-braces-around-statements]\n    2 | x: warning: y [readability-braces-around-statements]\n      | ^\n");
+    let outside = format!("{ELSEWHERE}/a.c:1:22: warning: w [readability-braces-around-statements]\n");
+    let rows: [(&str, i32, &[u8], &[u8], &str, &str, Result<Vec<Hit>, ParseError>); 9] = [
+        ("a check not in the tag", 0, include_bytes!("fixtures/one_finding.txt"), b"", "readability-else-after-return", FIND, Ok(vec![])),
+        ("a tag of two names, one the check", 0, two_names.as_bytes(), b"", BRACES, W, Ok(vec![hit("s/a.c", 3, 5, "two")])),
+        ("an error line on exit 0", 0, error_line.as_bytes(), b"", BRACES, W, Ok(vec![hit("a.c", 4, 2, "bad")])),
+        ("a note line and snippet lines", 0, note.as_bytes(), b"", BRACES, W, Ok(vec![])),
+        ("a path outside the folder", 0, outside.as_bytes(), b"", BRACES, W, Ok(vec![])),
+        ("a relative path", 0, b"src/a.c:1:22: warning: w [readability-braces-around-statements]\n", b"", BRACES, W, why(
             "clang-tidy printed `src/a.c` relative to its compile database's directory; tm reads its findings only when the database's `file` entries are absolute paths",
         )),
-        ("a relative path under another check", 0, b"src/a.c:1:22: warning: w [misc-x]\n", b"", BRACES, "/w", Ok(vec![])),
+        ("a relative path under another check", 0, b"src/a.c:1:22: warning: w [misc-x]\n", b"", BRACES, W, Ok(vec![])),
         ("exit 1 with a compile error quotes its error line", 1, include_bytes!("fixtures/compile_error.txt"), b"[1/2] Processing file /x/a.c.\n", BRACES, FIND, why(
             "clang-tidy gave no findings: /private/tmp/clang-tidy-fixtures.H87jA4/broken/a.c:1:27: error: use of undeclared identifier 'undefined_name' [clang-diagnostic-error]",
         )),

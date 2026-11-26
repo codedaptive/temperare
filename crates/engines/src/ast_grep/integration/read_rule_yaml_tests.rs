@@ -43,6 +43,8 @@ fn parent_file_outside_folder_is_refused() {
     );
 }
 
+// `rule_yaml_text` reads the hard-link count on unix only.
+#[cfg(unix)]
 #[test]
 fn hard_link_to_file_outside_folder_is_refused() {
     let tree = Tree::new("hard-link-outside");

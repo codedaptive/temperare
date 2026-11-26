@@ -34,7 +34,8 @@ use std::path::Path;
 ///    check; `parse_clippy` refusing a check clippy did not take is a second guard.
 /// 6. `cargo locate-project --workspace`, then the entry's command (`entry_cmd`), both in the Cargo root: only that
 ///    crate and what it depends on are built and that crate is linted. Its span paths are relative to the workspace
-///    root that `locate-project` names, so the entry's reader reads them from there. No `CARGO_TARGET_DIR` is set:
+///    root that `locate-project` names, so the entry's reader reads them from there, canonicalized so it shares
+///    `folder`'s form; a root that cannot be resolved is `Failed` before clippy runs. No `CARGO_TARGET_DIR` is set:
 ///    cargo builds in the repository's own `target/` (settled S-21). The clippy run is the counted check run
 ///    (`check_run`); the two runs before it are not. With a `max_nesting`, the check run's environment also holds
 ///    `CLIPPY_CONF_DIR`, naming the temporary folder whose `clippy.toml` holds the threshold; the folder is removed
@@ -61,7 +62,11 @@ pub(crate) fn hits_clippy(entry: &Entry, rule: &Rule, folder: &Path, host: &Host
         });
     }
     let located = ran(&locate_workspace_cmd(&root), host)?;
-    let workspace = parse_locate_workspace(&located).map_err(|err| parse_failed(&located, err))?;
+    let named = parse_locate_workspace(&located).map_err(|err| parse_failed(&located, err))?;
+    let workspace = std::fs::canonicalize(&named).map_err(|err| Stop::Failed {
+        code: None,
+        stderr: format!("cannot resolve the workspace root {}: {err}", named.display()),
+    })?;
     args.extend(threshold.iter().flat_map(|threshold| threshold.args.iter().cloned()));
     let mut cmd = entry_cmd(entry, OsStr::new(&rule.check), &args, None, &root);
     cmd.env.extend(threshold.iter().flat_map(|threshold| threshold.env.iter().cloned()));

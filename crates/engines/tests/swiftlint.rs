@@ -1,4 +1,6 @@
-use std::{ffi::OsStr, fs, path::Path};
+use std::{ffi::OsStr, fs};
+#[cfg(unix)]
+use std::path::Path;
 
 use engines::{availability_in, entry_cmd, run_rules_versioned_at, swiftlint::{parse_swiftlint, SWIFTLINT}, Availability};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
@@ -20,6 +22,8 @@ fn swiftlint_reports_force_cast_but_not_other_rules_or_clean_lines() {
     assert!(hits[0].what.to_lowercase().contains("cast"), "{:?}", hits[0]);
 }
 
+// Unix only: it checks the macOS /tmp to /private/tmp rewrite, and there is no /tmp on Windows.
+#[cfg(unix)]
 #[test]
 fn swiftlint_finding_in_a_private_tmp_repo_is_kept() {
     let folder = Path::new("/tmp").join(format!("engines-zit-{}-swiftlint-private", std::process::id()));
