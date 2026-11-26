@@ -57,7 +57,8 @@ In order:
 6. **The engines line:** `engines: <engine> <version>, ...`, one entry per engine that ran, in the order the rule
    file first names each. An engine that ran is one `tm` found and asked its version, whatever its rules came to: a
    rule refused before its engine ran, a rule that covered no file, or a check the installed engine does not know,
-   still counts. An engine that is absent (a program it needs is not on `PATH`) is left out, and its
+   still counts. An engine that is absent (a program it needs is not on `PATH`, nor, for ESLint's own program, in
+   the rule file's folder's `node_modules/.bin`) is left out, and its
    rules appear only on their `not available:` or `covers nothing:` lines, on a `failed:` line when the rule was
    refused, or in the not-applicable count. A rule with `only_with_base` run with no `--base` is counted as not
    applicable whatever its engine's state. Tessera is never listed today, since `tm` does not look for it.
@@ -438,7 +439,8 @@ next: nothing to do
 
 Each rule line is the id, the engine, the kind, the severity, the scope and the availability. The scope is the
 rule's `paths` (`all files` when it has none), then `exclude:`, `kits:` and `outside kits:`, each only when the
-rule has it. Availability is a look on `PATH`; no engine is run. Each exception line is the rule, the path, `what:`
+rule has it. Availability is a look on `PATH` and, for ESLint, in the rule file's folder's `node_modules/.bin`, the
+same look `tm check` makes; no engine is run. Each exception line is the rule, the path, `what:`
 when the exception has one, who approved it and the reason.
 
 The exceptions are judged on today's date in UTC, as `tm check` judges them: in force are those that have not

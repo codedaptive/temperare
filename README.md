@@ -100,7 +100,8 @@ tm --version      # temperare 0.1.0 (<the commit it was built from>)
 `temperare` and `tm` answer every command alike. If `~/.local/bin` is not on your PATH, add it. If you only want the
 binary and none of the above, `cargo install --path crates/cli --locked` puts it in `~/.cargo/bin`.
 
-**3. Install the engines your rules name.** Temperare finds each one on your PATH:
+**3. Install the engines your rules name.** Temperare finds each one on your PATH (ESLint also in the rule file's
+folder, below):
 
 | Engine in a rule | Program it must find |
 |---|---|
@@ -117,7 +118,7 @@ binary and none of the above, `cargo install --path crates/cli --locked` puts it
 | `cargo-audit` | `cargo-audit`, and its advisory database already fetched (`cargo audit update-db`): `tm` never fetches it |
 | `vulture` | `vulture` |
 | `periphery` | `periphery` and `swift`, which builds the package; the rule file's folder must be inside a Swift package |
-| `eslint` | `eslint`. `tm` runs the one on `PATH`, not one in `node_modules/.bin` |
+| `eslint` | `eslint` and `node`, which runs it. `tm` runs the rule file's folder's `node_modules/.bin/eslint` when there is one, else the one on `PATH` |
 | `mypy` | `mypy` (and `git`, which lists the files) |
 | `pmd` | `pmd` (and `git`) |
 | `detekt` | `detekt` (and `git`) |
@@ -129,8 +130,8 @@ binary and none of the above, `cargo install --path crates/cli --locked` puts it
 | `hadolint` | `hadolint` (and `git`) |
 | `yamllint` | `yamllint` (and `git`) |
 | `vale` | `vale` (and `git`); the repository must hold a Vale config that uses the rule's style |
-| `stylelint` | `stylelint` (and `git`) |
-| `markdownlint` | `markdownlint-cli2` (and `git`) |
+| `stylelint` | `stylelint` and `node`, which runs it (and `git`) |
+| `markdownlint` | `markdownlint-cli2` and `node`, which runs it (and `git`) |
 
 `tm rules` shows, for each rule, whether its engine is available.
 
@@ -452,7 +453,8 @@ one works alone.
 
 With neither installed, `tm` checks a plain git repository. Its one setting outside the rule file is the savings
 switch in `~/.config/temperare/config.toml`. It reads no environment variable of its own beyond `HOME`, which places
-that file and the savings log; it finds git and the engines on `PATH`.
+that file and the savings log; it finds git and the engines on `PATH` (ESLint first in the rule file's folder's
+`node_modules/.bin`).
 
 ## For AI agents
 

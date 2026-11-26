@@ -364,8 +364,11 @@ ESLint, RuboCop, stylelint and markdownlint are turned off, as above, and so are
 
 **There is no time limit on an engine.** Temperare waits for an engine for as long as it runs. An engine that
 hangs, hangs the check. The git questions asked through `ccvcslib` are bounded: git is stopped once it is stuck for
-10 seconds or has run for 60, and the question fails, so the rule that asked it fails or `tm` stops with an error,
-never clean. The one git question that `ccvcslib` waits on for as long as it runs is the list of untracked files.
+10 seconds or has run for 60, and the question fails. Where `tm` needs the answer, the rule that asked fails or `tm`
+stops with an error, never clean. One answer it can do without: the list of the files in the rule file's folder,
+which `tm` uses to skip a rule that covers no file and to drop ESLint findings in files git ignores. When that list
+fails, nothing is skipped or dropped: no rule is skipped for covering no file, and every ESLint finding is kept.
+The one git question that `ccvcslib` waits on for as long as it runs is the list of untracked files.
 
 **An exception is as trustworthy as the review of the rule file.** Anyone who can change `temperare.toml` can add
 an `[[exception]]`, remove a rule or lower its severity. `approved` is text that Temperare records and does not

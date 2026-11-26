@@ -121,19 +121,20 @@ No test reaches the network.
 
 ### Adding an engine
 
-An engine adapter is a folder in `crates/engines/src/` with three parts: a function that builds the command line, a
-function that reads the engine's output into hits, and a function that joins the two. To add one:
+An engine adapter is a folder in `crates/engines/src/` that holds its entry: one `static` `Entry` describing the
+engine as data (its program, how a rule's check reaches it, how its version is read, its reader and its flow;
+`crates/engines/src/entry/entry.rs` says what each field holds). To add one:
 
 1. Add the engine to `Engine` in `crates/rules/src/types/engine.rs` and to `Engine::from_name` beside it
    (`engine_from_name.rs`), and its name to the "unknown engine" fix text in
    `crates/rules/src/rule_file/read_rule.rs` and to `engine_name` in `crates/report/src/render_text.rs`.
-2. Add its program name in `crates/engines/src/program.rs`. An engine that needs more than one program on `PATH`,
-   as clippy does, says so in `crates/engines/src/availability.rs`.
-3. Write the adapter folder, with captured output of the real engine as fixtures and unit tests for the builder and
-   the reader.
-4. Dispatch to it in `crates/engines/src/engine_hits.rs`.
-5. Add an integration test that runs the real engine on a file the test makes.
-6. Document it in [`docs/reference/ENGINES.md`](docs/reference/ENGINES.md) and in the README's tables.
+2. Write the adapter folder: the entry, its reader of the engine's output, captured output of the real engine as
+   fixtures, and unit tests for the entry and the reader. The entry's `program` is what the check runs, and its
+   `needs` lists every program it must find to be available, checked in order (clippy needs `cargo-clippy` and
+   `clippy-driver`).
+3. Add its arm to `entry_of`'s match in `crates/engines/src/internal/entry_of.rs`.
+4. Add an integration test that runs the real engine on a file the test makes.
+5. Document it in [`docs/reference/ENGINES.md`](docs/reference/ENGINES.md) and in the README's tables.
 
 ### Documents
 
