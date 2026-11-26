@@ -145,6 +145,6 @@ fn resolved(target: &str, from: &Path, root: &Path) -> Result<PathBuf, Stop> {
     }
     let json = std::fs::read_to_string(&config)
         .map_err(|err| not_resolved(format!("cannot read {}: {err}", config.display())))?;
-    package_path(target, &json, &root.join(".dart_tool"))
+    package_path(target, &json, &root.join(".dart_tool"), cfg!(windows))
         .ok_or_else(|| not_resolved(format!("{} does not resolve it", config.display())))
 }

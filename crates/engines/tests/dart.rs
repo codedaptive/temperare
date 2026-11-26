@@ -1,8 +1,5 @@
-#![cfg(unix)]
-
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
 use std::fs;
-use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
@@ -49,12 +46,20 @@ enum Case {
     Violation, Clean, LintEnabled, LintDisabled, Unknown, NoPubspec,
     UnresolvedInclude, UnfetchedPackage, NoFilesAbsent, Absent,
     ErrorsIgnore, Exclude, OptionsAboveRepo, GitignoredNestedOptions, IncludeOutsideRepo,
-    EscapedIgnore, MultilineQuoted, EscapedInclude, FlowErrors, SymlinkedFolderOutside,
+    EscapedIgnore, MultilineQuoted, EscapedInclude, FlowErrors,
+    #[cfg(unix)]
+    SymlinkedFolderOutside,
 }
 
 fn check_case(case: Case) {
     let outer = TempFolder::new(&format!("{case:?}"));
-    let repo = if matches!(case, Case::OptionsAboveRepo | Case::IncludeOutsideRepo | Case::SymlinkedFolderOutside) {
+    let nested = match case {
+        Case::OptionsAboveRepo | Case::IncludeOutsideRepo => true,
+        #[cfg(unix)]
+        Case::SymlinkedFolderOutside => true,
+        _ => false,
+    };
+    let repo = if nested {
         let repo = outer.0.join("repo");
         fs::create_dir(&repo).unwrap();
         repo
@@ -92,6 +97,7 @@ fn check_case(case: Case) {
     if matches!(case, Case::IncludeOutsideRepo) {
         fs::write(outer.0.join("shared.yaml"), "linter:\n  rules:\n    - prefer_single_quotes\n").unwrap();
     }
+    #[cfg(unix)]
     if matches!(case, Case::SymlinkedFolderOutside) {
         let outside = outer.0.join("outside");
         fs::create_dir(&outside).unwrap();
@@ -129,8 +135,9 @@ fn check_case(case: Case) {
     let file = RuleFile::read(&repo.join("temperare.toml")).unwrap();
     let _absent_path = if matches!(case, Case::NoFilesAbsent | Case::Absent) {
         let guard = PathGuard(std::env::var_os("PATH"));
+        // Hides the entries where procio would find dart; procio never resolves a program against a relative entry.
         let paths = std::env::split_paths(guard.0.as_ref().unwrap()).filter(|dir| {
-            !dir.join("dart").metadata().is_ok_and(|m| m.is_file() && m.permissions().mode() & 0o111 != 0)
+            procio::which_in_dir(dir, OsStr::new("dart")).is_none()
         });
         std::env::set_var("PATH", std::env::join_paths(paths).unwrap());
         Some(guard)
@@ -168,10 +175,7 @@ fn check_case(case: Case) {
                 assert!(run.no_files.is_some(), "{case:?}: {run:?}");
             }
         }
-        Case::ErrorsIgnore | Case::Exclude | Case::OptionsAboveRepo
-        | Case::GitignoredNestedOptions | Case::IncludeOutsideRepo
-        | Case::EscapedIgnore | Case::MultilineQuoted | Case::EscapedInclude
-        | Case::FlowErrors | Case::SymlinkedFolderOutside => {
+        _ if expects_failed(case) => {
             assert!(matches!(&run.outcome, RuleOutcome::Failed { .. }), "{case:?}: expected Failed, got {:?}", run.outcome);
             let RuleOutcome::Failed { stderr, .. } = &run.outcome else { unreachable!() };
             match case {
@@ -195,6 +199,7 @@ fn check_case(case: Case) {
                     assert!(stderr.contains("ign.yaml"), "{case:?}: {stderr}");
                     assert!(stderr.contains("dart hides findings"), "{case:?}: {stderr}");
                 }
+                #[cfg(unix)]
                 Case::SymlinkedFolderOutside => assert!(stderr.contains(fs::canonicalize(outer.0.join("outside/analysis_options.yaml")).unwrap().to_str().unwrap()), "{case:?}: {stderr}"),
                 _ => unreachable!(),
             }
@@ -216,6 +221,18 @@ fn check_case(case: Case) {
                 _ => unreachable!(),
             }
         }
+    }
+}
+
+fn expects_failed(case: Case) -> bool {
+    match case {
+        Case::ErrorsIgnore | Case::Exclude | Case::OptionsAboveRepo
+        | Case::GitignoredNestedOptions | Case::IncludeOutsideRepo
+        | Case::EscapedIgnore | Case::MultilineQuoted | Case::EscapedInclude
+        | Case::FlowErrors => true,
+        #[cfg(unix)]
+        Case::SymlinkedFolderOutside => true,
+        _ => false,
     }
 }
 
@@ -256,6 +273,13 @@ fn dart_suppressions() {
         Case::ErrorsIgnore, Case::Exclude, Case::OptionsAboveRepo,
         Case::GitignoredNestedOptions, Case::IncludeOutsideRepo,
         Case::EscapedIgnore, Case::MultilineQuoted, Case::EscapedInclude,
-        Case::FlowErrors, Case::SymlinkedFolderOutside,
+        Case::FlowErrors,
     ]);
+}
+
+// A symlink needs privilege on Windows, so this case runs on unix only.
+#[cfg(unix)]
+#[test]
+fn dart_symlinked_folder_outside() {
+    run_cases(&[Case::SymlinkedFolderOutside]);
 }
