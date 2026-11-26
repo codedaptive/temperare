@@ -1,6 +1,7 @@
 //! `pathext`: this process's PATHEXT as `which` reads it, or no PATHEXT rules off Windows.
 //!
-//! It reads the environment, so it is owed no ZUT: `which_tests.rs` and `tests/which_in_dir.rs` prove it on unix (both are unix-only).
+//! It reads the environment, so it is owed no ZUT: `which_tests.rs` and `tests/which_in_dir.rs` prove it on unix
+//! (both are unix-only), `tests/which_windows.rs` on Windows.
 
 use std::ffi::OsString;
 

@@ -1,6 +1,7 @@
 //! `is_executable`: whether a path is a file `which` may return.
 //!
-//! It reads the disk, so it is owed no ZUT: `which_tests.rs` and `tests/which_in_dir.rs` prove it on unix (both are unix-only).
+//! It reads the disk, so it is owed no ZUT: `which_tests.rs` and `tests/which_in_dir.rs` prove it on unix
+//! (both are unix-only), `tests/which_windows.rs` on Windows.
 
 use std::path::Path;
 

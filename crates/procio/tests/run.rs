@@ -1,6 +1,7 @@
 //! procio's integration tests for the runner: `run` and `which` on real programs, with a throwaway dir
 //! where a test needs files. Most run unix programs (`sh`, `true`, `cat`, ...) and are unix-only; the
-//! not-found and which-miss tests run everywhere.
+//! not-found and which-miss tests run everywhere. `tests/run_windows.rs` and `tests/which_windows.rs` hold
+//! their Windows twins.
 
 use std::ffi::OsString;
 use std::fs;

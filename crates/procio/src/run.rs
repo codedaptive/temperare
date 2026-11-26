@@ -1,9 +1,9 @@
 //! `run`: start a program, feed its stdin, capture both outputs, wait for its exit.
 //!
 //! No sibling unit tests: any test of `run` starts a process, which a unit test may not, so the runner is
-//! proved by the integration tests in `tests/run.rs`. Its parts (`command_from`, `effective_path`,
-//! `has_path_separator`, `kill_group_cmd`, `names_to_try`, `spawn_error`, `spawn_reader`, `spawn_writer`,
-//! `wait_deadline`, `which`) each have their own unit tests.
+//! proved by the integration tests in `tests/run.rs` and, on Windows, `tests/run_windows.rs`. Its parts
+//! (`command_from`, `effective_path`, `has_path_separator`, `kill_group_cmd`, `names_to_try`, `spawn_error`,
+//! `spawn_reader`, `spawn_writer`, `wait_deadline`, `which`) each have their own unit tests.
 
 use std::env;
 use std::io;

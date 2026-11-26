@@ -1,6 +1,7 @@
 //! `first_in_dir`: the one per-folder lookup `which_in` and `which_in_dir` share.
 //!
-//! It reads the disk, so it is owed no ZUT: `which_tests.rs` and `tests/which_in_dir.rs` prove it.
+//! It reads the disk, so it is owed no ZUT: `which_tests.rs` and `tests/which_in_dir.rs` prove it, and
+//! `tests/which_windows.rs` on Windows.
 
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
