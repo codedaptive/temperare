@@ -13,11 +13,13 @@ mod unrecordable_path;
 
 #[cfg(test)]
 mod choose_targets_tests;
-#[cfg(test)]
+// Unix only: install is unix-only for now (tm is a symlink, S-32), and these fixtures are unix absolute paths.
+#[cfg(all(test, unix))]
 mod parse_record_tests;
 #[cfg(test)]
 mod pick_harnesses_tests;
-#[cfg(test)]
+// Unix only: install is unix-only for now (tm is a symlink, S-32), and these fixtures are unix absolute paths.
+#[cfg(all(test, unix))]
 mod plan_install_tests;
 #[cfg(test)]
 mod record_text_tests;

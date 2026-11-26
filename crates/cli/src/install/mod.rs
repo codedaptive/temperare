@@ -28,7 +28,8 @@ mod harness_from_name_tests;
 mod harness_name_tests;
 #[cfg(test)]
 mod harness_skill_file_tests;
-#[cfg(test)]
+// Unix only: install is unix-only for now (tm is a symlink, S-32), and these fixtures are unix absolute paths.
+#[cfg(all(test, unix))]
 mod install_host_real_tests;
 #[cfg(test)]
 mod install_paths_under_tests;

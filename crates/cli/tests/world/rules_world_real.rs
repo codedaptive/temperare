@@ -3,7 +3,7 @@
 //! their caller) and a ZIT. `exists` and `read` are real disk functions, so the only way to tell them from a stub is to
 //! use them on the disk: the tests use a throwaway folder under the system temp folder and remove it. `toplevel` asks
 //! git through ccvcslib (found on PATH); on a folder that does not exist the spawn fails before git starts, so the
-//! answer is Unavailable. Nothing here needs a real repository.
+//! answer is Unavailable. One case makes a throwaway git repository and removes it.
 
 use cli::RulesWorld;
 use std::fs;
@@ -96,6 +96,45 @@ fn read_of_a_missing_file_is_one_problem_at_line_zero() {
     assert_eq!(problems.len(), 1);
     assert_eq!((problems[0].line, problems[0].col), (0, 0));
     assert!(problems[0].what.starts_with("cannot read"), "what: {}", problems[0].what);
+}
+
+/// RIT: the real toplevel seam (through ccvcslib) returns git's repository top in native form.
+#[test]
+fn toplevel_of_a_repository_is_native() {
+    let dir = TempFolder::new("toplevel-native");
+    let home = dir.0.join("home");
+    fs::create_dir(&home).unwrap();
+    let mut cmd = procio::Cmd::new("git");
+    cmd.cwd = Some(dir.0.clone());
+    cmd.env_remove = std::env::vars_os().map(|(name, _)| name).collect();
+    cmd.env = vec![
+        ("PATH".into(), std::env::var_os("PATH").unwrap_or_else(|| "/usr/bin:/bin".into())),
+        ("HOME".into(), home.into_os_string()),
+        ("GIT_CONFIG_NOSYSTEM".into(), "1".into()),
+    ];
+    cmd.args = ["init", "-q"].iter().map(|arg| (*arg).into()).collect();
+    let init = procio::run(&cmd).unwrap();
+    assert_eq!(init.code, Some(0), "git init: {}", String::from_utf8_lossy(&init.stderr));
+    cmd.args = ["rev-parse", "--show-toplevel"].iter().map(|arg| (*arg).into()).collect();
+    let output = procio::run(&cmd).unwrap();
+    assert_eq!(output.code, Some(0), "git rev-parse: {}", String::from_utf8_lossy(&output.stderr));
+    let git_top = String::from_utf8(output.stdout).unwrap();
+    let git_top = git_top.trim();
+    let world = RulesWorld::real();
+    let result = (world.toplevel)(&dir.0).unwrap();
+    assert_eq!(result, PathBuf::from(git_top));
+    #[cfg(unix)]
+    {
+        // Git's Unix form is already native, so tm's output is unchanged.
+        assert_eq!(result.as_os_str(), std::ffi::OsStr::new(git_top));
+    }
+    #[cfg(windows)]
+    {
+        // Git prints C:/..., while tm prints native C:\... paths.
+        let native = result.to_str().unwrap();
+        assert!(!native.contains('/'), "{native}");
+        assert!(!native.starts_with(r"\\?\"), "{native}");
+    }
 }
 
 /// RIT: git is asked (ccvcslib's git_working_copy_root.rs, through crates/cli/src/app/git_toplevel.rs).
