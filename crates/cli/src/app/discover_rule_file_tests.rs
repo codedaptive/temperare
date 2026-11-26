@@ -42,7 +42,7 @@ fn no_file_at_the_repository_top() {
     assert_eq!(
         found,
         Err(UsageError {
-            what: "no rule file at /repo/temperare.toml".to_string(),
+            what: format!("no rule file at {}", Path::new("/repo").join("temperare.toml").display()),
             fix: "Write temperare.toml at the top of the repository, or pass --rules <path>.".to_string(),
         })
     );

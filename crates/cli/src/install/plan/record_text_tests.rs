@@ -19,6 +19,13 @@ fn dir(path: &str) -> RecordEntry {
     RecordEntry::Dir(PathBuf::from(path))
 }
 
+/// What an absolute path starts with before its first `/`: nothing on unix; off unix a path needs a drive to be
+/// absolute, and parse_record keeps absolute paths only, so the round trip below names `{DRIVE}/...` paths.
+#[cfg(unix)]
+const DRIVE: &str = "";
+#[cfg(not(unix))]
+const DRIVE: &str = "C:";
+
 #[test]
 fn files_links_and_dirs_one_per_line_in_order() {
     let entries =
@@ -67,14 +74,15 @@ fn an_entry_whose_path_holds_a_newline_return_or_tab_is_not_written() {
 #[test]
 fn an_injected_line_does_not_come_back_from_parse_record() {
     let injected = [
-        file("/h/a\nfile /victim"),
-        dir("/h/a\rdir /victim"),
-        link("/h/tm", "/t\nfile /victim"),
-        link("/h/tm\nfile /victim", "/t"),
+        file(&format!("{DRIVE}/h/a\nfile {DRIVE}/victim")),
+        dir(&format!("{DRIVE}/h/a\rdir {DRIVE}/victim")),
+        link(&format!("{DRIVE}/h/tm"), &format!("{DRIVE}/t\nfile {DRIVE}/victim")),
+        link(&format!("{DRIVE}/h/tm\nfile {DRIVE}/victim"), &format!("{DRIVE}/t")),
     ];
+    let (ok, d) = (file(&format!("{DRIVE}/h/ok")), dir(&format!("{DRIVE}/h/d")));
     for entry in injected {
-        let entries = [file("/h/ok"), entry.clone(), dir("/h/d")];
-        assert_eq!(parse_record(&record_text(&entries)), vec![file("/h/ok"), dir("/h/d")], "{entry:?}");
+        let entries = [ok.clone(), entry.clone(), d.clone()];
+        assert_eq!(parse_record(&record_text(&entries)), vec![ok.clone(), d.clone()], "{entry:?}");
     }
 }
 
