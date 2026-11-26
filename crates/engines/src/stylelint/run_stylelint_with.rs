@@ -14,8 +14,10 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 /// The hits of `rule` under `folder` (canonical), each step able to stop it:
-/// 1. the files `sources` lists for `folder` (its `Stop` as it is), kept when `rule` applies to them; none is
-///    `no_script`'s `NoFiles`, and nothing runs;
+/// 1. the files `sources` lists for `folder` (its `Stop` as it is), kept when `rule` applies to them; when `no_script`
+///    finds none the rule applies to, nothing runs and the rule is its `NoFiles`. `engine_hits_with`'s step 1
+///    (`engine_listed`) settles that before availability; this guard decides only when that listing failed and this
+///    one succeeds;
 /// 2. every kept file's config, by `configs_stop` over a probe running `stylelint --print-config
 ///    [--config=<rule's config>] ./<file>` in `folder` through `ran`, so it is not counted: a config that does not load,
 ///    turns on fix or quiet, or turns the check off for some files stops the rule before the check run;

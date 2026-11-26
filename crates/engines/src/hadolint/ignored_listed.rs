@@ -1,5 +1,6 @@
 //! `ignored_listed`: whether a hadolint config hides findings through `ignored`, which tm cannot turn off (S-67 (1)).
 
+use crate::cannot_turn_off::CANNOT_TURN_OFF;
 use crate::yaml::{yaml_entries, YamlValue};
 
 /// Why the config text `text` stops the rule, `name` being how the message names the file; None when it hides
@@ -34,8 +35,7 @@ pub(crate) fn ignored_listed(name: &str, text: &str) -> Option<String> {
         })
         .map(|entry| {
             format!(
-                "{name}: line {}: `ignored` hides hadolint findings outside the rule file; put exceptions in the rule \
-                 file (S-67 (1))",
+                "{name}: line {}: `ignored` hides hadolint findings and {CANNOT_TURN_OFF}",
                 entry.line
             )
         })

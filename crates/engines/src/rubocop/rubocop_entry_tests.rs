@@ -3,7 +3,7 @@
 
 use super::RUBOCOP;
 use crate::entry::entry_cmd;
-use procio::Output;
+use procio::{Cmd, Output};
 use rules::Engine;
 use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
@@ -34,4 +34,7 @@ fn rubocop_entry_builds_the_command_and_reads_the_version() {
     assert_eq!(probe.args, ["--force-default-config", "--version"]);
     let out = Output { code: Some(0), stdout: b"1.92.3\n".to_vec(), stderr: vec![] };
     assert_eq!((probe.read)(&out), Some("1.92.3".to_string()));
+    let cmd = (probe.wrap.expect("rubocop version probe must wrap its environment"))(Cmd::new("rubocop"));
+    assert!(cmd.env.contains(&(OsString::from("RUBOCOP_OPTS"), OsString::from(""))));
+    assert!(cmd.env.contains(&(OsString::from("https_proxy"), OsString::from("http://127.0.0.1:9"))));
 }

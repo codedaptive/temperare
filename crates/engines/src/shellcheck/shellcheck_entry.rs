@@ -21,7 +21,7 @@ pub static SHELLCHECK: Entry = Entry {
     params: Params::Args(&[]),
     config: Some("--rcfile="),
     after: &[],
-    version: Some(VersionProbe { args: &["--version"], read: shellcheck_version }),
+    version: Some(VersionProbe { args: &["--version"], read: shellcheck_version, wrap: None }),
     refuse: shellcheck_refusal,
     unknown: |_, _| None,
     read: parse_shellcheck,

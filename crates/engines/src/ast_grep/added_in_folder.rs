@@ -13,7 +13,8 @@ use rules::RelPath;
 /// absent; an untracked file git does not ignore gives 1, but an empty one (no lines) is absent, and so is a binary
 /// one; an untracked symlink, a path under a symlinked folder or any other untracked path that is not a regular file
 /// is skipped, not read; and a path `keep` says no to is dropped before it is read. A git error is `git_stop`'s
-/// `Stop`, and a kept regular untracked file that cannot be read is `Failed` naming it (`change_of`).
+/// `Stop`, a `base` that names no revision is `Failed`, and a kept regular untracked file that cannot be read is
+/// `Failed` naming it (`change_of`).
 pub(crate) fn added_in_folder(
     folder: &Path,
     base: &str,

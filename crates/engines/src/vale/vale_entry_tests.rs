@@ -26,10 +26,10 @@ fn vale_entry_drives_the_command_version_and_refusal() {
     assert_eq!(probe.args, ["--version"]);
     let out = Output { code: Some(0), stdout: b"vale version 3.28.1\n".to_vec(), stderr: vec![] };
     assert_eq!((probe.read)(&out), Some("3.28.1".to_string()));
-    assert!((VALE.refuse)("Spelling").is_some());
+    assert_eq!((VALE.refuse)("Spelling").as_deref(), Some("vale check `Spelling` is not a Vale rule name (Style.Rule, each part ASCII letters, digits, _ or -)"));
     assert_eq!((VALE.refuse)("Vale.Spelling"), None);
     let unknown = Output { code: Some(2), stdout: vec![], stderr: include_bytes!("fixtures/unknown.txt").to_vec() };
-    assert!((VALE.unknown)(&unknown, "Vale.Speling").is_some());
+    assert_eq!((VALE.unknown)(&unknown, "Vale.Speling").as_deref(), Some("invalid operation: int(unknown) (1:86)\n | filter(Rules, {.Name == \"Vale.Speling\" || (none(Rules, {.Name == \"Vale.Speling\"}) && int(\"unknown\") == 0)})\n | .....................................................................................^"));
     let why = "a vale rule takes no params".to_string();
     assert_eq!(param_args(&VALE, &json!({"level": ["x"]})), Err(ParamError::Bad { name: "level".to_string(), why }));
 }

@@ -198,6 +198,8 @@ fn check_case(case: Case) {
                 Case::SymlinkedFolderOutside => assert!(stderr.contains(fs::canonicalize(outer.0.join("outside/analysis_options.yaml")).unwrap().to_str().unwrap()), "{case:?}: {stderr}"),
                 _ => unreachable!(),
             }
+            assert!(stderr.contains("tm cannot turn it off; put exceptions in the rule file"), "{case:?}: {stderr}");
+            assert!(!stderr.contains("S-67"), "{case:?}: {stderr}");
         }
         _ => {
             let RuleOutcome::NotAvailable { rule, engine, why } = &run.outcome else {

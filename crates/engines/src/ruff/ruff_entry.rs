@@ -36,7 +36,7 @@ pub static RUFF: Entry = Entry {
     },
     config: Some("--config="),
     after: &["."],
-    version: Some(VersionProbe { args: &["--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["--version"], read: version_word, wrap: None }),
     refuse: ruff_refusal,
     unknown: unknown_selector,
     read: parse_ruff,

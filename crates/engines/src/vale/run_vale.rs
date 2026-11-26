@@ -73,9 +73,10 @@ pub(crate) fn run_vale(entry: &Entry, rule: &Rule, folder: &Path, host: &Host) -
 
 /// `vale --no-global [--config=<rule.config>] ls-config`, run in `folder` with `PWD` removed from its environment.
 /// The rule's config is joined to `folder` and canonicalized, because Vale prints a relative `--config` back as given
-/// and `config_stop` compares canonical paths with the repository top (a `..` is resolved, so a config that climbs
-/// out of the repository is outside it). One that does not exist is passed as joined, and Vale's own error for it
-/// makes the rule `Failed`.
+/// in `ConfigFiles` and `config_stop` compares canonical paths with the repository top (a `..` is resolved, so a
+/// config that climbs out of the repository is outside it). One that does not exist is passed as joined; Vale answers
+/// `path '<it>' does not exist` on stderr, exit 2, and the rule is `Failed` (fixtures/fixtures.txt, "Probe
+/// `--config`").
 fn probe_cmd(entry: &Entry, rule: &Rule, folder: &Path) -> Cmd {
     let config = rule.config.iter().map(|config| {
         let path = folder.join(config);

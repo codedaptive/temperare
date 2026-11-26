@@ -46,7 +46,7 @@ pub static PMD: Entry = Entry {
     params: Params::Args(&[]),
     config: None,
     after: &[],
-    version: Some(VersionProbe { args: &["--version"], read: pmd_version }),
+    version: Some(VersionProbe { args: &["--version"], read: pmd_version, wrap: None }),
     refuse: pmd_refusal,
     unknown: unknown_ruleset,
     read: parse_pmd,

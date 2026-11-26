@@ -21,7 +21,7 @@ use std::path::{Path, PathBuf};
 /// Dart source. Each step can stop the rule:
 /// 1. the package is the nearest `pubspec.yaml` at or above `folder` and no higher than the repository top
 ///    (`repo_top`) (`pubspec_root`); none is `NotAvailable` naming pubspec.yaml, and a `folder` in no repository is
-///    `Failed` with git's error;
+///    `Failed` with ccvcslib's error;
 /// 2. the analysis options that govern `folder`, each with what it includes (`options_files`), which stops the rule
 ///    on an options file read outside the repository top that no `package:` include reached, an include it cannot
 ///    resolve or read, a folder it cannot list, or options text the YAML parser cannot read (`yaml_entries`);

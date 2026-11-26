@@ -67,7 +67,7 @@ pub static DART: Entry = Entry {
     params: Params::Args(&[]),
     config: None,
     after: &["."],
-    version: Some(VersionProbe { args: &["--suppress-analytics", "--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["--suppress-analytics", "--version"], read: version_word, wrap: None }),
     refuse: dart_refusal,
     unknown: |_, _| None,
     read: parse_dart,

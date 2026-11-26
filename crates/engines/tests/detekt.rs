@@ -215,6 +215,41 @@ fn no_kotlin_file_precedes_missing_detekt() {
 }
 
 #[test]
+fn old_detekt_no_file_before_floor() {
+    let mut failed = Vec::new();
+    for (name, file, old_floor) in [("no-file", "README.txt", false), ("matching-file", "src/Demo.kt", true)] {
+        let result = std::panic::catch_unwind(|| {
+            let repo = Repo::new(name, "MagicNumber");
+            repo.write("bin/detekt", "#!/bin/sh\necho '1.23.7'\n");
+            fs::set_permissions(repo.path.join("bin/detekt"), fs::Permissions::from_mode(0o755)).unwrap();
+            let path = std::env::var_os("PATH").unwrap();
+            std::env::set_var("PATH", std::env::join_paths(std::iter::once(repo.path.join("bin"))
+                .chain(std::env::split_paths(&path))).unwrap());
+            repo.write(file, "package demo\n");
+            let rules = RuleFile::read(&repo.path.join("temperare.toml")).unwrap();
+            let checked = run_rules_versioned_at(&rules, &repo.path, &[], None);
+            assert_eq!(checked.engines.len(), 1, "{name}: {:?}", checked.engines);
+            assert_eq!(checked.engines[0].engine, Engine::Detekt, "{name}");
+            assert_eq!(checked.engines[0].version.as_deref(), Some("1.23.7"), "{name}");
+            assert_eq!(checked.runs.len(), 1, "{name}: {:?}", checked.runs);
+            let run = &checked.runs[0];
+            if old_floor {
+                assert_eq!(run.no_files, None, "{name}: {run:?}");
+                assert_eq!(run.not_available_cause, Some(NotAvailableCause::Other), "{name}: {run:?}");
+                let RuleOutcome::NotAvailable { why, .. } = &run.outcome else { panic!("{name}: {run:?}") };
+                assert_eq!(why, "detekt 1.23.7 is older than detekt 1.23.8, the release temperare's list of detekt codes was taken from", "{name}");
+            } else {
+                assert_eq!(run.outcome, RuleOutcome::Findings(vec![]), "{name}: {run:?}");
+                assert_eq!(run.no_files.as_deref(), Some("no file its engine checks"), "{name}");
+                assert_eq!(run.not_available_cause, None, "{name}");
+            }
+        });
+        if result.is_err() { failed.push(name); } else { eprintln!("{name}: PASS"); }
+    }
+    assert!(failed.is_empty(), "failed rows: {failed:?}");
+}
+
+#[test]
 fn invalid_other_rule_in_repo_config_fails() {
     let repo = Repo::new("invalid-config", "MagicNumber");
     repo.write("src/Demo.kt", DEMO);

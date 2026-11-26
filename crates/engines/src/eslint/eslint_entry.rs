@@ -22,20 +22,20 @@ use rules::Engine;
 /// `--pass-on-unpruned-suppressions` so its stale entries do not fail the run. ESLint 10 does not read
 /// `.eslintignore`.
 ///
-/// The eslint run is PATH's only: `npm run` and `npx` put `node_modules/.bin` on PATH, and tm's availability and
-/// version are per engine (looking in the folder's `node_modules/.bin` is follow-up order engines-eslint-local-bin).
-/// A rule whose paths match no file git lists is settled before the run, as for every engine (`run_rules_listed`); a
-/// run that lints no listed file in the rule's paths is settled in the flow, after availability (`run_eslint_with`):
-/// ESLint's config decides which files it lints, so no list of extensions can be made before the run. A fatal
-/// message (a file ESLint could not parse) is `Failed`, even in a file git does not list, whose hits would be dropped
-/// (an accepted limit: the rule is never silently clean). tm sets nothing in the environment (no NODE_PATH); eslint
-/// makes no network call. ESLint takes no params: any param makes the rule `Failed` before running. ESLint rules never share a run: `shares_with`
-/// has no arm for it.
+/// The eslint program is `<rule file's folder>/node_modules/.bin/eslint` when that is a file, else PATH's
+/// (`program_for`), for availability, the version and the run alike, and is run by that absolute path; `node`, which
+/// it needs, is looked up on PATH. A rule whose paths match no file git lists is settled before the run, as for every
+/// engine (`run_rules_listed`); a run that lints no listed file in the rule's paths is settled in the flow, after
+/// availability (`run_eslint_with`): ESLint's config decides which files it lints, so no list of extensions can be
+/// made before the run. A fatal message (a file ESLint could not parse) is `Failed`, even in a file git does not
+/// list, whose hits would be dropped (an accepted limit: the rule is never silently clean). tm sets nothing in the
+/// environment (no NODE_PATH); eslint makes no network call. ESLint takes no params: any param makes the rule
+/// `Failed` before running. ESLint rules never share a run: `shares_with` has no arm for it.
 pub static ESLINT: Entry = Entry {
     name: "eslint",
     engine: Engine::Eslint,
     program: "eslint",
-    needs: &["eslint"],
+    needs: &["eslint", "node"],
     never: None,
     args: &[
         "--format",
@@ -49,7 +49,7 @@ pub static ESLINT: Entry = Entry {
     params: Params::Args(&[]),
     config: Some("--config="),
     after: &["."],
-    version: Some(VersionProbe { args: &["--version"], read: eslint_version }),
+    version: Some(VersionProbe { args: &["--version"], read: eslint_version, wrap: None }),
     refuse: eslint_refusal,
     unknown: eslint_unknown,
     read: parse_eslint,

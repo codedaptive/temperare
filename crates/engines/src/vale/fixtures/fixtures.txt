@@ -117,3 +117,23 @@ reported only plainsentense (Markdown skips the fence); README.MD, Notes.Md and 
 text. In a second run SCRIPT.PY (`plainsentense here` / `# hashsentense here`) reported both lines and lower.py only
 hashsentense. So Vale 3.28.1 knows a format only by its extension as written; an upper- or mixed-case extension is
 the plain-text fallback, which tm does not give Vale.
+
+Config names (the source of `NO_CONFIG_WHY`; no fixture kept, the runs are recorded here). In a throwaway git
+repository /tmp/tm-vale-b9qDjC (removed afterwards), an empty styles/ and one config holding `StylesPath = styles` /
+`[*]` / `BasedOnStyles = Vale`, renamed in turn; each run in the repository's top:
+vale --no-global ls-config
+- .vale.ini, _vale.ini, vale.ini, .vale and _vale: each exit 0, `RootINI` that file (`/tmp/tm-vale-b9qDjC/_vale` for
+  the last), `GBaseStyles` ["Vale"].
+- vale (none of the five): exit 2, stdout empty, stderr `E100 [.vale.ini not found] Runtime error` / `no config file
+  found`.
+- the config as .vale.ini at the top and the run in sub/child: exit 0, `RootINI` `/tmp/tm-vale-b9qDjC/.vale.ini`,
+  `RootDir` `/tmp/tm-vale-b9qDjC`. So Vale finds the config at or above the folder it runs in.
+
+Probe `--config` (the source of `probe_cmd`'s doc). In the same repository, the config moved to cfg/rule.ini with an
+empty cfg/styles, no config Vale discovers, each run in sub/:
+vale --no-global --config=../cfg/rule.ini ls-config
+exit 0; `RootINI` `/tmp/tm-vale-b9qDjC/cfg/rule.ini` and `RootDir` `/tmp/tm-vale-b9qDjC/cfg` absolute, `Paths`
+["/tmp/tm-vale-b9qDjC/cfg/styles"], but `ConfigFiles` ["../cfg/rule.ini"], the relative path as given.
+vale --no-global --config=../cfg/missing.ini ls-config
+exit 2, stdout empty, stderr `E100 [--config] Runtime error` / `path '../cfg/missing.ini' does not exist`; with the
+absolute `--config=/tmp/tm-vale-b9qDjC/sub/missing.ini` the same, naming that path.

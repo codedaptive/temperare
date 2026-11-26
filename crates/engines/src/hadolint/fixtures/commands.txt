@@ -27,3 +27,11 @@ T/findings; the stderr names the config by its real /tmp path:
 
 double_format.out (stdout, exit 1, stderr empty: hadolint's JSON list then its SARIF log, glued), run in T/findings:
     hadolint --no-color -f sarif --disable-ignore-pragma --error=DL3006 --config=T/configs/json.yaml -- Dockerfile
+
+Captured separately on 2026-11-26 with hadolint 2.15.1 (/opt/homebrew/bin/hadolint) in a fresh throwaway folder
+under /tmp (T), removed afterwards. HOME and XDG_CONFIG_HOME were set to an empty T/home. T/Dockerfile held
+`FROM ubuntu` and T/empty.yaml held `{}`. Both commands ran in T:
+    env -u HADOLINT_IGNORE hadolint --no-color -f sarif --disable-ignore-pragma --error=DL3006 --config=T/empty.yaml -- Dockerfile
+    exit 1, stderr empty, SARIF results contain ruleId DL3006.
+    env HADOLINT_IGNORE=DL3006 hadolint --no-color -f sarif --disable-ignore-pragma --error=DL3006 --config=T/empty.yaml -- Dockerfile
+    exit 0, stderr empty, SARIF results are empty (no DL3006).

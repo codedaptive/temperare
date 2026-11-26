@@ -17,7 +17,7 @@ const ENTRY: Entry = Entry {
     params: Params::Args(&[]),
     config: Some("--config-file="),
     after: &[],
-    version: Some(VersionProbe { args: &["--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["--version"], read: version_word, wrap: None }),
     refuse: |_| None,
     unknown: |_, _| None,
     read: parse_clang_tidy,

@@ -39,6 +39,22 @@ Probes, no fixture kept:
   prints `a.yaml:1:1: [warning] missing document start "---" (document-start)` and
   `a.yaml:1:6: [warning] truthy value should be one of [false, true] (truthy)`, stderr empty, exit 0. Without
   `ignore: []` stdout and stderr are empty, exit 0: the `-d` text's `ignore: []` replaces the inherited `ignore`.
+- in /tmp/tm-yamllint-gi5SrN (made with `mktemp -d /tmp/tm-yamllint-XXXXXX`, removed afterwards), one folder per
+  base, each the run's cwd, a.yaml `key: yes` in each, and in each folder <f>:
+  yamllint -f parsable -d '{extends: "/tmp/tm-yamllint-gi5SrN/<f>/.yamllint", ignore: [], rules: {"truthy": {ignore-from-file: []}}}' -- a.yaml
+  every run printing `a.yaml:1:1: [warning] missing document start "---" (document-start)` first, stderr empty:
+  - disable, .yamllint `extends: default` / `rules:` / `  truthy: disable`: then
+    `a.yaml:1:6: [error] truthy value should be one of [false, true] (truthy)`, exit 1.
+  - false, the same with `  truthy: false`: the same two lines, exit 1.
+  - warning, the same with `  truthy: {level: warning}`: then
+    `a.yaml:1:6: [warning] truthy value should be one of [false, true] (truthy)`, exit 0.
+  - options, the same with `  truthy: {level: warning, allowed-values: ["on"]}`: then
+    `a.yaml:1:6: [warning] truthy value should be one of [on] (truthy)`, exit 0.
+  A disabled base check, named under `rules`, runs at level error with its own allowed-values; a base table keeps
+  its level and options. The same command on k.yaml `yes: 1` (a truthy key) prints
+  `k.yaml:1:1: [error] truthy value should be one of [false, true] (truthy)`, exit 1, in disable; and with a base of
+  `extends: default` alone, in a folder plain, `k.yaml:1:1: [warning] truthy value should be one of [false, true]
+  (truthy)`, exit 0: the two differ in level only.
 
 a.yaml:
 key: yes

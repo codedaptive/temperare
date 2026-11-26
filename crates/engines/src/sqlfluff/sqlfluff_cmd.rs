@@ -12,9 +12,9 @@ const REMOVED: [&str; 3] = ["XDG_CONFIG_HOME", "PYTHONPATH", "PYTHONUSERBASE"];
 
 /// `entry_cmd`'s command for `check` and `config` in `cwd` (the program, `entry.args`, `--rules=<check>`,
 /// `--config=<config>` when given), then `--`, then each of `files` as given, relative to `cwd`; the `--` keeps a
-/// file named `-x.sql` from being read as an option. `HOME` is set to `home`, the repository's top, so the configs
-/// sqlfluff reads from `~` and from the folders between `~` and each file are the repository's own; `REMOVED` are
-/// taken out.
+/// file named `-x.sql` from being read as an option. `HOME` is set to `home`, the repository's top: sqlfluff reads
+/// `~`'s configs and walks folder configs from the common path of `~` and each file down to the file's folder, so it
+/// reads no config above the top (measured); `REMOVED` are taken out.
 pub(crate) fn sqlfluff_cmd(
     entry: &Entry,
     check: &str,

@@ -4,6 +4,7 @@
 use super::{config_suppression, mypy_cmd, mypy_config, python_files};
 use crate::check_run::check_run;
 use crate::entry::Entry;
+use crate::failed::failed;
 use crate::host::Host;
 use crate::no_script::no_script;
 use crate::parse_failed::parse_failed;
@@ -53,7 +54,6 @@ pub(crate) fn run_mypy(entry: &Entry, rule: &Rule, folder: &Path, host: &Host) -
 /// config relative to `folder` when it is under it, else by its full path.
 fn silenced(config: &Path, folder: &Path, check: &str) -> Result<(), Stop> {
     let name = config.strip_prefix(folder).unwrap_or(config).display().to_string();
-    let failed = |stderr: String| Stop::Failed { code: None, stderr };
     let text =
         std::fs::read_to_string(config).map_err(|err| failed(format!("mypy config {name} cannot be read: {err}")))?;
     match config_suppression(&name, &text, check) {

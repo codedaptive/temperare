@@ -1,5 +1,6 @@
 //! `config_suppression`: an `ignore` in actionlint's config that tm cannot turn off (S-67 (1)).
 
+use crate::cannot_turn_off::CANNOT_TURN_OFF;
 use crate::types::Stop;
 use crate::yaml::yaml_entries;
 use std::path::Path;
@@ -19,8 +20,7 @@ pub(crate) fn config_suppression(path: &Path, text: &str) -> Option<Stop> {
         Ok(entries) => {
             let entry = entries.iter().find(|entry| entry.path.iter().any(|key| key == "ignore"))?;
             format!(
-                "line {}: `{}`: actionlint drops findings matching it and tm cannot turn it off; put exceptions in the \
-                 rule file (S-67 (1))",
+                "line {}: `{}`: actionlint drops findings matching it and {CANNOT_TURN_OFF}",
                 entry.line,
                 entry.path.join(": ")
             )

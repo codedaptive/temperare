@@ -4,6 +4,7 @@
 use super::{
     applying_configs, check_off_why, json_settings, md_rule_of, options_file_why, yaml_settings, MD_RULES_FROM,
 };
+use crate::failed::failed;
 use crate::types::Stop;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -26,9 +27,8 @@ pub(crate) fn config_stop(
     is_file: &dyn Fn(&Path) -> bool,
     read: &dyn Fn(&Path) -> io::Result<String>,
 ) -> Option<Stop> {
-    let failed = |stderr: String| Some(Stop::Failed { code: None, stderr });
     if let Some(why) = options_file_why(folder, files, is_file) {
-        return failed(why);
+        return Some(failed(why));
     }
     let Some(rule) = md_rule_of(check) else {
         let said = format!("{check} is not in temperare's list of markdownlint rules (taken from {MD_RULES_FROM})");
@@ -40,19 +40,19 @@ pub(crate) fn config_stop(
             Some("json") => json_settings,
             Some("yaml" | "yml") => yaml_settings,
             _ => {
-                return failed(format!(
+                return Some(failed(format!(
                     "markdownlint config {name}: tm reads only .markdownlint.json, .yaml and .yml (a stated limit); \
                      give the config in one of those"
-                ))
+                )))
             }
         };
         let text = read(&folder.join(&config)).map_err(|err| err.to_string());
         let settings = match text.and_then(|text| reader(&text)) {
             Ok(settings) => settings,
-            Err(err) => return failed(format!("markdownlint config {name} cannot be read: {err}")),
+            Err(err) => return Some(failed(format!("markdownlint config {name} cannot be read: {err}"))),
         };
         if settings.iter().any(|(key, _)| key == "extends") {
-            return failed(format!("markdownlint config {name} has `extends`: tm does not follow it (a stated limit)"));
+            return Some(failed(format!("markdownlint config {name} has `extends`: tm does not follow it (a stated limit)")));
         }
         if let Some(why) = check_off_why(rule, &name, &settings) {
             return Some(Stop::NotAvailable { why });

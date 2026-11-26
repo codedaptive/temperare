@@ -163,7 +163,8 @@ fn actionlint_rule_reports_workflows_suppressions_and_availability() {
                     match name {
                         "ignored" => {
                             assert!(stderr.contains("actionlint.yaml"), "{name}: {stderr}");
-                            assert!(stderr.contains("S-67"), "{name}: {stderr}");
+                            assert!(stderr.contains("tm cannot turn it off; put exceptions in the rule file"), "{name}: {stderr}");
+                            assert!(!stderr.contains("S-67"), "{name}: {stderr}");
                         }
                         "merged-ignore" => {
                             assert!(stderr.contains("actionlint.yaml"), "{name}: {stderr}");

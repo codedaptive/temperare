@@ -4,12 +4,15 @@ use std::ffi::OsString;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 
-use engines::run_rules_versioned_at;
+use engines::{run_rules_versioned_at, NotAvailableCause};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
 #[path = "support/git.rs"]
 mod git_support;
+
+static LOCK: Mutex<()> = Mutex::new(());
 
 struct TempFolder(PathBuf);
 
@@ -37,7 +40,53 @@ impl Drop for PathGuard {
 }
 
 #[test]
+fn old_markdownlint_no_file_before_floor() {
+    let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let mut failed = Vec::new();
+    for (name, file, old_floor) in [("no-file", "notes.txt", false), ("matching-file", "example.md", true)] {
+        let result = std::panic::catch_unwind(|| {
+            let folder = TempFolder::new(name);
+            git_support::git(&folder.0, &["init", "-q"], b"");
+            let bin = folder.0.join("bin");
+            fs::create_dir(&bin).unwrap();
+            for (program, script) in [
+                ("markdownlint-cli2", "#!/bin/sh\necho 'markdownlint-cli2 v0.24.1 (markdownlint v0.42.1)'\nexit 2\n"),
+                ("node", "#!/bin/sh\nexit 0\n"),
+            ] {
+                fs::write(bin.join(program), script).unwrap();
+                fs::set_permissions(bin.join(program), fs::Permissions::from_mode(0o755)).unwrap();
+            }
+            let guard = PathGuard(std::env::var_os("PATH"));
+            std::env::set_var("PATH", std::env::join_paths(std::iter::once(bin)
+                .chain(std::env::split_paths(guard.0.as_ref().unwrap()))).unwrap());
+            fs::write(folder.0.join(file), "example\n").unwrap();
+            fs::write(folder.0.join("temperare.toml"), "version = 1\n[[rule]]\nid = \"markdown-test\"\nengine = \"markdownlint\"\ncheck = \"MD013\"\npaths = [\"**\"]\nfix = \"Shorten the line.\"\n").unwrap();
+            let rules = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
+            let checked = run_rules_versioned_at(&rules, &folder.0, &[], None);
+            assert_eq!(checked.engines.len(), 1, "{name}: {:?}", checked.engines);
+            assert_eq!(checked.engines[0].engine, Engine::Markdownlint, "{name}");
+            assert_eq!(checked.engines[0].version.as_deref(), Some("0.24.1"), "{name}");
+            assert_eq!(checked.runs.len(), 1, "{name}: {:?}", checked.runs);
+            let run = &checked.runs[0];
+            if old_floor {
+                assert_eq!(run.no_files, None, "{name}: {run:?}");
+                assert_eq!(run.not_available_cause, Some(NotAvailableCause::Other), "{name}: {run:?}");
+                let RuleOutcome::NotAvailable { why, .. } = &run.outcome else { panic!("{name}: {run:?}") };
+                assert_eq!(why, "markdownlint-cli2 0.24.1 is older than markdownlint-cli2 0.24.2, the release bundling markdownlint 0.42.2, which temperare's list of markdownlint codes was taken from", "{name}");
+            } else {
+                assert_eq!(run.outcome, RuleOutcome::Findings(vec![]), "{name}: {run:?}");
+                assert_eq!(run.no_files.as_deref(), Some("no file its engine checks"), "{name}");
+                assert_eq!(run.not_available_cause, None, "{name}");
+            }
+        });
+        if result.is_err() { failed.push(name); } else { eprintln!("{name}: PASS"); }
+    }
+    assert!(failed.is_empty(), "failed rows: {failed:?}");
+}
+
+#[test]
 fn markdownlint_rule_reports_findings_configs_and_availability() {
+    let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let original = PathGuard(std::env::var_os("PATH"));
     std::env::set_var("PATH", std::env::join_paths(
         std::iter::once(Path::new("/opt/homebrew/bin").to_path_buf())
@@ -48,6 +97,7 @@ fn markdownlint_rule_reports_findings_configs_and_availability() {
     let fixable = format!("{}  \n", long.trim_end());
     let cases = [
         ("violation", "MD013"),
+        ("package-json", "MD013"),
         ("alias", "line-length"),
         ("clean", "MD013"),
         ("other-rule", "MD013"),
@@ -85,6 +135,7 @@ fn markdownlint_rule_reports_findings_configs_and_availability() {
             fs::create_dir_all(source_path.parent().unwrap()).unwrap();
             fs::write(&source_path, source).unwrap();
             let config = match name {
+                "package-json" => Some(("package.json", r#"{"markdownlint-cli2":{"config":{"MD013":false}},"markdownlint":{"MD013":false}}"#)),
                 "options" => Some((".markdownlint-cli2.jsonc", "{ \"fix\": true }")),
                 "options-below" => Some(("sub/.markdownlint-cli2.jsonc", "{ \"fix\": true }")),
                 "config-off-json" => Some((".markdownlint.json", "{\"MD013\": false}")),
@@ -158,7 +209,7 @@ fn markdownlint_rule_reports_findings_configs_and_availability() {
                     } else {
                         assert_eq!(run.no_files, None, "{name}");
                     }
-                    let count = usize::from(matches!(name, "violation" | "alias" | "inline-disable"));
+                    let count = usize::from(matches!(name, "violation" | "package-json" | "alias" | "inline-disable"));
                     assert_eq!(findings.len(), count, "{name}: {findings:?}");
                     if count == 1 {
                         let finding = &findings[0];

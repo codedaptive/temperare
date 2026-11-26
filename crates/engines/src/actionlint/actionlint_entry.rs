@@ -26,11 +26,12 @@ const TEMPLATE: &str = r#"{"kinds":{{json allKinds}},"errors":{{json .}}}"#;
 /// else the first of `<top>/.github/actionlint.yaml` and `<top>/.github/actionlint.yml` that is a file (`<top>` the
 /// git top, as actionlint discovers it), else `/dev/null` (`actionlint_config`). So actionlint reads exactly the file
 /// tm read. tm reads it through `crate::yaml`: an `ignore` key in it drops findings and tm cannot turn it off, so it is
-/// `Failed` naming the file and line (S-67 (1), `config_suppression`). actionlint reads YAML with go-yaml v3, measured
-/// on 1.7.12: a duplicate key is fatal (exit 3); only the first document applies; a merge key `<<` applies, so an
-/// `ignore` merged from an anchor drops findings; `Ignore` (another case) is not honoured; an escaped key
-/// `"\x69gnore"` is. `yaml_entries` rejects a duplicate key, a second document and `<<`, each `Failed`, never a
-/// silent clean. `self-hosted-runner` and `config-variables` are the repository's own definitions, left as they are.
+/// `Failed` naming the file and line (S-67 (1), `config_suppression`). actionlint 1.7.12 reads YAML with
+/// `go.yaml.in/yaml/v4` (v4.0.0-rc.3), measured (fixtures/fixtures.txt, "Config reading"): a duplicate key is fatal
+/// (exit 3); only the first document applies; a merge key `<<` applies, so an `ignore` merged from an anchor drops
+/// findings; `Ignore` (another case) is not honoured; an escaped key `"\x69gnore"` is. `yaml_entries` rejects a
+/// duplicate key, a second document and `<<`, each `Failed`, never a silent clean. `self-hosted-runner` and
+/// `config-variables` are the repository's own definitions, left as they are.
 ///
 /// What still keeps a finding from the report outside the rule file: `# shellcheck disable=...` inside a `run:`
 /// script, which actionlint's ShellCheck honours and no option turns off (S-67 (2)).
@@ -51,7 +52,7 @@ pub static ACTIONLINT: Entry = Entry {
     params: Params::Args(&[]),
     config: None,
     after: &[],
-    version: Some(VersionProbe { args: &["-version"], read: version_word }),
+    version: Some(VersionProbe { args: &["-version"], read: version_word, wrap: None }),
     refuse: actionlint_refusal,
     unknown: unknown_kind,
     read: parse_actionlint,

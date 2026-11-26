@@ -46,7 +46,7 @@ pub static PERIPHERY: Entry = Entry {
     params: Params::Args(&[]),
     config: None,
     after: &[],
-    version: Some(VersionProbe { args: &["version"], read: version_word }),
+    version: Some(VersionProbe { args: &["version"], read: version_word, wrap: None }),
     refuse: periphery_refusal,
     unknown: |_, _| None,
     read: parse_periphery,

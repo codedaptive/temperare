@@ -3,6 +3,7 @@
 
 use super::{detekt_args, detekt_layer, detekt_output, detekt_unlisted, kotlin_files, typed_why};
 use crate::entry::{run_plain, Entry, TempFile};
+use crate::failed::failed;
 use crate::host::Host;
 use crate::no_script::no_script;
 use crate::types::{Hit, Stop};
@@ -18,7 +19,7 @@ const JAVA_OPTIONS: [&str; 3] = ["JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS", "_JAVA
 /// settled the rule's refusals and params (detekt takes none), and availability is settled before the flow, so an
 /// absent detekt reads not on PATH whatever the well-formed check. Each step can stop the rule:
 /// 1. the Kotlin sources `kotlin_files` lists under `folder`, or its `Stop`; when `no_script` finds none the rule
-///    applies to, nothing runs and the rule is its `NoFiles`. `engine_hits_with`'s step 1 (`engine_listed`) settles
+///    applies to, nothing runs and the rule is its `NoFiles`. `engine_hits_with`'s step 1 (`no_file_listed`) settles
 ///    that before availability; this guard decides only when that listing failed and this one succeeds;
 /// 2. a check with a part that is neither a rule nor a rule set of temperare's list is `detekt_unlisted`'s
 ///    `NotListed`, naming the part and the list's version; `stopped` adds the engine and its version. Nothing runs
@@ -63,8 +64,4 @@ pub(crate) fn run_detekt(entry: &Entry, rule: &Rule, folder: &Path, host: &Host)
         Ok(detekt_output(out, sarif))
     };
     run_plain(entry, rule, folder, &Host { run: &run, on_path: host.on_path, raw_chars: host.raw_chars, base: host.base })
-}
-
-fn failed(stderr: String) -> Stop {
-    Stop::Failed { code: None, stderr }
 }

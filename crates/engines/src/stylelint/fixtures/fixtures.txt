@@ -83,6 +83,42 @@ print_config_error.txt (stderr; exit 78; stdout empty)
   folder /tmp/tm-stylelint-fixtures/cfgerr (as config_error.txt)
   command: stylelint --print-config ./a.css
 
+Runs kept as records only (no fixture file saved). Each ran in its own folder under one folder made by
+`mktemp -d /tmp/tm-stylelint-XXXXXX` (here /tmp/tm-stylelint-BH6mnA, canonical /private/tmp/tm-stylelint-BH6mnA),
+removed after. Stdout was empty in each; the report is quoted from stderr, one line there, wrapped here.
+
+upper-case extension (stderr; exit 2): a.CSS is linted, its finding reported
+  folder /tmp/tm-stylelint-BH6mnA/upper
+    .stylelintrc.json: {"rules":{"color-no-invalid-hex":true}}
+    a.CSS:             a { color: #fff1az; }
+  command: stylelint ARGS ./a.CSS
+  report: [{"source":"/private/tmp/tm-stylelint-BH6mnA/upper/a.CSS","deprecations":[],"invalidOptionWarnings":[],
+    "parseErrors":[],"errored":true,"warnings":[{"line":1,"column":12,"endLine":1,"endColumn":19,
+    "rule":"color-no-invalid-hex","severity":"error","text":"Invalid hex color \"#fff1az\" (color-no-invalid-hex)"}]}]
+
+scss with no customSyntax (stderr; exit 2): a `$var` and nesting parse with no parse error, the finding reported
+  folder /tmp/tm-stylelint-BH6mnA/scss
+    .stylelintrc.json: {"rules":{"color-no-invalid-hex":true}}
+    a.scss:            $c: #fff1az;
+                       a { b { color: $c; } }
+  command: stylelint ARGS ./a.scss
+  report: [{"source":"/private/tmp/tm-stylelint-BH6mnA/scss/a.scss","deprecations":[],"invalidOptionWarnings":[],
+    "parseErrors":[],"errored":true,"warnings":[{"line":1,"column":5,"endLine":1,"endColumn":12,
+    "rule":"color-no-invalid-hex","severity":"error","text":"Invalid hex color \"#fff1az\" (color-no-invalid-hex)"}]}]
+
+unknown rule, two files (stderr; exit 2): the unknown rule is one warning in each file's entry
+  folder /tmp/tm-stylelint-BH6mnA/unk2
+    .stylelintrc.json: {"rules":{"color-no-invalid-hexx":true}}
+    a.css:             a { color: #fff; }
+    b.css:             b { color: #000; }
+  command: stylelint ARGS ./a.css ./b.css
+  report: [{"source":"/private/tmp/tm-stylelint-BH6mnA/unk2/a.css","deprecations":[],"invalidOptionWarnings":[],
+    "parseErrors":[],"errored":true,"warnings":[{"line":1,"column":1,"endLine":1,"endColumn":2,
+    "rule":"color-no-invalid-hexx","severity":"error","text":"Unknown rule color-no-invalid-hexx. Did you mean color-no-invalid-hex?"}]},
+    {"source":"/private/tmp/tm-stylelint-BH6mnA/unk2/b.css","deprecations":[],"invalidOptionWarnings":[],
+    "parseErrors":[],"errored":true,"warnings":[{"line":1,"column":1,"endLine":1,"endColumn":2,
+    "rule":"color-no-invalid-hexx","severity":"error","text":"Unknown rule color-no-invalid-hexx. Did you mean color-no-invalid-hex?"}]}]
+
 NODE_WARNING: what Node prints on stderr before a report when SUP is given (any exit with a report; a ConfigurationError run prints none):
 (node:<pid>) [stylelint:101] ExperimentalWarning: The suppressions feature is experimental.
 See https://stylelint.io/user-guide/suppressions for more information.

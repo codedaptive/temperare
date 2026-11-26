@@ -1,25 +1,26 @@
-//! `ignored_entries`: the Python files and folders under a rule's folder in git's NUL-separated listing of what it
-//! ignores.
+//! `ignored_entries`: the Python files and folders under a rule's folder in the entries git lists as ignored,
+//! read from ccvcslib's `ignored_folders`.
 
-use std::ffi::OsStr;
-use std::os::unix::ffi::OsStrExt;
 use std::path::{Path, PathBuf};
 
-/// In `listing`'s order, each non-empty entry (relative to `top`, the repository's top) as `(top.join(entry
+/// In `entries`' order, each non-empty entry (relative to `top`, the repository's top) as `(top.join(entry
 /// minus any final /), is_folder)`, kept when it sits strictly under `folder` and is a folder (git ends one with `/`)
 /// or ends in `.py`.
-/// The paths are made from git's exact bytes, so a non-UTF-8 name survives.
-pub(crate) fn ignored_entries(listing: &[u8], top: &Path, folder: &Path) -> Vec<(PathBuf, bool)> {
-    listing
-        .split(|byte| *byte == 0)
+/// An entry whose name holds U+FFFD is left out: ccvcslib decodes git's listing lossily, so a non-UTF-8 name arrives
+/// with U+FFFD in place of its bytes, and that path is not the real file or folder. It is not reported ignored, and
+/// the real one's files are checked, so nothing is hidden.
+pub(crate) fn ignored_entries(entries: &[String], top: &Path, folder: &Path) -> Vec<(PathBuf, bool)> {
+    entries
+        .iter()
         .filter_map(|entry| {
-            let (name, is_folder) = match entry.strip_suffix(b"/") {
+            let (name, is_folder) = match entry.strip_suffix('/') {
                 Some(name) => (name, true),
-                None => (entry, false),
+                None => (entry.as_str(), false),
             };
-            let full = top.join(OsStr::from_bytes(name));
+            let full = top.join(name);
             let kept = !name.is_empty()
-                && (is_folder || name.ends_with(b".py"))
+                && !name.contains(char::REPLACEMENT_CHARACTER)
+                && (is_folder || name.ends_with(".py"))
                 && full != folder
                 && full.starts_with(folder);
             kept.then_some((full, is_folder))

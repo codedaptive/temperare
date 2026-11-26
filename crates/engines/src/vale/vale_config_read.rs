@@ -7,7 +7,8 @@ use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
-/// Why a rule whose folder has no Vale config is not available: it names the five names Vale looks for.
+/// Why a rule whose folder has no Vale config is not available: it names the five names Vale 3.28.1 looks for, at or
+/// above the folder it runs in (fixtures/fixtures.txt, "Config names").
 const NO_CONFIG_WHY: &str = "Vale finds no config (.vale.ini, _vale.ini, vale.ini, .vale or _vale) at or above the \
     rule file's folder: tm runs Vale only with the repository's own config";
 

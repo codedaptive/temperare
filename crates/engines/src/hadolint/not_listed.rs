@@ -1,6 +1,6 @@
 //! `not_listed`: whether temperare's list of hadolint codes holds a check (S-51).
 
-use crate::shellcheck::read_code_list;
+use crate::read_code_list::read_code_list;
 use crate::types::Stop;
 
 /// What hadolint's SARIF log is missing for an SC code, said after the list's words. hadolint links ShellCheck but runs

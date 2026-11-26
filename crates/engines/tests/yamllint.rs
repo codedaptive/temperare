@@ -52,6 +52,7 @@ fn yamllint_rule_reports_findings_failures_and_availability() {
         ("top-level-ignore", "truthy"),
         ("inherited-ignore", "truthy"),
         ("ignore-from-file", "truthy"),
+        ("check-ignore-from-file", "truthy"),
         ("unknown-check", "no-such-rule"),
         ("malformed-check", "Truthy!"),
         ("syntax-error", "truthy"),
@@ -79,11 +80,12 @@ fn yamllint_rule_reports_findings_failures_and_availability() {
                 "top-level-ignore" => Some("extends: default\nignore: |\n  a.yaml\n"),
                 "inherited-ignore" => Some("extends: base.yaml\n"),
                 "ignore-from-file" => Some("extends: default\nignore-from-file: ign.txt\n"),
+                "check-ignore-from-file" => Some("extends: default\nrules:\n  truthy:\n    ignore-from-file: ign.txt\n"),
                 _ => None,
             };
             if let Some(config) = config { fs::write(folder.0.join(".yamllint"), config).unwrap(); }
             if name == "inherited-ignore" { fs::write(folder.0.join("base.yaml"), "extends: default\nignore: |\n  a.yaml\n").unwrap(); }
-            if name == "ignore-from-file" { fs::write(folder.0.join("ign.txt"), "a.yaml\n").unwrap(); }
+            if name == "ignore-from-file" || name == "check-ignore-from-file" { fs::write(folder.0.join("ign.txt"), "a.yaml\n").unwrap(); }
             fs::write(folder.0.join("temperare.toml"), format!(
                 "version = 1\n[[rule]]\nid = \"yaml-check\"\nengine = \"yamllint\"\ncheck = \"{check}\"\n{}fix = \"Fix YAML.\"\n",
                 if name == "missing-config" { "config = \"missing.yaml\"\n" } else { "" }

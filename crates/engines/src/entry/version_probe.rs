@@ -1,13 +1,18 @@
 //! `VersionProbe`: how an engine's version is read.
 
-use procio::Output;
+use procio::{Cmd, Output};
 
-/// `<entry program> <args>` run in the rule file's folder, and `read` taking the version from its output
-/// (`version_word` for an engine that prints `<name> <version>` or the bare version).
+/// The program `program_for` gives for the rule file's folder (a local `node_modules/.bin/eslint` for ESLint when
+/// there is one, else the entry's program) with `args`, run in that folder, with `wrap` applied to the command when
+/// there is one, and `read` taking the version from its output (`version_word` for an engine that prints
+/// `<name> <version>` or the bare version).
 #[derive(Debug, Clone, Copy)]
 pub struct VersionProbe {
     /// The arguments after the entry's program (`["--version"]`).
     pub args: &'static [&'static str],
     /// The version from the probe's output; `None` when it gives none.
     pub read: fn(&Output) -> Option<String>,
+    /// The probe command given the same environment the entry's run gives its check run; `None`: the probe runs
+    /// with tm's environment as is.
+    pub wrap: Option<fn(Cmd) -> Cmd>,
 }

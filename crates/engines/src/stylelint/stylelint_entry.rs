@@ -38,15 +38,15 @@ use rules::Engine;
 /// letting a config rewrite a file or hide an exception for some files silently. The probes are not counted; the check
 /// run is.
 ///
-/// stylelint runs from PATH; tm sets nothing in the environment (no NODE_PATH, S-72 (3)), and stylelint makes no
-/// network call. stylelint takes no params: any param makes the rule `Failed` (`refused`, before anything runs; the
-/// flow's own check, after its probes, is the same refusal). stylelint rules never share a run: `shares_with` has no
-/// arm for it.
+/// stylelint runs from PATH, and `node`, which it needs, is looked up on PATH too; tm sets nothing in the environment
+/// (no NODE_PATH, S-72 (3)), and stylelint makes no network call. stylelint takes no params: any param makes the rule
+/// `Failed` (`refused`, before anything runs; the flow's own check, after its probes, is the same refusal). stylelint
+/// rules never share a run: `shares_with` has no arm for it.
 pub static STYLELINT: Entry = Entry {
     name: "stylelint",
     engine: Engine::Stylelint,
     program: "stylelint",
-    needs: &["stylelint"],
+    needs: &["stylelint", "node"],
     never: None,
     args: &[
         "--formatter",
@@ -61,7 +61,7 @@ pub static STYLELINT: Entry = Entry {
     params: Params::Args(&[]),
     config: Some("--config="),
     after: &[],
-    version: Some(VersionProbe { args: &["--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["--version"], read: version_word, wrap: None }),
     refuse: stylelint_refusal,
     unknown: stylelint_unknown,
     read: parse_stylelint,

@@ -27,7 +27,7 @@ pub static PYLINT: Entry = Entry {
     params: Params::Args(&[]),
     config: Some("--rcfile="),
     after: &["."],
-    version: Some(VersionProbe { args: &["--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["--version"], read: version_word, wrap: None }),
     refuse: pylint_refusal,
     unknown: unknown_message,
     read: parse_pylint,

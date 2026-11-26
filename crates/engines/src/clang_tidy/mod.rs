@@ -1,6 +1,7 @@
 //! The clang-tidy adapter: its entry (`CLANG_TIDY`) and the flow it runs for one rule, the refusal of a check that is
-//! not one check name, its no-file outcome before availability, clang-tidy's no-checks and no-compile-database words, the reader of its text output, its
-//! command, and which files are C-family sources (`is_c_source`).
+//! not one check name, its no-file outcome before availability (settled by `engine_listed`, in `engine_hits_with`'s
+//! step 1), clang-tidy's no-checks and no-compile-database words, the reader of its text output, its command, and
+//! which files are C-family sources (`is_c_source`).
 
 mod clang_tidy_cmd;
 mod clang_tidy_entry;

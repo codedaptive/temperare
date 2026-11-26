@@ -2,7 +2,7 @@
 
 use std::ffi::OsString;
 use std::fs;
-use std::os::unix::fs::PermissionsExt;
+use std::os::unix::fs::{symlink, PermissionsExt};
 use std::path::{Path, PathBuf};
 
 use engines::run_rules_versioned_at;
@@ -51,20 +51,24 @@ fn vulture_rule_reports_findings_clean_config_warnings_and_absence() {
         ("warning", Some(violation), false, true, false, 1),
         ("no-python", None, false, false, false, 0),
         ("absent", Some(violation), false, false, true, 0),
+        ("git-absent", Some(violation), false, false, false, 0),
         ("ignored-venv", Some("def clean():\n    pass\nclean()\n"), false, false, false, 0),
         ("tracked-broken", None, false, false, false, 0),
+        ("broken-index", Some(violation), false, false, false, 0),
     ];
     let mut failed = Vec::new();
     for (name, source, config, warning, absent, count) in cases {
         let result = std::panic::catch_unwind(|| {
             let folder = TempFolder::new(name);
-            if name == "ignored-venv" || name == "tracked-broken" {
+            if name == "ignored-venv" || name == "tracked-broken" || name == "broken-index" || name == "git-absent" {
                 git_support::git(&folder.0, &["init", "-q"], b"");
                 if name == "ignored-venv" {
                     fs::write(folder.0.join(".gitignore"), ".venv/\n").unwrap();
                     fs::create_dir_all(folder.0.join(".venv/lib")).unwrap();
                     fs::write(folder.0.join(".venv/lib/broken.py"), "def broken(:\n").unwrap();
-                } else {
+                } else if name == "broken-index" {
+                    fs::write(folder.0.join(".git/index"), b"bad").unwrap();
+                } else if name == "tracked-broken" {
                     fs::write(folder.0.join("broken.py"), "def broken(:\n").unwrap();
                     git_support::git(&folder.0, &["add", "broken.py"], b"");
                 }
@@ -82,9 +86,33 @@ fn vulture_rule_reports_findings_clean_config_warnings_and_absence() {
                 })).unwrap();
                 std::env::set_var("PATH", without_vulture);
                 Some(guard)
+            } else if name == "git-absent" {
+                let guard = PathGuard(std::env::var_os("PATH"));
+                let vulture = std::env::split_paths(guard.0.as_ref().unwrap())
+                    .map(|dir| dir.join("vulture"))
+                    .find(|path| path.metadata().is_ok_and(|m| m.is_file() && m.permissions().mode() & 0o111 != 0))
+                    .unwrap();
+                let bin = folder.0.join("bin");
+                fs::create_dir(&bin).unwrap();
+                symlink(vulture, bin.join("vulture")).unwrap();
+                std::env::set_var("PATH", bin);
+                Some(guard)
             } else { None };
             let runs = run_rules_versioned_at(&file, &folder.0, &[], None).runs;
             assert_eq!(runs.len(), 1, "{name}: {runs:?}");
+            if name == "git-absent" {
+                assert!(matches!(&runs[0].outcome, RuleOutcome::NotAvailable { why, .. } if why.contains("git")),
+                    "{name}: expected git not available, got {:?}", runs[0].outcome);
+                return;
+            }
+            if name == "broken-index" {
+                let RuleOutcome::Failed { code, stderr, .. } = &runs[0].outcome else {
+                    panic!("{name}: expected failure, got {:?}", runs[0].outcome);
+                };
+                assert_eq!(*code, Some(128), "{name}");
+                assert!(stderr.contains("index"), "{name}: {stderr}");
+                return;
+            }
             if name == "tracked-broken" {
                 let RuleOutcome::Failed { stderr, .. } = &runs[0].outcome else {
                     panic!("{name}: expected failure, got {:?}", runs[0].outcome);

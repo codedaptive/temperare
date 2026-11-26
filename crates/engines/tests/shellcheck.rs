@@ -5,7 +5,7 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
-use engines::{availability, entry_for, run_rules_versioned_at, Availability};
+use engines::{availability, entry_of, run_rules_versioned_at, Availability};
 use rules::{Engine, RuleFile, RuleOutcome};
 
 #[path = "support/git.rs"]
@@ -45,7 +45,7 @@ fn git(repo: &Path, args: &[&str]) {
 #[test]
 fn shellcheck_entry_reports_sc2086_finding_and_missing_program() {
     assert_eq!(availability(Engine::ShellCheck), Availability::Available);
-    assert_eq!(entry_for(Engine::ShellCheck).unwrap().name, "shellcheck");
+    assert_eq!(entry_of(Engine::ShellCheck).name, "shellcheck");
 
     let repo = TempFolder::new();
     git(&repo.0, &["init", "-q"]);

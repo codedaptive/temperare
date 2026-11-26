@@ -12,8 +12,9 @@ use std::fmt;
 ///   for any other truthy value.
 ///
 /// serde_json here keeps no key order of its own, so the object is read key by key. A key that repeats at the top
-/// level, or an `enabled` that repeats in one key's object, is an `Err`: JavaScript keeps the first one's place and the
-/// last one's value, which tm does not model. Text that is not one JSON object (JSONC comments and trailing commas
+/// level, or an `enabled` that repeats in the object of a key other than `default`, is an `Err`: JavaScript keeps the
+/// first one's place and the last one's value, which tm does not model. Under `default` (any case) only the value's
+/// truthiness counts, so its object's keys are skipped unread and a repeated `enabled` there is no `Err`. Text that is not one JSON object (JSONC comments and trailing commas
 /// included, which markdownlint-cli2 would accept) is an `Err` with serde_json's message, which names the line.
 pub(crate) fn json_settings(text: &str) -> Result<Vec<(String, bool)>, String> {
     let mut reader = serde_json::Deserializer::from_str(text);

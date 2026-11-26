@@ -6,7 +6,7 @@ use super::config_suppression;
 use crate::types::Stop;
 use std::path::Path;
 
-const DROPS: &str = "actionlint drops findings matching it and tm cannot turn it off; put exceptions in the rule file (S-67 (1))";
+const DROPS: &str = "actionlint drops findings matching it and tm cannot turn it off; put exceptions in the rule file";
 
 #[test]
 fn config_suppression_cases() {

@@ -2,14 +2,18 @@
 //! rules on.
 
 use super::json_settings;
-use crate::yaml::{yaml_entries, YamlEntry, YamlValue};
+use crate::yaml::{core_value, yaml_entries, YamlEntry, YamlValue};
+use saphyr_parser::ScalarStyle;
 
 /// The top-level keys of `text`, in file order, each with what markdownlint 0.42.2's `getEffectiveConfig` makes of its
 /// value, as `json_settings` says, the value read as js-yaml 5.5.0 (the reader markdownlint-cli2 0.24.2 bundles, YAML
 /// 1.2 core schema) gives it to JavaScript. Measured: plain `false`/`False`/`FALSE`, the null forms, a number equal to
-/// zero (`0`, `-0`, `+0`, `00`, `0.0`, `.0`, `0.`, `0e0`, `0x0`, `0o0` and their longer forms) and `.nan`/`.NaN`/`.NAN`
-/// are falsy; any other plain scalar is truthy, `yes`, `no`, `on` and `off` included (strings in YAML 1.2). A mapping
-/// under a key is on unless its `enabled` child is falsy, read the same way; a sequence is on.
+/// zero (`0`, `-0`, `+0`, `00`, `0.0`, `.0`, `0.`, `0e0`, `0e5`, `0x0`, `0o0` and their longer forms, and `1e-400`,
+/// which underflows to zero) and `.nan`/`.NaN`/`.NAN` are falsy; any other plain scalar is truthy, `1e-5`, `yes`, `no`,
+/// `on` and `off` included (the last four strings in YAML 1.2). `1e-400` and `0e5` falsy and `1e-5` truthy are as
+/// measured on markdownlint-cli2 0.24.2 (fixtures/fixtures.txt, "YAML numeric settings"). The value is `crate::yaml`'s
+/// `core_value`, the one copy of the core schema. A mapping under a key is on unless its `enabled` child is falsy, read
+/// the same way; a sequence is on.
 ///
 /// markdownlint-cli2 reads a config with JSONC first, then TOML, then YAML, keeping the first that parses, so these are
 /// `Err` rather than a reading that may differ from its own (measured: `MD013 = false` is read as TOML, and
@@ -67,35 +71,21 @@ fn nested_on(key: &str, after: &[YamlEntry]) -> Result<bool, String> {
 fn truthy(value: &YamlValue, line: usize) -> Result<bool, String> {
     match value {
         YamlValue::Null => Ok(false),
-        YamlValue::Plain(text) => Ok(!falsy_spelling(text)),
+        YamlValue::Plain(text) => Ok(!falsy_when_plain(text)),
         YamlValue::Quoted(text) if text.is_empty() => Ok(false),
-        YamlValue::Quoted(text) if falsy_spelling(text) || matches!(text.as_str(), "~" | "null" | "Null" | "NULL") => {
+        YamlValue::Quoted(text) if falsy_when_plain(text) || matches!(text.as_str(), "~" | "null" | "Null" | "NULL") => {
             Err(format!("line {line}: a quoted or tagged `{text}`, whose tag tm cannot see: it may be falsy"))
         }
         _ => Ok(true),
     }
 }
 
-/// Whether `text`, read as an untagged plain scalar, is falsy apart from the null forms: a false spelling, a number
-/// equal to zero in a core-schema form, or a NaN.
-fn falsy_spelling(text: &str) -> bool {
-    matches!(text, "false" | "False" | "FALSE" | ".nan" | ".NaN" | ".NAN") || zero(text)
-}
-
-/// Whether `text` is a core-schema int (`[-+]?[0-9]+`, `0o[0-7]+`, `0x[0-9a-fA-F]+`) or float
-/// (`[-+]?(\.[0-9]+|[0-9]+(\.[0-9]*)?)([eE][-+]?[0-9]+)?`) whose digits before any exponent are all `0`.
-fn zero(text: &str) -> bool {
-    let zeros = |part: &str| part.bytes().all(|byte| byte == b'0');
-    let digits = |part: &str| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit());
-    if let Some(radix) = text.strip_prefix("0o").or_else(|| text.strip_prefix("0x")) {
-        return !radix.is_empty() && zeros(radix);
-    }
-    let body = text.strip_prefix(['-', '+']).unwrap_or(text);
-    let (mantissa, exponent) = body.split_once(['e', 'E']).unwrap_or((body, "0"));
-    let (whole, fraction) = mantissa.split_once('.').unwrap_or((mantissa, ""));
-    let shaped =
-        (digits(whole) || (whole.is_empty() && !fraction.is_empty())) && (fraction.is_empty() || digits(fraction));
-    shaped && digits(exponent.strip_prefix(['-', '+']).unwrap_or(exponent)) && zeros(whole) && zeros(fraction)
+/// Whether `text`, read by `core_value` as an untagged plain scalar, is falsy apart from the null forms: `false`, a
+/// number equal to zero, or a NaN.
+fn falsy_when_plain(text: &str) -> bool {
+    // Only a tag makes core_value return Err, and there is none here, so an Err is never falsy.
+    core_value(text, ScalarStyle::Plain, None)
+        .is_ok_and(|value| matches!(value.as_str(), "bool false" | "number 0" | "number NaN"))
 }
 
 /// Whether `text` holds a line other than blank lines, `#` comments and the document markers `---` and `...`.

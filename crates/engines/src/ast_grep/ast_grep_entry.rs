@@ -24,7 +24,7 @@ pub static AST_GREP: Entry = Entry {
     params: Params::Template,
     config: None,
     after: &["--json=stream"],
-    version: Some(VersionProbe { args: &["--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["--version"], read: version_word, wrap: None }),
     refuse: |_| None,
     unknown: |_, _| None,
     read: |out, _check, cwd, folder| parse_ast_grep(out, cwd, folder),

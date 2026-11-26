@@ -10,8 +10,8 @@ use crate::types::{Hit, Stop};
 use rules::Rule;
 use std::path::Path;
 
-/// `run_eslint_with` given `files_in_folder`, so a run that lints no file git lists for `folder` and the rule's paths cover is
-/// no file, and a hit in a file git ignores is dropped.
+/// `run_eslint_with` given `files_in_folder`, so a run that lints no regular file git lists for `folder` and the
+/// rule's paths cover is no file, and a hit in a file git ignores is dropped.
 pub(crate) fn run_eslint(entry: &Entry, rule: &Rule, folder: &Path, host: &Host) -> Result<Vec<Hit>, Stop> {
     run_eslint_with(&files_in_folder, entry, rule, folder, host)
 }

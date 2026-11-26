@@ -2,6 +2,7 @@
 //! its test is the zone integration test tests/dart.rs and it has no unit-test sibling.
 
 use super::{include_targets, package_path, pubspec_root};
+use crate::cannot_turn_off::CANNOT_TURN_OFF;
 use crate::types::Stop;
 use std::collections::HashSet;
 use std::fs::{DirEntry, Metadata};
@@ -105,8 +106,7 @@ fn followed(
         return Err(Stop::Failed {
             code: None,
             stderr: format!(
-                "{}{read_as}, outside the repository top, governs what dart reports here and tm cannot turn it off; \
-                 put exceptions in the rule file (S-67 (1))",
+                "{}{read_as}, outside the repository top, governs what dart reports here and {CANNOT_TURN_OFF}",
                 file.display()
             ),
         });
