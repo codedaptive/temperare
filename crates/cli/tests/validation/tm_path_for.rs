@@ -3,8 +3,8 @@
 
 use crate::tm_path_folder::tm_path_folder;
 
-/// The folders `tm_path_folder` gives for each of `programs`, in order, each folder once, then `/usr/bin:/bin`. A
-/// program with no folder adds nothing, so with none found the PATH is `/usr/bin:/bin`.
+/// The folders `tm_path_folder` gives for each of `programs`, in order, each folder once, then `/usr/bin:/bin`, as a
+/// unix PATH. A program with no folder adds nothing, so with none found the PATH is `/usr/bin:/bin`.
 pub fn tm_path_for(programs: &[&str]) -> String {
     let mut dirs: Vec<String> = Vec::new();
     for dir in programs.iter().filter_map(|program| tm_path_folder(program)) {
