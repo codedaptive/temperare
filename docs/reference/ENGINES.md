@@ -116,7 +116,7 @@ Neither is ever "clean".
 
 | `why` | When |
 |---|---|
-| `<program> not found on PATH` | The engine's program is not installed, or not on `PATH`. A clippy rule names the first of `cargo-clippy` and `clippy-driver` that is missing. A ShellCheck rule names `git` when ShellCheck is there and git, which lists its scripts, is not. A golangci-lint rule names `go` when golangci-lint is there and go is not. A clang-tidy rule names `git` when clang-tidy is there and git, which lists its sources, is not. A Periphery rule names `swift` when Periphery is there and swift, which builds the package, is not. A PHPStan rule names `php` when phpstan is there and php, which runs it, is not. An actionlint rule whose check is `shellcheck` or `pyflakes` names that program when actionlint is there and it is not. A markdownlint rule names `markdownlint-cli2`, the program it runs. An ESLint, stylelint or markdownlint rule names `node` when the engine's program is there and node, which runs it, is not. For ESLint, a `node_modules/.bin/eslint` in the rule file's folder is its program, wherever `PATH` points. A rule of an engine `tm` lists the files for with git (mypy, PMD, detekt, dart, PHPStan, actionlint, sqlfluff, hadolint, yamllint, Vale, stylelint, markdownlint) names `git` when the engine is there and git is not |
+| `<program> not found on PATH` | The engine's program is not installed, or not on `PATH`. A clippy rule names the first of `cargo-clippy` and `clippy-driver` that is missing. A ShellCheck rule names `git` when ShellCheck is there and git, which lists its scripts, is not. A golangci-lint rule names `go` when golangci-lint is there and go is not. A clang-tidy rule names `git` when clang-tidy is there and git, which lists its sources, is not. A Periphery rule names `swift` when Periphery is there and swift, which builds the package, is not. A PHPStan rule names `php` when phpstan is there and php, which runs it, is not. An actionlint rule whose check is `shellcheck` or `pyflakes` names that program when actionlint is there and it is not. A markdownlint rule names `markdownlint-cli2`, the program it runs. An ESLint, stylelint or markdownlint rule names `node` when the engine's program is there and node, which runs it, is not. For ESLint, an executable `eslint` in the rule file's folder's `node_modules/.bin` (on Windows, `eslint.cmd` or another `PATHEXT` name) is its program, wherever `PATH` points ([eslint](#eslint)). A rule of an engine `tm` lists the files for with git (mypy, PMD, detekt, dart, PHPStan, actionlint, sqlfluff, hadolint, yamllint, Vale, stylelint, markdownlint) names `git` when the engine is there and git is not |
 | `no Package.swift at or above the rule file's folder: Periphery builds the project, and tm runs it only on a Swift package` | A Periphery rule outside a Swift package in its repository, such as one in an Xcode project ([periphery](#periphery)) |
 | `<subject> depends on <identities>, which tm would have to fetch: tm never fetches packages, so Periphery cannot build it here` | A Periphery rule on a package that, or one of whose local packages, names a source-control or registry dependency or a binary target with a `url` ([periphery](#periphery)) |
 | `<subject> depends on the local package <path>, which does not resolve: ...` or `..., outside the repository: ...` | A Periphery rule on a package that depends on a local package `tm` cannot read, or that is not the repository's ([periphery](#periphery)) |
@@ -352,10 +352,11 @@ list of its files git gives, fails, and the others run as they do when git canno
   ```
 
   The first lists the lints and lint groups of the toolchain in use; `check` is looked up in that list before
-  anything is built. The second names the workspace root, which is where cargo prints file paths from.
-  `--all-targets` lints tests, examples and benches too, so test code is checked like any other. `--warn=<check>`
-  turns the lint on even if it is off by default. Each lint in `params.allow` becomes `--allow=<lint>` after it, so
-  an allowed lint stays off even under `warnings`.
+  anything is built. The second names the workspace root, which is where cargo prints file paths from: `tm` reads
+  them from that root with its symlinks resolved, so a workspace reached through a symlink keeps its findings, and a
+  root that cannot be resolved fails the rule before clippy runs. `--all-targets` lints tests, examples and benches
+  too, so test code is checked like any other. `--warn=<check>` turns the lint on even if it is off by default.
+  Each lint in `params.allow` becomes `--allow=<lint>` after it, so an allowed lint stays off even under `warnings`.
 - **`check`:**
   - one lint that `clippy-driver -W help` lists, such as `clippy::bool_comparison` or the compiler's own
     `unused_variables`. `-` and `_` are read alike, so `clippy::bool-comparison` is the same lint. Messages with
@@ -482,8 +483,9 @@ ast-grep is for rules about the shape of code that no stock linter states: a hou
   fails with `changed while it was opened`. A folder on that walk that cannot be opened (one you may pass through
   but not read) fails the rule, naming that folder. A YAML path that is not a regular file, such as a FIFO or a
   folder, fails the rule without waiting on it. And a file with more than one hard link fails the rule, wherever
-  the other link is, because Temperare cannot tell where a file's other names are. On other systems only the path
-  checks above apply.
+  the other link is, because Temperare cannot tell where a file's other names are. On other systems, Windows
+  included, only the path checks above apply: the link count is not read, so a rule YAML with more than one hard
+  link is read whatever its other names are.
 - **A baseline set's rule carries its YAML inside `tm`.** For an ast-grep rule of a set the rule file takes
   ([`RULE_FILE.md`](RULE_FILE.md#baseline-sets)), `check` names the YAML inside the set, such as
   `ast-grep/tm-rust-suppression.yml`, and is not a path in your repository. Nothing is read from the rule file's
@@ -1018,12 +1020,14 @@ only the version question, `git --version`, is run by `tm` itself.
 
 ## eslint
 
-- **Which `eslint`:** the rule file's folder's `node_modules/.bin/eslint` when that is a file (a symlink to one, as
-  npm makes, included), else the `eslint` on `PATH`. The same program is used to tell whether ESLint is available,
-  to ask its version and to run the check, by its absolute path. It runs on `node`, which must be on `PATH`: with
-  `node` missing the rule is not available, with the reason `node not found on PATH`. `tm` sets nothing in ESLint's
-  environment, `NODE_PATH` included, so the plugins a config names must resolve as they do when you run that
-  `eslint` yourself.
+- **Which `eslint`:** an executable `eslint` in the rule file's folder's `node_modules/.bin` (a symlink to one, as
+  npm makes, included), else the `eslint` on `PATH`. On Unix, executable means an execute bit is set, so a local
+  `eslint` without one is passed over for the one on `PATH`. On Windows any file counts, and the names tried are
+  `eslint` with each extension your `PATHEXT` lists, in order (`.COM;.EXE;.BAT;.CMD` when it lists none), so npm's
+  `eslint.cmd` is found. The same program is used to tell whether ESLint is available, to ask its version and to run
+  the check, by its absolute path. It runs on `node`, which must be on `PATH`: with `node` missing the rule is not
+  available, with the reason `node not found on PATH`. `tm` sets nothing in ESLint's environment, `NODE_PATH`
+  included, so the plugins a config names must resolve as they do when you run that `eslint` yourself.
 - **`tm rules` and the engines line look in the folder too.** With `eslint` only in `node_modules/.bin`, `tm check`
   runs the rule, `tm rules` shows it available and the `engines:` line of `tm check` lists ESLint.
 - **Where:** the rule file's folder.

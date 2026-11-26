@@ -118,7 +118,7 @@ folder, below):
 | `cargo-audit` | `cargo-audit`, and its advisory database already fetched (`cargo audit update-db`): `tm` never fetches it |
 | `vulture` | `vulture` |
 | `periphery` | `periphery` and `swift`, which builds the package; the rule file's folder must be inside a Swift package |
-| `eslint` | `eslint` and `node`, which runs it. `tm` runs the rule file's folder's `node_modules/.bin/eslint` when there is one, else the one on `PATH` |
+| `eslint` | `eslint` and `node`, which runs it. `tm` runs an executable `eslint` in the rule file's folder's `node_modules/.bin` when there is one (on Windows, npm's `eslint.cmd`), else the one on `PATH` |
 | `mypy` | `mypy` (and `git`, which lists the files) |
 | `pmd` | `pmd` (and `git`) |
 | `detekt` | `detekt` (and `git`) |
