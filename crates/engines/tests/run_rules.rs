@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use engines::{availability, run_rules_versioned_at, Availability};
+use engines::{availability_in, run_rules_versioned_at, Availability};
 use rules::{Engine, Kind, RelPath, RuleFile, RuleOutcome, Severity};
 
 /// Each of `run_rules_versioned_at`'s `runs` with no base, read as (rule, outcome).
@@ -92,10 +92,10 @@ fix = "Remove slop."
 
 #[test]
 fn run_rules_reports_ordered_findings_and_filters_to_one_file() {
-    for engine in [Engine::Clippy, Engine::SwiftLint, Engine::Ruff, Engine::AstGrep] {
-        assert_eq!(availability(engine), Availability::Available, "{engine:?}");
-    }
     let folder = TempFolder::new("all");
+    for engine in [Engine::Clippy, Engine::SwiftLint, Engine::Ruff, Engine::AstGrep] {
+        assert_eq!(availability_in(engine, &folder.0), Availability::Available, "{engine:?}");
+    }
     fs::create_dir(folder.0.join("src")).unwrap();
     fs::write(folder.0.join("Cargo.toml"), "[package]\nname = \"run_rules_zit\"\nversion = \"0.1.0\"\nedition = \"2021\"\n[workspace]\n").unwrap();
     fs::write(folder.0.join("src/lib.rs"), "pub fn compare(value: bool) -> bool {\n    value == true\n}\n").unwrap();
@@ -147,8 +147,8 @@ fn run_rules_reports_ordered_findings_and_filters_to_one_file() {
 
 #[test]
 fn clippy_workspace_member_finding_is_relative_to_rule_folder() {
-    assert_eq!(availability(Engine::Clippy), Availability::Available);
     let folder = TempFolder::new("member");
+    assert_eq!(availability_in(Engine::Clippy, &folder.0), Availability::Available);
     let member = folder.0.join("member");
     fs::create_dir(&member).unwrap();
     fs::create_dir(member.join("src")).unwrap();
@@ -170,8 +170,8 @@ fn clippy_workspace_member_finding_is_relative_to_rule_folder() {
 
 #[test]
 fn clippy_warnings_cover_all_targets_deduplicate_and_honor_allows() {
-    assert_eq!(availability(Engine::Clippy), Availability::Available);
     let folder = TempFolder::new("warnings");
+    assert_eq!(availability_in(Engine::Clippy, &folder.0), Availability::Available);
     fs::create_dir(folder.0.join("src")).unwrap();
     fs::write(folder.0.join("Cargo.toml"), "[package]\nname = \"warnings_zit\"\nversion = \"0.1.0\"\nedition = \"2021\"\n[workspace]\n").unwrap();
     fs::write(folder.0.join("src/lib.rs"), concat!(

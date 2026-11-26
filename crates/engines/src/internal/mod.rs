@@ -1,5 +1,5 @@
 //! The crate's private modules, re-exported to the crate by lib.rs.
-pub(crate) mod availability;
+pub(crate) mod availability_from;
 pub(crate) mod availability_in;
 pub(crate) mod cannot_turn_off;
 pub(crate) mod change_of;
@@ -12,7 +12,6 @@ pub(crate) mod engine_hits_with;
 pub(crate) mod engine_listed;
 pub(crate) mod engine_version;
 pub(crate) mod engine_versions;
-pub(crate) mod entry_for;
 pub(crate) mod entry_of;
 pub(crate) mod failed;
 pub(crate) mod files_in_folder;
@@ -57,7 +56,7 @@ pub(crate) mod unavailable;
 pub(crate) mod union_args;
 pub(crate) mod yaml;
 #[cfg(test)]
-pub(crate) mod availability_tests;
+pub(crate) mod availability_from_tests;
 #[cfg(test)]
 pub(crate) mod check_host_tests;
 #[cfg(test)]
@@ -74,8 +73,6 @@ pub(crate) mod engine_listed_tests;
 pub(crate) mod engine_version_tests;
 #[cfg(test)]
 pub(crate) mod engine_versions_tests;
-#[cfg(test)]
-pub(crate) mod entry_for_tests;
 #[cfg(test)]
 pub(crate) mod entry_of_tests;
 #[cfg(test)]

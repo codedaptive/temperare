@@ -1,14 +1,14 @@
 use std::fs;
 
-use engines::{availability, ast_grep::{fill_params, parse_ast_grep, AST_GREP}, entry_cmd, run_rules_versioned_at, Availability, TempFile};
+use engines::{availability_in, ast_grep::{fill_params, parse_ast_grep, AST_GREP}, entry_cmd, run_rules_versioned_at, Availability, TempFile};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
 #[test]
 fn ast_grep_runs_a_list_parameterized_rule_and_removes_the_temp_file() {
-    assert_eq!(availability(Engine::AstGrep), Availability::Available);
     let folder = std::env::temp_dir().join(format!("engines-zit-{}-ast-grep", std::process::id()));
     fs::create_dir(&folder).unwrap();
     let folder = fs::canonicalize(folder).unwrap();
+    assert_eq!(availability_in(Engine::AstGrep, &folder), Availability::Available);
     fs::write(folder.join("example.js"), "console.log(foo);\nconsole.log(baz);\n").unwrap();
     let yaml = "id: selected-names\nlanguage: JavaScript\nmessage: matched name\nseverity: warning\nrule:\n  kind: identifier\n  regex: '^(?:{{names}})$'\n";
     let rule = fill_params(yaml, &serde_json::json!({"names": ["foo", "bar"]})).unwrap();
@@ -58,6 +58,7 @@ fn embedded_outcomes(tag: &str, rule: &str, yaml: &'static str, repository_yaml:
     let folder = std::env::temp_dir().join(format!("engines-zit-{}-{tag}", std::process::id()));
     fs::create_dir(&folder).unwrap();
     let folder = fs::canonicalize(folder).unwrap();
+    assert_eq!(availability_in(Engine::AstGrep, &folder), Availability::Available);
     fs::write(folder.join("example.js"), "console.log(foo);\n").unwrap();
     if let Some(text) = repository_yaml {
         fs::write(folder.join("baseline.yml"), text).unwrap();
@@ -82,19 +83,16 @@ fn assert_embedded_finding(outcomes: Vec<RuleOutcome>) {
 
 #[test]
 fn embedded_ast_grep_finds_violation_with_filled_params_and_no_repository_yaml() {
-    assert_eq!(availability(Engine::AstGrep), Availability::Available);
     assert_embedded_finding(embedded_outcomes("embedded-params", EMBEDDED_RULE, EMBEDDED_YAML, None));
 }
 
 #[test]
 fn embedded_ast_grep_yaml_takes_precedence_over_repository_yaml() {
-    assert_eq!(availability(Engine::AstGrep), Availability::Available);
     assert_embedded_finding(embedded_outcomes("embedded-precedence", EMBEDDED_RULE, EMBEDDED_YAML, Some(REPOSITORY_YAML)));
 }
 
 #[test]
 fn rejected_embedded_ast_grep_yaml_reports_engine_failure_with_exit_code() {
-    assert_eq!(availability(Engine::AstGrep), Availability::Available);
     let outcomes = embedded_outcomes("embedded-invalid", UNPARAMETERIZED_RULE, BROKEN_YAML, None);
     assert_eq!(outcomes.len(), 1, "{outcomes:?}");
     let RuleOutcome::Failed { rule, engine, code, stderr } = &outcomes[0] else {

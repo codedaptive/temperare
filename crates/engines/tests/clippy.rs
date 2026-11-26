@@ -1,15 +1,15 @@
 use std::ffi::OsStr;
 use std::fs;
 
-use engines::{availability, clippy::{parse_clippy, CLIPPY}, entry_cmd, Availability};
+use engines::{availability_in, clippy::{parse_clippy, CLIPPY}, entry_cmd, Availability};
 use rules::{Engine, RelPath};
 
 #[test]
 fn clippy_reports_only_the_requested_lint() {
-    assert_eq!(availability(Engine::Clippy), Availability::Available);
     let folder = std::env::temp_dir().join(format!("engines-zit-{}-clippy", std::process::id()));
     fs::create_dir(&folder).unwrap();
     let folder = fs::canonicalize(folder).unwrap();
+    assert_eq!(availability_in(Engine::Clippy, &folder), Availability::Available);
     fs::create_dir(folder.join("src")).unwrap();
     fs::write(folder.join("Cargo.toml"), "[package]\nname = \"clippy_zit\"\nversion = \"0.1.0\"\nedition = \"2021\"\n").unwrap();
     fs::write(folder.join("src/lib.rs"), "pub fn compare(value: bool) -> bool {\n    let unused = 1;\n    return value == true;\n}\npub fn clean(value: bool) -> bool { value }\n").unwrap();

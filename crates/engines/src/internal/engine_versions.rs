@@ -1,6 +1,6 @@
 //! `engine_versions`: the version of each engine a rule file names, each probed once.
 
-use crate::availability::availability_from;
+use crate::availability_from::availability_from;
 use crate::engine_version::engine_version;
 use crate::entry_of::entry_of;
 use crate::host::Host;

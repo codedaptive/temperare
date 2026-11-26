@@ -1,7 +1,7 @@
 //! ZIT for local ESLint lookup: program_for through availability (`availability_in`, and its body
 //! `availability_from` with PATH given), version probe and run.
 
-use crate::availability::availability_from;
+use crate::availability_from::availability_from;
 use crate::host::Host;
 use crate::types::Availability;
 use crate::run_rules_versioned_with::run_rules_versioned_with;

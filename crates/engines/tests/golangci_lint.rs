@@ -4,7 +4,7 @@ use std::fs;
 use std::os::unix::fs::{symlink, PermissionsExt};
 use std::path::PathBuf;
 
-use engines::{availability, run_rules_versioned_at, Availability};
+use engines::{availability_in, run_rules_versioned_at, Availability};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
 #[path = "support/env_guard.rs"]
@@ -38,7 +38,6 @@ impl Drop for SymlinkGuard {
 
 #[test]
 fn golangci_lint_reports_findings_and_unavailable_or_failed_runs() {
-    assert_eq!(availability(Engine::GolangciLint), Availability::Available);
     let _environment = [
         EnvGuard::set("GOTOOLCHAIN", "auto"),
         EnvGuard::set("GOPROXY", "http://127.0.0.1:9"),
@@ -58,6 +57,7 @@ fn golangci_lint_reports_findings_and_unavailable_or_failed_runs() {
         ("absent", deprecated, "staticcheck", "module example.com/absent\n\ngo 1.27\n"),
     ] {
         let folder = TempFolder::new(case);
+        assert_eq!(availability_in(Engine::GolangciLint, &folder.0), Availability::Available);
         fs::write(folder.0.join("go.mod"), module).unwrap();
         if case == "proxy" {
             fs::write(folder.0.join("go.sum"), "example.invalid/none v1.0.0 h1:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\nexample.invalid/none v1.0.0/go.mod h1:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\n").unwrap();

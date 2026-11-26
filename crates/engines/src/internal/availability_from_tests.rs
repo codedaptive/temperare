@@ -1,7 +1,7 @@
-//! ZUT for availability.rs: engine program lookups, including both Clippy programs and ShellCheck, exact absence
+//! ZUT for availability_from.rs: engine program lookups, including both Clippy programs and ShellCheck, exact absence
 //! reasons, the Node engines' `node`, and Tessera never available (settled S-20), from `availability_from`.
 
-use crate::availability::availability_from;
+use crate::availability_from::availability_from;
 use crate::types::Availability;
 use rules::Engine;
 use std::cell::RefCell;
