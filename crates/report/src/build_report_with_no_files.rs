@@ -1,9 +1,12 @@
 //! `build_report_with_no_files`: the report of a check whose engines flagged rules that had no file to check.
 
 use crate::{assemble_report, fold_untracked, folder_from_top, keep_added, utc_date, Report, ReportError};
+use ccvcslib::{AddedLines, GitVcs, Revision, Vcs};
 use procio::Oid;
 use rules::{Date, RuleFile, RuleOutcome};
-use std::path::Path;
+use std::collections::BTreeMap;
+use std::ops::Range;
+use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// The report of `outcomes` under `rules`, its exceptions looked up with `RuleFile::exception_on` given today's UTC day
@@ -12,10 +15,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// `exceptions_in_force` counts the others. With no base every finding is new, except that an `only_with_base` rule's
 /// outcomes are dropped (see `out_of_play`), and nothing else is run or read. With a base,
 /// `(repository, resolved base id)`, only findings on lines added since the base are new: lines git adds against it in
-/// the work tree, untracked files whole, and every path under an untracked nested repository. Finding paths are
-/// relative to the rule file's folder, so the folder is canonicalized (a relative one against the current directory)
-/// and taken relative to the repository top. A failed git call is `ReportError::Git`; a folder that cannot be
-/// canonicalized or lies outside the repository is `ReportError::Folder`.
+/// the work tree, untracked files whole, and every path under an untracked nested repository. The added lines and the
+/// untracked entries are asked of ccvcslib at the repository top, so a subfolder `repository` still covers the whole
+/// working copy. Finding paths are relative to the rule file's folder, so the folder is canonicalized (a relative one
+/// against the current directory) and taken relative to the repository top. A failed ccvcslib question is
+/// `ReportError::Vcs`; a folder that cannot be canonicalized or lies outside the repository is `ReportError::Folder`.
 ///
 /// `no_files` holds the rules the engines found no file for, each as (rule id, the engines' why). A flagged rule of
 /// the repository's own is listed under `covers_nothing`; a flagged baseline rule (its id starts "tm-") is listed under
@@ -34,18 +38,29 @@ pub fn build_report_with_no_files(
     let Some((repo, oid)) = base else {
         return Ok(assemble_report(rules, outcomes, None, day, date, &no_files, |findings| findings));
     };
-    let top = procio::toplevel(repo).map_err(ReportError::Git)?;
+    let vcs = GitVcs::default();
+    let top = vcs.working_copy_root(repo).map_err(ReportError::Vcs)?;
     let folder_abs = std::fs::canonicalize(&rules.folder)
         .map_err(|err| ReportError::Folder { folder: rules.folder.clone(), why: err.to_string() })?;
     let folder = folder_from_top(&top, &folder_abs).ok_or_else(|| ReportError::Folder {
         folder: rules.folder.clone(),
         why: format!("not inside the repository at {}", top.display()),
     })?;
-    let mut lines = procio::added_lines(repo, oid.as_str(), &[]).map_err(ReportError::Git)?;
-    let under = fold_untracked(&mut lines, procio::untracked_files(repo).map_err(ReportError::Git)?);
+    let revision = Revision(oid.as_str().to_string());
+    let mut lines = by_path(vcs.added_lines(&top, &revision, &[]).map_err(ReportError::Vcs)?);
+    let under = fold_untracked(&mut lines, vcs.untracked_entries(&top).map_err(ReportError::Vcs)?);
     Ok(assemble_report(rules, outcomes, Some(oid.clone()), day, date, &no_files, |findings| {
         keep_added(findings, &lines, &under, &folder)
     }))
+}
+
+/// ccvcslib's added lines keyed by path, in the shape `keep_added` reads: each run `start..end` as it is (both
+/// 1-based, end exclusive), and a file that only lost lines kept with no ranges.
+fn by_path(added: Vec<AddedLines>) -> BTreeMap<PathBuf, Vec<Range<u32>>> {
+    added
+        .into_iter()
+        .map(|file| (file.path, file.lines.into_iter().map(|run| run.start..run.end).collect()))
+        .collect()
 }
 
 /// Today's UTC day, and its "YYYY-MM-DD" text. A clock set before the Unix epoch reads as its first second.

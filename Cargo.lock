@@ -28,6 +28,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "ccvcslib"
+version = "0.1.0"
+source = "git+https://github.com/codedaptive/ccvcslib?tag=v0.1.0#4f9870e7c6aadd265de2dea3571633a5bcf0277f"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "cli"
 version = "0.1.0"
 dependencies = [
@@ -156,6 +164,7 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 name = "report"
 version = "0.1.0"
 dependencies = [
+ "ccvcslib",
  "procio",
  "rules",
  "serde",

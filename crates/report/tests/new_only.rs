@@ -7,6 +7,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
+use ccvcslib::{GitVcs, Vcs};
 use report::{build_report_with_no_files, CoversNothing};
 use rules::{Engine, Exception, Finding, Kind, RelPath, Rule, RuleFile, RuleOutcome, Severity};
 
@@ -50,7 +51,8 @@ fn repo(name: &str, initial_file: &str) -> (Scratch, procio::Oid) {
     write(&scratch.dir, initial_file, b"base\n");
     git(&scratch.dir, &["add", "-A"]);
     git(&scratch.dir, &["commit", "-q", "-m", "base"]);
-    let base = procio::rev_parse(&scratch.dir, "HEAD").unwrap().unwrap();
+    let rev = GitVcs::default().resolve_revision(&scratch.dir, "HEAD").unwrap().unwrap();
+    let base = procio::Oid::parse(&rev.0).unwrap();
     (scratch, base)
 }
 
@@ -94,10 +96,9 @@ fn new_lines_untracked_files_and_nested_repositories_are_kept() {
     fs::create_dir(repo.dir.join("nested")).unwrap();
     git(&repo.dir.join("nested"), &["init", "-q", "-b", "main"]);
     write(&repo.dir, "nested/c.rs", b"1\n2\n3\n4\n5\n6\n7\n");
-    assert_eq!(
-        git(&repo.dir, &["ls-files", "--others", "--exclude-standard", "-z", "--full-name", "--", ":/"]),
-        b"b.rs\0nested/\0"
-    );
+    let entries = GitVcs::default().untracked_entries(&repo.dir).unwrap();
+    let paths: Vec<_> = entries.iter().map(|path| path.as_os_str().as_encoded_bytes()).collect();
+    assert_eq!(paths, vec![b"b.rs".as_slice(), b"nested/".as_slice()]);
 
     let findings = vec![
         finding("test-rule", "nested/c.rs", 7),
@@ -120,6 +121,28 @@ fn new_lines_untracked_files_and_nested_repositories_are_kept() {
     assert_eq!(report.counts.findings, 3);
     assert!(report.silenced.is_empty());
     assert_eq!(report.base, Some(base));
+}
+
+#[test]
+fn subfolder_repository_argument_filters_the_whole_working_copy() {
+    let (repo, base) = repo("subfolder_repository", "sub/x.rs");
+    write(&repo.dir, "sub/x.rs", b"base\nadded\n");
+    write(&repo.dir, "b.rs", b"new\n");
+    write(&repo.dir, "sub/y.rs", b"new\n");
+    let report = build_report_with_no_files(
+        &rule_file(&repo.dir, vec![]),
+        outcomes(vec![
+            finding("test-rule", "sub/x.rs", 1),
+            finding("test-rule", "sub/x.rs", 2),
+            finding("test-rule", "b.rs", 1),
+            finding("test-rule", "sub/y.rs", 1),
+        ]),
+        Some((&repo.dir.join("sub"), &base)),
+        Vec::new(),
+    )
+    .unwrap();
+    let locations: Vec<_> = report.findings.iter().map(|f| (f.path.as_str(), f.line())).collect();
+    assert_eq!(locations, vec![("b.rs", Some(1)), ("sub/x.rs", Some(2)), ("sub/y.rs", Some(1))]);
 }
 
 #[test]

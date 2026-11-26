@@ -1,12 +1,19 @@
 //! Unit tests for report_error.rs: each variant carries what it was given.
 
 use crate::ReportError;
+use ccvcslib::VcsError;
 use std::path::{Path, PathBuf};
 
 #[test]
 fn git_carries_the_git_error() {
     let err = ReportError::Git(procio::GitError::NotARepository { repo: PathBuf::from("/tmp/x") });
     assert!(matches!(err, ReportError::Git(procio::GitError::NotARepository { repo }) if repo == Path::new("/tmp/x")));
+}
+
+#[test]
+fn vcs_carries_the_vcs_error() {
+    let err = ReportError::Vcs(VcsError::NotAWorkingCopy);
+    assert!(matches!(err, ReportError::Vcs(VcsError::NotAWorkingCopy)));
 }
 
 #[test]
