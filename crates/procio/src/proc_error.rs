@@ -6,8 +6,9 @@ use std::time::Duration;
 /// Why a program gave no `Output`. Every variant names the program as the caller gave it.
 #[derive(Debug)]
 pub enum ProcError {
-    /// The program is not on PATH, or the path given does not exist. Kept apart from `Spawn` because engines read
-    /// it as "not available", which is never "clean".
+    /// The program was not found: on unix, a name in no absolute entry of the `Cmd`'s effective PATH; off unix, a
+    /// name the OS could not find; or a path that does not exist. Kept apart from `Spawn` because engines read it as
+    /// "not available", which is never "clean".
     NotFound { program: OsString },
     /// Any other OS failure: to start the program, to write its stdin, to read its stdout or stderr, or to wait on it.
     Spawn { program: OsString, io: std::io::Error },

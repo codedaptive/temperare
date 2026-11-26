@@ -95,6 +95,33 @@ fn a_path_with_a_separator_is_checked_as_given_without_path() {
     assert_eq!(not_exec, None);
 }
 
+/// `dir` as a relative path that resolves to it from this process's cwd: one `..` per cwd component, then `dir`.
+fn relative_to_cwd(dir: &Path) -> PathBuf {
+    let ups = std::env::current_dir().unwrap().components().count();
+    let mut relative: PathBuf = std::iter::repeat_n("..", ups).collect();
+    relative.push(dir.strip_prefix("/").unwrap());
+    relative
+}
+
+#[test]
+fn entries_that_are_not_absolute_are_skipped() {
+    let (a, b) = dirs("not_absolute");
+    file(&a, "tool", 0o755);
+    let in_b = file(&b, "tool", 0o755);
+    let rel_a = relative_to_cwd(&a);
+    let rel_a_then_b = std::env::join_paths([rel_a.as_path(), b.as_path()]).unwrap();
+    let rows: [(&str, OsString, Option<PathBuf>); 3] = [
+        ("relative entry alone", rel_a.clone().into_os_string(), None),
+        ("relative entry, then absolute", rel_a_then_b, Some(in_b.clone())),
+        ("empty entry, then absolute", OsString::from(format!(":{}", b.display())), Some(in_b)),
+    ];
+    let found: Vec<_> = rows.iter().map(|(_, path, _)| which_in(OsStr::new("tool"), Some(path))).collect();
+    cleanup(&a);
+    for ((case, _, expected), found) in rows.iter().zip(found) {
+        assert_eq!(&found, expected, "{case}");
+    }
+}
+
 #[test]
 fn no_path_gives_none() {
     assert_eq!(which_in(OsStr::new("tool"), None), None);

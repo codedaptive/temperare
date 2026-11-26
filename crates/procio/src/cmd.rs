@@ -7,7 +7,8 @@ use std::time::Duration;
 /// What `run` starts: the program, its arguments, where and with what environment, what it reads, how long to wait.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cmd {
-    /// A program name looked up on PATH, or a path to the program.
+    /// A program name looked up on the effective PATH (the `Cmd`'s own when `env` sets it, none when `env_remove`
+    /// removes it, else the caller's; absolute entries only), or a path to the program.
     pub program: OsString,
     /// The arguments, each passed to the program as one argument, unquoted and unsplit.
     pub args: Vec<OsString>,

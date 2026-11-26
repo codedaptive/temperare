@@ -1,9 +1,11 @@
 //! `run`: start a program, feed its stdin, capture both outputs, wait for its exit.
 //!
 //! No sibling unit tests: any test of `run` starts a process, which a unit test may not, so the runner is
-//! proved by the integration tests in `tests/run.rs`. Its parts (`command_from`,
-//! `kill_group_cmd`, `spawn_error`, `spawn_reader`, `spawn_writer`, `wait_deadline`) each have their own unit tests.
+//! proved by the integration tests in `tests/run.rs`. Its parts (`command_from`, `effective_path`,
+//! `has_path_separator`, `kill_group_cmd`, `spawn_error`, `spawn_reader`, `spawn_writer`, `wait_deadline`, `which`)
+//! each have their own unit tests.
 
+use std::env;
 use std::io;
 #[cfg(unix)]
 use std::num::NonZeroU32;
@@ -12,24 +14,36 @@ use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
 use crate::command_from::command_from;
+use crate::effective_path::effective_path;
+use crate::has_path_separator::has_path_separator;
 #[cfg(unix)]
 use crate::kill_group_cmd::kill_group_cmd;
 use crate::spawn_error::spawn_error;
 use crate::spawn_reader::spawn_reader;
 use crate::spawn_writer::spawn_writer;
 use crate::wait_deadline::wait_deadline;
-use crate::{which, Cmd, Output, ProcError};
+use crate::which::which_in;
+use crate::{Cmd, Output, ProcError};
 
 /// Runs `cmd` to its end. Any exit code is `Ok`: a non-zero exit is the program's answer, not an error.
 /// The stdin writer and both output readers start before the wait, so no pipe can fill and block the child.
 /// Without a timeout, `run` waits for the child's exit, then for both readers and the stdin writer, which end when
 /// every holder of the pipes (a grandchild too) has closed them. With one, the timeout bounds all of that, counted
 /// from before the spawn: a grandchild holding a pipe open cannot keep `run` past it.
+/// A bare program name is resolved once on the `Cmd`'s effective PATH (absolute entries only) and that path is
+/// spawned, so the OS does not search PATH for it. On unix a name not found there is `NotFound` without spawning; off
+/// unix it is spawned as given, since `which_in` does not try PATHEXT extensions such as `.exe`.
 pub fn run(cmd: &Cmd) -> Result<Output, ProcError> {
     let start = Instant::now();
-    let mut child = command_from(cmd)
+    let found = which_in(&cmd.program, effective_path(cmd, env::var_os("PATH").as_deref()).as_deref());
+    let program = match (has_path_separator(&cmd.program), &found) {
+        (false, Some(path)) => path.as_os_str(),
+        (false, None) if cfg!(unix) => return Err(ProcError::NotFound { program: cmd.program.clone() }),
+        _ => cmd.program.as_os_str(),
+    };
+    let mut child = command_from(cmd, program)
         .spawn()
-        .map_err(|io| spawn_error(&cmd.program, io, which(&cmd.program).is_some()))?;
+        .map_err(|io| spawn_error(&cmd.program, io, found.is_some()))?;
     let (Some(stdin), Some(stdout), Some(stderr)) = (child.stdin.take(), child.stdout.take(), child.stderr.take())
     else {
         stop(&mut child, cmd);
