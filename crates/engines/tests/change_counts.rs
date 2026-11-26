@@ -1,10 +1,12 @@
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::ffi::OsString;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use engines::{availability_in, run_rules_versioned_at, Availability};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
+
+#[path = "support/git.rs"]
+mod git_support;
 
 static NEXT_FOLDER: AtomicUsize = AtomicUsize::new(0);
 
@@ -28,12 +30,6 @@ impl Drop for TempFolder {
     }
 }
 
-fn git(repo: &Path, args: &[&str]) -> String {
-    let output = procio::run(&procio::git_cmd(repo, args.iter().map(OsString::from).collect())).unwrap();
-    assert_eq!(output.code, Some(0), "git {args:?}: {}", String::from_utf8_lossy(&output.stderr));
-    String::from_utf8(output.stdout).unwrap().trim().to_owned()
-}
-
 enum Expected {
     Finding,
     Clean,
@@ -44,14 +40,14 @@ enum Expected {
 fn check_change(code_lines: usize, tracked_test_lines: usize, untracked_test_lines: usize, params: &str, with_base: bool, expected: Expected, setup: impl FnOnce(&Path) -> Option<(PathBuf, fs::Permissions)>) {
     let repo = TempFolder::new();
     assert_eq!(availability_in(Engine::Git, &repo.0), Availability::Available);
-    git(&repo.0, &["init", "-q"]);
+    git_support::git(&repo.0, &["init", "-q"], b"");
     fs::create_dir(repo.0.join("src")).unwrap();
     fs::create_dir(repo.0.join("tests")).unwrap();
     fs::write(repo.0.join("src/lib.rs"), "base code\n").unwrap();
     fs::write(repo.0.join("tests/a_tests.rs"), "base test\n").unwrap();
-    git(&repo.0, &["add", "src/lib.rs", "tests/a_tests.rs"]);
-    git(&repo.0, &["-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-q", "-m", "base"]);
-    let base = git(&repo.0, &["rev-parse", "HEAD"]);
+    git_support::git(&repo.0, &["add", "src/lib.rs", "tests/a_tests.rs"], b"");
+    git_support::git(&repo.0, &["-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-q", "-m", "base"], b"");
+    let base = String::from_utf8(git_support::git(&repo.0, &["rev-parse", "HEAD"], b"")).unwrap().trim().to_owned();
     fs::write(repo.0.join("src/lib.rs"), format!("base code\n{}", "added code\n".repeat(code_lines))).unwrap();
     fs::write(repo.0.join("tests/a_tests.rs"), format!("base test\n{}", "added test\n".repeat(tracked_test_lines))).unwrap();
     if untracked_test_lines > 0 {

@@ -4,10 +4,12 @@
 use crate::change_of::change_of;
 use crate::types::Stop;
 use rules::RelPath;
-use std::ffi::OsString;
 use std::fs;
 use std::ops::Range;
 use std::path::{Path, PathBuf};
+
+#[path = "../../../tests/support/git.rs"]
+mod git_support;
 
 /// A throwaway repository, removed when dropped, so a failing assertion leaves nothing behind.
 struct Repo(PathBuf);
@@ -22,21 +24,15 @@ fn repo(name: &str) -> Repo {
     let root = std::env::temp_dir().join(format!("engines-zit-{}-change-of-{name}", std::process::id()));
     fs::create_dir(&root).unwrap();
     let root = Repo(fs::canonicalize(root).unwrap());
-    git(&root.0, &["init", "-q"]);
+    git_support::git(&root.0, &["init", "-q"], b"");
     root
-}
-
-fn git(repo: &Path, args: &[&str]) -> String {
-    let output = procio::run(&procio::git_cmd(repo, args.iter().map(OsString::from).collect())).unwrap();
-    assert_eq!(output.code, Some(0), "git {args:?}: {}", String::from_utf8_lossy(&output.stderr));
-    String::from_utf8(output.stdout).unwrap().trim().to_string()
 }
 
 /// Commits everything in `repo` and gives the commit.
 fn commit_all(repo: &Path) -> String {
-    git(repo, &["add", "-A"]);
-    git(repo, &["-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-q", "-m", "base"]);
-    git(repo, &["rev-parse", "HEAD"])
+    git_support::git(repo, &["add", "-A"], b"");
+    git_support::git(repo, &["-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-q", "-m", "base"], b"");
+    String::from_utf8(git_support::git(repo, &["rev-parse", "HEAD"], b"")).unwrap().trim().to_string()
 }
 
 fn files(given: &[(&str, &[Range<u32>])]) -> Vec<(RelPath, Vec<Range<u32>>)> {

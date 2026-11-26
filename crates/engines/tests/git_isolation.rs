@@ -44,8 +44,7 @@ fn snapshot(root: &Path) -> Vec<(PathBuf, Vec<u8>)> {
 #[test]
 fn the_git_helper_leaves_an_inherited_callers_repository_untouched() {
     let caller = TempFolder::new("caller");
-    let out = procio::run(&procio::git_cmd(&caller.0, vec!["init".into(), "-q".into()])).unwrap();
-    assert_eq!(out.code, Some(0), "{}", String::from_utf8_lossy(&out.stderr));
+    git_support::git(&caller.0, &["init", "-q"], b"");
     let before = snapshot(&caller.0.join(".git"));
 
     std::env::set_var("GIT_DIR", caller.0.join(".git"));

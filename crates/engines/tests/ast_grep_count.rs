@@ -1,8 +1,11 @@
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use engines::{availability_in, run_rules_versioned_at, Availability};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
+
+#[path = "support/git.rs"]
+mod git_support;
 
 const YAML: &str = r#"id: root
 language: Rust
@@ -45,16 +48,16 @@ impl Repo {
         let path = std::env::temp_dir().join(format!("engines-zit-{}-{tag}", std::process::id()));
         fs::create_dir(&path).unwrap();
         let repo = Self(fs::canonicalize(path).unwrap());
-        git(&repo.0, &["init", "-q"]);
+        git_support::git(&repo.0, &["init", "-q"], b"");
         fs::create_dir_all(repo.0.join("tests/common")).unwrap();
         fs::write(repo.0.join("temperare.toml"), RULE).unwrap();
         fs::write(repo.0.join("setup.yml"), YAML).unwrap();
         fs::write(repo.0.join("tests/a_tests.rs"), BALANCED).unwrap();
         fs::write(repo.0.join("tests/b_tests.rs"), HEAVY).unwrap();
         fs::write(repo.0.join("tests/common/mod.rs"), HEAVY).unwrap();
-        git(&repo.0, &["add", "."]);
-        git(&repo.0, &["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "base"]);
-        let base = git(&repo.0, &["rev-parse", "HEAD"]).trim().to_string();
+        git_support::git(&repo.0, &["add", "."], b"");
+        git_support::git(&repo.0, &["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "base"], b"");
+        let base = String::from_utf8(git_support::git(&repo.0, &["rev-parse", "HEAD"], b"")).unwrap().trim().to_string();
         (repo, base)
     }
 
@@ -68,12 +71,6 @@ impl Drop for Repo {
     fn drop(&mut self) {
         fs::remove_dir_all(&self.0).unwrap();
     }
-}
-
-fn git(repo: &Path, args: &[&str]) -> String {
-    let output = procio::run(&procio::git_cmd(repo, args.iter().map(|arg| (*arg).into()).collect())).unwrap();
-    assert_eq!(output.code, Some(0), "git {args:?}: {}", String::from_utf8_lossy(&output.stderr));
-    String::from_utf8(output.stdout).unwrap()
 }
 
 fn assert_finding(outcomes: Vec<RuleOutcome>, path: &str, line: u32, what: &str) {

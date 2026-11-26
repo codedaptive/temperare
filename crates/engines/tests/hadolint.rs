@@ -21,6 +21,26 @@ static LOCK: Mutex<()> = Mutex::new(());
 const FIX: &str = "Tag the image.";
 const VIOLATION: &str = "FROM ubuntu\n";
 const MESSAGE: &str = "Always tag the version of an image explicitly";
+/// Set on the child process that runs one git-only case: the name of that case's test.
+const GIT_ONLY_CASE: &str = "ENGINES_HADOLINT_GIT_ONLY_CASE";
+
+/// Runs `case` when this process is the child started for `test`; otherwise starts that child and asserts it passed.
+fn in_own_process(test: &str, case: impl FnOnce()) {
+    if std::env::var_os(GIT_ONLY_CASE).is_some_and(|name| name == test) {
+        return case();
+    }
+    let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    // ccvcslib finds git once per process and keeps it, and this case's git lives in a temp folder that is removed,
+    // so it runs in its own process.
+    let out = procio::run(&procio::Cmd {
+        args: vec!["--exact".into(), test.into(), "--test-threads=1".into()],
+        env: vec![(GIT_ONLY_CASE.into(), test.into())],
+        ..procio::Cmd::new(std::env::current_exe().unwrap())
+    }).unwrap();
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert_eq!(out.code, Some(0), "{test}: {stdout}{}", String::from_utf8_lossy(&out.stderr));
+    assert!(stdout.contains("1 passed"), "{test}: {stdout}");
+}
 
 struct Repo(PathBuf);
 
@@ -102,6 +122,13 @@ struct Case {
 }
 
 fn run_case(name: &str, case: Case) {
+    if matches!(case.expected, Expected::Missing | Expected::NoFiles) {
+        return in_own_process(name, || check_case(name, case));
+    }
+    check_case(name, case);
+}
+
+fn check_case(name: &str, case: Case) {
     let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let _env = case.env.map(|(name, value)| EnvGuard::set(name, value));
     let repo = Repo::new(name);
@@ -198,37 +225,40 @@ macro_rules! case {
 
 #[test]
 fn old_hadolint_no_file_before_floor() {
+    in_own_process("old_hadolint_no_file_before_floor", || old_hadolint_row("no-file", "README", false));
+}
+
+#[test]
+fn old_hadolint_matching_file_before_floor() {
+    in_own_process("old_hadolint_matching_file_before_floor", || old_hadolint_row("matching-file", "Dockerfile", true));
+}
+
+/// One row with hadolint 2.14.0, below the floor, with PATH a folder holding only git and the hadolint stub; `file` is the one source file the row adds.
+fn old_hadolint_row(name: &str, file: &str, old_floor: bool) {
     let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
-    let mut failed = Vec::new();
-    for (name, file, old_floor) in [("no-file", "README", false), ("matching-file", "Dockerfile", true)] {
-        let result = std::panic::catch_unwind(|| {
-            let repo = Repo::new(name);
-            let _path = PathGuard::git_only(&repo);
-            repo.write("bin/hadolint", "#!/bin/sh\necho 'Haskell Dockerfile Linter 2.14.0'\n");
-            fs::set_permissions(repo.0.join("bin/hadolint"), fs::Permissions::from_mode(0o755)).unwrap();
-            repo.write(file, "FROM ubuntu\n");
-            repo.write("temperare.toml", "version = 1\n[[rule]]\nid = \"docker\"\nengine = \"hadolint\"\ncheck = \"DL3006\"\npaths = [\"**\"]\nfix = \"Tag the image.\"\n");
-            let rules = RuleFile::read(&repo.0.join("temperare.toml")).unwrap();
-            let checked = run_rules_versioned_at(&rules, &repo.0, &[], None);
-            assert_eq!(checked.engines.len(), 1, "{name}: {:?}", checked.engines);
-            assert_eq!(checked.engines[0].engine, Engine::Hadolint, "{name}");
-            assert_eq!(checked.engines[0].version.as_deref(), Some("2.14.0"), "{name}");
-            assert_eq!(checked.runs.len(), 1, "{name}: {:?}", checked.runs);
-            let run = &checked.runs[0];
-            if old_floor {
-                assert_eq!(run.no_files, None, "{name}: {run:?}");
-                assert_eq!(run.not_available_cause, Some(NotAvailableCause::Other), "{name}: {run:?}");
-                let RuleOutcome::NotAvailable { why, .. } = &run.outcome else { panic!("{name}: {run:?}") };
-                assert_eq!(why, "hadolint 2.14.0 is older than hadolint 2.15.1, the release temperare's list of hadolint codes was taken from", "{name}");
-            } else {
-                assert_eq!(run.outcome, RuleOutcome::Findings(vec![]), "{name}: {run:?}");
-                assert_eq!(run.no_files.as_deref(), Some("no file its engine checks"), "{name}");
-                assert_eq!(run.not_available_cause, None, "{name}");
-            }
-        });
-        if result.is_err() { failed.push(name); } else { eprintln!("{name}: PASS"); }
+    let repo = Repo::new(name);
+    let _path = PathGuard::git_only(&repo);
+    repo.write("bin/hadolint", "#!/bin/sh\necho 'Haskell Dockerfile Linter 2.14.0'\n");
+    fs::set_permissions(repo.0.join("bin/hadolint"), fs::Permissions::from_mode(0o755)).unwrap();
+    repo.write(file, "FROM ubuntu\n");
+    repo.write("temperare.toml", "version = 1\n[[rule]]\nid = \"docker\"\nengine = \"hadolint\"\ncheck = \"DL3006\"\npaths = [\"**\"]\nfix = \"Tag the image.\"\n");
+    let rules = RuleFile::read(&repo.0.join("temperare.toml")).unwrap();
+    let checked = run_rules_versioned_at(&rules, &repo.0, &[], None);
+    assert_eq!(checked.engines.len(), 1, "{name}: {:?}", checked.engines);
+    assert_eq!(checked.engines[0].engine, Engine::Hadolint, "{name}");
+    assert_eq!(checked.engines[0].version.as_deref(), Some("2.14.0"), "{name}");
+    assert_eq!(checked.runs.len(), 1, "{name}: {:?}", checked.runs);
+    let run = &checked.runs[0];
+    if old_floor {
+        assert_eq!(run.no_files, None, "{name}: {run:?}");
+        assert_eq!(run.not_available_cause, Some(NotAvailableCause::Other), "{name}: {run:?}");
+        let RuleOutcome::NotAvailable { why, .. } = &run.outcome else { panic!("{name}: {run:?}") };
+        assert_eq!(why, "hadolint 2.14.0 is older than hadolint 2.15.1, the release temperare's list of hadolint codes was taken from", "{name}");
+    } else {
+        assert_eq!(run.outcome, RuleOutcome::Findings(vec![]), "{name}: {run:?}");
+        assert_eq!(run.no_files.as_deref(), Some("no file its engine checks"), "{name}");
+        assert_eq!(run.not_available_cause, None, "{name}");
     }
-    assert!(failed.is_empty(), "failed rows: {failed:?}");
 }
 
 cases! {

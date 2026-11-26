@@ -94,8 +94,28 @@ struct Case {
     expected: Expected,
 }
 
+/// Set on the child process that runs one PATH-narrowed case: the name of that case's test.
+const GIT_ONLY_CASE: &str = "ENGINES_PMD_GIT_ONLY_CASE";
+
+/// Runs the named case's test alone in a child of this test binary, with GIT_ONLY_CASE naming it.
+fn run_in_child(name: &str) {
+    let out = procio::run(&procio::Cmd {
+        args: vec!["--exact".into(), name.into(), "--test-threads=1".into()],
+        env: vec![(GIT_ONLY_CASE.into(), name.into())],
+        ..procio::Cmd::new(std::env::current_exe().unwrap())
+    }).unwrap();
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert_eq!(out.code, Some(0), "{name}: {stdout}{}", String::from_utf8_lossy(&out.stderr));
+    assert!(stdout.contains("1 passed"), "{name}: {stdout}");
+}
+
 fn run_case(case: Case) {
     let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    if case.absent && std::env::var(GIT_ONLY_CASE).as_deref() != Ok(case.name) {
+        // ccvcslib finds git once per process and keeps it, and this case's git lives in a temp folder that is
+        // removed, so it runs in its own process.
+        return run_in_child(case.name);
+    }
     let repo = Repo::new(case.name, case.check, case.source, case.ignored, case.tracked);
     let _path = PathGuard::set(&repo, case.absent);
     let file = RuleFile::read(&repo.0.join("kit/temperare.toml")).unwrap();

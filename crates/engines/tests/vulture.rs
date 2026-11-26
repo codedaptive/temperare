@@ -36,8 +36,26 @@ impl Drop for PathGuard {
     }
 }
 
+const TEST_NAME: &str = "vulture_rule_reports_findings_clean_config_warnings_and_absence";
+
+/// Set on the child process that runs the git-absent row: the repository it checks.
+const GIT_ABSENT_REPO: &str = "ENGINES_VULTURE_GIT_ABSENT_REPO";
+
+/// The git-absent row's check, run in the child: with PATH holding only vulture, the rule is not available for git.
+fn assert_git_absent(repo: &Path) {
+    let file = RuleFile::read(&repo.join("temperare.toml")).unwrap();
+    let runs = run_rules_versioned_at(&file, repo, &[], None).runs;
+    let name = "git-absent";
+    assert_eq!(runs.len(), 1, "{name}: {runs:?}");
+    assert!(matches!(&runs[0].outcome, RuleOutcome::NotAvailable { why, .. } if why.contains("git")),
+        "{name}: expected git not available, got {:?}", runs[0].outcome);
+}
+
 #[test]
 fn vulture_rule_reports_findings_clean_config_warnings_and_absence() {
+    if let Some(repo) = std::env::var_os(GIT_ABSENT_REPO) {
+        return assert_git_absent(Path::new(&repo));
+    }
     let original = PathGuard(std::env::var_os("PATH"));
     let path = original.0.as_ref().unwrap();
     std::env::set_var("PATH", std::env::join_paths(
@@ -78,33 +96,37 @@ fn vulture_rule_reports_findings_clean_config_warnings_and_absence() {
             if config { fs::write(folder.0.join("pyproject.toml"), "[tool.vulture]\nignore_names = [\"dead\"]\n").unwrap(); }
             if warning { fs::write(folder.0.join("warning.py"), "PAT = \"\\d+\"\nprint(PAT)\n").unwrap(); }
             fs::write(folder.0.join("temperare.toml"), "version = 1\n[[rule]]\nid = \"dead-function\"\nengine = \"vulture\"\ncheck = \"V103\"\nfix = \"Remove the function or call it.\"\n").unwrap();
-            let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
-            let _path_guard = if absent {
-                let guard = PathGuard(std::env::var_os("PATH"));
-                let without_vulture = std::env::join_paths(std::env::split_paths(guard.0.as_ref().unwrap()).filter(|dir| {
-                    !dir.join("vulture").metadata().is_ok_and(|m| m.is_file() && m.permissions().mode() & 0o111 != 0)
-                })).unwrap();
-                std::env::set_var("PATH", without_vulture);
-                Some(guard)
-            } else if name == "git-absent" {
-                let guard = PathGuard(std::env::var_os("PATH"));
-                let vulture = std::env::split_paths(guard.0.as_ref().unwrap())
+            if name == "git-absent" {
+                // ccvcslib finds git once per process and keeps it, and earlier rows have run git here, so the row
+                // runs in a child of this test binary whose PATH holds only vulture.
+                let vulture = std::env::split_paths(&std::env::var_os("PATH").unwrap())
                     .map(|dir| dir.join("vulture"))
                     .find(|path| path.metadata().is_ok_and(|m| m.is_file() && m.permissions().mode() & 0o111 != 0))
                     .unwrap();
                 let bin = folder.0.join("bin");
                 fs::create_dir(&bin).unwrap();
                 symlink(vulture, bin.join("vulture")).unwrap();
-                std::env::set_var("PATH", bin);
-                Some(guard)
-            } else { None };
-            let runs = run_rules_versioned_at(&file, &folder.0, &[], None).runs;
-            assert_eq!(runs.len(), 1, "{name}: {runs:?}");
-            if name == "git-absent" {
-                assert!(matches!(&runs[0].outcome, RuleOutcome::NotAvailable { why, .. } if why.contains("git")),
-                    "{name}: expected git not available, got {:?}", runs[0].outcome);
+                let out = procio::run(&procio::Cmd {
+                    args: vec!["--exact".into(), TEST_NAME.into(), "--test-threads=1".into()],
+                    env: vec![("PATH".into(), bin.into()), (GIT_ABSENT_REPO.into(), folder.0.clone().into())],
+                    ..procio::Cmd::new(std::env::current_exe().unwrap())
+                }).unwrap();
+                let stdout = String::from_utf8_lossy(&out.stdout);
+                assert_eq!(out.code, Some(0), "{name}: {stdout}{}", String::from_utf8_lossy(&out.stderr));
+                assert!(stdout.contains("1 passed"), "{name}: {stdout}");
                 return;
             }
+            let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
+            let _path_guard = absent.then(|| {
+                let guard = PathGuard(std::env::var_os("PATH"));
+                let without_vulture = std::env::join_paths(std::env::split_paths(guard.0.as_ref().unwrap()).filter(|dir| {
+                    !dir.join("vulture").metadata().is_ok_and(|m| m.is_file() && m.permissions().mode() & 0o111 != 0)
+                })).unwrap();
+                std::env::set_var("PATH", without_vulture);
+                guard
+            });
+            let runs = run_rules_versioned_at(&file, &folder.0, &[], None).runs;
+            assert_eq!(runs.len(), 1, "{name}: {runs:?}");
             if name == "broken-index" {
                 let RuleOutcome::Failed { code, stderr, .. } = &runs[0].outcome else {
                     panic!("{name}: expected failure, got {:?}", runs[0].outcome);

@@ -19,6 +19,26 @@ const DIALECT: &str = "[sqlfluff]\ndialect = ansi\n";
 const VIOLATION: &str = "SELECT a  FROM t\n";
 /// 25,500 bytes: over sqlfluff's default `large_file_skip_byte_limit` (20,000), so sqlfluff skips the file unreported.
 static LARGE: LazyLock<String> = LazyLock::new(|| "SELECT a FROM t;\n".repeat(1500));
+/// Set on the child process that runs one git-only case: the name of that case's test.
+const GIT_ONLY_CASE: &str = "ENGINES_SQLFLUFF_GIT_ONLY_CASE";
+
+/// Runs `case` when this process is the child started for `test`; otherwise starts that child and asserts it passed.
+fn in_own_process(test: &str, case: impl FnOnce()) {
+    if std::env::var_os(GIT_ONLY_CASE).is_some_and(|name| name == test) {
+        return case();
+    }
+    let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    // ccvcslib finds git once per process and keeps it, and this case's git lives in a temp folder that is removed,
+    // so it runs in its own process.
+    let out = procio::run(&procio::Cmd {
+        args: vec!["--exact".into(), test.into(), "--test-threads=1".into()],
+        env: vec![(GIT_ONLY_CASE.into(), test.into())],
+        ..procio::Cmd::new(std::env::current_exe().unwrap())
+    }).unwrap();
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert_eq!(out.code, Some(0), "{test}: {stdout}{}", String::from_utf8_lossy(&out.stderr));
+    assert!(stdout.contains("1 passed"), "{test}: {stdout}");
+}
 
 struct Repo(PathBuf, bool);
 
@@ -104,7 +124,14 @@ struct Case {
     expected: Expected,
 }
 
-fn run_case(case: Case) {
+fn run_case(test: &str, case: Case) {
+    if case.absent {
+        return in_own_process(test, || check_case(case));
+    }
+    check_case(case);
+}
+
+fn check_case(case: Case) {
     let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let no_files = matches!(case.expected, Expected::NoFiles);
     let filename = if no_files { "README.txt" } else { "q.sql" };
@@ -183,7 +210,7 @@ macro_rules! cases {
         $ignore:expr, $absent:expr, $expected:ident $(($saying:expr))? $(, $above:expr)?) ),+ $(,)?) => {
         $(#[test]
         fn $test() {
-            run_case(Case { name: $name, check: $check, source: $source, config: $config,
+            run_case(stringify!($test), Case { name: $name, check: $check, source: $source, config: $config,
                 above_config: None $(.or(Some($above)))?,
                 ignore: $ignore, absent: $absent, expected: Expected::$expected $(($saying))? });
         })+
