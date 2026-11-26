@@ -129,7 +129,9 @@ that repository's instructions.
 go, gitleaks, cargo-audit, vulture, Periphery and swift, ESLint, mypy, PMD, detekt, RuboCop, PHPStan and php, dart,
 actionlint, sqlfluff, hadolint, yamllint, Vale, stylelint and markdownlint-cli2 (the program of the engine
 `markdownlint`). It looks for each in the absolute entries of your `PATH`, skipping an empty or relative entry, and
-runs whatever is there. Two are found another way:
+runs whatever is there, by the full path it found. On Windows it tries each name with the extensions your `PATHEXT`
+lists, in order (`.COM;.EXE;.BAT;.CMD` when it lists none). A name it does not find is never started, so the system
+does not go looking for it in the working folder. Two are found another way:
 
 - **ESLint** is the rule file's folder's `node_modules/.bin/eslint` when that file exists, run by its absolute
   path, and the `eslint` on `PATH` only when it does not. The folder's `eslint` is the repository's own code, trusted as
@@ -143,7 +145,8 @@ Some of them start programs of their own, which they find on `PATH` themselves: 
 `markdownlint-cli2` scripts are run by `node`, and the `phpstan` launcher by `php` (`tm` checks that `node` or `php`
 is on `PATH`, and the rule is not available when it is not); actionlint runs `shellcheck` or `pyflakes` for a rule
 whose check is that name, and neither for any other check. PMD and detekt each start a Java they find for
-themselves; `tm` looks for none. Whoever controls `PATH` controls what runs. There is no sandbox. The
+themselves; `tm` looks for none. Whoever controls `PATH` (on Windows, `PATHEXT` too) controls what runs. There is
+no sandbox. The
 twenty-eighth engine, Tessera, is the exception: a rule that names it is reported not available, and `tm` neither
 looks for it nor runs it.
 
