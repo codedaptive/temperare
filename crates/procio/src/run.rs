@@ -2,8 +2,8 @@
 //!
 //! No sibling unit tests: any test of `run` starts a process, which a unit test may not, so the runner is
 //! proved by the integration tests in `tests/run.rs`. Its parts (`command_from`, `effective_path`,
-//! `has_path_separator`, `kill_group_cmd`, `spawn_error`, `spawn_reader`, `spawn_writer`, `wait_deadline`, `which`)
-//! each have their own unit tests.
+//! `has_path_separator`, `kill_group_cmd`, `names_to_try`, `spawn_error`, `spawn_reader`, `spawn_writer`,
+//! `wait_deadline`, `which`) each have their own unit tests.
 
 use std::env;
 use std::io;
@@ -30,15 +30,15 @@ use crate::{Cmd, Output, ProcError};
 /// Without a timeout, `run` waits for the child's exit, then for both readers and the stdin writer, which end when
 /// every holder of the pipes (a grandchild too) has closed them. With one, the timeout bounds all of that, counted
 /// from before the spawn: a grandchild holding a pipe open cannot keep `run` past it.
-/// A bare program name is resolved once on the `Cmd`'s effective PATH (absolute entries only) and that path is
-/// spawned, so the OS does not search PATH for it. On unix a name not found there is `NotFound` without spawning; off
-/// unix it is spawned as given, since `which_in` does not try PATHEXT extensions such as `.exe`.
+/// A bare program name is resolved once to a full path on the `Cmd`'s effective PATH (absolute entries only; on
+/// Windows with PATHEXT's extensions) and only that path is spawned, so the OS never searches for the name (Windows
+/// would search the working folder and append `.exe`). A name not found there is `NotFound` without a spawn.
 pub fn run(cmd: &Cmd) -> Result<Output, ProcError> {
     let start = Instant::now();
     let found = which_in(&cmd.program, effective_path(cmd, env::var_os("PATH").as_deref()).as_deref());
     let program = match (has_path_separator(&cmd.program), &found) {
         (false, Some(path)) => path.as_os_str(),
-        (false, None) if cfg!(unix) => return Err(ProcError::NotFound { program: cmd.program.clone() }),
+        (false, None) => return Err(ProcError::NotFound { program: cmd.program.clone() }),
         _ => cmd.program.as_os_str(),
     };
     let mut child = command_from(cmd, program)

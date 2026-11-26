@@ -8,7 +8,9 @@ use std::time::Duration;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Cmd {
     /// A program name looked up on the effective PATH (the `Cmd`'s own when `env` sets it, none when `env_remove`
-    /// removes it, else the caller's; absolute entries only), or a path to the program.
+    /// removes it, else the caller's; absolute entries only), or a path to the program. On Windows the name is also
+    /// tried with PATHEXT's extensions, from this process's PATHEXT, not the `Cmd`'s: tm chooses which file kinds it
+    /// starts and spawns the full path found.
     pub program: OsString,
     /// The arguments, each passed to the program as one argument, unquoted and unsplit.
     pub args: Vec<OsString>,
