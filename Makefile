@@ -1,7 +1,7 @@
 # Temperare workspace targets called by codeteam's zone.mk and by agents.
 # MAKEFILES=<codeteam>/zone/zone.mk supplies zone-test, zone-test-one, zone-test-status and warm.
 CARGO ?= cargo
-.PHONY: test-one test-group check test accept windows-run
+.PHONY: test-one test-group check check-cross test accept windows-run
 
 # Three kinds of test: GROUP=unit (default), integration or validation; scripts/test_one.sh says what each runs.
 GROUP ?= unit
@@ -15,6 +15,12 @@ test-group:
 
 check:
 	$(CARGO) check --workspace --all-targets
+
+# The type-check for Windows and Linux from this Mac (PLAN-finish-tao step 3: Linux needs only a type-check; Windows
+# code behind cfg(windows) is caught here before a gammaAI run). Each target's standard library must be installed.
+CROSS_TARGETS ?= x86_64-pc-windows-msvc x86_64-unknown-linux-gnu
+check-cross:
+	@rc=0; for t in $(CROSS_TARGETS); do $(CARGO) check --workspace --all-targets --target $$t || rc=1; done; exit $$rc
 
 test:
 	@$(MAKE) --no-print-directory test-group GROUP=$(GROUP)
