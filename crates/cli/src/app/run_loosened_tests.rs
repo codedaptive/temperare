@@ -72,7 +72,7 @@ fn loosened(base: Base, now: Option<&'static str>) -> (u8, String, String) {
         toplevel: &toplevel,
         exists: &|_| true,
         read: &read,
-        availability: &|_: Engine| Availability::Available,
+        availability: &|_: Engine, _: &Path| Availability::Available,
         now: &|| 0,
         rev_parse: &rev_parse,
         blob_at: &blob_at,

@@ -1,5 +1,6 @@
 //! `RulesWorld::real`: the world wired to the real git, disk, engines and clock.
 
+use super::availability_at::availability_at;
 use super::git_rev_parse::git_rev_parse;
 use super::git_toplevel::git_toplevel;
 use super::now_secs::now_secs;
@@ -11,14 +12,14 @@ use std::path::Path;
 
 impl RulesWorld<'static> {
     /// The world wired to the real git (through ccvcslib), disk, PATH and clock: `git_toplevel`, `Path::is_file`,
-    /// `RuleFile::read`, `engines::availability`, `now_secs`, `git_rev_parse`, `blob_at` and `engines::no_file_rules`.
+    /// `RuleFile::read`, `availability_at`, `now_secs`, `git_rev_parse`, `blob_at` and `engines::no_file_rules`.
     /// `run` uses it; tests of `run_rules` pass closures instead.
     pub fn real() -> RulesWorld<'static> {
         RulesWorld {
             toplevel: &git_toplevel,
             exists: &Path::is_file,
             read: &RuleFile::read,
-            availability: &engines::availability,
+            availability: &availability_at,
             now: &now_secs,
             rev_parse: &git_rev_parse,
             blob_at: &blob_at,

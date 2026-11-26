@@ -14,12 +14,13 @@ use std::path::Path;
 
 /// With `--base`, runs `run_loosened` instead: what the rule file loosened since that base, exit 0, 1 or 2
 /// (`parse_rules_args` gives `--base` only together with `--loosened`).
-/// Otherwise finds the rule file, reads it and prints its rules with each engine's availability, the rules not
-/// applicable here with the whys `tm check` run in `cwd` gives them (`world.no_file_rules`; no engine runs), and its
-/// exceptions in force and expired on the UTC day holding `world.now` (exit 0, whatever the availability or the dates:
-/// listing is not checking) or its problems (exit 2), as text ending in a `next:` line or as one JSON object carrying
-/// `exit` and `next`. A rule file that cannot be found is a usage error on `err` (and, under `--json`, an `{"error",
-/// "exit", "next"}` object on `out`), exit 2. Write errors are ignored: a closed pipe is not tm's failure.
+/// Otherwise finds the rule file, reads it and prints its rules with each engine's availability for the rule file's
+/// folder, the rules not applicable here with the whys `tm check` run in `cwd` gives them (`world.no_file_rules`; no
+/// engine runs), and its exceptions in force and expired on the UTC day holding `world.now` (exit 0, whatever the
+/// availability or the dates: listing is not checking) or its problems (exit 2), as text ending in a `next:` line or
+/// as one JSON object carrying `exit` and `next`. A rule file that cannot be found is a usage error on `err` (and,
+/// under `--json`, an `{"error", "exit", "next"}` object on `out`), exit 2. Write errors are ignored: a closed pipe is
+/// not tm's failure.
 pub fn run_rules(
     args: &RulesArgs,
     cwd: &Path,
@@ -41,10 +42,12 @@ pub fn run_rules(
     };
     // `cwd` is the folder `tm check` hands the engines as `repo`, so both judge the same folder.
     let not_applicable = rules_not_applicable(&rf, &(world.no_file_rules)(&rf, cwd));
+    let folder = cwd.join(&rf.folder);
+    let availability = |engine| (world.availability)(engine, &folder);
     if args.json {
-        write_json(out, rules_json(&path, &rf, world.availability, day, &not_applicable), 0, None, &path)
+        write_json(out, rules_json(&path, &rf, &availability, day, &not_applicable), 0, None, &path)
     } else {
-        write_text(out, &rules_text(&path, &rf, world.availability, day, &not_applicable), 0, None, &path)
+        write_text(out, &rules_text(&path, &rf, &availability, day, &not_applicable), 0, None, &path)
     }
 }
 

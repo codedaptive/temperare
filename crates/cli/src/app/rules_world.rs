@@ -5,7 +5,7 @@ use report::Oid;
 use rules::{Problem, RuleFile};
 use std::path::{Path, PathBuf};
 
-/// `run` passes `git_toplevel`, `Path::is_file`, `RuleFile::read`, `engines::availability`, `now_secs`,
+/// `run` passes `git_toplevel`, `Path::is_file`, `RuleFile::read`, `availability_at`, `now_secs`,
 /// `git_rev_parse`, a ccvcslib file read for `blob_at` and `engines::no_file_rules`; a unit test passes closures, so
 /// `run_rules` is tested without running git, reading the disk or the clock, or looking at PATH.
 pub struct RulesWorld<'a> {
@@ -15,8 +15,9 @@ pub struct RulesWorld<'a> {
     pub exists: &'a dyn Fn(&Path) -> bool,
     /// The rule file read and checked, or its problems.
     pub read: &'a dyn Fn(&Path) -> Result<RuleFile, Vec<Problem>>,
-    /// Whether a rule's engine can be run here.
-    pub availability: &'a dyn Fn(rules::Engine) -> engines::Availability,
+    /// Whether tm finds an engine for a rule file in the folder given (its program, from the folder's
+    /// node_modules/.bin for ESLint, else PATH); nothing is run.
+    pub availability: &'a dyn Fn(rules::Engine, &Path) -> engines::Availability,
     /// Whole seconds since the Unix epoch; the UTC day holding it decides which exceptions have expired.
     pub now: &'a dyn Fn() -> u64,
     /// The commit a revision names in the repository holding a folder; None when it names none.

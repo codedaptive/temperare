@@ -12,6 +12,7 @@ mod baseline_git_env;
 mod baseline_world_real;
 mod check_base_real;
 mod check_world_real;
+mod local_eslint_real;
 mod rules_loosened_real;
 mod rules_not_applicable_real;
 mod rules_world_real;

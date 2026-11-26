@@ -48,7 +48,7 @@ fn check(entries: Vec<(NotAvailable, NotAvailableCause)>, json: bool) -> (u8, St
         },
         rev_parse: &|_, _| unreachable!("rev_parse"),
         run_rules: &run_rules,
-        availability: &|_| engines::Availability::Available,
+        availability: &|_, _| engines::Availability::Available,
         build_report: &build_report,
         home: &|| None,
         now: &|| 0,

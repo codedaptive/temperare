@@ -2,6 +2,7 @@
 //! loosened since a base, `tm check` from finding the rule file to the report, `tm baseline test` from the sets' rules
 //! to each case's verdict, and `temperare install` and `uninstall` on the disk.
 
+mod availability_at;
 mod base_error;
 mod baseline_world;
 mod baseline_world_real;
@@ -41,6 +42,8 @@ mod write_failure;
 mod write_problems;
 mod write_usage_error;
 
+#[cfg(test)]
+mod availability_at_tests;
 #[cfg(test)]
 mod base_error_tests;
 #[cfg(test)]

@@ -52,7 +52,7 @@ fn there(_: &Path) -> bool {
     true
 }
 
-fn all_available(_: Engine) -> Availability {
+fn all_available(_: Engine, _: &Path) -> Availability {
     Availability::Available
 }
 
@@ -87,7 +87,7 @@ fn rules_with(
     toplevel: &dyn Fn(&Path) -> Result<PathBuf, VcsError>,
     exists: &dyn Fn(&Path) -> bool,
     read: &dyn Fn(&Path) -> Result<RuleFile, Vec<Problem>>,
-    availability: &dyn Fn(Engine) -> Availability,
+    availability: &dyn Fn(Engine, &Path) -> Availability,
     now: &dyn Fn() -> u64,
 ) -> (u8, String, String) {
     rules_in_world(args, toplevel, exists, read, availability, now, &none_no_file)
@@ -100,7 +100,7 @@ fn rules_in_world(
     toplevel: &dyn Fn(&Path) -> Result<PathBuf, VcsError>,
     exists: &dyn Fn(&Path) -> bool,
     read: &dyn Fn(&Path) -> Result<RuleFile, Vec<Problem>>,
-    availability: &dyn Fn(Engine) -> Availability,
+    availability: &dyn Fn(Engine, &Path) -> Availability,
     now: &dyn Fn() -> u64,
     no_file_rules: &dyn Fn(&RuleFile, &Path) -> Vec<NoFileRule>,
 ) -> (u8, String, String) {
@@ -244,7 +244,7 @@ fn the_rules_flag_reads_that_file_and_never_asks_git() {
     assert!(out.starts_with("rule file: /repo/src/cfg/t.toml\n"), "{out}");
 }
 
-fn clippy_not_available(engine: Engine) -> Availability {
+fn clippy_not_available(engine: Engine, _: &Path) -> Availability {
     assert_eq!(engine, Engine::Clippy);
     Availability::NotAvailable { why: "cargo-clippy not found on PATH".to_string() }
 }

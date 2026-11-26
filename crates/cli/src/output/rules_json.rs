@@ -9,8 +9,9 @@ use std::path::Path;
 /// list in file order, and `not_applicable` in the given order (each `{"rule", "engine", "why"}`, counted in
 /// `rules_not_applicable`); `rf.exceptions_expired(day)` alone decides which are expired. Engine, kind and severity
 /// take their serde names, which are the rule-file names. Each rule carries `available`, whether `availability` says
-/// its engine can be run here, and `why` (the reason when not available, null when available); `outside_kits` is
-/// always present, [] when the rule has none. An exception's `what` is present only when the exception names one.
+/// its engine can be run for the rule file's folder, and `why` (the reason when not available, null when available);
+/// `outside_kits` is always present, [] when the rule has none. An exception's `what` is present only when the
+/// exception names one.
 pub fn rules_json(
     file: &Path,
     rf: &rules::RuleFile,

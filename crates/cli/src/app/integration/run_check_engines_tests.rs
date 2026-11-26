@@ -1,7 +1,7 @@
 //! RIT for run_check.rs with engines' real entries: the engines the check seam names that the availability seam finds
 //! here, each with its version probe, reach the printed report whatever their rules' outcomes, as text and as JSON, in
 //! the order given, and leave the savings baseline alone. run_check maps the engines through report_engines, which
-//! reads each version probe from `engines::entry_for`, so these cases test engines' adapter list as well as cli.
+//! reads each version probe from `engines::entry_of`, so these cases test engines' adapter list as well as cli.
 //! The report seam returns a report with no engines, so every engine printed came from the check seam through
 //! run_check.
 
@@ -66,7 +66,7 @@ fn engines_leave_the_baseline_runs_and_counted_alone_and_output_counts_the_print
 }
 
 /// SwiftLint not found on PATH; every other engine found.
-fn swiftlint_absent(engine: Engine) -> Availability {
+fn swiftlint_absent(engine: Engine, _: &Path) -> Availability {
     match engine {
         Engine::SwiftLint => Availability::NotAvailable { why: "swiftlint not found on PATH".to_string() },
         _ => Availability::Available,
