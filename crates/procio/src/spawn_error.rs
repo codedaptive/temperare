@@ -5,7 +5,9 @@ use std::io;
 
 use crate::ProcError;
 
-/// `NotFound` when the OS said "no such file" and the program was not found by `which`; `Spawn` otherwise.
+/// `NotFound` when the OS said "no such file" and the program was not `found`; `Spawn` otherwise. `found` means
+/// `which_in` found it on the `Cmd`'s effective PATH, or, for a program holding a path separator, that the path is an
+/// executable file.
 ///
 /// `found` is needed because a missing cwd also fails with "no such file": a program that exists must then stay
 /// `Spawn`, or callers would report a present engine as "not available".

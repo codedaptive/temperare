@@ -3,7 +3,9 @@
 mod cmd;
 mod cmd_new;
 mod command_from;
+mod effective_path;
 mod git;
+mod has_path_separator;
 #[cfg(unix)]
 mod kill_group_cmd;
 mod output;
@@ -32,6 +34,10 @@ mod cmd_new_tests;
 mod cmd_tests;
 #[cfg(test)]
 mod command_from_tests;
+#[cfg(test)]
+mod effective_path_tests;
+#[cfg(test)]
+mod has_path_separator_tests;
 #[cfg(all(test, unix))]
 mod kill_group_cmd_tests;
 #[cfg(test)]

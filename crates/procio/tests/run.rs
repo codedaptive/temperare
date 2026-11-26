@@ -44,6 +44,32 @@ fn missing_program_on_path_is_not_found() {
     }
 }
 
+/// An empty PATH entry must not run a same-named executable in the child's cwd.
+#[cfg(unix)]
+#[test]
+fn empty_path_entry_does_not_run_cwd_executable() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let dir = scratch("empty_path_entry");
+    let name = format!("procio-zit-cwd-trap-{}", std::process::id());
+    let executable = dir.join(&name);
+    let marker = dir.join("marker");
+    fs::write(&executable, "#!/bin/sh\nprintf ran > \"$PROCIO_ZIT_MARKER\"\n").unwrap();
+    fs::set_permissions(&executable, fs::Permissions::from_mode(0o755)).unwrap();
+    let result = run(&Cmd {
+        cwd: Some(dir.clone()),
+        env: vec![("PATH".into(), ":/usr/bin:/bin".into()), ("PROCIO_ZIT_MARKER".into(), marker.clone().into())],
+        ..Cmd::new(&name)
+    });
+    let marker_exists = marker.exists();
+    fs::remove_dir_all(&dir).unwrap();
+    assert!(
+        matches!(&result, Err(ProcError::NotFound { program }) if program == &OsString::from(&name)),
+        "expected NotFound for {name}, got {result:?}; marker exists: {marker_exists}"
+    );
+    assert!(!marker_exists, "the cwd executable ran");
+}
+
 #[test]
 fn missing_absolute_path_is_not_found() {
     let dir = scratch("missing_absolute_path");
