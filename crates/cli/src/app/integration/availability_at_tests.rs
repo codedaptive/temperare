@@ -14,16 +14,14 @@ fn availability_at_answers_without_a_path_lookup() {
         Availability::NotAvailable { why: "Tessera's slop records are not defined yet".to_string() },
         "Tessera on an existing folder"
     );
-    let unresolved = availability_at(Engine::Eslint, &missing);
-    let names_folder_and_error = match &unresolved {
-        Availability::NotAvailable { why } => {
-            why.contains(&missing.display().to_string()) && why.contains("No such file or directory")
-        }
-        Availability::Available => false,
-    };
-    assert!(
-        names_folder_and_error,
-        "a missing folder gives NotAvailable naming {} and the io error: got {unresolved:?}",
-        missing.display()
+    // The io error's text is the OS's own (it differs between unix and Windows), so it is taken from the same call
+    // on the same missing folder.
+    let io_error = std::fs::canonicalize(&missing).unwrap_err();
+    assert_eq!(
+        availability_at(Engine::Eslint, &missing),
+        Availability::NotAvailable {
+            why: format!("cannot resolve the rule file's folder {}: {io_error}", missing.display())
+        },
+        "a missing folder gives NotAvailable naming the folder and the io error"
     );
 }

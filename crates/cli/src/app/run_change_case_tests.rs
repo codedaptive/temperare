@@ -106,8 +106,10 @@ fn run(setup: Setup, failing: bool) -> (CaseVerdict, Vec<String>, String) {
 fn run_change_case_rows() {
     let ran = |steps: &[&str]| steps.iter().map(|step| step.to_string()).collect::<Vec<_>>();
     let broken = |why: &str| CaseVerdict::Broken { why: why.to_string() };
-    let base = "write /case/a.py \"x = 1\\n\"";
-    let change = "write /case/a.py \"x = 1\\nsleep(1)\\n\"";
+    // The writes name `/case` joined with `a.py`, in the platform's separator (`/case/a.py` on unix).
+    let a = Path::new("/case").join("a.py");
+    let base = &format!("write {} \"x = 1\\n\"", a.display());
+    let change = &format!("write {} \"x = 1\\nsleep(1)\\n\"", a.display());
     let ruled = "run /case /case [\"tm-sleep\"] 0 Some(\"b45e\")";
     let rows = [
         (

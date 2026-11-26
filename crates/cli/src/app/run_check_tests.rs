@@ -45,6 +45,12 @@ fn read(path: &Path) -> Result<RuleFile, Vec<Problem>> {
     Ok(RuleFile::parse(TEXT, Path::new("/repo")).unwrap())
 }
 
+/// The rule file as tm prints it: `/repo` joined with `temperare.toml` in the platform's separator,
+/// `/repo/temperare.toml` on unix.
+fn rule_file() -> String {
+    Path::new("/repo").join("temperare.toml").display().to_string()
+}
+
 fn no_runs(_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>) -> CheckedRules {
     CheckedRules { runs: vec![], engines: vec![] }
 }
@@ -129,13 +135,15 @@ fn rule_file_problems_are_listed_with_exit_2() {
         Err(vec![Problem { line: 1, col: 11, what, fix: "Write version = 1.".to_string() }])
     };
     let w = CheckWorld { read: &broken, run_rules: &|_, _, _, _| unreachable!("run_rules"), ..world() };
+    let rf = rule_file();
     assert_eq!(
         check(&CheckArgs::default(), &w),
         (
             2,
-            "/repo/temperare.toml:1:11  version must be 1  Write version = 1.\n\
-             next: fix each problem listed for /repo/temperare.toml\n"
-                .to_string(),
+            format!(
+                "{rf}:1:11  version must be 1  Write version = 1.\n\
+                 next: fix each problem listed for {rf}\n"
+            ),
             String::new()
         )
     );
@@ -144,10 +152,10 @@ fn rule_file_problems_are_listed_with_exit_2() {
     assert_eq!(
         serde_json::from_str::<serde_json::Value>(&out).unwrap(),
         json!({
-            "rule_file": "/repo/temperare.toml",
+            "rule_file": rf,
             "problems": [{"line": 1, "col": 11, "what": "version must be 1", "fix": "Write version = 1."}],
             "exit": 2,
-            "next": "fix each problem listed for /repo/temperare.toml",
+            "next": format!("fix each problem listed for {rf}"),
         })
     );
 }
@@ -321,10 +329,8 @@ fn a_quality_error_exits_1_and_names_the_rule_file() {
     let (code, out, err) = check(&CheckArgs::default(), &CheckWorld { build_report: &found, ..world() });
     assert_eq!((code, err.as_str()), (1, ""));
     assert!(out.starts_with("a.py:7:3  error quality q  owner core\n"), "{out}");
-    assert!(
-        out.ends_with("next: fix the findings above, or add an approved [[exception]] to /repo/temperare.toml\n"),
-        "{out}"
-    );
+    let next = format!("next: fix the findings above, or add an approved [[exception]] to {}\n", rule_file());
+    assert!(out.ends_with(&next), "{out}");
 }
 
 #[test]
@@ -382,7 +388,7 @@ fn json_is_one_line_with_the_report_exit_and_next_at_the_top() {
     assert_eq!(out.lines().count(), 1, "{out}");
     let value: serde_json::Value = serde_json::from_str(&out).unwrap();
     assert_eq!(value["exit"], 1);
-    assert_eq!(value["next"], "fix the findings above, or add an approved [[exception]] to /repo/temperare.toml");
+    assert_eq!(value["next"], format!("fix the findings above, or add an approved [[exception]] to {}", rule_file()));
     assert_eq!(value["findings"][0]["rule"], "q");
     assert_eq!(value["findings"][0]["path"], "a.py");
     assert!(value["counts"].is_object(), "{out}");

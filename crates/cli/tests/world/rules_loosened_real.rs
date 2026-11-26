@@ -89,8 +89,9 @@ impl Repo {
         (code, String::from_utf8(out).unwrap(), String::from_utf8(err).unwrap())
     }
 
+    /// tm names the rule file from git's top-level path, whose form can differ from the temp path `self.repo` holds (on Windows, by reading).
     fn path(&self) -> String {
-        self.repo.join("temperare.toml").display().to_string()
+        PathBuf::from(self.git(&["rev-parse", "--show-toplevel"])).join("temperare.toml").display().to_string()
     }
 }
 

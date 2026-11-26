@@ -89,6 +89,21 @@ fn loosened(base: Base, now: Option<&'static str>) -> (u8, String, String) {
 
 #[test]
 fn each_outcome_with_its_exit_and_text() {
+    // The rule file as tm prints it: `/repo` joined with `temperare.toml`, `/repo/temperare.toml` on unix.
+    let rf = Path::new("/repo").join("temperare.toml").display().to_string();
+    let base_problems = format!(
+        "{rf} (at v1):1:11  `version` must be 1, not 2  Write `version = 1`.\n\
+         next: fix each problem listed for {rf} (at v1)\n"
+    );
+    let now_problems = format!(
+        "{rf}:2:1  unknown key  Remove the key.\n\
+         next: fix each problem listed for {rf}\n"
+    );
+    let loosened_one = format!(
+        "rule file: {rf}\nbase: v1\nloosened (1):\n  rule_gone  lint-all\n\
+         next: have each loosening above approved, or undo it in {rf}\n"
+    );
+    let loosened_none = format!("rule file: {rf}\nbase: v1\nloosened (0):\nnext: nothing to do\n");
     let rows: [(&str, Base, Option<&'static str>, u8, &str, &str); 9] = [
         ("rev names nothing", Base::NoCommit, Some(ONE_RULE), 2, "",
          "tm: base 'v1' does not name a commit\nnext: Pass a commit, branch or tag that exists, e.g. --base main.\n"),
@@ -104,17 +119,10 @@ fn each_outcome_with_its_exit_and_text() {
         ("not UTF-8", Base::NotUtf8, Some(ONE_RULE), 2, "",
          "tm: temperare.toml at base 'v1' is not UTF-8 text\n\
           next: Pass a --base whose temperare.toml is UTF-8 text, or leave --loosened out.\n"),
-        ("base problems", Base::Text("version = 2\n"), None, 2,
-         "/repo/temperare.toml (at v1):1:11  `version` must be 1, not 2  Write `version = 1`.\n\
-          next: fix each problem listed for /repo/temperare.toml (at v1)\n", ""),
-        ("now problems", Base::Text(ONE_RULE), None, 2,
-         "/repo/temperare.toml:2:1  unknown key  Remove the key.\n\
-          next: fix each problem listed for /repo/temperare.toml\n", ""),
-        ("something loosened", Base::Text(ONE_RULE), Some("version = 1\n"), 1,
-         "rule file: /repo/temperare.toml\nbase: v1\nloosened (1):\n  rule_gone  lint-all\n\
-          next: have each loosening above approved, or undo it in /repo/temperare.toml\n", ""),
-        ("nothing loosened", Base::Text(ONE_RULE), Some(ONE_RULE), 0,
-         "rule file: /repo/temperare.toml\nbase: v1\nloosened (0):\nnext: nothing to do\n", ""),
+        ("base problems", Base::Text("version = 2\n"), None, 2, &base_problems, ""),
+        ("now problems", Base::Text(ONE_RULE), None, 2, &now_problems, ""),
+        ("something loosened", Base::Text(ONE_RULE), Some("version = 1\n"), 1, &loosened_one, ""),
+        ("nothing loosened", Base::Text(ONE_RULE), Some(ONE_RULE), 0, &loosened_none, ""),
     ];
     for (name, base, now, exit, out, err) in rows {
         assert_eq!(loosened(base, now), (exit, out.to_string(), err.to_string()), "{name}");
