@@ -16,10 +16,12 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// outcomes are dropped (see `out_of_play`), and nothing else is run or read. With a base,
 /// `(repository, resolved base id)`, only findings on lines added since the base are new: lines git adds against it in
 /// the work tree, untracked files whole, and every path under an untracked nested repository. The added lines and the
-/// untracked entries are asked of ccvcslib at the repository top, so a subfolder `repository` still covers the whole
-/// working copy. Finding paths are relative to the rule file's folder, so the folder is canonicalized (a relative one
-/// against the current directory) and taken relative to the repository top. A failed ccvcslib question is
-/// `ReportError::Vcs`; a folder that cannot be canonicalized or lies outside the repository is `ReportError::Folder`.
+/// untracked entries are asked of ccvcslib at the repository top as git gave it, so a subfolder `repository` still
+/// covers the whole working copy. Finding paths are relative to the rule file's folder, so the folder (a relative one
+/// against the current directory) and the repository top are both canonicalized, giving one path form to compare
+/// (git prints `C:/...` on Windows where canonicalize gives `\\?\C:\...`), and the folder is taken relative to the
+/// top. A failed ccvcslib question is `ReportError::Vcs`; a folder or top that cannot be canonicalized, or a folder
+/// outside the repository, is `ReportError::Folder`.
 ///
 /// `no_files` holds the rules the engines found no file for, each as (rule id, the engines' why). A flagged rule of
 /// the repository's own is listed under `covers_nothing`; a flagged baseline rule (its id starts "tm-") is listed under
@@ -42,7 +44,11 @@ pub fn build_report_with_no_files(
     let top = vcs.working_copy_root(repo).map_err(ReportError::Vcs)?;
     let folder_abs = std::fs::canonicalize(&rules.folder)
         .map_err(|err| ReportError::Folder { folder: rules.folder.clone(), why: err.to_string() })?;
-    let folder = folder_from_top(&top, &folder_abs).ok_or_else(|| ReportError::Folder {
+    let top_abs = std::fs::canonicalize(&top).map_err(|err| ReportError::Folder {
+        folder: rules.folder.clone(),
+        why: format!("cannot resolve the repository top {}: {err}", top.display()),
+    })?;
+    let folder = folder_from_top(&top_abs, &folder_abs).ok_or_else(|| ReportError::Folder {
         folder: rules.folder.clone(),
         why: format!("not inside the repository at {}", top.display()),
     })?;
