@@ -20,9 +20,7 @@ mod wait_deadline;
 mod which;
 
 pub use cmd::Cmd;
-pub use git::{
-    added_lines, blob_at, changed_files, git_cmd, rev_parse, toplevel, tracked_files, untracked_files, GitError, Oid,
-};
+pub use git::{added_lines, blob_at, git_cmd, rev_parse, toplevel, tracked_files, untracked_files, GitError, Oid};
 pub use output::Output;
 pub use proc_error::ProcError;
 pub use run::run;
