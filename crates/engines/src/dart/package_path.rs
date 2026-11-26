@@ -1,5 +1,6 @@
 //! `package_path`: the file a `package:` URI names, through a package's `.dart_tool/package_config.json`.
 
+use super::windows_path;
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 
@@ -7,9 +8,13 @@ use std::path::{Path, PathBuf};
 /// package_config.json in the folder `config_dir`: the entry of `packages` whose `name` is `<name>`, its `rootUri` (a
 /// `file:///` URI, or a URI relative to `config_dir`), then its `packageUri` (`lib/` when absent), then `<path>`, each
 /// percent-decoded. None when `uri` is not of that form, the JSON does not parse, no entry has the name, or a field
-/// is missing, not a string, not decodable, or a URI of another scheme or host: the caller reads None as an include
-/// that does not resolve. Pure: it reads no file.
-pub(crate) fn package_path(uri: &str, config_json: &str, config_dir: &Path) -> Option<PathBuf> {
+/// is missing, not a string, not decodable, or a URI of another scheme: the caller reads None as an include that
+/// does not resolve. A `file://` URI with a host (UNC, `file://server/share`) is None on every platform. `windows`
+/// is the platform, given as data (the caller passes `cfg!(windows)`): when set, the path is made native by
+/// `windows_path`, so a file URL with a drive (`file:///C:/x`) gives `C:\x`, with `.` and `..` resolved lexically as
+/// dart does, and a path with no drive, UNC included, is returned as built; when not set, it is returned as built.
+/// Pure: it reads no file.
+pub(crate) fn package_path(uri: &str, config_json: &str, config_dir: &Path, windows: bool) -> Option<PathBuf> {
     let (name, rest) = uri.strip_prefix("package:")?.split_once('/')?;
     let config: Value = serde_json::from_str(config_json).ok()?;
     let packages = config.get("packages")?.as_array()?;
@@ -25,7 +30,11 @@ pub(crate) fn package_path(uri: &str, config_json: &str, config_dir: &Path) -> O
         None => "lib/",
         Some(value) => value.as_str()?,
     };
-    Some(root.join(decoded(package_uri)?).join(decoded(rest)?))
+    let path = root.join(decoded(package_uri)?).join(decoded(rest)?);
+    Some(match path.to_str() {
+        Some(text) if windows => PathBuf::from(windows_path(text)),
+        _ => path,
+    })
 }
 
 /// `text` with each `%XX` escape decoded to its byte; None when an escape is cut short or either of its two bytes is
