@@ -1,7 +1,7 @@
 //! ZUT for windows_path.rs: paths with a drive in URL and Windows form made native, `.` and `..` resolved, and the
 //! paths it returns unchanged (no drive, UNC, drive-relative).
 
-use super::windows_path;
+use crate::windows_path::windows_path;
 
 #[test]
 fn windows_path_cases() {

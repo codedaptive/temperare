@@ -6,8 +6,9 @@
 /// dropping the segment before it but never the root (as dart's `Uri.resolve` resolves them, since Windows does not
 /// resolve `..` under `\\?\`), and joined with `\`; the root alone gives `X:\` (`\\?\X:\` for the verbatim form). The
 /// drive letter keeps its case. Limits: a path with no drive is returned unchanged, and so is UNC (`\\srv\share`,
-/// `\\?\UNC\...`), which this does not handle (package_path answers None for a `file://server/share` rootUri), and a
-/// drive-relative `X:x`. Pure.
+/// `\\?\UNC\...`), which this does not handle (its callers are dart's package_path, which answers None for a
+/// `file://server/share` rootUri, and sarif's sarif_path, which returns such a path as decoded), and a drive-relative
+/// `X:x`. Pure.
 pub(crate) fn windows_path(path: &str) -> String {
     let Some((root, rest)) = drive_root(path) else {
         return path.to_string();

@@ -54,6 +54,7 @@ pub(crate) mod stopped;
 pub(crate) mod types;
 pub(crate) mod unavailable;
 pub(crate) mod union_args;
+pub(crate) mod windows_path;
 pub(crate) mod yaml;
 #[cfg(test)]
 pub(crate) mod availability_from_tests;
@@ -139,3 +140,5 @@ pub(crate) mod stopped_tests;
 pub(crate) mod unavailable_tests;
 #[cfg(test)]
 pub(crate) mod union_args_tests;
+#[cfg(test)]
+pub(crate) mod windows_path_tests;

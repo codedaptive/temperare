@@ -2,9 +2,9 @@
 //! lower-case code, its no-file outcome before availability, the listing of the Dart sources in a repository
 //! (tracked, and untracked but not ignored; never a symlink), the package root a rule runs in, the not-available case
 //! of dependencies never fetched, the reader of its machine output, the analysis options (the files that govern a
-//! folder, their includes, and package URIs made native Windows paths by `windows_path`), read with a YAML parser
-//! (`yaml_entries`) for the suppressions in them and whether they enable a lint, and the probe run that tells a lint
-//! from a diagnostic and an unknown code.
+//! folder, their includes, and package URIs made native Windows paths by the crate's `windows_path`), read with a
+//! YAML parser (`yaml_entries`) for the suppressions in them and whether they enable a lint, and the probe run that
+//! tells a lint from a diagnostic and an unknown code.
 
 mod check_kind;
 mod dart_entry;
@@ -24,7 +24,6 @@ mod probe_dir_drop;
 mod probe_files;
 mod pubspec_root;
 mod run_dart;
-mod windows_path;
 
 #[cfg(test)]
 mod dart_entry_tests;
@@ -48,8 +47,6 @@ mod package_path_tests;
 mod parse_dart_tests;
 #[cfg(test)]
 mod probe_files_tests;
-#[cfg(test)]
-mod windows_path_tests;
 
 pub(crate) use check_kind::CheckKind;
 pub use dart_entry::DART;
@@ -68,4 +65,3 @@ pub(crate) use probe_dir::ProbeDir;
 pub(crate) use probe_files::probe_files;
 pub(crate) use pubspec_root::pubspec_root;
 pub(crate) use run_dart::run_dart;
-pub(crate) use windows_path::windows_path;
