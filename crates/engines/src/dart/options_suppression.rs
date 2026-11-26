@@ -1,5 +1,6 @@
 //! `options_suppression`: a suppression in an analysis options chain that tm cannot turn off (S-67 (1)).
 
+use crate::cannot_turn_off::CANNOT_TURN_OFF;
 use crate::types::Stop;
 use crate::yaml::{yaml_entries, YamlValue};
 use std::path::PathBuf;
@@ -40,8 +41,7 @@ fn hiding(text: &str) -> Option<String> {
             entry.path.iter().any(|key| key.eq_ignore_ascii_case("exclude")) || scalar.eq_ignore_ascii_case("ignore");
         hides.then(|| {
             format!(
-                "line {}: `{}{after}{scalar}`: dart hides findings there and tm cannot turn it off; put exceptions in \
-                 the rule file (S-67 (1))",
+                "line {}: `{}{after}{scalar}`: dart hides findings there and {CANNOT_TURN_OFF}",
                 entry.line,
                 entry.path.join(": ")
             )

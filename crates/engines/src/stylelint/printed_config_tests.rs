@@ -1,6 +1,6 @@
 //! ZUT for printed_config.rs: real stylelint 18.1.0 `--print-config` output (fixtures/print_config_*; commands and
 //! configs in fixtures/fixtures.txt) read for a check: a rule on, null, absent or unknown, a config turning on fix or
-//! quiet, a probe that failed, and stdout that is no config.
+//! quiet, and a probe that failed. The "no config" row's stdout (`[]`, stdout that is no config) is written by hand.
 
 use super::printed_config;
 use crate::types::Stop;

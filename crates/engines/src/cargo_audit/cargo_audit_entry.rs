@@ -28,7 +28,7 @@ pub static CARGO_AUDIT: Entry = Entry {
     params: Params::Args(&[]),
     config: None,
     after: &[],
-    version: Some(VersionProbe { args: &["--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["--version"], read: version_word, wrap: None }),
     refuse: cargo_audit_refusal,
     unknown: |_, _| None,
     read: parse_cargo_audit,

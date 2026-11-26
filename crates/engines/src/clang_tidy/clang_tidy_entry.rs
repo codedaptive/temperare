@@ -25,7 +25,7 @@ pub static CLANG_TIDY: Entry = Entry {
     params: Params::Args(&[]),
     config: Some("--config-file="),
     after: &[],
-    version: Some(VersionProbe { args: &["--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["--version"], read: version_word, wrap: None }),
     refuse: clang_tidy_refusal,
     unknown: unknown_check,
     read: parse_clang_tidy,

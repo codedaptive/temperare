@@ -49,7 +49,7 @@ pub static GOLANGCI_LINT: Entry = Entry {
     params: Params::Args(&[]),
     config: Some("--config="),
     after: &["./..."],
-    version: Some(VersionProbe { args: &["--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["--version"], read: version_word, wrap: None }),
     refuse: golangci_lint_refusal,
     unknown: unknown_linters,
     read: parse_golangci_lint,

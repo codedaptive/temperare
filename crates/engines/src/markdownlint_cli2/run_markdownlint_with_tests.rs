@@ -15,11 +15,11 @@ const FOLDER: &str = "/no/such/engines-zut-markdownlint";
 
 #[test]
 fn run_markdownlint_with_stops_before_the_run() {
-    let git_failed = Stop::Failed { code: Some(128), stderr: "fatal: not a git repository".into() };
+    let git_failed = Stop::Failed { code: None, stderr: "not a working copy".into() };
     let off = ("docs/.markdownlint.json", "{\"MD013\": false}");
     let rows: [(&str, &str, &str, Result<Vec<&str>, Stop>, &[(&str, &str)], &str, &str); 7] = [
         ("rule config", "MD013", "config = \"x.json\"\n", Ok(vec!["a.md"]), &[], "failed", "takes no config"),
-        ("listing error", "MD013", "", Err(git_failed), &[], "failed", "not a git repository"),
+        ("listing error", "MD013", "", Err(git_failed), &[], "failed", "not a working copy"),
         ("no file in paths", "MD013", "paths = [\"docs/**\"]\n", Ok(vec!["a.md"]), &[], "no-files", "no file its engine checks"),
         ("options file", "MD013", "", Ok(vec!["a.md"]), &[(".markdownlint-cli2.yaml", "fix: true\n")], "failed",
             ".markdownlint-cli2.yaml"),

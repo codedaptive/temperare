@@ -1,5 +1,5 @@
 //! ZUT for markdownlint_entry.rs: what the entry's fields drive. The command `entry_cmd` builds (the flow then adds
-//! the options module and the files), the program it needs, the version probe wired to `--help` and
+//! the options module and the files), the programs it needs, the version probe wired to `--help` and
 //! `markdownlint_version` (whose reading markdownlint_version_tests.rs proves), the refusal wired in, and a param
 //! refused by `param_args` naming the engine. Nothing runs.
 
@@ -16,7 +16,7 @@ use std::path::{Path, PathBuf};
 fn markdownlint_entry_drives_the_command_version_and_refusal() {
     let entry = &MARKDOWNLINT;
     assert_eq!((entry.name, entry.engine, entry.program), ("markdownlint", Engine::Markdownlint, "markdownlint-cli2"));
-    assert_eq!(entry.needs, ["markdownlint-cli2"]);
+    assert_eq!(entry.needs, ["markdownlint-cli2", "node"]);
     assert_eq!(entry.never, None);
     let cmd = entry_cmd(entry, OsStr::new("MD013"), &[], Some("ignored.json"), Path::new("/w/docs"));
     assert_eq!(cmd.program, OsString::from("markdownlint-cli2"));

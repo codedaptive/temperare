@@ -20,8 +20,9 @@ use rules::Engine;
 /// `UnknownCheck` (`unknown_rule`). The rule's config is passed as `--config=`, sqlfluff's additional config file,
 /// layered on top of the ones it finds.
 ///
-/// The environment: `HOME` is the repository's top, so sqlfluff's user and `~` configs and every folder config between
-/// `~` and the file are the repository's own; `XDG_CONFIG_HOME`, `PYTHONPATH` and `PYTHONUSERBASE` are removed.
+/// The environment: `HOME` is the repository's top. sqlfluff reads its user and `~` configs and walks folder configs
+/// from the common path of `~` and the file down to the file's folder, so every config it reads is the repository's
+/// own and none above the top is read (measured); `XDG_CONFIG_HOME`, `PYTHONPATH` and `PYTHONUSERBASE` are removed.
 /// Nothing reaches the network: sqlfluff fetches nothing and installs no plugin. The templater is the repository's,
 /// one of sqlfluff's own (`raw`, `jinja`, `python`, `placeholder`); dbt is a plugin sqlfluff does not ship; where it is
 /// not installed, a config naming it is `Failed` with sqlfluff's stderr (exit 2; it says to `pip install
@@ -62,7 +63,7 @@ pub static SQLFLUFF: Entry = Entry {
     params: Params::Args(&[]),
     config: Some("--config="),
     after: &[],
-    version: Some(VersionProbe { args: &["--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["--version"], read: version_word, wrap: None }),
     refuse: sqlfluff_refusal,
     unknown: unknown_rule,
     read: parse_sqlfluff,

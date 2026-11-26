@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 #[test]
 fn eslint_entry_builds_the_command_and_reads_the_version() {
     assert_eq!((ESLINT.name, ESLINT.engine, ESLINT.program), ("eslint", Engine::Eslint, "eslint"));
-    assert_eq!((ESLINT.needs, ESLINT.never, ESLINT.pick), (&["eslint"][..], None, Pick::None));
+    assert_eq!((ESLINT.needs, ESLINT.never, ESLINT.pick), (&["eslint", "node"][..], None, Pick::None));
     let cmd = entry_cmd(&ESLINT, OsStr::new("no-var"), &[], Some("cfg/eslint.config.mjs"), Path::new("/w/js"));
     let want = [
         "--format",

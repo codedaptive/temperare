@@ -9,10 +9,11 @@ use std::path::Path;
 /// - `ignore: []` replaces the base's top-level `ignore` or `ignore-from-file`, one inherited through an `extends`
 ///   chain included: yamllint applies the `-d` text's own `ignore` after `extends` has copied the base's, so no file tm
 ///   passes is dropped (S-67 (1); this form is the one measured, fixtures/fixtures.txt).
-/// - naming the check under `rules` enables it even where the base disables it: a base `false` is replaced, so the
-///   check gets yamllint's defaults; a base table keeps its options.
+/// - naming the check under `rules` enables it even where the base disables it: a base `false` or `disable` is
+///   replaced, so the check runs with its own option defaults at level error; a base table keeps its options and its
+///   level (both measured, fixtures/fixtures.txt).
 /// - `ignore-from-file: []` clears the check's own `ignore` and `ignore-from-file` (S-67 (1)), so a path the
-///   repository's config hides from that rule is still checked.
+///   repository's config hides from that rule is still checked (tests/yamllint.rs, "check-ignore-from-file").
 ///
 /// The check key is double-quoted too, so PyYAML, which reads YAML 1.1, takes `yes` or `on` as the string, not a
 /// boolean. The check is a rule id already (`yamllint_refusal`), so it needs no escaping. Err(why) when `base` is not

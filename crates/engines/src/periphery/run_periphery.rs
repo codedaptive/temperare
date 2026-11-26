@@ -14,8 +14,8 @@ use std::path::Path;
 /// The hits of `rule` under `folder` (canonical); a `RunFn`, the flow of `PERIPHERY`. The central `refused` has already
 /// settled the rule's refusals. Each step can stop the rule:
 /// 1. the package is the nearest `Package.swift` at or above `folder` and no higher than the repository top
-///    (`repo_top`) (`package_root`); none is `NotAvailable`, and a `folder` in no repository is `Failed` with git's
-///    error;
+///    (`repo_top`) (`package_root`); none is `NotAvailable`, and a `folder` in no repository is `Failed` with
+///    ccvcslib's error;
 /// 2. a new scratch folder (`ScratchDir`) holds everything the run writes, `<scratch>/build` the build;
 /// 3. `manifest_walk` reads the manifest of the package and of each local package it reaches, before anything is
 ///    built; any of them naming a dependency or a binary target with a url to fetch is `NotAvailable`, since tm never

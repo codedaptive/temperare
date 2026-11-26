@@ -19,8 +19,9 @@ use rules::Engine;
 /// The check is one markdownlint rule, by its id or an alias (`MD013`, `line-length`), matched ignoring case as
 /// markdownlint does; a finding is the rule's when its `ruleNames` hold the check. A check that is not a rule name's
 /// form is `Failed` before anything runs (`markdownlint_refusal`); one of that form that is not in temperare's list
-/// (S-51, `MD_RULES`, taken from markdownlint 0.42.2) is not available, the engine and version named (`config_stop`),
-/// since markdownlint never reports a rule it lacks. A tag (`headings`) is not a check.
+/// (S-51, `MD_RULES`, taken from markdownlint 0.42.2) is not available, since markdownlint never reports a rule it
+/// lacks: `config_stop` makes it `NotListed`, naming the check and the list's source (`MD_RULES_FROM`), and `stopped`
+/// adds the engine and its version. A tag (`headings`) is not a check.
 ///
 /// Config: the repository's own. markdownlint-cli2 reads `.markdownlint.{jsonc,json,yaml,yml,cjs,mjs}` (the first in
 /// that order, per folder; the nearest folder's applies) in the rule file's folder and below, never above it or in
@@ -41,23 +42,24 @@ use rules::Engine;
 /// `.markdownlintignore` is not read by markdownlint-cli2.
 ///
 /// Settling order: a rule whose paths hold no Markdown file git lists is `NoFiles` before availability (`engine_listed`,
-/// in `engine_hits_with`'s step 1); then availability (markdownlint-cli2 on PATH); then the flow. The version is read
-/// from `--help`'s first line, which lints nothing and reads no repository options (`--version` is no flag to it: it
-/// would lint); `--help` exits 2, and `markdownlint_version` reads it whatever the exit code. Environment: PATH only;
-/// tm sets no NODE_PATH, and markdownlint-cli2 makes no network call. markdownlint takes no params: any param makes
-/// the rule `Failed` before running. Its rules never share a run: `shares_with` has no arm for it.
+/// in `engine_hits_with`'s step 1); then availability (markdownlint-cli2, then node, on PATH); then the flow. The
+/// version is read from `--help`'s first line, which lints nothing and reads no repository options (`--version` is no
+/// flag to it: it would lint); `--help` exits 2, and `markdownlint_version` reads it whatever the exit code.
+/// Environment: PATH only; tm sets no NODE_PATH, and markdownlint-cli2 makes no network call. markdownlint takes no
+/// params: any param makes the rule `Failed` before running. Its rules never share a run: `shares_with` has no arm
+/// for it.
 pub static MARKDOWNLINT: Entry = Entry {
     name: "markdownlint",
     engine: Engine::Markdownlint,
     program: "markdownlint-cli2",
-    needs: &["markdownlint-cli2"],
+    needs: &["markdownlint-cli2", "node"],
     never: None,
     args: &["--no-globs"],
     pick: Pick::None,
     params: Params::Args(&[]),
     config: None,
     after: &[],
-    version: Some(VersionProbe { args: &["--help"], read: markdownlint_version }),
+    version: Some(VersionProbe { args: &["--help"], read: markdownlint_version, wrap: None }),
     refuse: markdownlint_refusal,
     unknown: |_, _| None,
     read: parse_markdownlint,

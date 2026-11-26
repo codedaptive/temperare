@@ -1,12 +1,16 @@
 #![cfg(unix)]
 
-use std::ffi::OsString;
 use std::fs;
 use std::os::unix::fs::{symlink, PermissionsExt};
 use std::path::PathBuf;
 
 use engines::{availability, run_rules_versioned_at, Availability};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
+
+#[path = "support/env_guard.rs"]
+mod env_guard;
+
+use env_guard::EnvGuard;
 
 struct TempFolder(PathBuf);
 
@@ -21,25 +25,6 @@ impl TempFolder {
 impl Drop for TempFolder {
     fn drop(&mut self) {
         fs::remove_dir_all(&self.0).unwrap();
-    }
-}
-
-struct EnvGuard(&'static str, Option<OsString>);
-
-impl EnvGuard {
-    fn set(name: &'static str, value: impl AsRef<std::ffi::OsStr>) -> Self {
-        let previous = std::env::var_os(name);
-        std::env::set_var(name, value);
-        Self(name, previous)
-    }
-}
-
-impl Drop for EnvGuard {
-    fn drop(&mut self) {
-        match &self.1 {
-            Some(value) => std::env::set_var(self.0, value),
-            None => std::env::remove_var(self.0),
-        }
     }
 }
 

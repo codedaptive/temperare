@@ -3,7 +3,8 @@
 use std::path::{Path, PathBuf};
 
 /// The configs actionlint itself discovers under the repository's top when given none, in its order (measured on
-/// 1.7.12: `.yaml` wins when both exist; a sub-folder's own `.github` is not read).
+/// 1.7.12, fixtures/fixtures.txt, "Config discovery": `.yaml` wins when both exist; a sub-folder's own `.github` is
+/// not read).
 const CONFIG_NAMES: [&str; 2] = [".github/actionlint.yaml", ".github/actionlint.yml"];
 
 /// `folder.join(rule_config)` when the rule names a config, whether or not it exists: a missing one is reported when

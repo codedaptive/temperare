@@ -40,6 +40,8 @@ fn parse_sqlfluff_cases() {
         ("a parse error", 1, UNPARSABLE, b"", "/w", err("sqlfluff could not read a.sql, so it did not check it: line 1: PRS: Couldn't find closing bracket for opening bracket.")),
         ("a templating error", 1, TEMPLATED, b"", "/w", err("sqlfluff could not read t.sql, so it did not check it: line 3: TMP: Undefined jinja template variable: 'x'")),
         ("exit 2", 2, b"", b"User Error: No dialect was specified.", "/w", err("sqlfluff stopped without a report: User Error: No dialect was specified.")),
+        // The unknown-dialect run in fixtures/fixtures.txt, written by hand: exit 1, stdout empty, and of its
+        // traceback only the last line.
         ("no JSON on exit 1", 1, b"", b"KeyError: 'Unknown dialect'\n", "/w", err("sqlfluff printed no JSON report: KeyError: 'Unknown dialect'\n")),
     ];
     for (label, code, stdout, stderr, folder, expected) in rows {

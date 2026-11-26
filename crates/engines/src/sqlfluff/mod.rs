@@ -1,6 +1,7 @@
 //! The sqlfluff adapter: its entry (`SQLFLUFF`) and the flow it runs for one rule, the refusal of a check that is not
-//! one rule reference, its no-file outcome before availability, sqlfluff's unknown-rule and no-dialect words, the files
-//! it was handed and left out of its report, the reader of its JSON report, its command, and which files are SQL.
+//! one rule reference, its no-file outcome before availability (settled by `engine_listed`, in `engine_hits_with`'s
+//! step 1), sqlfluff's unknown-rule and no-dialect words, the files it was handed and left out of its report, the
+//! reader of its JSON report, its command, and which files are SQL.
 
 mod is_sql_source;
 mod no_dialect;

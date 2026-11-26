@@ -1,5 +1,5 @@
-//! `git`: how the engines tests run git in a throwaway repository, except `git_isolation.rs`, which calls
-//! `procio::git_cmd` itself for the caller repository it guards.
+//! `git`: the helper most engines tests use to run git in a throwaway repository; some keep their own (for example
+//! `change_of_tests.rs`).
 
 use std::path::Path;
 

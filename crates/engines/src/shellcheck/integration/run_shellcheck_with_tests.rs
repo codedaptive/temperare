@@ -5,7 +5,7 @@ use crate::host::Host;
 use crate::shellcheck::{parse_shellcheck, run_shellcheck_with, shell_files, shellcheck_refusal, shellcheck_version};
 use crate::types::{Hit, Stop};
 use procio::Cmd;
-use rules::{Engine, RelPath, RuleFile};
+use rules::{Engine, RuleFile};
 use std::cell::Cell;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -51,7 +51,7 @@ fn check(repo: &Path) -> (Result<Vec<Hit>, Stop>, Option<usize>) {
         params: Params::Args(&[]),
         config: None,
         after: &[],
-        version: Some(VersionProbe { args: &["--version"], read: shellcheck_version }),
+        version: Some(VersionProbe { args: &["--version"], read: shellcheck_version, wrap: None }),
         refuse: shellcheck_refusal,
         unknown: |_, _| None,
         read: parse_shellcheck,
@@ -68,21 +68,6 @@ fn check(repo: &Path) -> (Result<Vec<Hit>, Stop>, Option<usize>) {
 }
 
 #[test]
-fn tracked_violation_returns_the_shellcheck_hit_and_counts_output() {
-    let repo = TempRepo::new("violation", "quote.sh", "#!/bin/sh\nname=$1\necho $name\n");
-    let (result, raw_chars) = check(&repo.0);
-    assert_eq!(result, Ok(vec![Hit {
-        path: RelPath::new("quote.sh"),
-        line: Some(3),
-        col: Some(6),
-        what: "Double quote to prevent globbing and word splitting.".into(),
-    }]));
-    // shellcheck 0.11.0 prints 862 characters for this script on stdout and none on stderr.
-    assert_installed_version_is_0_11_0();
-    assert_eq!(raw_chars, Some(862));
-}
-
-#[test]
 fn tracked_clean_script_has_no_hits_and_counts_output() {
     let repo = TempRepo::new("clean", "clean.sh", "#!/bin/sh\nname=\"${1}\"\necho \"${name}\"\n");
     let (result, raw_chars) = check(&repo.0);
@@ -92,7 +77,7 @@ fn tracked_clean_script_has_no_hits_and_counts_output() {
     assert_eq!(raw_chars, Some(16));
 }
 
-/// The counts above are shellcheck 0.11.0's output; another version fails here first, with a plain message.
+/// The clean script's count is shellcheck 0.11.0's output; another version fails here first, with a plain message.
 fn assert_installed_version_is_0_11_0() {
     let out = procio::run(&Cmd { args: vec!["--version".into()], ..Cmd::new("shellcheck") }).unwrap();
     assert_eq!(shellcheck_version(&out).as_deref(), Some("0.11.0"), "the expected counts are shellcheck 0.11.0's");

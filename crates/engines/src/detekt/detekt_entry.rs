@@ -53,7 +53,7 @@ pub static DETEKT: Entry = Entry {
     params: Params::Args(&[]),
     config: None,
     after: &[],
-    version: Some(VersionProbe { args: &["--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["--version"], read: version_word, wrap: None }),
     refuse: detekt_refusal,
     unknown: unknown_rule,
     read: parse_detekt,

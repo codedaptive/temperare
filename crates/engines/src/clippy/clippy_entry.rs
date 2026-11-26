@@ -40,7 +40,7 @@ pub static CLIPPY: Entry = Entry {
     },
     config: None,
     after: &[],
-    version: Some(VersionProbe { args: &["clippy", "--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["clippy", "--version"], read: version_word, wrap: None }),
     refuse: clippy_refusal,
     unknown: |_, _| None,
     read: parse_clippy,

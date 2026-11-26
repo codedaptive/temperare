@@ -4,8 +4,8 @@
 //! engine or git runs. A malformed check is refused before this flow, by `shellcheck_refusal`, and is covered in
 //! shellcheck_refusal_tests.rs.
 
-use super::read_code_list;
 use super::run_shellcheck_with_tests::{answers, listed, rule};
+use crate::read_code_list::read_code_list;
 use crate::types::Stop;
 use std::path::PathBuf;
 

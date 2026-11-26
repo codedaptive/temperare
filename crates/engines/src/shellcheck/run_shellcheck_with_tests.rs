@@ -35,7 +35,7 @@ fn entry(params: Params) -> Entry {
         params,
         config: None,
         after: &[],
-        version: Some(VersionProbe { args: &["--version"], read: shellcheck_version }),
+        version: Some(VersionProbe { args: &["--version"], read: shellcheck_version, wrap: None }),
         refuse: shellcheck_refusal,
         unknown: |_: &Output, _: &str| None,
         read: parse_shellcheck,
@@ -204,9 +204,9 @@ fn the_rules_config_is_the_rcfile() {
 
 #[test]
 fn a_failed_listing_stops_before_the_check_run() {
-    let stop = Stop::Failed { code: Some(128), stderr: "git ls-files: exit 128: fatal: x".to_string() };
+    let stop = Stop::Failed { code: Some(128), stderr: "fatal: x".to_string() };
     let (got, ran, raw_chars, _) = listed(LIST, Err(stop), &rule("SC2086", ""), &answers());
-    assert_eq!(got, Err(Stop::Failed { code: Some(128), stderr: "git ls-files: exit 128: fatal: x".to_string() }));
+    assert_eq!(got, Err(Stop::Failed { code: Some(128), stderr: "fatal: x".to_string() }));
     assert!(ran.is_empty(), "{ran:?}");
     assert_eq!(raw_chars, None);
 }

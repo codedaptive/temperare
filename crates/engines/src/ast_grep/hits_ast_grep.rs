@@ -4,6 +4,7 @@
 use super::{count_ast_grep, fill_params, read_rule_yaml, split_count_params};
 use crate::check_run::check_run;
 use crate::entry::{entry_cmd, Entry, TempFile};
+use crate::failed::failed;
 use crate::host::Host;
 use crate::parse_failed::parse_failed;
 use crate::types::{Hit, Stop};
@@ -54,8 +55,4 @@ fn param_why(err: ParamError, check: &str) -> String {
         ParamError::Unknown { name } => format!("unknown param {{{{{name}}}}} in {check}"),
         ParamError::Bad { name, why } => format!("param {name} in {check}: {why}"),
     }
-}
-
-fn failed(stderr: String) -> Stop {
-    Stop::Failed { code: None, stderr }
 }

@@ -1,5 +1,6 @@
-//! ZUT for md_rules.rs against markdownlint 0.42.2's rule list: all 53 rows, names and tags, in order, written out by
-//! hand as markdownlint's own `rules.mjs` lists them.
+//! ZUT for md_rules.rs against markdownlint 0.42.2's rule list: all 53 rows, written out by hand in the order
+//! `rules.mjs` lists them, each rule's names and tags as its `md*.mjs` file declares them (`md019-md021.mjs` and
+//! `md049-md050.mjs` declare two rules each).
 
 use super::MD_RULES;
 

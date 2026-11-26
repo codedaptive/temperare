@@ -32,7 +32,8 @@ struct Violation {
 
 /// The hits in `out`, in report order. Exit 0 and 1 are answers (sqlfluff exits 1 on any violation that is not a
 /// config `warnings` one, 0 otherwise); any other exit is a `ParseError` quoting `printed_start`, as is a stdout that is
-/// not the JSON array (sqlfluff's traceback for an unknown dialect exits 1 with none). A violation with a
+/// not the JSON array (an unknown dialect in the config exits 1 with stdout empty and a traceback on stderr,
+/// fixtures/fixtures.txt). A violation with a
 /// `NOT_CHECKED` code is a `ParseError` naming its file, line and description. Every other violation is a hit,
 /// whether sqlfluff marked it a warning or not: its file made relative to `folder` from `cwd` (both canonical) and
 /// dropped when outside it, its line and column, its text "<code>: <description>". `_check` is not read: the command

@@ -38,7 +38,7 @@ pub static MYPY: Entry = Entry {
     params: Params::Args(&[]),
     config: Some("--config-file="),
     after: &[],
-    version: Some(VersionProbe { args: &["--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["--version"], read: version_word, wrap: None }),
     refuse: mypy_refusal,
     unknown: unknown_code,
     read: parse_mypy,

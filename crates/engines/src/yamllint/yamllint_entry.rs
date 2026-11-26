@@ -54,7 +54,7 @@ pub static YAMLLINT: Entry = Entry {
     params: Params::Args(&[]),
     config: None,
     after: &[],
-    version: Some(VersionProbe { args: &["--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["--version"], read: version_word, wrap: None }),
     refuse: yamllint_refusal,
     unknown: no_such_rule,
     read: parse_yamllint,

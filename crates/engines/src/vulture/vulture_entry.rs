@@ -8,9 +8,10 @@ use rules::Engine;
 /// `parse_vulture`. The Python files under the folder are scanned, as ruff and pylint scan `.`; findings outside the
 /// rule's scope are dropped later. Tracked files and untracked files git does not ignore are scanned. What git ignores
 /// under the folder (a .gitignore'd virtualenv, build output) is left out through `--exclude`, so vulture neither
-/// reports nor reads it, and a name used only there now counts as unused. Outside a git repository nothing is ignored
-/// and the whole folder is scanned. An ignored path holding `,`, or more ignored Python paths than one argument
-/// holds, makes the rule `Failed` before running (`run_vulture_with`).
+/// reports nor reads it, and a name used only there now counts as unused. Outside a git repository (git on PATH says
+/// so) nothing is ignored and the whole folder is scanned. Any other failure to find the repository's top or to list
+/// what git ignores stops the rule before running (`ignored_python`). An ignored path holding `,`, or more ignored
+/// Python paths than one argument holds, makes the rule `Failed` before running (`run_vulture_with`).
 ///
 /// The check is one vulture code (V101 to V107, V201: the codes vulture's own `# noqa` uses). Vulture has no option
 /// that selects a kind and reports all of them, so the reader keeps the rule's; anything else is refused before
@@ -44,7 +45,7 @@ pub static VULTURE: Entry = Entry {
     params: Params::Args(&[]),
     config: None,
     after: &["."],
-    version: Some(VersionProbe { args: &["--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["--version"], read: version_word, wrap: None }),
     refuse: vulture_refusal,
     unknown: |_, _| None,
     read: parse_vulture,

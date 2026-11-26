@@ -1,6 +1,6 @@
 //! ZIT for added_in_folder.rs: a throwaway git repository with a base commit and a change in the working tree.
 //! Symlinks, the paths `keep` rejects and a base git cannot read are change_of's, tested in
-//! src/integration/change_of_tests.rs.
+//! src/internal/integration/change_of_tests.rs.
 
 use super::super::added_in_folder::added_in_folder;
 use rules::RelPath;

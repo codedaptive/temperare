@@ -12,6 +12,10 @@ use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
 #[path = "support/git.rs"]
 mod git_support;
+#[path = "support/env_guard.rs"]
+mod env_guard;
+
+use env_guard::EnvGuard;
 
 static LOCK: Mutex<()> = Mutex::new(());
 const FIX: &str = "Tag the image.";
@@ -93,11 +97,13 @@ struct Case {
     check: &'static str,
     config: Option<(&'static str, &'static str)>,
     extra: Option<(&'static str, &'static str)>,
+    env: Option<(&'static str, &'static str)>,
     expected: Expected,
 }
 
 fn run_case(name: &str, case: Case) {
     let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let _env = case.env.map(|(name, value)| EnvGuard::set(name, value));
     let repo = Repo::new(name);
     let _path = if matches!(case.expected, Expected::Missing | Expected::NoFiles) {
         PathGuard::git_only(&repo)
@@ -183,12 +189,51 @@ const HIT: Expected = Expected::Hit { line: Some(1), message: Some(MESSAGE) };
 
 macro_rules! case {
     ($file:expr, $source:expr, $check:expr, $config:expr, $extra:expr, $expected:expr) => {
-        Case { file: $file, source: $source, check: $check, config: $config, extra: $extra, expected: $expected }
+        Case { file: $file, source: $source, check: $check, config: $config, extra: $extra, env: None, expected: $expected }
     };
+    ($file:expr, $source:expr, $check:expr, $config:expr, $extra:expr, $expected:expr, $env:expr) => {
+        Case { env: Some($env), ..case!($file, $source, $check, $config, $extra, $expected) }
+    };
+}
+
+#[test]
+fn old_hadolint_no_file_before_floor() {
+    let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let mut failed = Vec::new();
+    for (name, file, old_floor) in [("no-file", "README", false), ("matching-file", "Dockerfile", true)] {
+        let result = std::panic::catch_unwind(|| {
+            let repo = Repo::new(name);
+            let _path = PathGuard::git_only(&repo);
+            repo.write("bin/hadolint", "#!/bin/sh\necho 'Haskell Dockerfile Linter 2.14.0'\n");
+            fs::set_permissions(repo.0.join("bin/hadolint"), fs::Permissions::from_mode(0o755)).unwrap();
+            repo.write(file, "FROM ubuntu\n");
+            repo.write("temperare.toml", "version = 1\n[[rule]]\nid = \"docker\"\nengine = \"hadolint\"\ncheck = \"DL3006\"\npaths = [\"**\"]\nfix = \"Tag the image.\"\n");
+            let rules = RuleFile::read(&repo.0.join("temperare.toml")).unwrap();
+            let checked = run_rules_versioned_at(&rules, &repo.0, &[], None);
+            assert_eq!(checked.engines.len(), 1, "{name}: {:?}", checked.engines);
+            assert_eq!(checked.engines[0].engine, Engine::Hadolint, "{name}");
+            assert_eq!(checked.engines[0].version.as_deref(), Some("2.14.0"), "{name}");
+            assert_eq!(checked.runs.len(), 1, "{name}: {:?}", checked.runs);
+            let run = &checked.runs[0];
+            if old_floor {
+                assert_eq!(run.no_files, None, "{name}: {run:?}");
+                assert_eq!(run.not_available_cause, Some(NotAvailableCause::Other), "{name}: {run:?}");
+                let RuleOutcome::NotAvailable { why, .. } = &run.outcome else { panic!("{name}: {run:?}") };
+                assert_eq!(why, "hadolint 2.14.0 is older than hadolint 2.15.1, the release temperare's list of hadolint codes was taken from", "{name}");
+            } else {
+                assert_eq!(run.outcome, RuleOutcome::Findings(vec![]), "{name}: {run:?}");
+                assert_eq!(run.no_files.as_deref(), Some("no file its engine checks"), "{name}");
+                assert_eq!(run.not_available_cause, None, "{name}");
+            }
+        });
+        if result.is_err() { failed.push(name); } else { eprintln!("{name}: PASS"); }
+    }
+    assert!(failed.is_empty(), "failed rows: {failed:?}");
 }
 
 cases! {
     dockerfile => case!("Dockerfile", VIOLATION, "DL3006", None, None, HIT),
+    environment_ignore => case!("Dockerfile", VIOLATION, "DL3006", None, None, HIT, ("HADOLINT_IGNORE", "DL3006")),
     containerfile => case!("Containerfile", VIOLATION, "DL3006", None, None, HIT),
     named_dockerfile => case!("web.Dockerfile", VIOLATION, "DL3006", None, None, HIT),
     space_path => case!("sub dir/Dockerfile", VIOLATION, "DL3006", None, None, HIT),

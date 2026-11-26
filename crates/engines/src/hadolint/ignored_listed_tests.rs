@@ -45,8 +45,8 @@ fn ignored_listed_cases() {
             (None, Clean) => true,
             (Some(why), Hides(line)) => {
                 why == &format!(
-                    "/r/.hadolint.yaml: line {line}: `ignored` hides hadolint findings outside the rule file; put \
-                     exceptions in the rule file (S-67 (1))"
+                    "/r/.hadolint.yaml: line {line}: `ignored` hides hadolint findings and tm cannot turn it off; put \
+                     exceptions in the rule file"
                 )
             }
             (Some(why), Unreadable(line, what)) => {

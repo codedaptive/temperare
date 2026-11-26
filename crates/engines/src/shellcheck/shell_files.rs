@@ -3,24 +3,26 @@
 //! has no unit-test sibling.
 
 use super::{read_head, shell_files_with};
+use crate::checked_out::checked_out;
 use crate::git_stop::git_stop;
 use crate::is_regular_file::is_regular_file;
 use crate::repo_top::repo_top;
 use crate::types::Stop;
+use ccvcslib::{GitVcs, Vcs};
 use std::path::{Path, PathBuf};
 
 /// The scripts under `folder` (canonical), relative to it, as `shell_files_with` keeps them from the repository's
-/// listing: the tracked files (procio drops those deleted from disk and every skip-worktree entry, and lists an
-/// unmerged file once, as it is in the work tree), then the untracked files git does not ignore. The untracked
-/// listing covers the whole work tree, so the folder filter keeps only what is under `folder`. No path reached through
-/// a symlink is kept: `is_regular_file` follows no component below the repository's top, the file itself included, so
-/// neither a symlinked script nor a script under a symlinked folder reaches shellcheck. The top is `repo_top`'s, so it
-/// shares `folder`'s form and holds no link. The listing runs git through procio, not the host, so it is not counted;
-/// a git error is `git_stop`'s `Stop`. Off unix `read_head` reads nothing, so a file with no extension is left out
-/// there.
+/// listing: ccvcslib's `tracked_entries` as `checked_out` keeps them (deleted and skip-worktree entries left out, an
+/// unmerged path once), then the untracked files git does not ignore. Both listings cover the whole working copy, so
+/// the folder filter keeps only what is under `folder`. No path reached through a symlink is kept: `is_regular_file`
+/// follows no component below the repository's top, the file itself included, so neither a symlinked script nor a
+/// script under a symlinked folder reaches shellcheck. The top is `repo_top`'s, so it shares `folder`'s form and holds
+/// no link. The listing runs git through ccvcslib, not the host, so it is not counted; a git error is `git_stop`'s
+/// `Stop`. Off unix `read_head` reads nothing, so a file with no extension is left out there.
 pub(crate) fn shell_files(folder: &Path) -> Result<Vec<PathBuf>, Stop> {
     let top = repo_top(folder)?;
-    let mut listed = procio::tracked_files::<&str>(folder, &[]).map_err(git_stop)?;
-    listed.extend(procio::untracked_files(folder).map_err(git_stop)?);
+    let vcs = GitVcs::default();
+    let mut listed = checked_out(vcs.tracked_entries(&top).map_err(|err| git_stop(err, procio::which))?);
+    listed.extend(vcs.untracked_entries(&top).map_err(|err| git_stop(err, procio::which))?);
     Ok(shell_files_with(folder, &top, &listed, &|full: &Path| is_regular_file(&top, full), &read_head))
 }

@@ -44,8 +44,6 @@ mod md_rule_of_tests;
 #[cfg(test)]
 mod md_rule_tests;
 #[cfg(test)]
-mod md_rules_from_tests;
-#[cfg(test)]
 mod md_rules_tests;
 #[cfg(test)]
 mod options_file_why_tests;

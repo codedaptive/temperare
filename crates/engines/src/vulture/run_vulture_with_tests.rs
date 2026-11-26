@@ -10,9 +10,9 @@ use std::path::{Path, PathBuf};
 #[test]
 fn run_vulture_with_adds_exclusions_or_stops_before_running() {
     let cases = [
-        ("no listing", None, Some(vec!["--config=/dev/null", "."])),
-        ("ignored folder", Some(vec![(PathBuf::from("/w/py/.venv"), true)]), Some(vec!["--config=/dev/null", "--exclude=/w/py/.venv/*", "."])),
-        ("comma", Some(vec![(PathBuf::from("/w/py/a,b.py"), false)]), None),
+        ("nothing ignored", Ok(vec![]), Some(vec!["--config=/dev/null", "."])),
+        ("ignored folder", Ok(vec![(PathBuf::from("/w/py/.venv"), true)]), Some(vec!["--config=/dev/null", "--exclude=/w/py/.venv/*", "."])),
+        ("comma", Ok(vec![(PathBuf::from("/w/py/a,b.py"), false)]), None),
     ];
     let mut failed = Vec::new();
     for (name, entries, expected_args) in cases {

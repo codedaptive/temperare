@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 #[test]
 fn stylelint_entry_builds_the_command_and_reads_the_version() {
     assert_eq!((STYLELINT.name, STYLELINT.engine, STYLELINT.program), ("stylelint", Engine::Stylelint, "stylelint"));
-    assert_eq!((STYLELINT.needs, STYLELINT.never, STYLELINT.pick), (&["stylelint"][..], None, Pick::None));
+    assert_eq!((STYLELINT.needs, STYLELINT.never, STYLELINT.pick), (&["stylelint", "node"][..], None, Pick::None));
     let cmd = entry_cmd(&STYLELINT, OsStr::new("color-named"), &[], Some("cfg/.stylelintrc.json"), Path::new("/w/css"));
     let want = [
         "--formatter",

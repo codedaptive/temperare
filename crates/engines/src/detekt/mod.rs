@@ -3,14 +3,16 @@
 //! not-listed stop for a well-formed name that is not in the list, the rules a check picks, and tm's own config layer
 //! that makes each picked rule run on every file detekt is given, whatever the repository's config says; the listing
 //! of the Kotlin sources in a repository (tracked, and untracked but not ignored; never a symlink) and its no-file
-//! outcome before availability; detekt's arguments, its output reshaped around the SARIF report file, detekt's words
-//! for a rule it lacks, and the reader of the report; and the rules that need type resolution
+//! outcome before availability (settled by `engine_listed`, in `engine_hits_with`'s step 1); detekt's arguments, its
+//! output reshaped around the SARIF report file, detekt's words for a rule it lacks, and the reader of the report; and
+//! the rules that need type resolution
 //! (`detekt_typed_rules.txt`, read by `typed_rule`), which tm cannot run, with the why a check naming one is not
 //! available.
 
 mod detekt_args;
 mod detekt_entry;
 mod detekt_layer;
+mod detekt_list_version;
 mod detekt_output;
 mod detekt_refusal;
 mod detekt_rule_list;
@@ -29,6 +31,8 @@ mod detekt_args_tests;
 mod detekt_entry_tests;
 #[cfg(test)]
 mod detekt_layer_tests;
+#[cfg(test)]
+mod detekt_list_version_tests;
 #[cfg(test)]
 mod detekt_output_tests;
 #[cfg(test)]
@@ -51,6 +55,7 @@ mod unknown_rule_tests;
 pub(crate) use detekt_args::detekt_args;
 pub use detekt_entry::DETEKT;
 pub(crate) use detekt_layer::detekt_layer;
+pub(crate) use detekt_list_version::DETEKT_LIST_VERSION;
 pub(crate) use detekt_output::detekt_output;
 pub(crate) use detekt_refusal::detekt_refusal;
 pub(crate) use detekt_rule_list::detekt_rule_list;

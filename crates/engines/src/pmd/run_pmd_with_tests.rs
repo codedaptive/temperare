@@ -24,7 +24,7 @@ const FIXED: [&str; 6] = [
 #[test]
 fn run_pmd_with_hands_pmd_the_files_the_rule_applies_to() {
     let hit = Hit { path: RelPath::new("Foo.java"), line: Some(2), col: Some(17), what: "Avoid unused private fields such as 'unused'.".to_string() };
-    let failed = Stop::Failed { code: Some(128), stderr: "fatal: not a git repository".into() };
+    let failed = Stop::Failed { code: None, stderr: "not a working copy".into() };
     let no_files = Stop::NoFiles { why: "no file its engine checks".into() };
     let comma = Stop::Failed {
         code: None,

@@ -9,7 +9,10 @@ fn yaml_settings_cases() {
     let falsy = "a: false\nb: FALSE\nc: ~\nd:\ne: NULL\nf: 0\ng: -0\nh: +0\ni: 00\nj: 0.0\nk: .0\nl: 0.\nm: 0E5\nn: 0x00\no: 0o0\np: .NaN\n";
     let truthy = "a: yes\nb: no\nc: off\nd: 0b0\ne: -0x0\nf: .Nan\ng: fAlse\nh: 1\ni: .inf\nj: 0.1\nk: 1e0\nl: 0e\nm: 0_0\n";
     let all = |keys: &str, on: bool| keys.split(' ').map(|key| (key.to_string(), on)).collect::<Vec<_>>();
-    let rows: [(&str, &str, Result<Vec<(String, bool)>, &str>); 27] = [
+    let rows: [(&str, &str, Result<Vec<(String, bool)>, &str>); 30] = [
+        ("underflow", "MD013: 1e-400\n", Ok(all("MD013", false))),
+        ("zero exponent", "MD013: 0e5\n", Ok(all("MD013", false))),
+        ("nonzero exponent", "MD013: 1e-5\n", Ok(all("MD013", true))),
         ("empty", "", Ok(vec![])),
         ("comment and marker only", "# nothing\n---\n", Ok(vec![])),
         ("name and alias", "MD013: false\nline-length: true\n", Ok(all("MD013", false).into_iter().chain(all("line-length", true)).collect())),

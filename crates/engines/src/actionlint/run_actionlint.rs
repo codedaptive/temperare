@@ -21,7 +21,7 @@ use std::path::{Path, PathBuf};
 ///    the rule applies to, nothing runs and the rule is its `NoFiles`. `engine_hits_with`'s step 1
 ///    (`engine_listed`) settles that before availability; this guard decides only when that listing failed and
 ///    this one succeeds;
-/// 2. the repository top (`repo_top`); a `folder` in no repository is `Failed` with git's error;
+/// 2. the repository top (`repo_top`); a `folder` in no repository is `Failed` with ccvcslib's error;
 /// 3. the config tm passes (`actionlint_config`: the rule's, else the top's `.github/actionlint.yaml` or `.yml`);
 ///    when there is one, its text, a file it cannot read being `Failed` naming it, and `config_suppression`: an
 ///    `ignore` in it, or text tm cannot read, is `Failed` naming the file and line (S-67 (1));

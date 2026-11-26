@@ -33,7 +33,7 @@ pub static GITLEAKS: Entry = Entry {
     params: Params::Args(&[]),
     config: Some("--config="),
     after: &["."],
-    version: Some(VersionProbe { args: &["version"], read: version_word }),
+    version: Some(VersionProbe { args: &["version"], read: version_word, wrap: None }),
     refuse: gitleaks_refusal,
     unknown: unknown_rule_id,
     read: parse_gitleaks,

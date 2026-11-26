@@ -33,8 +33,6 @@ mod report_warning_tests;
 #[cfg(test)]
 mod report_why_tests;
 #[cfg(test)]
-mod run_stylelint_with_tests;
-#[cfg(test)]
 mod stylelint_entry_tests;
 #[cfg(test)]
 mod stylelint_refusal_tests;

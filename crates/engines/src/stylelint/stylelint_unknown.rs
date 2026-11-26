@@ -4,8 +4,8 @@ use super::stylelint_report;
 use procio::Output;
 
 /// The text of the first warning in `out`'s report whose `rule` is `check` and whose text starts with
-/// `Unknown rule ` (stylelint reports a rule its config names but does not know once per linted file, as
-/// `Unknown rule <name>. Did you mean <x>?`); None when there is no report or no such warning. An unknown rule of
+/// `Unknown rule ` (stylelint 18.1.0, given two files and a config naming a rule it does not know, put one warning
+/// `Unknown rule <name>. Did you mean <x>?` in each file's entry: fixtures/fixtures.txt); None when there is no report or no such warning. An unknown rule of
 /// another name (one the config names besides the check) is not about the check, so the rule is never blamed for it.
 pub(crate) fn stylelint_unknown(out: &Output, check: &str) -> Option<String> {
     stylelint_report(out)?

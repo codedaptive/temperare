@@ -53,6 +53,7 @@ dependencies = [
 name = "engines"
 version = "0.1.0"
 dependencies = [
+ "ccvcslib",
  "libc",
  "procio",
  "regex-syntax",

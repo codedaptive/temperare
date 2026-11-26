@@ -3,6 +3,7 @@
 
 use super::{cop_excludes, inspected_files, left_out, rubocop_probe, todo_why, with_rubocop_env};
 use crate::entry::{run_plain, Entry};
+use crate::failed::failed;
 use crate::host::Host;
 use crate::types::{Hit, Stop};
 use procio::{Cmd, Output, ProcError};
@@ -90,8 +91,4 @@ fn beyond_stock(repo: &str, show: &str, rule: &Rule, folder: &Path, host: &Host)
         }
     }
     Ok(())
-}
-
-fn failed(stderr: String) -> Stop {
-    Stop::Failed { code: None, stderr }
 }

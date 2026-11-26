@@ -48,7 +48,7 @@ pub static SWIFTLINT: Entry = Entry {
     },
     config: Some("--config="),
     after: &[],
-    version: Some(VersionProbe { args: &["version"], read: version_word }),
+    version: Some(VersionProbe { args: &["version"], read: version_word, wrap: None }),
     refuse: swiftlint_refusal,
     unknown: unknown_rule,
     read: parse_swiftlint,

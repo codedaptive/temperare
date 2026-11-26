@@ -13,8 +13,9 @@ use super::ValeConfig;
 ///
 /// Only `StylesPath` and `Vocab` come from the repository, so its skip keys (`BlockIgnores`, `TokenIgnores`,
 /// `IgnoredScopes`, `SkippedScopes`, `IgnoredClasses`), its sections and their `Style.Rule = NO` lines never reach
-/// Vale (S-67 (1), S-81). Err, naming the value, when a value written holds a line break (it would start another
-/// setting) or is a path that is not UTF-8.
+/// Vale (S-67 (1), S-81): `ValeConfig` holds only styles, vocab, paths and files, so nothing else can be written, and
+/// vale_wrapper_tests.rs pins the exact text. Err, naming the value, when a value written holds a line break (it would
+/// start another setting) or is a path that is not UTF-8.
 pub(crate) fn vale_wrapper(config: &ValeConfig, style: &str) -> Result<String, String> {
     let mut text = String::new();
     if let Some(path) = config.paths.first() {

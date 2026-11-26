@@ -20,13 +20,19 @@ const VIOLATION: &str = "SELECT a  FROM t\n";
 /// 25,500 bytes: over sqlfluff's default `large_file_skip_byte_limit` (20,000), so sqlfluff skips the file unreported.
 static LARGE: LazyLock<String> = LazyLock::new(|| "SELECT a FROM t;\n".repeat(1500));
 
-struct Repo(PathBuf);
+struct Repo(PathBuf, bool);
 
 impl Repo {
-    fn new(name: &str, filename: &str, source: &str, check: &str) -> Self {
+    fn new(name: &str, filename: &str, source: &str, check: &str, above_config: Option<&str>) -> Self {
         let path = std::env::temp_dir().join(format!("engines-zit-{}-sqlfluff-{name}", std::process::id()));
         fs::create_dir(&path).unwrap();
-        let repo = Self(fs::canonicalize(path).unwrap());
+        let path = if let Some(config) = above_config {
+            fs::write(path.join(".sqlfluff"), config).unwrap();
+            let repo = path.join("repo");
+            fs::create_dir(&repo).unwrap();
+            repo
+        } else { path };
+        let repo = Self(fs::canonicalize(path).unwrap(), above_config.is_some());
         support::git::git(&repo.0, &["init", "-q"], b"");
         fs::write(repo.0.join(filename), source).unwrap();
         fs::write(repo.0.join("temperare.toml"), format!(
@@ -38,7 +44,7 @@ impl Repo {
 
 impl Drop for Repo {
     fn drop(&mut self) {
-        fs::remove_dir_all(&self.0).unwrap();
+        fs::remove_dir_all(if self.1 { self.0.parent().unwrap() } else { &self.0 }).unwrap();
     }
 }
 
@@ -80,7 +86,6 @@ impl Drop for PathGuard {
 enum Expected {
     Finding,
     Clean,
-    Failed,
     FailedSaying(&'static str),
     NoDialect,
     UnknownCheck,
@@ -93,6 +98,7 @@ struct Case {
     check: &'static str,
     source: &'static str,
     config: Option<&'static str>,
+    above_config: Option<&'static str>,
     ignore: bool,
     absent: bool,
     expected: Expected,
@@ -102,7 +108,7 @@ fn run_case(case: Case) {
     let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let no_files = matches!(case.expected, Expected::NoFiles);
     let filename = if no_files { "README.txt" } else { "q.sql" };
-    let repo = Repo::new(case.name, filename, case.source, case.check);
+    let repo = Repo::new(case.name, filename, case.source, case.check, case.above_config);
     if let Some(config) = case.config {
         fs::write(repo.0.join(".sqlfluff"), config).unwrap();
     }
@@ -136,10 +142,6 @@ fn run_case(case: Case) {
         Expected::Clean => {
             assert_eq!(run.not_available_cause, None, "{}: {run:?}", case.name);
             assert_eq!(run.outcome, RuleOutcome::Findings(vec![]), "{}", case.name);
-        }
-        Expected::Failed => {
-            assert_eq!(run.not_available_cause, None, "{}: {run:?}", case.name);
-            assert!(matches!(&run.outcome, RuleOutcome::Failed { .. }), "{}: {run:?}", case.name);
         }
         Expected::FailedSaying(text) => {
             assert_eq!(run.not_available_cause, None, "{}: {run:?}", case.name);
@@ -178,10 +180,11 @@ fn run_case(case: Case) {
 
 macro_rules! cases {
     ($( $test:ident: ($name:expr, $check:expr, $source:expr, $config:expr,
-        $ignore:expr, $absent:expr, $expected:ident $(($saying:expr))?) ),+ $(,)?) => {
+        $ignore:expr, $absent:expr, $expected:ident $(($saying:expr))? $(, $above:expr)?) ),+ $(,)?) => {
         $(#[test]
         fn $test() {
             run_case(Case { name: $name, check: $check, source: $source, config: $config,
+                above_config: None $(.or(Some($above)))?,
                 ignore: $ignore, absent: $absent, expected: Expected::$expected $(($saying))? });
         })+
     };
@@ -194,14 +197,15 @@ cases! {
     inline_noqa_does_not_suppress: ("noqa", "LT01", "SELECT a  FROM t -- noqa: LT01\n", Some(DIALECT), false, false, Finding),
     ignore_file_does_not_suppress: ("ignore-file", "LT01", VIOLATION, Some(DIALECT), true, false, Finding),
     exclude_rules_does_not_suppress: ("exclude", "LT01", VIOLATION, Some("[sqlfluff]\ndialect = ansi\nexclude_rules = LT01\n"), false, false, Finding),
-    ignored_parsing_error_fails: ("parsing", "LT01", "SELECT FROM WHERE (((\n", Some("[sqlfluff]\ndialect = ansi\nignore = parsing\n"), false, false, Failed),
+    ignored_parsing_error_fails: ("parsing", "LT01", "SELECT FROM WHERE (((\n", Some("[sqlfluff]\ndialect = ansi\nignore = parsing\n"), false, false, FailedSaying("PRS")),
     dbt_templater_fails: (
         "dbt", "LT01", VIOLATION, Some("[sqlfluff]\ndialect = ansi\ntemplater = dbt\n"),
         false, false, FailedSaying("sqlfluff-templater-dbt")
     ),
     missing_dialect_is_not_available: ("dialect", "LT01", VIOLATION, None, false, false, NoDialect),
+    above_top_dialect_is_not_loaded: ("above-top", "LT01", VIOLATION, None, false, false, NoDialect, DIALECT),
     unknown_check_is_not_available: ("unknown", "NOPE99", VIOLATION, Some(DIALECT), false, false, UnknownCheck),
-    large_file_fails: ("large", "LT01", LARGE.as_str(), Some(DIALECT), false, false, Failed),
+    large_file_fails: ("large", "LT01", LARGE.as_str(), Some(DIALECT), false, false, FailedSaying("large_file_skip_byte_limit")),
     missing_engine_is_not_available: ("missing", "LT01", VIOLATION, Some(DIALECT), false, true, MissingEngine),
     no_sql_file_precedes_missing_engine: ("no-sql", "LT01", "tracked\n", Some(DIALECT), false, true, NoFiles),
 }

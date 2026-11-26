@@ -4,6 +4,7 @@
 use super::{config_data, is_yaml_source, yamllint_config};
 use crate::check_run::check_run;
 use crate::entry::{entry_cmd, Entry};
+use crate::failed::failed;
 use crate::host::Host;
 use crate::no_script::no_script;
 use crate::parse_failed::parse_failed;
@@ -21,8 +22,8 @@ use std::path::{Path, PathBuf};
 ///    settles that before availability; this guard decides only when that listing failed and this one succeeds. The
 ///    files kept are those the rule applies to, relative to `folder`, where yamllint runs;
 /// 2. the base config (`yamllint_config`), looked for from `folder` up to the repository top (`repo_top`); a `folder`
-///    in no repository is `Failed` with git's error. A config the rule names that is not a file is `Failed` naming it,
-///    since yamllint given a missing base prints only a traceback;
+///    in no repository is `Failed` with ccvcslib's error. A config the rule names that is not a file is `Failed`
+///    naming it, since yamllint given a missing base prints only a traceback;
 /// 3. the `-d` text (`config_data`), which turns off the config's ignores, so every file passed is linted; a base path
 ///    that is not UTF-8 is `Failed`;
 /// 4. the check run: `entry_cmd`, `-d <text>`, `--` and the files, through `check_run` so it is counted; yamllint
@@ -49,8 +50,4 @@ pub(crate) fn run_yamllint(entry: &Entry, rule: &Rule, folder: &Path, host: &Hos
         return Err(Stop::UnknownCheck { said });
     }
     (entry.read)(&out, &rule.check, folder, folder).map_err(|err| parse_failed(&out, err))
-}
-
-fn failed(stderr: String) -> Stop {
-    Stop::Failed { code: None, stderr }
 }

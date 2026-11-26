@@ -105,9 +105,9 @@ fn a_param_the_flow_cannot_read_fails_before_the_change_is_read() {
 
 #[test]
 fn the_readers_stop_is_the_rules() {
-    let stop = Stop::Failed { code: Some(128), stderr: "git diff: exit 128: fatal: bad revision".to_string() };
+    let stop = Stop::Failed { code: None, stderr: "abc123: not a revision in this repository".to_string() };
     let (got, _, _, raw_chars) = run(&rule("test_ratio", PARAMS), Some("abc123"), Err(stop));
-    assert_eq!(got, Err(Stop::Failed { code: Some(128), stderr: "git diff: exit 128: fatal: bad revision".to_string() }));
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "abc123: not a revision in this repository".to_string() }));
     assert_eq!(raw_chars, None);
 }
 

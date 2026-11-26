@@ -1,11 +1,11 @@
 //! `RUBOCOP`: the rubocop engine as an entry.
 
-use super::{parse_rubocop, rubocop_refusal, run_rubocop, unrecognized_cop};
+use super::{parse_rubocop, rubocop_refusal, run_rubocop, unrecognized_cop, with_rubocop_env};
 use crate::entry::{version_word, Entry, Params, Pick, VersionProbe};
 use rules::Engine;
 
 /// `rubocop --cache false --no-server --format json --ignore-disable-comments --only=<check> [--config=<config>] .`
-/// run in the rule file's folder, read by `parse_rubocop`; `run_rubocop` runs it, then the probes below.
+/// run in the rule file's folder, read by `parse_rubocop`; `run_rubocop` runs it, then the config probes below.
 ///
 /// The check is a comma-separated list of full cop names (`Lint/UselessAssignment,Style/StringLiterals`), passed as
 /// `--only=`, which runs those cops even where the config disables them. Anything else (a department, a wildcard, an
@@ -18,13 +18,14 @@ use rules::Engine;
 /// The config is the repository's own: the `.rubocop.yml` rubocop finds from the folder up, or the rule's `config`,
 /// given as `--config=<config>`.
 ///
-/// The environment: every command the flow runs (the check run and its probes) gets RUBOCOP_OPTS set empty, so no
-/// options come from the caller's environment, and http_proxy, https_proxy, HTTP_PROXY and HTTPS_PROXY set to a dead
-/// loopback proxy with no_proxy and NO_PROXY empty, so a remote `inherit_from: https://...` fails (exit 2, `Failed`)
-/// instead of being fetched (`with_rubocop_env`). The version probe, `rubocop --force-default-config --version`, runs
-/// without them: plain `--version` loads the folder's config first (and so would fetch a remote `inherit_from`), while
-/// `--force-default-config` makes rubocop read no config file, so the probe makes no fetch. `--cache false` keeps the
-/// check run from writing rubocop's result cache and `--no-server` from starting or using its server.
+/// The environment: the check run, its config probes (`rubocop_probe`) and the version probe (applied by
+/// `engine_version` through the probe's `wrap`) all get RUBOCOP_OPTS set empty, so no options come from the caller's
+/// environment, and http_proxy, https_proxy, HTTP_PROXY and HTTPS_PROXY set to a dead loopback proxy with no_proxy and
+/// NO_PROXY empty, so a remote `inherit_from: https://...` fails (exit 2, `Failed`) instead of being
+/// fetched (`with_rubocop_env`). The version probe is `rubocop --force-default-config --version`:
+/// plain `--version` loads the folder's config first (and so would fetch a remote `inherit_from`), while
+/// `--force-default-config` makes rubocop read no config file. `--cache false` keeps the check run from writing
+/// rubocop's result cache and `--no-server` from starting or using its server.
 ///
 /// Suppressions, and what is done about each (S-67 (1): each is turned off, or makes the rule `Failed` with a why
 /// that says exceptions go in the rule file):
@@ -61,7 +62,11 @@ pub static RUBOCOP: Entry = Entry {
     params: Params::Args(&[]),
     config: Some("--config="),
     after: &["."],
-    version: Some(VersionProbe { args: &["--force-default-config", "--version"], read: version_word }),
+    version: Some(VersionProbe {
+        args: &["--force-default-config", "--version"],
+        read: version_word,
+        wrap: Some(with_rubocop_env),
+    }),
     refuse: rubocop_refusal,
     unknown: unrecognized_cop,
     read: parse_rubocop,
