@@ -1,4 +1,5 @@
 use std::ffi::OsString;
+#[cfg(unix)]
 use std::os::unix::ffi::OsStringExt;
 use std::path::Path;
 
@@ -23,6 +24,8 @@ fn args_are_one_rev_colon_path_object_after_end_of_options() {
     assert_eq!(blob_at_args("HEAD", Path::new("sub/g d.txt")), args(&["show", "--end-of-options", "HEAD:sub/g d.txt"]));
 }
 
+// Unix only: it builds a non-UTF-8 path from raw bytes, which only unix's OsString allows.
+#[cfg(unix)]
 #[test]
 fn non_utf8_path_bytes_are_kept_in_the_object() {
     let path = OsString::from_vec(b"bin\xffary".to_vec());

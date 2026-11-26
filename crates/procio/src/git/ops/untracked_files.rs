@@ -9,7 +9,8 @@ use crate::{run, Cmd, Output};
 
 /// The untracked files not excluded by git's standard ignore rules (`.gitignore`, `.git/info/exclude`,
 /// `core.excludesFile`), in git's order, each relative to the top of the repository. The listing covers the whole
-/// work tree even when `repo` is a subdirectory.
+/// work tree even when `repo` is a subdirectory. Off unix, a non-UTF-8 name becomes U+FFFD, so the path is not the
+/// exact bytes git listed.
 pub fn untracked_files(repo: &Path) -> Result<Vec<PathBuf>, GitError> {
     let cmd = git_cmd(repo, untracked_files_args());
     let out = run(&cmd)?;

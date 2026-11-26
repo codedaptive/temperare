@@ -10,7 +10,8 @@ use super::{parse_hunk_header, path_from_bytes, unquote_c_path};
 /// `git diff -U0 --no-color --no-renames --no-ext-diff --no-prefix --no-textconv <base> -- [paths]`.
 ///
 /// Ranges are 1-based, half-open line numbers in the new file, in file order. Each `+++` line names a file and
-/// puts it in the map, so a file whose hunks only remove lines is present with no ranges. A deleted file
+/// puts it in the map, so a file whose hunks only remove lines is present with no ranges. Off unix, non-UTF-8
+/// paths that read the same after U+FFFD merge their ranges under one key. A deleted file
 /// (`+++ /dev/null`) and files git prints with no `+++` line (binary, mode-only, new and empty) are absent.
 /// `None` when the output is malformed: a bad hunk header, a bad quoted path, or a hunk body cut short.
 pub(crate) fn parse_added_lines(diff: &[u8]) -> Option<BTreeMap<PathBuf, Vec<Range<u32>>>> {

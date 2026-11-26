@@ -9,6 +9,7 @@ use crate::git::{git_checked, git_cmd, GitError};
 use crate::{run, Cmd, Output};
 
 /// The absolute path of the top of the work tree that holds `repo`, as git prints it (symlinks resolved).
+/// Off unix, a non-UTF-8 top level becomes U+FFFD, so the path is not the exact bytes git printed.
 /// `repo` outside any repository is `GitError::NotARepository`; a `repo` that does not exist is `GitError::Exit`.
 pub fn toplevel(repo: &Path) -> Result<PathBuf, GitError> {
     let cmd = git_cmd(repo, toplevel_args());

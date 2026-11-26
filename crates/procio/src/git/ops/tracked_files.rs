@@ -9,7 +9,8 @@ use crate::git::{git_checked, git_cmd, GitError};
 use crate::{run, Cmd, Output};
 
 /// The tracked files under `repo`, in git's order, each listed once and relative to the top of the repository,
-/// leaving out those missing from the work tree and every skip-worktree entry.
+/// leaving out those missing from the work tree and every skip-worktree entry. Off unix, two different non-UTF-8
+/// names can both become U+FFFD and be listed twice.
 ///
 /// - Tracked only: the entries of the index. Untracked and ignored files are never listed.
 /// - A tracked file deleted from the work tree is dropped. A skip-worktree entry is dropped whether or not its file

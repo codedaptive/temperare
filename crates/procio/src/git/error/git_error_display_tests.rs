@@ -1,4 +1,5 @@
 use std::ffi::OsString;
+#[cfg(unix)]
 use std::os::unix::ffi::OsStringExt;
 
 use super::GitError;
@@ -48,6 +49,8 @@ fn exit_without_a_code_says_a_signal_ended_it() {
     assert_eq!(err.to_string(), "git -C /r diff: killed by a signal: x");
 }
 
+// Unix only: it builds a non-UTF-8 arg from raw bytes, which only unix's OsString allows.
+#[cfg(unix)]
 #[test]
 fn non_utf8_args_and_stderr_are_written_lossily() {
     let err = GitError::Exit {
