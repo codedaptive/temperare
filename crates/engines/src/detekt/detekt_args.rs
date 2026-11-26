@@ -1,7 +1,6 @@
 //! `detekt_args`: the arguments that give detekt its files, its config layers and the SARIF report's path.
 
 use std::ffi::OsString;
-use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::path::{Path, PathBuf};
 
 /// The longest `--input` value made. Linux takes at most 128 KiB in one argument (MAX_ARG_STRLEN); this keeps well
@@ -15,7 +14,7 @@ const MAX_ARG_BYTES: usize = 98304;
 /// `,` or `;`, since detekt splits those values on either; Err when the `--input` value would pass `MAX_ARG_BYTES`.
 pub(crate) fn detekt_args(files: &[PathBuf], config: Option<&Path>, layer: &Path, report: &Path) -> Result<Vec<OsString>, String> {
     let input = joined(files.iter().map(PathBuf::as_path))?;
-    if input.len() > MAX_ARG_BYTES {
+    if input.as_encoded_bytes().len() > MAX_ARG_BYTES {
         return Err(format!(
             "too many Kotlin files for detekt's --input (more than {MAX_ARG_BYTES} bytes in one argument); narrowing the \
              rule's paths keeps the list short"
@@ -29,16 +28,15 @@ pub(crate) fn detekt_args(files: &[PathBuf], config: Option<&Path>, layer: &Path
 
 /// The paths' bytes joined by `,`; Err naming the first path that holds `,` or `;`.
 fn joined<'a>(paths: impl Iterator<Item = &'a Path>) -> Result<OsString, String> {
-    let mut value = Vec::new();
+    let mut value = OsString::new();
     for (index, path) in paths.enumerate() {
-        let bytes = path.as_os_str().as_bytes();
-        if bytes.iter().any(|byte| matches!(byte, b',' | b';')) {
+        if path.as_os_str().as_encoded_bytes().iter().any(|byte| matches!(byte, b',' | b';')) {
             return Err(format!("cannot give detekt the path {}: detekt splits its paths on `,` and `;`", path.display()));
         }
         if index > 0 {
-            value.push(b',');
+            value.push(",");
         }
-        value.extend_from_slice(bytes);
+        value.push(path.as_os_str());
     }
-    Ok(OsString::from_vec(value))
+    Ok(value)
 }

@@ -48,6 +48,8 @@ fn parent_file_outside_folder_is_refused() {
     assert_eq!(rule_yaml_path(&tree.folder, "../outside.yml"), Err("ast-grep rule ../outside.yml is outside the rule file's folder".to_string()));
 }
 
+// Unix only: it makes the link with std::os::unix::fs::symlink, and a Windows symlink needs a privilege.
+#[cfg(unix)]
 #[test]
 fn symlink_to_file_outside_folder_is_refused() {
     let tree = Tree::new("symlink-outside");
@@ -55,6 +57,8 @@ fn symlink_to_file_outside_folder_is_refused() {
     assert_eq!(rule_yaml_path(&tree.folder, "link.yml"), Err("ast-grep rule link.yml is outside the rule file's folder".to_string()));
 }
 
+// Unix only: it makes the link with std::os::unix::fs::symlink, and a Windows symlink needs a privilege.
+#[cfg(unix)]
 #[test]
 fn symlink_to_file_inside_folder_resolves_to_canonical_path() {
     let tree = Tree::new("symlink-inside");

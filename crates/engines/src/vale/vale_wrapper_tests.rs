@@ -1,9 +1,7 @@
 //! ZUT for vale_wrapper.rs: the exact wrapper text, with and without StylesPath and Vocab; a value with a line break
-//! or a StylesPath that is not UTF-8 is Err naming it.
+//! or a StylesPath that is not UTF-8 (on unix only) is Err naming it.
 
 use super::{vale_wrapper, ValeConfig};
-use std::ffi::OsStr;
-use std::os::unix::ffi::OsStrExt;
 use std::path::PathBuf;
 
 #[test]
@@ -15,7 +13,7 @@ fn vale_wrapper_cases() {
         files: vec![PathBuf::from("/repo/.vale.ini")],
     };
     let styles = || vec![PathBuf::from("/repo/styles")];
-    let rows: [(&str, ValeConfig, &str, Result<&str, &str>); 7] = [
+    let rows: [(&str, ValeConfig, &str, Result<&str, &str>); 6] = [
         (
             "StylesPath and Vocab",
             config(styles(), &["Proj", "Base"]),
@@ -42,12 +40,6 @@ fn vale_wrapper_cases() {
             Err("the Vale config value \"/repo/sty\\rles\" holds a line break, so tm cannot write it into a config"),
         ),
         (
-            "a StylesPath not UTF-8",
-            config(vec![PathBuf::from(OsStr::from_bytes(b"/repo/st\xffyles"))], &[]),
-            "Vale",
-            Err("the Vale StylesPath /repo/st\u{fffd}yles is not UTF-8, so tm cannot write it into a config"),
-        ),
-        (
             "a style with a line break",
             config(styles(), &[]),
             "Vale\n",
@@ -58,4 +50,20 @@ fn vale_wrapper_cases() {
         let expected = expected.map(str::to_string).map_err(str::to_string);
         assert_eq!(vale_wrapper(&config, style), expected, "{label}");
     }
+}
+
+// Unix only: the non-UTF-8 StylesPath is built from raw bytes with OsStrExt::from_bytes, which only unix has.
+#[cfg(unix)]
+#[test]
+fn vale_wrapper_refuses_a_styles_path_not_utf8() {
+    use std::ffi::OsStr;
+    use std::os::unix::ffi::OsStrExt;
+    let config = ValeConfig {
+        styles: vec!["Vale".to_string(), "Other".to_string()],
+        vocab: Vec::new(),
+        paths: vec![PathBuf::from(OsStr::from_bytes(b"/repo/st\xffyles"))],
+        files: vec![PathBuf::from("/repo/.vale.ini")],
+    };
+    let expected = Err("the Vale StylesPath /repo/st\u{fffd}yles is not UTF-8, so tm cannot write it into a config".to_string());
+    assert_eq!(vale_wrapper(&config, "Vale"), expected, "a StylesPath not UTF-8");
 }

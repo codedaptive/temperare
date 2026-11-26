@@ -7,7 +7,6 @@ use crate::git_stop::git_stop;
 use crate::repo_top::repo_top;
 use crate::types::Stop;
 use ccvcslib::{GitVcs, Vcs, VcsError};
-use std::os::unix::ffi::OsStrExt;
 use std::path::{Path, PathBuf};
 
 /// The ignored entries under `folder` (canonical) as `ignored_entries` keeps them from ccvcslib's `ignored_folders`
@@ -44,7 +43,7 @@ fn holds_python(dir: &Path) -> bool {
         let path = child.path();
         match std::fs::symlink_metadata(&path) {
             Ok(meta) if meta.is_dir() => holds_python(&path),
-            Ok(meta) => meta.is_file() && path.as_os_str().as_bytes().ends_with(b".py"),
+            Ok(meta) => meta.is_file() && path.as_os_str().as_encoded_bytes().ends_with(b".py"),
             Err(_) => false,
         }
     })

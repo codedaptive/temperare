@@ -16,6 +16,26 @@ mod support {
 static LOCK: Mutex<()> = Mutex::new(());
 const VIOLATION: &str = "def f(x: int) -> int:\n    return x\n\nf(\"s\")\n";
 const FIX: &str = "Pass an argument of the expected type.";
+/// Set on the child process that runs one git-only case: the name of that case's test.
+const GIT_ONLY_CASE: &str = "ENGINES_MYPY_GIT_ONLY_CASE";
+
+/// Runs `case` when this process is the child started for `test`; otherwise starts that child and asserts it passed.
+fn in_own_process(test: &str, case: impl FnOnce()) {
+    if std::env::var_os(GIT_ONLY_CASE).is_some_and(|name| name == test) {
+        return case();
+    }
+    let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    // ccvcslib finds git once per process and keeps it, and this case's git lives in a temp folder that is removed,
+    // so it runs in its own process.
+    let out = procio::run(&procio::Cmd {
+        args: vec!["--exact".into(), test.into(), "--test-threads=1".into()],
+        env: vec![(GIT_ONLY_CASE.into(), test.into())],
+        ..procio::Cmd::new(std::env::current_exe().unwrap())
+    }).unwrap();
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert_eq!(out.code, Some(0), "{test}: {stdout}{}", String::from_utf8_lossy(&out.stderr));
+    assert!(stdout.contains("1 passed"), "{test}: {stdout}");
+}
 
 struct Repo(PathBuf);
 
@@ -142,14 +162,20 @@ fn clean_file_passes() {
 
 #[test]
 fn missing_mypy_is_not_available() {
-    let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
-    let repo = Repo::new("missing", "a.py", VIOLATION, "arg-type");
-    let _path = PathGuard::git_only(&repo);
-    assert_unavailable(repo.run(), "mypy not found on PATH", NotAvailableCause::EngineNotOnPath, true);
+    in_own_process("missing_mypy_is_not_available", || {
+        let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let repo = Repo::new("missing", "a.py", VIOLATION, "arg-type");
+        let _path = PathGuard::git_only(&repo);
+        assert_unavailable(repo.run(), "mypy not found on PATH", NotAvailableCause::EngineNotOnPath, true);
+    });
 }
 
 #[test]
 fn no_python_file_precedes_missing_engine() {
+    in_own_process("no_python_file_precedes_missing_engine", no_python_file_case);
+}
+
+fn no_python_file_case() {
     let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let repo = Repo::new("no-python", "README.txt", "tracked\n", "arg-type");
     support::git::git(&repo.0, &["add", "README.txt"], b"");

@@ -47,8 +47,14 @@ impl Drop for ShellcheckOptsGuard {
     }
 }
 
+const TEST_NAME: &str = "actionlint_rule_reports_workflows_suppressions_and_availability";
+
+/// Set on the child process that runs one temp-git row: that row's name.
+const TEMP_GIT_CASE: &str = "ENGINES_ACTIONLINT_TEMP_GIT_CASE";
+
 #[test]
 fn actionlint_rule_reports_workflows_suppressions_and_availability() {
+    let only = std::env::var(TEMP_GIT_CASE).ok();
     let original = PathGuard(std::env::var_os("PATH"));
     std::env::set_var("PATH", std::env::join_paths(
         std::iter::once(Path::new("/opt/homebrew/bin").to_path_buf())
@@ -73,7 +79,23 @@ fn actionlint_rule_reports_workflows_suppressions_and_availability() {
     ];
     let mut failed = Vec::new();
     for (name, check) in cases {
+        if only.as_deref().is_some_and(|row| row != name) {
+            continue;
+        }
         let result = std::panic::catch_unwind(|| {
+            if only.is_none() && (name == "shellcheck-absent" || name == "pyflakes-absent") {
+                // ccvcslib finds git once per process and keeps it, and this row's git lives in a temp folder that
+                // is removed, so it runs in its own process.
+                let out = procio::run(&procio::Cmd {
+                    args: vec!["--exact".into(), TEST_NAME.into(), "--test-threads=1".into()],
+                    env: vec![(TEMP_GIT_CASE.into(), name.into())],
+                    ..procio::Cmd::new(std::env::current_exe().unwrap())
+                }).unwrap();
+                let stdout = String::from_utf8_lossy(&out.stdout);
+                assert_eq!(out.code, Some(0), "{name}: {stdout}{}", String::from_utf8_lossy(&out.stderr));
+                assert!(stdout.contains("1 passed"), "{name}: {stdout}");
+                return;
+            }
             let folder = TempFolder::new(name);
             git_support::git(&folder.0, &["init", "-q"], b"");
             let no_workflow = name == "no-workflow" || name == "no-workflow-absent";

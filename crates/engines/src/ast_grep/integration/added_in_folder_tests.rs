@@ -8,22 +8,20 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-fn git(repo: &Path, args: &[&str]) {
-    let out = procio::run(&procio::git_cmd(repo, args.iter().map(Into::into).collect())).unwrap();
-    assert_eq!(out.code, Some(0), "git {args:?}: {}", String::from_utf8_lossy(&out.stderr));
-}
+#[path = "../../../tests/support/git.rs"]
+mod git_support;
 
 /// A repository under the temp folder holding `files` in its one commit; returns its canonical path.
 fn repo_with_base(test: &str, files: &[(&str, &str)]) -> PathBuf {
     let root = std::env::temp_dir().join(format!("engines-zit-{}-added-in-folder-{test}", std::process::id()));
     fs::create_dir(&root).unwrap();
     let root = fs::canonicalize(root).unwrap();
-    git(&root, &["init", "-q"]);
+    git_support::git(&root, &["init", "-q"], b"");
     for (path, text) in files {
         write(&root, path, text);
     }
-    git(&root, &["add", "-A"]);
-    git(&root, &["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "base"]);
+    git_support::git(&root, &["add", "-A"], b"");
+    git_support::git(&root, &["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "base"], b"");
     root
 }
 
