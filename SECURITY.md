@@ -137,18 +137,18 @@ does not go looking for it in the working folder. Two are found another way:
   path, and the `eslint` on `PATH` only when it does not. The folder's `eslint` is the repository's own code, trusted as
   its ESLint config and the plugins it loads are ([below](#running-it-on-code-you-do-not-trust)). stylelint and
   markdownlint-cli2 are taken from `PATH` only.
-- **git, for the questions asked through `ccvcslib`,** is started by name, and the system searches `PATH` for it
-  without skipping an empty or relative entry. Such an entry is read from a working folder, which is usually inside
-  the repository being checked.
+- **git, for the questions asked through `ccvcslib`,** is found by `ccvcslib`, once per run: the first `git` in
+  the absolute entries of your `PATH`, skipping an empty or relative entry (on Windows, `git` with each extension
+  your `PATHEXT` lists, `.EXE` when it is not set). `ccvcslib` starts that full path, so a `git` in the working
+  folder is never run.
 
 Some of them start programs of their own, which they find on `PATH` themselves: the `eslint`, `stylelint` and
 `markdownlint-cli2` scripts are run by `node`, and the `phpstan` launcher by `php` (`tm` checks that `node` or `php`
 is on `PATH`, and the rule is not available when it is not); actionlint runs `shellcheck` or `pyflakes` for a rule
 whose check is that name, and neither for any other check. PMD and detekt each start a Java they find for
 themselves; `tm` looks for none. Whoever controls `PATH` (on Windows, `PATHEXT` too) controls what runs. There is
-no sandbox. The
-twenty-eighth engine, Tessera, is the exception: a rule that names it is reported not available, and `tm` neither
-looks for it nor runs it.
+no sandbox. The twenty-eighth engine, Tessera, is the exception: a rule that names it is reported not available, and
+`tm` neither looks for it nor runs it.
 
 **The engines get your environment, with a few variables changed.** Temperare sets and removes the variables
 listed here and no others, so every other variable reaches the engine as you set it:
@@ -415,8 +415,6 @@ turns off. Try a new rule on a file you know breaks it.
 - Look for a `node_modules/.bin/eslint` in the rule file's folder. When it is there, an ESLint rule runs it, not
   the `eslint` on your `PATH`: it is the repository's code, as its ESLint config is. Remove the folder's
   `node_modules`, or leave ESLint rules out with `--rules <path>`, if you would not run that code.
-- Keep empty and relative entries out of your `PATH`: the git that `ccvcslib` starts can be found through one, in
-  a folder of the repository.
 - Expect a clippy or Periphery rule to build the code. If you would not build the repository, do not check it with
   either.
 - Use a rule file of your own with `--rules <path>` when you want your rules and not the repository's.

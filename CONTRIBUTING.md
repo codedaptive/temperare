@@ -75,7 +75,7 @@ cli       the binary: the commands, the output, the exit codes
 
 `procio` and `rules` depend on no other crate here. `engines` depends on both. `report` depends on `rules`, and on
 `procio` only in its tests. `cli` depends on all four. `engines`, `report` and `cli` also depend on `ccvcslib`, the
-Code Chi version-control library, from outside the workspace and pinned at its tag v0.1.0: every git question
+Code Chi version-control library, from outside the workspace and pinned at its tag v0.2.0: every git question
 `tm check` and `tm rules` ask goes through it.
 
 ### What a change must keep
