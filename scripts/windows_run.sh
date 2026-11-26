@@ -67,11 +67,14 @@ cmd /c "$suite --no-fail-fast > ..\\out\\cargo-test.txt 2>&1"
 Set-Content -Encoding ascii -Path ..\\out\\exits.txt -Value "cargo_test=\$test"
 EOF
 
-# Ship the steps, run, fetch, delete. The machine's folder goes even when a step fails.
+# Ship the steps, run, fetch, delete. Once the machine's folder is made it goes even when a step fails: a failed
+# upload skips the run, not the removal.
 ssh $ssh_opts "$host" "New-Item -ItemType Directory -Force -Path '$remote' | Out-Null" || exit 2
-COPYFILE_DISABLE=1 tar -c -f - -C "$stage" run.ps1 | ssh $ssh_opts "$host" "tar -x -f - -C '$remote'" || exit 2
 rc=0
-ssh $ssh_opts "$host" "powershell -NoProfile -ExecutionPolicy Bypass -File '$remote\\run.ps1'" || rc=2
+COPYFILE_DISABLE=1 tar -c -f - -C "$stage" run.ps1 | ssh $ssh_opts "$host" "tar -x -f - -C '$remote'" || rc=2
+if [ "$rc" = 0 ]; then
+  ssh $ssh_opts "$host" "powershell -NoProfile -ExecutionPolicy Bypass -File '$remote\\run.ps1'" || rc=2
+fi
 rm -rf "$out"
 mkdir -p "$out"
 ssh $ssh_opts "$host" "tar -c -f - -C '$remote' out" | tar -x -f - -C "$out" || rc=2
