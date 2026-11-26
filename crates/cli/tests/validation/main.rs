@@ -8,9 +8,9 @@
 //!
 //! Acceptance: the mission's Done list (MISSION-temperare-2026-11-16, Done 1-8, SPEC-engines-common's Done 9 for
 //! golangci-lint, pylint, clang-tidy, vulture, Periphery, gitleaks, cargo-audit, eslint, mypy, PMD, detekt, RuboCop,
-//! PHPStan, dart analyze, markdownlint-cli2, yamllint, actionlint, hadolint, Vale, stylelint and SQLFluff, and
-//! Done 10's shared run and baseline test), run against the built `temperare` with the real engines, each case in a
-//! throwaway folder it makes and removes.
+//! PHPStan, dart analyze, markdownlint-cli2, yamllint, actionlint, hadolint, Vale, stylelint, SQLFluff, ShellCheck
+//! and git, and Done 10's shared run and baseline test), run against the built `temperare` with the real engines,
+//! each case in a throwaway folder it makes and removes.
 //! Validation, not a unit or integration test: a run of the shipped binary, written by the cli lane to the
 //! orchestrator's measures (rule 11).
 //! `make accept` runs it.
@@ -78,6 +78,8 @@ mod done_9_hadolint;
 mod done_9_vale;
 mod done_9_stylelint;
 mod done_9_sqlfluff;
+mod done_9_shellcheck;
+mod done_9_git;
 mod done_10_shared_run;
 mod done_10_baseline_test;
 

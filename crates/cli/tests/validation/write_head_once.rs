@@ -22,6 +22,7 @@ use crate::temp_home::TempHome;
 static HEAD: Once = Once::new();
 
 /// One rule per engine, only so `temperare rules` says whether each engine is available; nothing is checked with them.
+/// head-git gives all three of its params in range, since a git rule without them is refused before anything runs.
 const RULES: &str = r#"version = 1
 
 [[rule]]
@@ -175,6 +176,23 @@ check = "LT01"
 fix = "none"
 
 [[rule]]
+id = "head-shellcheck"
+engine = "shellcheck"
+check = "SC2086"
+fix = "none"
+
+[[rule]]
+id = "head-git"
+engine = "git"
+check = "test_ratio"
+fix = "none"
+
+[rule.params]
+max_ratio = 2
+floor = 50
+test_paths = ["tests/**"]
+
+[[rule]]
 id = "head-tessera"
 engine = "tessera"
 check = "erosion"
@@ -185,7 +203,7 @@ fix = "none"
 /// arguments that print its version. `temperare rules` lists only RULES' engines, so an engine it lists must be
 /// here; one added to RULES is added here too. Tessera's is asked only once `temperare` says
 /// Tessera is available, which it does not yet (S-20).
-const VERSIONS: [(&str, &str, &[&str]); 26] = [
+const VERSIONS: [(&str, &str, &[&str]); 28] = [
     ("clippy", "cargo", &["clippy", "--version"]),
     ("swiftlint", "swiftlint", &["version"]),
     ("ruff", "ruff", &["--version"]),
@@ -211,6 +229,8 @@ const VERSIONS: [(&str, &str, &[&str]); 26] = [
     ("vale", "vale", &["--version"]),
     ("stylelint", "stylelint", &["--version"]),
     ("sqlfluff", "sqlfluff", &["--version"]),
+    ("shellcheck", "shellcheck", &["--version"]),
+    ("git", "git", &["--version"]),
     ("tessera", "ts", &["--version"]),
 ];
 
@@ -255,9 +275,11 @@ fn engine_line(rule: &Value) -> String {
 
 /// The first line `program args` prints (stdout, else stderr), run in the temp folder and the environment `temperare`
 /// gets; for pmd, the first line starting `PMD ` (`PMD 7.29.0 (...)`), since an ASCII-art banner comes before it;
-/// "no version printed" when it prints no such line; "not installed" when procio finds no such program; procio's
-/// error when it gives no answer otherwise; the exit code when the program fails. markdownlint-cli2's probe, `--help`,
-/// exits 2 after its version line (`markdownlint-cli2 v0.24.2 (markdownlint v0.42.2)`), so exit 2 is its answer.
+/// for shellcheck, the first line starting `version:` (leading space ignored, `version: 0.11.0`), since its first
+/// line is its name; "no version printed" when it prints no such line; "not installed" when procio finds no such
+/// program; procio's error when it gives no answer otherwise; the exit code when the program fails.
+/// markdownlint-cli2's probe, `--help`, exits 2 after its version line
+/// (`markdownlint-cli2 v0.24.2 (markdownlint v0.42.2)`), so exit 2 is its answer.
 fn version(program: &str, args: &[&str]) -> String {
     let home = TempHome::new();
     let cmd = Cmd {
@@ -270,7 +292,11 @@ fn version(program: &str, args: &[&str]) -> String {
         Ok(out) if out.code == Some(0) || (program == "markdownlint-cli2" && out.code == Some(2)) => {
             let printed = if out.stdout.is_empty() { &out.stderr } else { &out.stdout };
             let text = String::from_utf8_lossy(printed);
-            let line = text.lines().find(|line| program != "pmd" || line.starts_with("PMD "));
+            let line = text.lines().find(|line| match program {
+                "pmd" => line.starts_with("PMD "),
+                "shellcheck" => line.trim_start().starts_with("version:"),
+                _ => true,
+            });
             let first = line.unwrap_or("").trim().to_string();
             if first.is_empty() {
                 "no version printed".to_string()

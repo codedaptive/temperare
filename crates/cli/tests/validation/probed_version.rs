@@ -15,6 +15,8 @@ use crate::temp_home::TempHome;
 ///   the word after a leading `markdownlint-cli2 v`, whatever the exit code;
 /// - `pmd` (`pmd_version`): the second word of the first stdout line starting `PMD ` (its ASCII-art banner comes
 ///   first);
+/// - `shellcheck` (`shellcheck_version`): the text after `version:` on stdout's first line that starts with it (leading
+///   space ignored), trimmed (`version: 0.11.0`), since its first line is its name;
 /// - any other program (`version_word`): on stdout's first non-empty line, the first word starting with an ASCII
 ///   digit, with a trailing `,` or `)` trimmed.
 ///
@@ -35,6 +37,7 @@ pub fn probed_version(program: &str, args: &[&str], dir: &Path) -> String {
             first.trim_start().strip_prefix("markdownlint-cli2 v").and_then(|rest| rest.split_whitespace().next())
         }
         "pmd" => stdout.lines().find(|line| line.starts_with("PMD ")).and_then(|line| line.split_whitespace().nth(1)),
+        "shellcheck" => stdout.lines().find_map(|line| line.trim_start().strip_prefix("version:")).map(str::trim),
         _ => first
             .split_whitespace()
             .find(|w| w.starts_with(|c: char| c.is_ascii_digit()))
