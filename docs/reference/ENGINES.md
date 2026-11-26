@@ -18,8 +18,11 @@ The engines, in the order of this page: [clippy](#clippy), [swiftlint](#swiftlin
 
 ## What holds for every engine
 
-- **Found on `PATH`.** An engine is available when the programs it needs are on the `PATH` that `tm` was started
-  with. `tm rules` shows the answer per rule without running anything.
+- **Found on `PATH`.** An engine is available when the programs it needs are in the absolute entries of the `PATH`
+  that `tm` was started with; an empty or relative entry is skipped. ESLint is the exception: `tm check` first
+  looks for `node_modules/.bin/eslint` in the rule file's folder ([eslint](#eslint)). ESLint, stylelint and
+  markdownlint-cli2 also need `node` on `PATH`. `tm rules` shows the answer per rule without running anything, from
+  `PATH` alone.
 - **Run as a program, never through a shell.** Each argument is passed as one argument, as written.
 - **A rule's value is passed as a value, not as an option.** A `check`, `config` or `params.allow` value that
   begins with `-` is a problem in the rule file, and nothing runs. Each value reaches the engine joined to its own
@@ -61,14 +64,20 @@ The engines, in the order of this page: [clippy](#clippy), [swiftlint](#swiftlin
   when every rule that names it is refused or covers no file. The version is named in the reason of a check the
   engine does not know, and of a ShellCheck code, a detekt name, a hadolint code or a markdownlint rule that is not
   on `tm`'s list (below).
-- **No time limit.** `tm` waits for an engine as long as it runs.
-- **The engine's environment is yours.** Temperare adds nothing to it, except: for a clippy rule with `max_nesting` it
+- **No time limit.** `tm` waits for an engine as long as it runs. The git questions `tm` asks through `ccvcslib`
+  (the top of the repository, the files git lists, the lines a change adds) are the exception: git is stopped once
+  it is stuck for 10 seconds or has run for 60, and the rule that asked fails. The list of untracked files has no
+  limit.
+- **The engine's environment is yours.** Temperare changes it only as listed here: for git, asked through
+  `ccvcslib`, it removes the variables that could point git at another repository or give it config for one run,
+  and sets `LC_ALL=C`, `GIT_TERMINAL_PROMPT=0` and `GIT_OPTIONAL_LOCKS=0`
+  ([`SECURITY.md`](../../SECURITY.md)); for a clippy rule with `max_nesting` it
   sets `CLIPPY_CONF_DIR` for that run to a temporary folder holding `clippy.toml`, which clippy reads instead of the
   repository's own `clippy.toml`; for ShellCheck it removes `SHELLCHECK_OPTS`; for gitleaks it removes
   `GITLEAKS_CONFIG` and `GITLEAKS_CONFIG_TOML` ([gitleaks](#gitleaks)); for golangci-lint it keeps Go local
   ([golangci-lint](#golangci-lint)); for PMD it removes `CLASSPATH`; for detekt it removes `JAVA_TOOL_OPTIONS`,
-  `JDK_JAVA_OPTIONS` and `_JAVA_OPTIONS`; for RuboCop it empties `RUBOCOP_OPTS` and points the proxy variables at
-  a dead address ([rubocop](#rubocop)); for actionlint it removes `SHELLCHECK_OPTS`; for sqlfluff it sets `HOME` to
+  `JDK_JAVA_OPTIONS` and `_JAVA_OPTIONS`; for RuboCop, its version question included, it empties `RUBOCOP_OPTS`
+  and points the proxy variables at a dead address ([rubocop](#rubocop)); for actionlint it removes `SHELLCHECK_OPTS`; for sqlfluff it sets `HOME` to
   the top of the repository and removes `XDG_CONFIG_HOME`, `PYTHONPATH` and `PYTHONUSERBASE`
   ([sqlfluff](#sqlfluff)); for hadolint it removes every `HADOLINT_*` variable ([hadolint](#hadolint)); and Vale's
   config probe runs without `PWD` ([vale](#vale)). It sets no `NODE_PATH` for ESLint, stylelint or
@@ -105,7 +114,7 @@ Neither is ever "clean".
 
 | `why` | When |
 |---|---|
-| `<program> not found on PATH` | The engine's program is not installed, or not on `PATH`. A clippy rule names the first of `cargo-clippy` and `clippy-driver` that is missing. A ShellCheck rule names `git` when ShellCheck is there and git, which lists its scripts, is not. A golangci-lint rule names `go` when golangci-lint is there and go is not. A clang-tidy rule names `git` when clang-tidy is there and git, which lists its sources, is not. A Periphery rule names `swift` when Periphery is there and swift, which builds the package, is not. A PHPStan rule names `php` when phpstan is there and php, which runs it, is not. An actionlint rule whose check is `shellcheck` or `pyflakes` names that program when actionlint is there and it is not. A markdownlint rule names `markdownlint-cli2`, the program it runs. A rule of an engine `tm` lists the files for with git (mypy, PMD, detekt, dart, PHPStan, actionlint, sqlfluff, hadolint, yamllint, Vale, stylelint, markdownlint) names `git` when the engine is there and git is not |
+| `<program> not found on PATH` | The engine's program is not installed, or not on `PATH`. A clippy rule names the first of `cargo-clippy` and `clippy-driver` that is missing. A ShellCheck rule names `git` when ShellCheck is there and git, which lists its scripts, is not. A golangci-lint rule names `go` when golangci-lint is there and go is not. A clang-tidy rule names `git` when clang-tidy is there and git, which lists its sources, is not. A Periphery rule names `swift` when Periphery is there and swift, which builds the package, is not. A PHPStan rule names `php` when phpstan is there and php, which runs it, is not. An actionlint rule whose check is `shellcheck` or `pyflakes` names that program when actionlint is there and it is not. A markdownlint rule names `markdownlint-cli2`, the program it runs. An ESLint, stylelint or markdownlint rule names `node` when the engine's program is there and node, which runs it, is not. For ESLint, a `node_modules/.bin/eslint` in the rule file's folder is its program, wherever `PATH` points. A rule of an engine `tm` lists the files for with git (mypy, PMD, detekt, dart, PHPStan, actionlint, sqlfluff, hadolint, yamllint, Vale, stylelint, markdownlint) names `git` when the engine is there and git is not |
 | `no Package.swift at or above the rule file's folder: Periphery builds the project, and tm runs it only on a Swift package` | A Periphery rule outside a Swift package in its repository, such as one in an Xcode project ([periphery](#periphery)) |
 | `<subject> depends on <identities>, which tm would have to fetch: tm never fetches packages, so Periphery cannot build it here` | A Periphery rule on a package that, or one of whose local packages, names a source-control or registry dependency or a binary target with a `url` ([periphery](#periphery)) |
 | `<subject> depends on the local package <path>, which does not resolve: ...` or `..., outside the repository: ...` | A Periphery rule on a package that depends on a local package `tm` cannot read, or that is not the repository's ([periphery](#periphery)) |
@@ -215,7 +224,8 @@ Each rule is settled by the first of these that applies:
    check is left out of that run. It is not applicable: counted in the text, listed under `not_applicable` in JSON
    ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)). An engine found on `PATH` is still asked its version for
    the engines line.
-4. **Not available.** A program the engine needs is not on `PATH`, or it is Tessera. (What else an engine needs
+4. **Not available.** A program the engine needs is not on `PATH` (for ESLint's own program, not in the rule
+   file's folder's `node_modules/.bin` either), or it is Tessera. (What else an engine needs
    is looked for in the run, at step 5: cargo-audit's advisory database, a Swift or Dart package, a PHPStan or
    Vale config, a compile database, a name on `tm`'s list.)
 5. **The run.** What the engine's run comes to: findings, none, not available or failed.
@@ -277,7 +287,7 @@ Each is a regular file, never a symlink.
 
 **ESLint and RuboCop are settled after their run.** Their own config decides which files they read, so `tm` cannot
 list those files beforehand. A rule of theirs that covers none of the files git lists runs nothing, as above. One
-that covers some file needs its engine on `PATH` and is run; when none of the files the engine says it read is one
+that covers some file needs its engine found (ESLint's as [eslint](#eslint) says) and is run; when none of the files the engine says it read is one
 the rule covers, the rule covers no file, with the why
 `ESLint linted no file in the rule's paths that git lists (its config decides which files it lints)` or
 `no file rubocop inspects is in the rule's paths`. So with ESLint or RuboCop missing, such a rule is not available.
@@ -318,6 +328,12 @@ rule is settled by its paths, its scripts, its C-family sources or the other fil
 each goes on to steps 3 to 5. A cargo-audit rule is the one
 exception: when the rule file's folder is still found, `tm` looks for its `Cargo.lock` on disk, so a rule whose
 folder has no `Cargo.lock` it covers still settles here.
+
+**A repository whose top folder's path is not UTF-8 cannot be checked.** `tm` asks git for the top of the
+repository through `ccvcslib`, which gives back only a path that is UTF-8. Without `--rules`, `tm check` and
+`tm rules` stop with exit 2 when they look for the rule file. With `--rules`, each rule that needs the top, or the
+list of its files git gives, fails, and the others run as they do when git cannot list the files (above); with
+`--base` the report cannot be built, and `tm check` exits 2. No rule that needs the top reads clean.
 
 ## clippy
 
@@ -644,7 +660,8 @@ rule:
 ## git
 
 `git` as an engine counts what a change adds. It is separate from the git `tm` runs for `--base` and to list files,
-which needs no rule.
+which needs no rule. Both ask git through `ccvcslib` ([what holds for every engine](#what-holds-for-every-engine));
+only the version question, `git --version`, is run by `tm` itself.
 
 - **Available when** `git` is on `PATH`.
 - **It needs `--base`.** It counts a change against the base commit `tm check --base <rev>` names. Without
@@ -892,10 +909,15 @@ which needs no rule.
   on stderr. Nothing reaches the network.
 - **What it scans.** Two things decide it, and they are separate:
   - **Left out of the scan:** what git ignores under the folder. Before vulture runs, `tm` asks git for its ignored
-    paths (`git ls-files --others --ignored --exclude-standard --directory`) and passes each ignored `.py` file, and
-    each ignored folder that holds one (a `.gitignore`d virtualenv, build output), to `--exclude`. vulture neither
-    reads nor reports them, so a name used only there counts as unused. Tracked files, and untracked files git does
-    not ignore, are scanned. Outside a git repository nothing is left out and the whole folder is scanned.
+    paths at the top of the repository (`git ls-files -z -o -i --exclude-standard --directory`, through
+    `ccvcslib`) and passes each ignored `.py` file under the folder, and each ignored folder there that holds one (a
+    `.gitignore`d virtualenv, build output), to `--exclude`. vulture neither reads nor reports them, so a name used
+    only there counts as unused. Tracked files, and untracked files git does not ignore, are scanned. Outside a git
+    repository nothing is left out and the whole folder is scanned.
+  - **A stated limit: an ignored name that is not UTF-8 is scanned.** `ccvcslib` gives git's list of ignored
+    paths back as text, so a name whose bytes are not UTF-8 arrives with U+FFFD in their place and names no real
+    file. `tm` leaves such an entry out of `--exclude`, so vulture scans the ignored file or folder: what it finds
+    there is reported, and a name used there counts as used.
   - **Dropped after the scan:** findings outside the rule's `paths`, `exclude`, `kits` and `outside_kits`. These do
     not narrow the scan, so a file the rule does not cover is still read, and one vulture cannot read or parse
     still fails the rule (below).
@@ -994,9 +1016,14 @@ which needs no rule.
 
 ## eslint
 
-- **Available when** `eslint` is on `PATH`. `tm` runs that `eslint` and does not look in the folder's
-  `node_modules/.bin`. It sets nothing in ESLint's environment, `NODE_PATH` included, so the plugins a config names
-  must resolve as they do when you run that `eslint` yourself.
+- **Which `eslint`:** the rule file's folder's `node_modules/.bin/eslint` when that is a file (a symlink to one, as
+  npm makes, included), else the `eslint` on `PATH`. The same program is used to tell whether ESLint is available,
+  to ask its version and to run the check, by its absolute path. It runs on `node`, which must be on `PATH`: with
+  `node` missing the rule is not available, with the reason `node not found on PATH`. `tm` sets nothing in ESLint's
+  environment, `NODE_PATH` included, so the plugins a config names must resolve as they do when you run that
+  `eslint` yourself.
+- **`tm rules` and the engines line look on `PATH` only.** With `eslint` only in `node_modules/.bin`, `tm check`
+  runs the rule, while `tm rules` shows it not available and the `engines:` line of `tm check` leaves ESLint out.
 - **Where:** the rule file's folder.
 - **What runs:**
 
@@ -1019,7 +1046,7 @@ which needs no rule.
   is kept.
 - **No file is settled after the run.** When none of the files ESLint linted is both listed by git and covered by
   the rule, the rule covers no file ([above](#a-rule-that-covers-no-file)). ESLint has run by then, so it must be
-  on `PATH`.
+  found, in `node_modules/.bin` or on `PATH`.
 - **What is turned off:** `eslint-disable` comments and every other inline config (`--no-inline-config`), and the
   config's `ignores` (`--no-ignore`); ESLint's own defaults still leave out `node_modules`. A finding that an
   `eslint-suppressions.json` hides is read from the suppressed messages of ESLint's output and reported like any other;
@@ -1214,7 +1241,8 @@ which needs no rule.
 
   The second of those three runs only when the first shows an `Exclude` for a cop of the check. `--cache false`
   keeps RuboCop from writing its result cache, and `--no-server` from starting or using its server.
-- **The environment:** every one of those runs gets `RUBOCOP_OPTS` set empty, so no options come from your
+- **The environment:** every one of those runs, and the question RuboCop is asked for its version
+  (`rubocop --force-default-config --version`), gets `RUBOCOP_OPTS` set empty, so no options come from your
   environment; and `http_proxy`, `https_proxy`, `HTTP_PROXY` and `HTTPS_PROXY` set to `http://127.0.0.1:9`, where
   nothing listens, with `no_proxy` and `NO_PROXY` empty. A config with a remote `inherit_from` then fails instead of
   being fetched.
@@ -1642,8 +1670,9 @@ which needs no rule.
 
 ## stylelint
 
-- **Available when** `stylelint` is on `PATH`. `tm` lists the files with git, so git must be there too. `tm` sets
-  nothing in stylelint's environment, `NODE_PATH` included.
+- **Available when** `stylelint` and `node`, which runs it, are on `PATH`; `tm` does not look in the folder's
+  `node_modules/.bin`. `tm` lists the files with git, so git must be there too. `tm` sets nothing in stylelint's
+  environment, `NODE_PATH` included.
 - **Where:** the rule file's folder, which must be inside a git repository.
 - **Which files it is handed:** the files ending `.css`, in any case, that git lists under the rule file's folder
   (the tracked files, then the untracked files git does not ignore), that are regular files and not symlinks, and
@@ -1701,7 +1730,8 @@ which needs no rule.
 
 The engine `markdownlint` runs the program `markdownlint-cli2`.
 
-- **Available when** `markdownlint-cli2` is on `PATH`. `tm` lists the files with git, so git must be there too.
+- **Available when** `markdownlint-cli2` and `node`, which runs it, are on `PATH`; `tm` does not look in the
+  folder's `node_modules/.bin`. `tm` lists the files with git, so git must be there too.
   `tm` sets nothing in its environment, `NODE_PATH` included.
 - **Where:** the rule file's folder, which must be inside a git repository.
 - **Which files it is handed:** the files ending `.md` or `.markdown` that git lists under the rule file's folder
@@ -1788,17 +1818,14 @@ any such rule is ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)).
 
 The acceptance checks for 0.1.0 ran against clippy 0.1.95, SwiftLint 0.65.1, ruff 0.17.4, ast-grep 0.51.1,
 golangci-lint 2.15.0 (built with go 1.27.2), pylint 4.1.4, clang-tidy 23.1.6 (Homebrew LLVM), vulture 2.16,
-Periphery 3.8.0, gitleaks 8.30.1 and cargo-audit 0.23.0.
+Periphery 3.8.0, gitleaks 8.30.1, cargo-audit 0.23.0, ESLint 10.15.0, mypy 2.4.1, PMD 7.29.0, detekt 1.23.8,
+RuboCop 1.92.3, PHPStan 2.3.7, dart 3.14.1, actionlint 1.7.12, sqlfluff 4.5.0, hadolint 2.15.1, yamllint 1.38.0,
+Vale 3.28.1, stylelint 18.1.0, markdownlint-cli2 0.24.2 (which carries markdownlint 0.42.2), ShellCheck 0.11.0
+and git 2.56.0.
 
-ESLint, mypy, PMD, detekt, RuboCop, PHPStan, dart, actionlint, sqlfluff, hadolint, yamllint, Vale, stylelint and
-markdownlint are not among them. Each of them is tested on output recorded from one version of the
-engine: ESLint 10.15.0, mypy 2.4.1, PMD 7.29.0, detekt 1.23.8, RuboCop 1.92.3, PHPStan 2.3.7, dart 3.14.1,
-actionlint 1.7.12, sqlfluff 4.5.0, hadolint 2.15.1, yamllint 1.38.0, Vale 3.28.1, stylelint 18.1.0 and
-markdownlint-cli2 0.24.2 (which carries markdownlint 0.42.2).
-
-ShellCheck, git and Tessera are not among them either. ShellCheck is tested on output recorded from ShellCheck
-0.11.0, whose 510 codes `tm` carries as its list. The git engine has no version of its own to accept: it is the
-`git` that `tm` uses to list files. Tessera's checks are not available yet, so there is nothing to accept.
+ShellCheck's 510 codes, which `tm` carries as its list, are those of ShellCheck 0.11.0. The git engine has no
+version of its own: it is the `git` that `tm` uses to list files. Tessera is not among them: its checks are not
+available yet, so there is nothing to accept.
 
 Temperare reads each engine's own output, so another version of an engine may print something it reads
 differently. If a rule stops reporting after an engine upgrade, try it on a file you know breaks it.
