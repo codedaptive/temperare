@@ -8,8 +8,9 @@ use std::ops::Range;
 use std::path::{Path, PathBuf};
 
 /// `BaselineWorld::real()` wires the sets built into tm, case folders under the system temp folder, the real disk,
-/// git through procio and `engines::run_rules_versioned_at` (given the case's base commit, `None` without one); a unit
-/// test passes closures, so `tm baseline test` is tested without touching the disk or running git or an engine.
+/// `git init` and staging through procio, commit and added lines through ccvcslib, and
+/// `engines::run_rules_versioned_at` (given the case's base commit, `None` without one); a unit test passes closures,
+/// so `tm baseline test` is tested without touching the disk or running git or an engine.
 pub struct BaselineWorld<'a> {
     /// Every set tm carries, as ("name@version", ready), in tm's order: without `--set`, the ready ones are tested in
     /// this order.
@@ -24,7 +25,7 @@ pub struct BaselineWorld<'a> {
     /// Stages every file in a case folder and commits it (an empty commit when there is none); the commit's id.
     pub commit_all: &'a dyn Fn(&Path) -> std::io::Result<String>,
     /// Stages every file in a case folder, then the lines each file gained since the commit given: keys relative to
-    /// the folder, 1-based half-open line ranges (`procio::added_lines`' shape).
+    /// the folder, 1-based half-open line ranges (the real world asks ccvcslib's `added_lines`).
     pub added_since: &'a dyn Fn(&Path, &str) -> std::io::Result<BTreeMap<PathBuf, Vec<Range<u32>>>>,
     /// Removes a case folder and all in it.
     pub remove_folder: &'a dyn Fn(&Path) -> std::io::Result<()>,
