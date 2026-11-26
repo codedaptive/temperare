@@ -9,18 +9,6 @@ use super::install_host_real::host_from;
 use super::InstallHost;
 use crate::UsageError;
 
-/// What an absolute path starts with before its first `/`: nothing on unix; off unix a path needs a drive to be
-/// absolute, and `C:/home/ann` is.
-#[cfg(unix)]
-const DRIVE: &str = "";
-#[cfg(not(unix))]
-const DRIVE: &str = "C:";
-
-/// An absolute HOME: `/home/ann` on unix.
-fn home() -> String {
-    format!("{DRIVE}/home/ann")
-}
-
 fn exe() -> io::Result<PathBuf> {
     Ok(PathBuf::from("/opt/tools/temperare"))
 }
@@ -39,7 +27,7 @@ fn home_not_set() -> UsageError {
 #[test]
 fn every_value_lands_in_its_field() {
     let host = host_from(
-        Some(OsString::from(home())),
+        Some(OsString::from("/home/ann")),
         Some(OsString::from("/usr/bin:/bin")),
         exe(),
         Path::new("/work/project"),
@@ -48,7 +36,7 @@ fn every_value_lands_in_its_field() {
     assert_eq!(
         host,
         Ok(InstallHost {
-            home: PathBuf::from(home()),
+            home: PathBuf::from("/home/ann"),
             path_var: Some(OsString::from("/usr/bin:/bin")),
             exe: PathBuf::from("/opt/tools/temperare"),
             cwd: PathBuf::from("/work/project"),
@@ -90,20 +78,20 @@ fn a_relative_home_is_checked_before_the_binary() {
 
 #[test]
 fn an_unset_path_is_none() {
-    let host = host_from(Some(OsString::from(home())), None, exe(), Path::new("/w"), false).unwrap();
+    let host = host_from(Some(OsString::from("/home/ann")), None, exe(), Path::new("/w"), false).unwrap();
     assert_eq!(host.path_var, None);
     assert!(!host.interactive);
 }
 
 #[test]
 fn an_empty_path_stays_an_empty_path() {
-    let host = host_from(Some(OsString::from(home())), Some(OsString::new()), exe(), Path::new("/w"), false);
+    let host = host_from(Some(OsString::from("/home/ann")), Some(OsString::new()), exe(), Path::new("/w"), false);
     assert_eq!(host.map(|host| host.path_var), Ok(Some(OsString::from(""))));
 }
 
 #[test]
 fn a_missing_binary_says_to_run_temperare_from_its_file_not_to_set_home() {
-    let host = host_from(Some(OsString::from(home())), None, gone(), Path::new("/w"), false);
+    let host = host_from(Some(OsString::from("/home/ann")), None, gone(), Path::new("/w"), false);
     assert_eq!(
         host,
         Err(UsageError {
