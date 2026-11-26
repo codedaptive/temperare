@@ -7,11 +7,11 @@ use std::path::{Path, PathBuf};
 
 #[test]
 fn cargo_audit_cmd_cases() {
+    let mut args: Vec<OsString> =
+        ["audit", "--no-fetch", "--no-yanked", "--json", "--db", "/c/advisory-db", "--file"].iter().map(OsString::from).collect();
+    args.push(Path::new("/w").join("Cargo.lock").into_os_string());
     let expected = Cmd {
-        args: ["audit", "--no-fetch", "--no-yanked", "--json", "--db", "/c/advisory-db", "--file", "/w/Cargo.lock"]
-            .iter()
-            .map(OsString::from)
-            .collect(),
+        args,
         cwd: Some(PathBuf::from("/w")),
         ..Cmd::new("cargo-audit")
     };

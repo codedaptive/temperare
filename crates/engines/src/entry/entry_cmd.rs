@@ -6,7 +6,7 @@ use procio::Cmd;
 use std::ffi::{OsStr, OsString};
 use std::path::Path;
 
-/// The program `program_for` gives for `cwd` (ESLint's local one when there is one, else `entry.program`) run in
+/// The program `program_for` gives for `cwd` (ESLint's executable local one if any, else `entry.program`) run in
 /// `cwd` with, in order: `entry.args`; the pick (`Pick::Arg(flag)`: one argument `{flag}{pick}`; `Pick::File(option)`:
 /// `option`, then `pick`; `Pick::None`: nothing, and `pick` is not used); `params`, each one argument as given;
 /// `{entry.config}{config}` as one argument when the entry takes a config and `config` is given; then `entry.after`.

@@ -27,9 +27,9 @@ use std::path::{Path, PathBuf};
 ///    is looked up and the flow never runs. It comes after the no-file steps and the base step, so an old engine with
 ///    no file of its kind is still `NoFiles`;
 /// 2. an engine that `unavailable` says cannot be run here gets that stop: `NotOnPath` for a program it needs not
-///    found, `NotAvailable` for one never available. ESLint's program counts as found when the resolved folder holds
-///    `node_modules/.bin/eslint` (`program_for`); every other name it needs (node) is looked up on PATH. Either way,
-///    whatever `folder` is, its flow never runs;
+///    found, `NotAvailable` for one never available. ESLint's program counts as found when `program_for` finds an
+///    executable `eslint` in the resolved folder's `node_modules/.bin`; every other name it needs (node) is looked up
+///    on PATH. Either way, whatever `folder` is, its flow never runs;
 /// 3. an available engine with an unresolved folder gets that folder's `Stop`;
 /// 4. otherwise its entry's flow runs it through `host`.
 pub(crate) fn engine_hits_with(

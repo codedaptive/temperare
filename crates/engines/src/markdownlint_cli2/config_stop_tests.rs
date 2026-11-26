@@ -12,13 +12,15 @@ const FOLDER: &str = "/w/repo";
 #[test]
 fn config_stop_cases() {
     let json_off = (".markdownlint.json", "{\"MD013\": false}");
+    let cjs = Path::new("docs").join(".markdownlint.cjs").display().to_string();
+    let yml = Path::new("docs").join(".markdownlint.yml").display().to_string();
     let rows: [(&str, &str, &[&str], &[(&str, &str)], &str, &[&str]); 16] = [
         ("no config", "MD013", &["a.md"], &[], "none", &[]),
         ("options before the list", "MD999", &["a.md"], &[(".markdownlint-cli2.jsonc", "{}")], "failed", &[".markdownlint-cli2.jsonc"]),
         ("unlisted check", "MD999", &["a.md"], &[json_off], "not-listed", &["MD999", "markdownlint 0.42.2"]),
         ("a tag is not a check", "headings", &["a.md"], &[], "not-listed", &["headings"]),
         ("jsonc", "MD013", &["a.md"], &[(".markdownlint.jsonc", "{}")], "failed", &[".markdownlint.jsonc"]),
-        ("cjs below", "MD013", &["docs/a.md"], &[("docs/.markdownlint.cjs", "")], "failed", &["docs/.markdownlint.cjs"]),
+        ("cjs below", "MD013", &["docs/a.md"], &[("docs/.markdownlint.cjs", "")], "failed", &[cjs.as_str()]),
         ("unreadable", "MD013", &["a.md"], &[(".markdownlint.json", "UNREADABLE")], "failed", &[".markdownlint.json", "denied"]),
         ("repeated key", "MD013", &["a.md"], &[(".markdownlint.json", "{\"a\": 1, \"a\": 2}")], "failed", &[".markdownlint.json", "duplicate key"]),
         ("quoted falsy yaml", "MD013", &["a.md"], &[(".markdownlint.yaml", "MD013: \"false\"\n")], "failed", &[".markdownlint.yaml", "line 1"]),
@@ -30,7 +32,7 @@ fn config_stop_cases() {
         ("on with options", "MD013", &["a.md"], &[(".markdownlint.json", "{\"MD013\": {\"line_length\": 200}}")], "none", &[]),
         ("off in any applying config", "MD013", &["a.md", "docs/b.md"],
             &[(".markdownlint.json", "{}"), ("docs/.markdownlint.yml", "default: false\n")], "not-available",
-            &["docs/.markdownlint.yml", "`default`"]),
+            &[yml.as_str(), "`default`"]),
         ("a config no file reaches", "MD013", &["a.md"], &[("docs/.markdownlint.json", "{\"MD013\": false}")], "none", &[]),
     ];
     for (label, check, files, present, kind, tokens) in rows {

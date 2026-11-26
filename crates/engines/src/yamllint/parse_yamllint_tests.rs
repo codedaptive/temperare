@@ -12,6 +12,8 @@ const TRACEBACK: &[u8] = b"Traceback (most recent call last):\nFileNotFoundError
 #[test]
 fn parse_yamllint_selects_the_check_and_rejects_invalid_output() {
     let hit = |path: &str, line, col, what: &str| Hit { path: RelPath::new(path), line: Some(line), col: Some(col), what: what.to_string() };
+    // A colon is not a Windows file-name character, so `c:3.yaml` is a drive-relative path there and falls outside the folder.
+    let with_colon = |mut hits: Vec<Hit>, colon: Hit| { if cfg!(unix) { hits.push(colon); } hits };
     let truthy = "truthy value should be one of [false, true]";
     let start = "missing document start \"---\"";
     let findings: &[u8] = include_bytes!("fixtures/findings.txt");
@@ -20,9 +22,9 @@ fn parse_yamllint_selects_the_check_and_rejects_invalid_output() {
     let warning_only: &[u8] = b"b.yml:2:8: [warning] truthy value should be one of [false, true] (truthy)\n";
     let rows: [(&str, Option<i32>, &[u8], &[u8], &str, &str, &str, Result<Vec<Hit>, &[&str]>); 18] = [
         ("truthy, warnings", Some(1), findings, b"", "truthy", "/work/y", "/work/y",
-            Ok(vec![hit("a.yaml", 1, 6, truthy), hit("b.yml", 2, 8, truthy), hit("c:3.yaml", 1, 7, truthy)])),
+            Ok(with_colon(vec![hit("a.yaml", 1, 6, truthy), hit("b.yml", 2, 8, truthy)], hit("c:3.yaml", 1, 7, truthy)))),
         ("document-start, a path holding a colon", Some(1), findings, b"", "document-start", "/work/y", "/work/y",
-            Ok(vec![hit("a.yaml", 1, 1, start), hit("c:3.yaml", 1, 1, start)])),
+            Ok(with_colon(vec![hit("a.yaml", 1, 1, start)], hit("c:3.yaml", 1, 1, start)))),
         ("line-length, an error", Some(1), findings, b"", "line-length", "/work/y", "/work/y",
             Ok(vec![hit("a.yaml", 2, 81, "line too long (87 > 80 characters)")])),
         ("a check not in the output", Some(1), findings, b"", "indentation", "/work/y", "/work/y", Ok(vec![])),

@@ -16,11 +16,11 @@ pub struct Entry {
     /// The engine this entry serves.
     pub engine: Engine,
     /// The program the check run runs ("cargo", "ruff"), found on PATH; ESLint's comes from the rule file's folder's
-    /// `node_modules/.bin` when it is there (`program_for`).
+    /// `node_modules/.bin` when an executable `eslint` is there (`program_for`).
     pub program: &'static str,
     /// The programs the engine needs to be available, checked in order; the first missing one is named in the why
     /// (clippy: `["cargo-clippy", "clippy-driver"]`; eslint: `["eslint", "node"]`). `program` counts as found when
-    /// `program_for` gives a local one; every other name (node) is looked up on PATH.
+    /// `program_for` gives an executable local one; every other name (node) is looked up on PATH.
     pub needs: &'static [&'static str],
     /// `Some(why)` when the engine is never available: nothing is looked up or run, and every rule naming it is not
     /// available with this why (tessera). `None` for an engine tm can run.

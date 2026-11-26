@@ -17,6 +17,8 @@ use std::path::Path;
 use std::rc::Rc;
 
 const FOLDER: &str = "/engines-zut-run-rules-listed";
+/// An absolute check on this platform: `/abs/names.yml` is not absolute on Windows.
+const ABS: &str = if cfg!(windows) { "C:/abs/names.yml" } else { "/abs/names.yml" };
 
 /// Three ruff rules that pairwise share a run; `elsewhere`'s paths match no file of `files()`.
 const RULES: &str = r#"version = 1
@@ -133,11 +135,12 @@ fn the_base_reaches_each_rules_run_alone_and_both_passes_of_a_shared_group() {
 
 #[test]
 fn the_central_settle_runs_before_every_flow() {
+    let abs_refused = format!("ast-grep rule {ABS} is an absolute path: a check names a file inside the rule file's folder");
     let cases = [
         ("ruff", Engine::Ruff, "flake8-bugbear", "ruff check `flake8-bugbear`: `flake8-bugbear` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects"),
         ("shellcheck", Engine::ShellCheck, "sc2086", "shellcheck check `sc2086` is not one ShellCheck code such as `SC2086`, so tm cannot tell which findings it selects"),
         ("clippy", Engine::Clippy, "rustdoc::broken_intra_doc_links", "clippy check `rustdoc::broken_intra_doc_links` is a rustdoc lint: clippy never runs rustdoc lints, so tm cannot report it"),
-        ("ast-grep", Engine::AstGrep, "/abs/names.yml", "ast-grep rule /abs/names.yml is an absolute path: a check names a file inside the rule file's folder"),
+        ("ast-grep", Engine::AstGrep, ABS, abs_refused.as_str()),
         ("git", Engine::Git, "other", "git check `other` is not one git counts: the git entry checks only `test_ratio`"),
     ];
     for (name, engine, check, stderr) in cases {

@@ -9,6 +9,9 @@ use crate::types::Stop;
 use rules::{Rule, RuleFile};
 use std::path::Path;
 
+/// An absolute check on this platform: `/abs/names.yml` is not absolute on Windows.
+const ABS: &str = if cfg!(windows) { "C:/abs/names.yml" } else { "/abs/names.yml" };
+
 /// The one rule of a rule file: `engine`, `check`, then `extra` (TOML lines).
 fn rule(engine: &str, check: &str, extra: &str) -> Rule {
     let text = format!("version = 1\n[[rule]]\nid = \"r\"\nengine = \"{engine}\"\ncheck = \"{check}\"\nfix = \"f\"\n{extra}");
@@ -17,6 +20,7 @@ fn rule(engine: &str, check: &str, extra: &str) -> Rule {
 
 #[test]
 fn a_refused_check_or_param_is_failed_with_its_flows_stderr_and_any_other_rule_is_not_refused() {
+    let abs_refused = format!("ast-grep rule {ABS} is an absolute path: a check names a file inside the rule file's folder");
     let cases: [(&str, &str, &str, Option<&str>); 28] = [
         (
             "ruff",
@@ -57,7 +61,7 @@ fn a_refused_check_or_param_is_failed_with_its_flows_stderr_and_any_other_rule_i
             "params = { foo = 1 }\n",
             Some("git param foo: a git rule reads only the `max_ratio`, `floor`, `test_paths` param"),
         ),
-        ("ast-grep", "/abs/names.yml", "", Some("ast-grep rule /abs/names.yml is an absolute path: a check names a file inside the rule file's folder")),
+        ("ast-grep", ABS, "", Some(abs_refused.as_str())),
         ("ast-grep", "../x.yml", "", Some("ast-grep rule ../x.yml is outside the rule file's folder")),
         ("ast-grep", "a/../../x.yml", "", Some("ast-grep rule a/../../x.yml is outside the rule file's folder")),
         ("ast-grep", "../rules/x.yml", "", Some("ast-grep rule ../rules/x.yml is outside the rule file's folder")),

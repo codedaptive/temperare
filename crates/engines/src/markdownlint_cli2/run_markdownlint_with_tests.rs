@@ -17,6 +17,7 @@ const FOLDER: &str = "/no/such/engines-zut-markdownlint";
 fn run_markdownlint_with_stops_before_the_run() {
     let git_failed = Stop::Failed { code: None, stderr: "not a working copy".into() };
     let off = ("docs/.markdownlint.json", "{\"MD013\": false}");
+    let off_name = Path::new("docs").join(".markdownlint.json").display().to_string();
     let rows: [(&str, &str, &str, Result<Vec<&str>, Stop>, &[(&str, &str)], &str, &str); 7] = [
         ("rule config", "MD013", "config = \"x.json\"\n", Ok(vec!["a.md"]), &[], "failed", "takes no config"),
         ("listing error", "MD013", "", Err(git_failed), &[], "failed", "not a working copy"),
@@ -24,9 +25,9 @@ fn run_markdownlint_with_stops_before_the_run() {
         ("options file", "MD013", "", Ok(vec!["a.md"]), &[(".markdownlint-cli2.yaml", "fix: true\n")], "failed",
             ".markdownlint-cli2.yaml"),
         ("unlisted check", "MD999", "", Ok(vec!["a.md"]), &[], "not-listed", "MD999"),
-        ("config off", "MD013", "", Ok(vec!["docs/b.md"]), &[off], "not-available", "docs/.markdownlint.json"),
+        ("config off", "MD013", "", Ok(vec!["docs/b.md"]), &[off], "not-available", off_name.as_str()),
         ("only files in paths reach the configs", "MD013", "paths = [\"docs/**\"]\n", Ok(vec!["other/a.md", "docs/b.md"]),
-            &[("other/.markdownlint-cli2.jsonc", "{}"), off], "not-available", "docs/.markdownlint.json"),
+            &[("other/.markdownlint-cli2.jsonc", "{}"), off], "not-available", off_name.as_str()),
     ];
     for (label, check, extra, listed, present, kind, token) in rows {
         let text = format!("version = 1\n[[rule]]\nid = \"r\"\nengine = \"markdownlint\"\ncheck = \"{check}\"\nfix = \"f\"\n{extra}");

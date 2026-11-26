@@ -22,7 +22,7 @@ use rules::Engine;
 /// `--pass-on-unpruned-suppressions` so its stale entries do not fail the run. ESLint 10 does not read
 /// `.eslintignore`.
 ///
-/// The eslint program is `<rule file's folder>/node_modules/.bin/eslint` when that is a file, else PATH's
+/// The eslint program is the executable `eslint` in `<rule file's folder>/node_modules/.bin` if any, else PATH's
 /// (`program_for`), for availability, the version and the run alike, and is run by that absolute path; `node`, which
 /// it needs, is looked up on PATH. A rule whose paths match no file git lists is settled before the run, as for every
 /// engine (`run_rules_listed`); a run that lints no listed file in the rule's paths is settled in the flow, after

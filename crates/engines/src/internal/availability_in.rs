@@ -7,9 +7,9 @@ use crate::types::Availability;
 use rules::Engine;
 use std::path::Path;
 
-/// Whether `engine` can be run for a rule file in `folder`, its canonical folder, with the same program the run uses
-/// (`program_for`): ESLint's is `<folder>/node_modules/.bin/eslint` when that is a file, else PATH's; every other
-/// name, `node` included, is looked up on PATH. Nothing is run.
+/// Whether `engine` can be run for a rule file in `folder`, its absolute canonical folder, with the same program the
+/// run uses (`program_for`): ESLint's is the executable file for `eslint` in `<folder>/node_modules/.bin` when there
+/// is one, else PATH's; every other name, `node` included, is looked up on PATH. Nothing is run.
 pub fn availability_in(engine: Engine, folder: &Path) -> Availability {
     availability_from(engine, Some(folder), |name| procio::which(name).is_some())
 }
