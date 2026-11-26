@@ -36,8 +36,12 @@ These are properties of the code, not of how it is deployed.
   files come after `--` for mypy, PHPStan, actionlint, sqlfluff, hadolint, yamllint and Vale, as `./<file>` for
   stylelint, as `:<file>` for markdownlint-cli2, in a list file for PMD, and as the value of `--input` for detekt.
   ESLint, RuboCop and dart are handed the folder instead, and their own config decides which files they read.
-- **One place starts programs.** Everything Temperare runs, git included, goes through one small crate, `procio`.
-  The repository's own rule file holds that line: a rule reports any other code that starts a process.
+- **Two places start programs.** The engines, the question each is asked for its version, and the git that
+  `tm baseline test` runs in the case repositories it makes go through one small crate of Temperare's, `procio`.
+  The git questions `tm check` and `tm rules` ask of your repository (its top, a revision, the files git lists, the
+  lines a change adds, a file at the base) go through `ccvcslib`, the Code Chi version-control library, which
+  starts git itself. The repository's own rule file holds the line for Temperare's own code: a rule reports any code
+  outside `procio` that starts a process. It does not read `ccvcslib`, which is a dependency.
 - **It does not edit what it checks.** `tm check` and `tm rules` write to stdout and stderr. `tm check` creates
   temporary files in the system's temporary folder for twelve kinds of rule, and only for them:
   - an ast-grep rule that gets as far as its scan (each one, with or without `params`): a copy of its rule file
@@ -120,24 +124,40 @@ rule that names one fails. An ast-grep rule file is the
 repository's own, and ast-grep runs whatever it holds over the code. Running `tm check` in a repository is running
 that repository's instructions.
 
-**The engines are trusted programs.** Temperare finds each engine's program on your `PATH` and runs whatever is
-there, with your privileges: git, cargo (with `cargo-clippy` and `clippy-driver`), SwiftLint, ruff, ast-grep,
-ShellCheck, pylint, clang-tidy, golangci-lint and go, gitleaks, cargo-audit, vulture, Periphery and swift, ESLint,
-mypy, PMD, detekt, RuboCop, PHPStan and php, dart, actionlint, sqlfluff, hadolint, yamllint, Vale, stylelint and
-markdownlint-cli2 (the program of the engine `markdownlint`). Some of them start programs of their own, found the
-same way: the `phpstan` launcher is run by `php`, and actionlint runs `shellcheck` or `pyflakes` for a rule whose
-check is that name, and neither for any other check. PMD and detekt each start a Java they find for themselves;
-`tm` looks for none. The `eslint`, `stylelint` and `markdownlint-cli2` it runs are the ones on `PATH`: it does not
-look in the repository's `node_modules/.bin`. Whoever controls `PATH` controls what runs. There is no sandbox. The
+**The engines are trusted programs.** Temperare runs each engine's program with your privileges: git, cargo (with
+`cargo-clippy` and `clippy-driver`), SwiftLint, ruff, ast-grep, ShellCheck, pylint, clang-tidy, golangci-lint and
+go, gitleaks, cargo-audit, vulture, Periphery and swift, ESLint, mypy, PMD, detekt, RuboCop, PHPStan and php, dart,
+actionlint, sqlfluff, hadolint, yamllint, Vale, stylelint and markdownlint-cli2 (the program of the engine
+`markdownlint`). It looks for each in the absolute entries of your `PATH`, skipping an empty or relative entry, and
+runs whatever is there. Two are found another way:
+
+- **ESLint** is the rule file's folder's `node_modules/.bin/eslint` when that file exists, run by its absolute
+  path, and the `eslint` on `PATH` only when it does not. The folder's `eslint` is the repository's own code, trusted as
+  its ESLint config and the plugins it loads are ([below](#running-it-on-code-you-do-not-trust)). stylelint and
+  markdownlint-cli2 are taken from `PATH` only.
+- **git, for the questions asked through `ccvcslib`,** is started by name, and the system searches `PATH` for it
+  without skipping an empty or relative entry. Such an entry is read from a working folder, which is usually inside
+  the repository being checked.
+
+Some of them start programs of their own, which they find on `PATH` themselves: the `eslint`, `stylelint` and
+`markdownlint-cli2` scripts are run by `node`, and the `phpstan` launcher by `php` (`tm` checks that `node` or `php`
+is on `PATH`, and the rule is not available when it is not); actionlint runs `shellcheck` or `pyflakes` for a rule
+whose check is that name, and neither for any other check. PMD and detekt each start a Java they find for
+themselves; `tm` looks for none. Whoever controls `PATH` controls what runs. There is no sandbox. The
 twenty-eighth engine, Tessera, is the exception: a rule that names it is reported not available, and `tm` neither
 looks for it nor runs it.
 
 **The engines get your environment, with a few variables changed.** Temperare sets and removes the variables
 listed here and no others, so every other variable reaches the engine as you set it:
 
-- git: the twelve `GIT_*` variables that could point it at another repository, index or object store, or change
-  how it reads paths, are removed; `GIT_TERMINAL_PROMPT=0` and `GIT_OPTIONAL_LOCKS=0` are set, so it asks for no
-  credentials and takes no index lock; and `LC_ALL=C` is set, so its messages read the same in every locale;
+- git, for the questions asked through `ccvcslib`: the seventeen `GIT_*` variables that could point it at another
+  repository, work tree, index, object store or ref namespace, change where it stops looking for the repository or
+  how it reads paths, or give it config for that one run (`GIT_CONFIG`, `GIT_CONFIG_PARAMETERS`,
+  `GIT_CONFIG_COUNT`) are removed, and so is each `GIT_CONFIG_KEY_<n>` and `GIT_CONFIG_VALUE_<n>`; your own config
+  files (`GIT_CONFIG_GLOBAL`, `GIT_CONFIG_SYSTEM`, `GIT_CONFIG_NOSYSTEM`) are kept. `GIT_TERMINAL_PROMPT=0` and
+  `GIT_OPTIONAL_LOCKS=0` are set, so it asks for no credentials and takes no index lock, and `LC_ALL=C` is set, so
+  its messages read the same in every locale. The git that `tm baseline test` runs in its case repositories goes
+  through `procio`, with twelve of those seventeen removed and the same three set;
 - clippy, for a rule with `max_nesting`: `CLIPPY_CONF_DIR` is set to Temperare's temporary folder, which holds the
   `clippy.toml` clippy then reads;
 - ShellCheck: `SHELLCHECK_OPTS` is removed, since ShellCheck reads it as more options, which could silence a rule;
@@ -151,7 +171,8 @@ listed here and no others, so every other variable reaches the engine as you set
 - PMD: `CLASSPATH` is removed, since PMD's launcher would put it ahead of PMD's own rulesets;
 - detekt: `JAVA_TOOL_OPTIONS`, `JDK_JAVA_OPTIONS` and `_JAVA_OPTIONS` are removed, since each could load an agent
   into detekt's JVM or change what it prints; `JAVA_HOME` is kept;
-- RuboCop, for the check and the runs after it that ask what the config holds: `RUBOCOP_OPTS` is set empty, since
+- RuboCop, for the check, the runs after it that ask what the config holds, and the question it is asked for its
+  version: `RUBOCOP_OPTS` is set empty, since
   RuboCop reads it as more options; `http_proxy`, `https_proxy`, `HTTP_PROXY` and `HTTPS_PROXY` are set to
   `http://127.0.0.1:9`, where nothing listens, and `no_proxy` and `NO_PROXY` are set empty;
 - actionlint: `SHELLCHECK_OPTS` is removed, for the ShellCheck it may start;
@@ -159,15 +180,16 @@ listed here and no others, so every other variable reaches the engine as you set
   repository: the configs there, and in the folders between `~` and each file, are the repository's own.
   `XDG_CONFIG_HOME`, `PYTHONPATH` and `PYTHONUSERBASE` are removed, so no user config and no Python package is
   taken from where they point;
-- hadolint: thirteen `HADOLINT_*` variables are removed by name, the ones hadolint 2.15.1 reads,
-  `HADOLINT_IGNORE` and `HADOLINT_DISABLE_IGNORE_PRAGMA` among them. A variable a later hadolint adds is not on
-  that list;
+- hadolint: every variable whose name starts with `HADOLINT_` is removed, whatever follows, so neither one that
+  hadolint 2.15.1 reads (`HADOLINT_IGNORE` and `HADOLINT_DISABLE_IGNORE_PRAGMA` among them) nor one a later
+  hadolint adds reaches it;
 - Vale: the run that reads the repository's config (`vale ls-config`) has `PWD` removed, so Vale takes its folder
   from the system. The check run's environment is not changed.
 
 ESLint, mypy, PHPStan, dart, yamllint, stylelint and markdownlint-cli2 run with your environment as it is, and so
 do the engines not named above; no `NODE_PATH` is set for the three that run on Node. The question each engine is
-asked for its version is put with your environment as it is, too: none of these changes is made for it.
+asked for its version is put with your environment as it is, too, RuboCop's apart (above): none of the other
+changes is made for it.
 
 **A clippy rule builds the code.** `cargo clippy` compiles the crate. A build runs that crate's build scripts and
 procedural macros, and cargo may download its dependencies. That is code from the repository running as you.
@@ -340,8 +362,10 @@ ESLint, RuboCop, stylelint and markdownlint are turned off, as above, and so are
 - ESLint: `--no-ignore` turns the config's `ignores` off, and ESLint's own defaults still leave out
   `node_modules`.
 
-**There is no time limit.** Temperare waits for an engine for as long as it runs. An engine that hangs, hangs the
-check.
+**There is no time limit on an engine.** Temperare waits for an engine for as long as it runs. An engine that
+hangs, hangs the check. The git questions asked through `ccvcslib` are bounded: git is stopped once it is stuck for
+10 seconds or has run for 60, and the question fails, so the rule that asked it fails or `tm` stops with an error,
+never clean. The one git question that `ccvcslib` waits on for as long as it runs is the list of untracked files.
 
 **An exception is as trustworthy as the review of the rule file.** Anyone who can change `temperare.toml` can add
 an `[[exception]]`, remove a rule or lower its severity. `approved` is text that Temperare records and does not
@@ -382,6 +406,11 @@ turns off. Try a new rule on a file you know breaks it.
 - Read `temperare.toml` first, and the files it names: each ast-grep rule file and each `config`.
 - Read the engines' own config files in the repository too. An engine loads the code its config names: an ESLint
   config and its plugins, a stylelint plugin, a PHPStan bootstrap file, a sqlfluff templater.
+- Look for a `node_modules/.bin/eslint` in the rule file's folder. When it is there, an ESLint rule runs it, not
+  the `eslint` on your `PATH`: it is the repository's code, as its ESLint config is. Remove the folder's
+  `node_modules`, or leave ESLint rules out with `--rules <path>`, if you would not run that code.
+- Keep empty and relative entries out of your `PATH`: the git that `ccvcslib` starts can be found through one, in
+  a folder of the repository.
 - Expect a clippy or Periphery rule to build the code. If you would not build the repository, do not check it with
   either.
 - Use a rule file of your own with `--rules <path>` when you want your rules and not the repository's.

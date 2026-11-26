@@ -48,13 +48,15 @@ make accept                            # the acceptance checks, with a report
 
 `GROUP` is `unit` (the default), `integration` or `validation`, and works with `test-one` as well.
 `CARGO_TEST_ARGS=<name>` passes a test name filter. `make accept` needs clippy, SwiftLint, ruff, ast-grep,
-golangci-lint (with go), pylint, clang-tidy, vulture, Periphery, gitleaks and cargo-audit installed; for Periphery,
+ShellCheck, golangci-lint (with go), pylint, clang-tidy, vulture, Periphery, gitleaks, cargo-audit, ESLint, mypy,
+PMD, detekt, RuboCop, PHPStan (with php), dart, actionlint, sqlfluff, hadolint, yamllint, Vale, stylelint and
+markdownlint-cli2 installed, and `node` for ESLint, stylelint and markdownlint-cli2; for Periphery,
 Apple's `swift` at `/usr/bin/swift`; and for cargo-audit, its advisory database already fetched at
 `~/.cargo/advisory-db` (`cargo audit update-db`, run yourself beforehand: the check runs cargo-audit with
 `--no-fetch` and never fetches it). `tm` itself reads `$CARGO_HOME/advisory-db` first when `CARGO_HOME` is set, but
 the check runs `tm` with a home of its own linked to `~/.cargo/advisory-db` and no `CARGO_HOME`, so that is the
 path it needs even when `CARGO_HOME` is set. A check whose engine or database is missing does not run, and the
-report says so. The integration tests of the `engines` crate run those engines for real, and ShellCheck too.
+report says so. The integration tests of the `engines` crate run those engines for real.
 `make accept` writes its report to `target/accept-report.md` and fails when a check fails or does not run.
 
 Start with the smallest test that proves your change, then widen.
@@ -68,11 +70,13 @@ cli       the binary: the commands, the output, the exit codes
  ├── report   the report and its counts; new findings only, against a base commit
  ├── engines  one adapter per engine: run it, read its output into findings
  ├── rules    the rule file: read it, check it, scope, exceptions; the rule and finding types
- └── procio   the one place that runs another program, git included
+ └── procio   starts the programs Temperare runs; git questions go through ccvcslib
 ```
 
-`procio` and `rules` depend on no other crate here. `engines` depends on both. `report` depends on `rules` and
-`procio`. `cli` depends on all four.
+`procio` and `rules` depend on no other crate here. `engines` depends on both. `report` depends on `rules`, and on
+`procio` only in its tests. `cli` depends on all four. `engines`, `report` and `cli` also depend on `ccvcslib`, the
+Code Chi version-control library, from outside the workspace and pinned at its tag v0.1.0: every git question
+`tm check` and `tm rules` ask goes through it.
 
 ### What a change must keep
 
@@ -80,8 +84,9 @@ These hold today, and a pull request that breaks one will be asked to change.
 
 1. **Rules, not parsers.** Temperare parses no source code. A new check is a rule on an engine. A new language is a
    new engine adapter.
-2. **Engines are programs.** No engine is linked. Every program, git included, is started by `procio` and nowhere
-   else. The repository's own `temperare.toml` checks this: run `tm check` in your checkout.
+2. **Engines are programs.** No engine is linked. In this repository every program is started by `procio` and
+   nowhere else; the git questions go through `ccvcslib`, which starts git itself. The repository's own
+   `temperare.toml` checks this repository's part: run `tm check` in your checkout.
 3. **"Not available" is never "clean".** A rule that could not be run says so. So does an engine that ran and gave
    no answer that can be read, and so does a rule whose `check` cannot be matched back to the engine's findings: it
    fails, it does not report nothing.

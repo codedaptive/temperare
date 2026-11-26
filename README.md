@@ -467,7 +467,7 @@ install and run it for a user. [`llms.txt`](llms.txt) is the index.
 | `crates/report` | The report and its counts; new findings only, against a base commit |
 | `crates/engines` | One adapter per engine: run it, read its output into findings |
 | `crates/rules` | The rule file: read it, check it, scope a rule by path and kit, exceptions; the rule and finding types |
-| `crates/procio` | The one place that runs another program, git included |
+| `crates/procio` | Starts the programs Temperare runs; the git questions of `tm check` and `tm rules` go through the `ccvcslib` library |
 | `temperare.toml`, `rules/` | Temperare's own rule file and its ast-grep rule: this repository is checked by itself |
 | `Makefile`, `scripts/` | The build, test and acceptance targets |
 | `docs/` | The reference: [`docs/README.md`](docs/README.md) |
@@ -497,20 +497,20 @@ Temperare runs other programs with your privileges, and the rule file decides wh
 ## Status and license
 
 - **Version:** 0.1.0. See [`CHANGELOG.md`](CHANGELOG.md).
-- **Proven:** the acceptance checks run the built binary against real clippy, SwiftLint, ruff, ast-grep,
-  golangci-lint, pylint, clang-tidy, vulture, Periphery, gitleaks and cargo-audit. They cover a stock lint in Rust,
-  Swift and Python, new findings only against a base commit, a house rule in Swift and Rust, an absent engine, an
-  exception, a run with nothing but `PATH` and `HOME` set, a security rule, a rule that a command is named only
-  inside one kit, clippy's `warnings` with an `allow` list, and a finding from golangci-lint (Go), pylint (Python),
-  clang-tidy (C), vulture (dead Python), Periphery (dead Swift, in a Swift package), gitleaks (a secret, never
-  printed) and cargo-audit (an advisory on `Cargo.lock`, from the local database) that is reported with its rule,
-  place and fix, and is not available when the engine is off `PATH`. They also run
-  `tm baseline test` on the ready sets, `house@1` and `standard@1`, and in the acceptance record all 89 of their
-  rules (36 and 53) hold on their own failing and passing cases.
+- **Proven:** the acceptance checks run the built binary against every engine `tm` runs, each real: clippy,
+  SwiftLint, ruff, ast-grep, ShellCheck, git, golangci-lint, pylint, clang-tidy, vulture, Periphery, gitleaks,
+  cargo-audit, ESLint, mypy, PMD, detekt, RuboCop, PHPStan, dart, actionlint, sqlfluff, hadolint, yamllint, Vale,
+  stylelint and markdownlint-cli2. They cover a stock lint in Rust, Swift and Python, new findings only against a
+  base commit, a house rule in Swift and Rust, an absent engine, an exception, a run with nothing but `PATH` and
+  `HOME` set, a security rule, a rule that a command is named only inside one kit, clippy's `warnings` with an
+  `allow` list, and, for each engine from ShellCheck to markdownlint-cli2, a finding that is reported with its
+  rule, place and fix, and a rule that is not available when the engine is off `PATH`: among them golangci-lint
+  (Go), clang-tidy (C), vulture (dead Python), Periphery (dead Swift, in a Swift package), gitleaks (a secret, never
+  printed), cargo-audit (an advisory on `Cargo.lock`, from the local database) and git (a change that adds too much
+  test for its code). They also run `tm baseline test` on the ready sets, `house@1` and `standard@1`, and in the
+  acceptance record all 89 of their rules (36 and 53) hold on their own failing and passing cases. The engine
+  versions are listed in [`docs/reference/ENGINES.md`](docs/reference/ENGINES.md#the-engines-version-010-was-accepted-with).
 - **Platforms:** built and accepted on macOS. The code is written for Unix systems; Linux and Windows are untested.
-- **Not in the acceptance checks yet:** `eslint`, `mypy`, `pmd`, `detekt`, `rubocop`, `phpstan`, `dart`,
-  `actionlint`, `sqlfluff`, `hadolint`, `yamllint`, `vale`, `stylelint` and `markdownlint`. `tm` runs each of them
-  (see [Engines](#engines)); none is among the engines the acceptance checks above ran.
 - **Not available today:** rules with `engine = "tessera"` (see [Engines](#engines)).
 - **License:** MIT. See [`LICENSE`](LICENSE).
 
