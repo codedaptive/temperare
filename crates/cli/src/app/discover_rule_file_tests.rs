@@ -2,10 +2,10 @@
 
 use super::discover_rule_file;
 use crate::UsageError;
-use procio::GitError;
+use ccvcslib::{VcsError, VcsFailure};
 use std::path::{Path, PathBuf};
 
-fn no_git() -> Result<PathBuf, GitError> {
+fn no_git() -> Result<PathBuf, VcsError> {
     panic!("toplevel must not be called")
 }
 
@@ -13,7 +13,7 @@ fn no_disk(_: &Path) -> bool {
     panic!("exists must not be called")
 }
 
-fn repo_top() -> Result<PathBuf, GitError> {
+fn repo_top() -> Result<PathBuf, VcsError> {
     Ok(PathBuf::from("/repo"))
 }
 
@@ -50,7 +50,7 @@ fn no_file_at_the_repository_top() {
 
 #[test]
 fn outside_a_repository_names_cwd() {
-    let toplevel = || Err(GitError::NotARepository { repo: PathBuf::from("/elsewhere") });
+    let toplevel = || Err(VcsError::NotAWorkingCopy);
     let found = discover_rule_file(None, Path::new("/work"), &toplevel, &no_disk);
     assert_eq!(
         found,
@@ -63,15 +63,22 @@ fn outside_a_repository_names_cwd() {
 
 #[test]
 fn any_other_git_error_is_quoted() {
-    let toplevel =
-        || Err(GitError::BadOutput { args: vec!["rev-parse".into(), "--show-toplevel".into()], stdout: vec![] });
-    let found = discover_rule_file(None, Path::new("/work"), &toplevel, &no_disk);
-    assert_eq!(
-        found,
-        Err(UsageError {
-            what: "git could not find the repository top: git rev-parse --show-toplevel: unexpected output"
-                .to_string(),
-            fix: "Check that git runs here, or pass --rules <path>.".to_string(),
-        })
-    );
+    for (error, what) in [
+        (VcsError::Unavailable, "git could not find the repository top: version control unavailable"),
+        (
+            VcsError::Failed(VcsFailure { message: "fatal: bad object".to_string(), exit_status: Some(128) }),
+            "git could not find the repository top: fatal: bad object",
+        ),
+    ] {
+        let toplevel = || Err(error.clone());
+        let found = discover_rule_file(None, Path::new("/work"), &toplevel, &no_disk);
+        assert_eq!(
+            found,
+            Err(UsageError {
+                what: what.to_string(),
+                fix: "Check that git runs here, or pass --rules <path>.".to_string(),
+            }),
+            "{error:?}"
+        );
+    }
 }

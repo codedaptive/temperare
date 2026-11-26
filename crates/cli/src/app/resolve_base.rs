@@ -2,7 +2,7 @@
 
 use super::CheckWorld;
 use crate::UsageError;
-use procio::Oid;
+use report::Oid;
 use std::path::{Path, PathBuf};
 
 /// With no base, `Ok(None)` and nothing is called. Otherwise the top of the repository holding `folder` and the

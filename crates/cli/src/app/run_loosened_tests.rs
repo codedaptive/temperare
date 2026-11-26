@@ -6,7 +6,8 @@ use super::run_rules;
 use super::RulesWorld;
 use crate::RulesArgs;
 use engines::Availability;
-use procio::{GitError, Oid};
+use ccvcslib::{VcsError, VcsFailure};
+use report::Oid;
 use rules::{Engine, Problem, RuleFile};
 use std::path::{Path, PathBuf};
 
@@ -31,14 +32,14 @@ enum Base {
     Text(&'static str),
 }
 
-fn git_error() -> GitError {
-    GitError::Exit { args: vec!["show".into()], code: Some(128), stderr: b"fatal: boom\n".to_vec() }
+fn git_error() -> VcsError {
+    VcsError::Failed(VcsFailure { message: "fatal: boom".into(), exit_status: Some(128) })
 }
 
 /// Runs `tm rules --loosened --base v1` in /repo/src, the repository top /repo; `now` is the working rule file's text,
 /// or None for a file with one problem. (exit, out, err).
 fn loosened(base: Base, now: Option<&'static str>) -> (u8, String, String) {
-    let toplevel = |cwd: &Path| -> Result<PathBuf, GitError> {
+    let toplevel = |cwd: &Path| -> Result<PathBuf, VcsError> {
         assert_eq!(cwd, Path::new("/repo/src"));
         Ok(PathBuf::from("/repo"))
     };
@@ -49,7 +50,7 @@ fn loosened(base: Base, now: Option<&'static str>) -> (u8, String, String) {
             None => Err(vec![Problem { line: 2, col: 1, what: "unknown key".into(), fix: "Remove the key.".into() }]),
         }
     };
-    let rev_parse = |folder: &Path, rev: &str| -> Result<Option<Oid>, GitError> {
+    let rev_parse = |folder: &Path, rev: &str| -> Result<Option<Oid>, VcsError> {
         assert_eq!((folder, rev), (Path::new("/repo"), "v1"));
         match base {
             Base::NoCommit => Ok(None),
@@ -57,8 +58,8 @@ fn loosened(base: Base, now: Option<&'static str>) -> (u8, String, String) {
             _ => Ok(Oid::parse(OID)),
         }
     };
-    let blob_at = |folder: &Path, oid: &str, path: &Path| -> Result<Option<Vec<u8>>, GitError> {
-        assert_eq!((folder, oid, path), (Path::new("/repo"), OID, Path::new("./temperare.toml")));
+    let blob_at = |folder: &Path, oid: &Oid, path: &str| -> Result<Option<Vec<u8>>, VcsError> {
+        assert_eq!((folder, oid, path), (Path::new("/repo"), &Oid::parse(OID).unwrap(), "temperare.toml"));
         match base {
             Base::BlobGitError => Err(git_error()),
             Base::NoFile => Ok(None),
@@ -92,10 +93,10 @@ fn each_outcome_with_its_exit_and_text() {
         ("rev names nothing", Base::NoCommit, Some(ONE_RULE), 2, "",
          "tm: base 'v1' does not name a commit\nnext: Pass a commit, branch or tag that exists, e.g. --base main.\n"),
         ("rev_parse git error", Base::RevGitError, Some(ONE_RULE), 2, "",
-         "tm: git could not resolve base 'v1': git show: exit 128: fatal: boom\n\
+         "tm: git could not resolve base 'v1': fatal: boom\n\
           next: Run tm rules inside a git repository to use --base.\n"),
         ("blob_at git error", Base::BlobGitError, Some(ONE_RULE), 2, "",
-         "tm: git could not read temperare.toml at base 'v1': git show: exit 128: fatal: boom\n\
+         "tm: git could not read temperare.toml at base 'v1': fatal: boom\n\
           next: Run tm rules inside a git repository to use --base.\n"),
         ("blob missing", Base::NoFile, Some(ONE_RULE), 2, "",
          "tm: no rule file temperare.toml at base 'v1'\n\

@@ -3,8 +3,8 @@
 use super::{run_check, CheckWorld};
 use crate::CheckArgs;
 use engines::{CheckedRules, RuleRun};
-use procio::{GitError, Oid};
-use report::{Report, ReportError};
+use ccvcslib::VcsError;
+use report::{Oid, Report, ReportError};
 use rules::{Engine, Problem, RelPath, RuleFile, RuleOutcome};
 use serde_json::json;
 use std::path::{Path, PathBuf};
@@ -66,7 +66,7 @@ pub(super) fn checked(runs: Vec<RuleRun>) -> CheckedRules {
     CheckedRules { runs, engines: vec![] }
 }
 
-fn top(_: &Path) -> Result<PathBuf, GitError> { Ok(PathBuf::from("/repo")) }
+fn top(_: &Path) -> Result<PathBuf, VcsError> { Ok(PathBuf::from("/repo")) }
 fn read(_: &Path) -> Result<RuleFile, Vec<Problem>> { Ok(RuleFile::parse(TEXT, Path::new("/repo")).unwrap()) }
 fn clean(
     _: &RuleFile,
@@ -153,7 +153,7 @@ fn only_some_counts_as_a_run_and_none_alone_has_no_line() {
 
 #[test]
 fn usage_error_prints_no_savings_line() {
-    let w = CheckWorld { toplevel: &|cwd| Err(GitError::NotARepository { repo: cwd.to_path_buf() }), run_rules: &|_, _, _, _| unreachable!(), now: &|| unreachable!(), ..world() };
+    let w = CheckWorld { toplevel: &|_| Err(VcsError::NotAWorkingCopy), run_rules: &|_, _, _, _| unreachable!(), now: &|| unreachable!(), ..world() };
     let (code, out, _) = check(&CheckArgs::default(), &w);
     assert_eq!(code, 2);
     assert_eq!(out, "");

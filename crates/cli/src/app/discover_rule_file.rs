@@ -1,7 +1,7 @@
 //! `discover_rule_file`: which rule file tm reads.
 
 use crate::UsageError;
-use procio::GitError;
+use ccvcslib::VcsError;
 use std::path::{Path, PathBuf};
 
 /// The `--rules` path joined to `cwd` when given (whether it exists is `RuleFile::read`'s to say), else
@@ -10,14 +10,14 @@ use std::path::{Path, PathBuf};
 pub fn discover_rule_file(
     flag: Option<&Path>,
     cwd: &Path,
-    toplevel: &dyn Fn() -> Result<PathBuf, GitError>,
+    toplevel: &dyn Fn() -> Result<PathBuf, VcsError>,
     exists: &dyn Fn(&Path) -> bool,
 ) -> Result<PathBuf, UsageError> {
     if let Some(path) = flag {
         return Ok(cwd.join(path));
     }
     let top = toplevel().map_err(|e| match e {
-        GitError::NotARepository { .. } => usage_error(
+        VcsError::NotAWorkingCopy => usage_error(
             format!("not in a git repository: {}", cwd.display()),
             "Run tm inside a git repository, or pass --rules <path>.",
         ),
