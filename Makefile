@@ -1,7 +1,7 @@
 # Temperare workspace targets called by codeteam's zone.mk and by agents.
 # MAKEFILES=<codeteam>/zone/zone.mk supplies zone-test, zone-test-one, zone-test-status and warm.
 CARGO ?= cargo
-.PHONY: test-one test-group check test accept
+.PHONY: test-one test-group check test accept windows-run
 
 # Three kinds of test: GROUP=unit (default), integration or validation; scripts/test_one.sh says what each runs.
 GROUP ?= unit
@@ -25,6 +25,12 @@ test:
 ACCEPT_REPORT ?= $(CURDIR)/target/accept-report.md
 accept:
 	@CARGO="$(CARGO)" CARGO_TEST_ARGS="$(CARGO_TEST_ARGS)" sh "$(CURDIR)/scripts/accept.sh" "$(ACCEPT_REPORT)"
+
+# The unit and integration suite on the Windows machine (WINDOWS_HOST, default gammaAI), at COMMIT (default
+# develop): scripts/windows_run.sh says how. Output in target/windows-run/<short>/out/.
+COMMIT ?= develop
+windows-run:
+	@sh "$(CURDIR)/scripts/windows_run.sh" "$(COMMIT)"
 
 ifeq ($(GROUP),unit)
 ZONE_TEST = $(CARGO) test --workspace --lib -- --skip integration::
