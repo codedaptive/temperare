@@ -133,8 +133,9 @@ runs whatever is there, by the full path it found. On Windows it tries each name
 lists, in order (`.COM;.EXE;.BAT;.CMD` when it lists none). A name it does not find is never started, so the system
 does not go looking for it in the working folder. Two are found another way:
 
-- **ESLint** is the rule file's folder's `node_modules/.bin/eslint` when that file exists, run by its absolute
-  path, and the `eslint` on `PATH` only when it does not. The folder's `eslint` is the repository's own code, trusted as
+- **ESLint** is an executable `eslint` in the rule file's folder's `node_modules/.bin` when there is one (on
+  Windows, `eslint` with each extension your `PATHEXT` lists, so npm's `eslint.cmd`), run by its absolute path, and
+  the `eslint` on `PATH` only when there is none. The folder's `eslint` is the repository's own code, trusted as
   its ESLint config and the plugins it loads are ([below](#running-it-on-code-you-do-not-trust)). stylelint and
   markdownlint-cli2 are taken from `PATH` only.
 - **git, for the questions asked through `ccvcslib`,** is found by `ccvcslib`, once per run: the first `git` in
@@ -412,7 +413,8 @@ turns off. Try a new rule on a file you know breaks it.
 - Read `temperare.toml` first, and the files it names: each ast-grep rule file and each `config`.
 - Read the engines' own config files in the repository too. An engine loads the code its config names: an ESLint
   config and its plugins, a stylelint plugin, a PHPStan bootstrap file, a sqlfluff templater.
-- Look for a `node_modules/.bin/eslint` in the rule file's folder. When it is there, an ESLint rule runs it, not
+- Look for an `eslint` in the rule file's folder's `node_modules/.bin` (on Windows, `eslint.cmd` and the other
+  `PATHEXT` names too). When it is there and executable (on Windows any file counts), an ESLint rule runs it, not
   the `eslint` on your `PATH`: it is the repository's code, as its ESLint config is. Remove the folder's
   `node_modules`, or leave ESLint rules out with `--rules <path>`, if you would not run that code.
 - Expect a clippy or Periphery rule to build the code. If you would not build the repository, do not check it with
