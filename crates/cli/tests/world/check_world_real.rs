@@ -1,13 +1,13 @@
 //! Tests of crates/cli/src/app/check_world_real.rs: six of the nine seams of `CheckWorld::real()` (toplevel, exists,
 //! read, rev_parse, run_rules, build_report) are wired to their real functions. `availability`, `home` and `now` have
 //! no case here: `availability` would look at the real PATH, `home` would read the real HOME and `now` the real
-//! clock. The file mixes kinds, each case marked: RITs (cli→procio/rules/engines/report, kept beside their caller)
-//! and a std disk seam. `exists` and `read` are told from stubs on
+//! clock. The file mixes kinds, each case marked: RITs (cli→ccvcslib/procio/rules/engines/report, kept beside their
+//! caller) and a std disk seam. `exists` and `read` are told from stubs on
 //! a file the tests write in a throwaway folder under the system temp folder, removed on drop; `run_rules` (wired to
 //! `engines::run_rules_versioned_at`) and `build_report` (wired to `report::build_report_with_no_files`) on a rule file
-//! with no rules in such a folder; `toplevel` and `rev_parse` are told by a folder that does not exist, where git
-//! fails. Nothing here needs a real repository or an engine: `run_rules` and `build_report` get rule files with no
-//! rules, so no engine is looked up, and the report has no base, so no git diff is run.
+//! with no rules in such a folder; `toplevel` and `rev_parse` are told by a folder that does not exist, where the
+//! spawn fails. Nothing here needs a real repository or an engine: `run_rules` and `build_report` get rule files with
+//! no rules, so no engine is looked up, and the report has no base, so no git diff is run.
 
 use cli::CheckWorld;
 use rules::{Exception, RuleFile};
@@ -84,7 +84,8 @@ fn read_reads_a_rule_file_from_disk() {
     assert_eq!(ids, vec!["lint-all"]);
 }
 
-/// RIT: git runs (crates/procio/src/git/ops/toplevel.rs:13-16, rev_parse.rs:11-13).
+/// RIT: git is asked (ccvcslib's git_working_copy_root.rs and git_resolve_revision.rs, through git_toplevel.rs and
+/// git_rev_parse.rs); the folder is missing, so the spawn fails before git starts and both answer Err.
 #[test]
 fn toplevel_and_rev_parse_of_a_missing_folder_are_errors() {
     let world = CheckWorld::real();

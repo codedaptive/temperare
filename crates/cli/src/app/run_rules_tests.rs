@@ -5,7 +5,8 @@
 use super::{run_rules, RulesWorld};
 use crate::RulesArgs;
 use engines::{Availability, NoFileRule};
-use procio::{GitError, Oid};
+use ccvcslib::VcsError;
+use report::Oid;
 use rules::{Engine, Problem, Rule, RuleFile};
 use serde_json::json;
 use std::path::{Path, PathBuf};
@@ -38,13 +39,13 @@ fn broken(_: &Path) -> Result<RuleFile, Vec<Problem>> {
     ])
 }
 
-fn repo_top(cwd: &Path) -> Result<PathBuf, GitError> {
+fn repo_top(cwd: &Path) -> Result<PathBuf, VcsError> {
     assert_eq!(cwd, Path::new("/repo/src"));
     Ok(PathBuf::from("/repo"))
 }
 
-fn not_a_repository(cwd: &Path) -> Result<PathBuf, GitError> {
-    Err(GitError::NotARepository { repo: cwd.to_path_buf() })
+fn not_a_repository(_: &Path) -> Result<PathBuf, VcsError> {
+    Err(VcsError::NotAWorkingCopy)
 }
 
 fn there(_: &Path) -> bool {
@@ -64,7 +65,7 @@ fn pinned_now() -> u64 {
 /// Runs `tm rules` in /repo/src with the given seams, every engine available; (exit, out, err).
 fn rules_in_repo(
     args: RulesArgs,
-    toplevel: &dyn Fn(&Path) -> Result<PathBuf, GitError>,
+    toplevel: &dyn Fn(&Path) -> Result<PathBuf, VcsError>,
     exists: &dyn Fn(&Path) -> bool,
     read: &dyn Fn(&Path) -> Result<RuleFile, Vec<Problem>>,
 ) -> (u8, String, String) {
@@ -83,7 +84,7 @@ fn none_no_file(rf: &RuleFile, folder: &Path) -> Vec<NoFileRule> {
 /// (exit, out, err).
 fn rules_with(
     args: RulesArgs,
-    toplevel: &dyn Fn(&Path) -> Result<PathBuf, GitError>,
+    toplevel: &dyn Fn(&Path) -> Result<PathBuf, VcsError>,
     exists: &dyn Fn(&Path) -> bool,
     read: &dyn Fn(&Path) -> Result<RuleFile, Vec<Problem>>,
     availability: &dyn Fn(Engine) -> Availability,
@@ -96,16 +97,16 @@ fn rules_with(
 /// never asks git for a base.
 fn rules_in_world(
     args: RulesArgs,
-    toplevel: &dyn Fn(&Path) -> Result<PathBuf, GitError>,
+    toplevel: &dyn Fn(&Path) -> Result<PathBuf, VcsError>,
     exists: &dyn Fn(&Path) -> bool,
     read: &dyn Fn(&Path) -> Result<RuleFile, Vec<Problem>>,
     availability: &dyn Fn(Engine) -> Availability,
     now: &dyn Fn() -> u64,
     no_file_rules: &dyn Fn(&RuleFile, &Path) -> Vec<NoFileRule>,
 ) -> (u8, String, String) {
-    let rev_parse = |_: &Path, _: &str| -> Result<Option<Oid>, GitError> { panic!("rev_parse must not be called") };
+    let rev_parse = |_: &Path, _: &str| -> Result<Option<Oid>, VcsError> { panic!("rev_parse must not be called") };
     let blob_at =
-        |_: &Path, _: &str, _: &Path| -> Result<Option<Vec<u8>>, GitError> { panic!("blob_at must not be called") };
+        |_: &Path, _: &Oid, _: &str| -> Result<Option<Vec<u8>>, VcsError> { panic!("blob_at must not be called") };
     let world =
         RulesWorld { toplevel, exists, read, availability, now, rev_parse: &rev_parse, blob_at: &blob_at, no_file_rules };
     let (mut out, mut err) = (Vec::new(), Vec::new());
@@ -231,7 +232,7 @@ fn a_missing_rule_file_under_json_is_also_an_object_on_stdout() {
 
 #[test]
 fn the_rules_flag_reads_that_file_and_never_asks_git() {
-    let toplevel = |_: &Path| -> Result<PathBuf, GitError> { panic!("toplevel must not be called") };
+    let toplevel = |_: &Path| -> Result<PathBuf, VcsError> { panic!("toplevel must not be called") };
     let exists = |_: &Path| -> bool { panic!("exists must not be called") };
     let read = |p: &Path| {
         assert_eq!(p, Path::new("/repo/src/cfg/t.toml"));

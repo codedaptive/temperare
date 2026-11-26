@@ -11,9 +11,12 @@ mod case_rule;
 mod check_world;
 mod check_world_real;
 mod discover_rule_file;
+mod git_rev_parse;
+mod git_toplevel;
 mod judge_case;
 mod leftover_folders_next;
 mod now_secs;
+mod oid_of_revision;
 mod only_paths;
 mod read_base_rule_file;
 mod report_engines;
@@ -56,6 +59,8 @@ mod judge_case_tests;
 mod leftover_folders_next_tests;
 #[cfg(test)]
 mod now_secs_tests;
+#[cfg(test)]
+mod oid_of_revision_tests;
 #[cfg(test)]
 mod only_paths_tests;
 #[cfg(test)]

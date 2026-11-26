@@ -2,8 +2,7 @@
 
 use super::{run_check, CheckWorld};
 use crate::CheckArgs;
-use procio::Oid;
-use report::{NotAvailable, Report};
+use report::{NotAvailable, Oid, Report};
 use engines::{CheckedRules, NotAvailableCause, RuleRun};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 use std::path::{Path, PathBuf};

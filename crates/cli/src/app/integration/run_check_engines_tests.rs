@@ -9,8 +9,7 @@ use super::super::run_check_savings_tests::{assert_clean_body, check, printed_bo
 use super::super::CheckWorld;
 use crate::CheckArgs;
 use engines::{Availability, CheckedRules, EngineVersion, RuleRun};
-use procio::Oid;
-use report::{NotAvailable, Report, ReportError};
+use report::{NotAvailable, Oid, Report, ReportError};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 use serde_json::json;
 use std::path::Path;

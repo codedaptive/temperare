@@ -5,8 +5,8 @@ use super::run_check_savings_tests::{assert_counts_tail, without_counts_tail};
 use super::{run_check, CheckWorld};
 use crate::CheckArgs;
 use engines::{CheckedRules, NotAvailableCause, RuleRun};
-use procio::{GitError, Oid};
-use report::{Failed, NotAvailable, Report, ReportError};
+use ccvcslib::VcsError;
+use report::{Failed, NotAvailable, Oid, Report, ReportError};
 use rules::{Engine, Finding, Kind, Problem, RelPath, RuleFile, RuleOutcome, Severity};
 use serde_json::json;
 use std::cell::{Cell, RefCell};
@@ -32,7 +32,7 @@ const HEX: &str = "0123456789abcdef0123456789abcdef01234567";
 type Outcomes = Vec<(String, RuleOutcome)>;
 type NoFiles = Vec<(String, String)>;
 
-fn top(_: &Path) -> Result<PathBuf, GitError> {
+fn top(_: &Path) -> Result<PathBuf, VcsError> {
     Ok(PathBuf::from("/repo"))
 }
 
@@ -105,7 +105,7 @@ fn assert_usage_error(args: CheckArgs, world: &CheckWorld, stderr: &str, object:
 #[test]
 fn outside_a_repository_is_a_usage_error() {
     let w = CheckWorld {
-        toplevel: &|cwd| Err(GitError::NotARepository { repo: cwd.to_path_buf() }),
+        toplevel: &|_| Err(VcsError::NotAWorkingCopy),
         read: &|_| unreachable!("read"),
         run_rules: &|_, _, _, _| unreachable!("run_rules"),
         ..world()
