@@ -31,5 +31,33 @@
 99|gitleaks_off_path_is_not_available|Done 9: gitleaks through a rule file
 99|a_cargo_audit_advisory_is_reported_on_cargo_lock_with_no_line|Done 9: cargo-audit through a rule file
 99|cargo_audit_off_path_is_not_available|Done 9: cargo-audit through a rule file
+99|an_eslint_problem_is_reported_with_its_rule_place_fix_and_version|Done 9: eslint through a rule file
+99|eslint_off_path_is_not_available|Done 9: eslint through a rule file
+99|a_mypy_error_is_reported_with_its_rule_place_fix_and_version|Done 9: mypy through a rule file
+99|mypy_off_path_is_not_available|Done 9: mypy through a rule file
+99|a_pmd_violation_is_reported_with_its_rule_place_fix_and_version|Done 9: PMD through a rule file
+99|pmd_off_path_is_not_available|Done 9: PMD through a rule file
+99|a_detekt_finding_is_reported_with_its_rule_place_fix_and_version|Done 9: detekt through a rule file
+99|detekt_off_path_is_not_available|Done 9: detekt through a rule file
+99|a_rubocop_offense_is_reported_with_its_rule_place_fix_and_version|Done 9: RuboCop through a rule file
+99|rubocop_off_path_is_not_available|Done 9: RuboCop through a rule file
+99|a_phpstan_error_is_reported_with_its_rule_place_fix_and_version|Done 9: PHPStan through a rule file
+99|phpstan_off_path_is_not_available|Done 9: PHPStan through a rule file
+99|a_dart_diagnostic_is_reported_with_its_rule_place_fix_and_version|Done 9: dart analyze through a rule file
+99|dart_off_path_is_not_available|Done 9: dart analyze through a rule file
+99|a_markdownlint_violation_is_reported_with_its_rule_place_fix_and_version|Done 9: markdownlint-cli2 through a rule file
+99|markdownlint_off_path_is_not_available|Done 9: markdownlint-cli2 through a rule file
+99|a_yamllint_problem_is_reported_with_its_rule_place_fix_and_version|Done 9: yamllint through a rule file
+99|yamllint_off_path_is_not_available|Done 9: yamllint through a rule file
+99|an_actionlint_error_is_reported_with_its_rule_place_fix_and_version|Done 9: actionlint through a rule file
+99|actionlint_off_path_is_not_available|Done 9: actionlint through a rule file
+99|a_hadolint_warning_is_reported_with_its_rule_place_fix_and_version|Done 9: hadolint through a rule file
+99|hadolint_off_path_is_not_available|Done 9: hadolint through a rule file
+99|a_vale_alert_is_reported_with_its_rule_place_fix_and_version|Done 9: Vale through a rule file
+99|vale_off_path_is_not_available|Done 9: Vale through a rule file
+99|a_stylelint_warning_is_reported_with_its_rule_place_fix_and_version|Done 9: stylelint through a rule file
+99|stylelint_off_path_is_not_available|Done 9: stylelint through a rule file
+99|a_sqlfluff_violation_is_reported_with_its_rule_place_fix_and_version|Done 9: SQLFluff through a rule file
+99|sqlfluff_off_path_is_not_available|Done 9: SQLFluff through a rule file
 100|two_ruff_rules_share_one_engine_run|Done 10: the baseline
 100|the_shipped_baseline_sets_hold|Done 10: the baseline

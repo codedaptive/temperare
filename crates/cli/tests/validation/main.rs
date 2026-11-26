@@ -7,9 +7,10 @@
 //! a folder the test made.
 //!
 //! Acceptance: the mission's Done list (MISSION-temperare-2026-11-16, Done 1-8, SPEC-engines-common's Done 9 for
-//! golangci-lint, pylint, clang-tidy, vulture, Periphery, gitleaks and cargo-audit, and Done 10's shared run and
-//! baseline test), run against the built `temperare` with the real engines, each case in a throwaway folder it makes
-//! and removes.
+//! golangci-lint, pylint, clang-tidy, vulture, Periphery, gitleaks, cargo-audit, eslint, mypy, PMD, detekt, RuboCop,
+//! PHPStan, dart analyze, markdownlint-cli2, yamllint, actionlint, hadolint, Vale, stylelint and SQLFluff, and
+//! Done 10's shared run and baseline test), run against the built `temperare` with the real engines, each case in a
+//! throwaway folder it makes and removes.
 //! Validation, not a unit or integration test: a run of the shipped binary, written by the cli lane to the
 //! orchestrator's measures (rule 11).
 //! `make accept` runs it.
@@ -35,6 +36,7 @@ mod check_not_run;
 mod check_saw_tm;
 mod clean_cmd;
 mod env;
+mod not_available_pairs;
 mod on_tm_path;
 mod probed_version;
 mod repo;
@@ -43,6 +45,7 @@ mod temp_home;
 mod tm;
 mod tm_lines;
 mod tm_path_folder;
+mod tm_path_for;
 mod write_head_once;
 
 mod done_1_clippy;
@@ -61,6 +64,20 @@ mod done_9_vulture;
 mod done_9_periphery;
 mod done_9_gitleaks;
 mod done_9_cargo_audit;
+mod done_9_eslint;
+mod done_9_mypy;
+mod done_9_pmd;
+mod done_9_detekt;
+mod done_9_rubocop;
+mod done_9_phpstan;
+mod done_9_dart;
+mod done_9_markdownlint;
+mod done_9_yamllint;
+mod done_9_actionlint;
+mod done_9_hadolint;
+mod done_9_vale;
+mod done_9_stylelint;
+mod done_9_sqlfluff;
 mod done_10_shared_run;
 mod done_10_baseline_test;
 
