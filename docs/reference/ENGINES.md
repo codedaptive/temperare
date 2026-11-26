@@ -51,6 +51,11 @@ The engines, in the order of this page: [clippy](#clippy), [swiftlint](#swiftlin
   Temperare then keeps the findings that are inside that folder, in the files the rule covers (its `paths`,
   `exclude`, `kits`, `outside_kits`) and, when you gave paths on the command line, in those paths. Paths on the
   command line narrow the result; they do not make the engines do less work.
+- **Where a SARIF result is.** PMD, detekt, hadolint and gitleaks print SARIF, and each result's file is read from
+  its URI: the path after `file://`, or a path relative to the rule file's folder, where the engine runs, with each
+  `%XX` escape decoded. On Windows a URI with a drive (`file:///C:/x/a.py`, or `file:///C%3A/x/a.py`) is the native
+  path `C:\x\a.py`, with `.` and `..` resolved as text, and the rule file's folder is compared with it in the same
+  form.
 - **Its version is read once per check.** Before the rules run, each engine named by the rules this check runs is
   asked its version once, in the rule file's folder, when it is available: `cargo clippy --version`,
   `swiftlint version`, `ruff --version`, `ast-grep --version`, `shellcheck --version`, `git --version`,
@@ -1382,6 +1387,13 @@ only the version question, `git --version`, is run by `tm` itself.
 - **Which options files are read.** The nearest `analysis_options.yaml` at or above the rule file's folder, and each
   one on disk below it, in a folder git ignores or not, through symlinked folders, but not in a folder whose name
   starts with `.`; and every file each of them names with `include:`. `tm` reads them from disk as dart does.
+- **Where a `package:` include is.** `tm` finds it through the package's `.dart_tool/package_config.json`, as dart
+  does: the package's `rootUri` (a relative one is taken from the `.dart_tool` folder), then its `packageUri`
+  (`lib/` when there is none), then the rest of the URI. On Windows a `rootUri` that is a file URL with a drive
+  (`file:///C:/x`, the letter in either case, `%XX` escapes decoded first) is the native path `C:\x`, its drive
+  letter as written, and `.` and `..` in the path are resolved as text, as dart's `Uri.resolve` resolves them, a
+  relative `rootUri` such as `../` included. A `rootUri` with a host (`file://server/share/...`) resolves on no
+  platform, so the include is reported as not resolving. On other platforms the path is used as dart writes it.
 - **Failed when the options hide findings.** dart cannot be told to ignore these, so each fails the rule and the
   reason names the file and the line:
   - a key `exclude`, in any case, anywhere in an options file, which covers `analyzer: exclude:`;
