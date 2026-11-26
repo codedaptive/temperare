@@ -1,12 +1,24 @@
 //! Unit tests for report_error_display.rs.
 
 use crate::ReportError;
+use ccvcslib::{VcsError, VcsFailure};
 use std::path::PathBuf;
 
 #[test]
 fn git_is_prefixed_with_git() {
     let err = ReportError::Git(procio::GitError::NotARepository { repo: PathBuf::from("/tmp/x") });
     assert_eq!(err.to_string(), "git: /tmp/x: not a git repository");
+}
+
+#[test]
+fn vcs_is_prefixed_with_git() {
+    let cases = [
+        (VcsError::NotAWorkingCopy, "git: not a working copy"),
+        (VcsError::Failed(VcsFailure { message: "bad".into(), exit_status: Some(128) }), "git: bad"),
+    ];
+    for (vcs, want) in cases {
+        assert_eq!(ReportError::Vcs(vcs).to_string(), want);
+    }
 }
 
 #[test]

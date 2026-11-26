@@ -100,6 +100,7 @@ pub use keep_added::keep_added;
 pub use not_applicable::NotApplicable;
 pub use not_available::NotAvailable;
 pub use out_of_play::out_of_play;
+pub use procio::Oid;
 pub use render_text::render_text;
 pub use report::Report;
 pub use report_error::ReportError;

@@ -7,6 +7,7 @@ impl fmt::Display for ReportError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ReportError::Git(err) => write!(f, "git: {err}"),
+            ReportError::Vcs(err) => write!(f, "git: {err}"),
             ReportError::Folder { folder, why } => write!(f, "rule file folder {}: {why}", folder.display()),
         }
     }
