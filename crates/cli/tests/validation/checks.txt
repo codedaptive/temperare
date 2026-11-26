@@ -59,5 +59,9 @@
 99|stylelint_off_path_is_not_available|Done 9: stylelint through a rule file
 99|a_sqlfluff_violation_is_reported_with_its_rule_place_fix_and_version|Done 9: SQLFluff through a rule file
 99|sqlfluff_off_path_is_not_available|Done 9: SQLFluff through a rule file
+99|a_shellcheck_warning_is_reported_with_its_rule_place_fix_and_version|Done 9: ShellCheck through a rule file
+99|shellcheck_off_path_is_not_available|Done 9: ShellCheck through a rule file
+99|a_git_ratio_finding_is_reported_with_its_rule_place_fix_and_version|Done 9: git through a rule file
+99|git_off_path_is_not_available|Done 9: git through a rule file
 100|two_ruff_rules_share_one_engine_run|Done 10: the baseline
 100|the_shipped_baseline_sets_hold|Done 10: the baseline
