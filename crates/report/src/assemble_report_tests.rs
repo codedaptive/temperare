@@ -4,7 +4,7 @@
 //! a set-aside rule's apart; the expired exceptions, judged on the day, against those in force.
 
 use crate::{assemble_report, RuleCount};
-use procio::Oid;
+use crate::Oid;
 use rules::{Date, Engine, Exception, Finding, Kind, RelPath, Rule, RuleFile, RuleOutcome, Severity};
 use std::path::PathBuf;
 
