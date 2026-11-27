@@ -8,7 +8,7 @@ use std::ops::Range;
 use std::path::{Path, PathBuf};
 
 /// `BaselineWorld::real()` wires the sets built into tm, case folders under the system temp folder, the real disk,
-/// `git init` and staging through procio, commit and added lines through ccvcslib, and
+/// the case's git repository made, staged, committed and diffed through ccvcslib, and
 /// `engines::run_rules_versioned_at` (given the case's base commit, `None` without one); a unit test passes closures,
 /// so `tm baseline test` is tested without touching the disk or running git or an engine.
 pub struct BaselineWorld<'a> {
