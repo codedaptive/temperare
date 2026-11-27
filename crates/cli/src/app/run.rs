@@ -14,8 +14,8 @@ use std::path::Path;
 
 /// Runs the command `args` names (the program name left out) in `cwd`, printing on `out` and `err`, and returns the
 /// exit code: a usage error is 2, help and version are 0, `tm rules` (also `tm rules --loosened`) is `run_rules` and
-/// `tm check` is `run_check`, both against the real git, disk, PATH and clock (`tm check` also reads and writes its
-/// files under HOME: the savings switch and log, and the telemetry file).
+/// `tm check` is `run_check`, both against the real git, disk, PATH and clock (`tm check` also reads the savings switch
+/// under HOME and writes the savings log and the telemetry file there; it never reads the telemetry file).
 /// `tm baseline test` is `run_baseline_test` on the sets built into tm, its cases in folders under the system temp
 /// folder run by the real engines (`BaselineWorld::real`). `install` and `uninstall`
 /// are `run_install` and `run_uninstall` on the real host (`InstallHost::real`), the harness picker reading stdin

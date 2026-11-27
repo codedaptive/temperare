@@ -8,8 +8,8 @@ use std::path::Path;
 
 use super::same_file;
 
-/// Appends `line` and a newline, in one write, to `<home>/<folders...>/<file_name>`, making missing folders. When any
-/// of `folders` (each taken under the one before it, the first under HOME) or `file_name` is a symbolic link
+/// Appends `line` and a newline, as one `write_all`, to `<home>/<folders...>/<file_name>`, making missing folders.
+/// When any of `folders` (each taken under the one before it, the first under HOME) or `file_name` is a symbolic link
 /// (dangling included), or is not a folder or a regular file as expected, when it is looked at, nothing is written.
 /// On unix a link at the file is also refused by the open itself, and a file swapped after its look is caught. A
 /// folder swapped for a link after its look and before the file is opened is still not caught. HOME itself is not
@@ -28,8 +28,9 @@ fn append(home: &Path, folders: &[&str], file_name: &str, line: &str) -> io::Res
         folder.push(name);
         ensure_folder(&folder)?;
     }
-    // One write_all of line and newline together, on a file opened in append mode, so lines from runs at the same
-    // time never interleave.
+    // One write_all of line and newline together, on a file opened in append mode: each write goes at the end, and
+    // the line goes in one write unless the OS writes it short, so runs at the same time do not interleave lines in
+    // practice.
     open_file(&folder.join(file_name))?.write_all(format!("{line}\n").as_bytes())
 }
 
