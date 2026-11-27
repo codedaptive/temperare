@@ -32,7 +32,7 @@ engines: ruff 0.17.4, clippy 0.1.95
 1 findings (1 error, 0 warning; 0 security), 1 silenced, 1 exceptions in force, 1 not available, 1 failed, 0 not applicable, 0 covers nothing, 0 expired
 stderr of clippy-warnings (clippy):
   clippy param alow: a clippy rule reads only the `allow`, `max_nesting` param
-next: fix the findings above, or add an approved [[exception]] to /path/to/temperare.toml
+next: fix the findings above, or add an approved [[exception]] with its expires date to /path/to/temperare.toml
 ```
 
 In order:
@@ -127,7 +127,7 @@ The run above, as `--json` prints it (on one line; wrapped here to read):
       "what": "Comparison to `None` should be `cond is None`"
     }
   ],
-  "next": "fix the findings above, or add an approved [[exception]] to /path/to/temperare.toml",
+  "next": "fix the findings above, or add an approved [[exception]] with its expires date to /path/to/temperare.toml",
   "not_applicable": [],
   "not_available": [
     { "engine": "tessera", "rule": "file-erosion", "why": "Tessera's slop records are not defined yet" }
@@ -348,7 +348,7 @@ for exit 6:
 | Exit | Text |
 |---|---|
 | 0 | `nothing to do` |
-| 1 | `fix the findings above, or add an approved [[exception]] to <rule file>` |
+| 1 | `fix the findings above, or add an approved [[exception]] with its expires date to <rule file>` |
 | 2 | The fix for the error |
 | 3 | `install <engine>, <engine> (or run without those rules)`, naming each engine missing from PATH; any other reason is `<engine>: <reason>` |
 | 4 | `raise the security findings with their owner; work goes on` |
@@ -575,7 +575,9 @@ or `--base is only for tm rules --loosened`. The errors of the base:
 Each is two lines on stderr, and with `--json` also the object on stdout
 ([Errors that stop a run, as JSON](#errors-that-stop-a-run-as-json)). A problem in the rule file at the base is
 listed as for any rule file, its file shown as `<path> (at <rev>)`; the base's problems come first, and now's are
-listed only when the base has none.
+listed only when the base has none. The base's rule file is read as strictly as today's: an `[[exception]]` there
+without `expires` is a problem, so against a base committed before `expires` was required, `tm rules --loosened`
+exits 2 and names that exception's line at the base. Compare against a base whose exceptions carry their dates.
 
 ## `tm baseline test`
 

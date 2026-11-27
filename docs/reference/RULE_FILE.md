@@ -79,6 +79,7 @@ path = "Sources/Legacy/Bridge.swift"
 what = "Force casts"
 reason = "the bridge is rewritten in 2.0"
 approved = "who approved it"
+expires = "2027-03-31"
 ```
 
 ## The top level
@@ -362,8 +363,8 @@ value that begins with `-` are problems as they are in a `[[rule]]`.
 | `path` | yes | One file, exactly, relative to the rule file's folder. Not a glob |
 | `reason` | yes | Why the exception stands |
 | `approved` | yes | Who approved it |
+| `expires` | yes | The last day the exception holds, a string `"YYYY-MM-DD"`, such as `expires = "2027-03-31"`. The day is in UTC. An exception without it, or with a string that is not a real date written that way, is a problem |
 | `what` | no | Limits the exception to findings whose message contains this text. Leave it out to cover every finding of the rule in the file; an empty `what` is a problem |
-| `expires` | no | The last day the exception holds, a string `"YYYY-MM-DD"`, such as `expires = "2027-03-31"`. The day is in UTC. Leave it out for an exception with no end date. A string that is not a real date written that way is a problem |
 
 An exception has no line number, because line numbers drift. A finding is covered by the first exception in the
 file with its rule and its path whose `what`, when given, is in the finding's message, and that has not expired.
@@ -428,4 +429,6 @@ What is checked:
 - an exception missing `rule`, `path`, `reason` or `approved`, naming a rule that is neither in the file nor in a
   taken set, with an empty `what`, or with an `expires` that is not a real date (`` `expires` must be a real date
   written YYYY-MM-DD, not "<text>" ``);
+- an exception missing `expires`, reported at its `[[exception]]` line as `` [[exception]] is missing `expires` ``,
+  with the fix ``Add `expires = "YYYY-MM-DD"`, the exception's last day (UTC), to this [[exception]].``;
 - a rule file that cannot be read, reported at line 0, column 0.
