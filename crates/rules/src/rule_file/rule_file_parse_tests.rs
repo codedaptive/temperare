@@ -4,7 +4,7 @@
 
 use super::baseline_set::BaselineSet;
 use super::rule_file_parse::parse_with_sets;
-use crate::{Engine, Kind, Problem, RelPath, Rule, RuleFile, Severity};
+use crate::{Date, Engine, Kind, Problem, RelPath, Rule, RuleFile, Severity};
 use std::path::Path;
 
 /// A valid rule, to which a case adds lines.
@@ -28,7 +28,8 @@ fn check_1_unknown_key_at_top_level_in_a_kit_in_a_rule_and_in_an_exception() {
     only("version = 1\ncolour = \"blue\"\n", 2, 1, "colour");
     only("version = 1\n[kits.core]\npaths = [\"a/**\"]\ncolours = 1\n", 4, 1, "colours");
     only(&format!("version = 1\n{RULE}  sevrity = \"error\"\n"), 7, 3, "sevrity");
-    let exception = "[[exception]]\nrule = \"r\"\npath = \"a.rs\"\nreason = \"x\"\napproved = \"bob\"\nline = 3\n";
+    let exception = "[[exception]]\nrule = \"r\"\npath = \"a.rs\"\nreason = \"x\"\napproved = \"bob\"\nline = 3\n\
+                    expires = \"2099-12-31\"\n";
     only(&format!("version = 1\n{RULE}{exception}"), 12, 1, "line");
 }
 
@@ -73,19 +74,20 @@ fn check_8_kit_named_but_not_defined_at_that_string() {
 
 #[test]
 fn check_9_exception_for_an_unknown_rule_at_the_value() {
-    let exception = "[[exception]]\nrule = \"ghost\"\npath = \"a.rs\"\nreason = \"x\"\napproved = \"bob\"\n";
+    let exception = "[[exception]]\nrule = \"ghost\"\npath = \"a.rs\"\nreason = \"x\"\napproved = \"bob\"\n\
+                    expires = \"2099-12-31\"\n";
     only(&format!("version = 1\n{RULE}{exception}"), 8, 8, "ghost");
 }
 
 #[test]
 fn check_10_exception_missing_reason_at_its_header() {
-    let exception = "[[exception]]\nrule = \"r\"\npath = \"a.rs\"\napproved = \"bob\"\n";
+    let exception = "[[exception]]\nrule = \"r\"\npath = \"a.rs\"\napproved = \"bob\"\nexpires = \"2099-12-31\"\n";
     only(&format!("version = 1\n{RULE}{exception}"), 7, 1, "`reason`");
 }
 
 #[test]
 fn check_11_exception_missing_approved_at_its_header() {
-    let exception = "[[exception]]\nrule = \"r\"\npath = \"a.rs\"\nreason = \"x\"\n";
+    let exception = "[[exception]]\nrule = \"r\"\npath = \"a.rs\"\nreason = \"x\"\nexpires = \"2099-12-31\"\n";
     only(&format!("version = 1\n{RULE}{exception}"), 7, 1, "`approved`");
 }
 
@@ -114,8 +116,10 @@ fn a_rule_missing_id_or_engine_is_a_problem_at_its_header() {
 
 #[test]
 fn an_exception_missing_rule_or_path_is_a_problem_at_its_header() {
-    only(&format!("version = 1\n{RULE}[[exception]]\npath = \"a.rs\"\nreason = \"x\"\napproved = \"b\"\n"), 7, 1, "`rule`");
-    only(&format!("version = 1\n{RULE}[[exception]]\nrule = \"r\"\nreason = \"x\"\napproved = \"b\"\n"), 7, 1, "`path`");
+    only(&format!("version = 1\n{RULE}[[exception]]\npath = \"a.rs\"\nreason = \"x\"\napproved = \"b\"\n\
+                    expires = \"2099-12-31\"\n"), 7, 1, "`rule`");
+    only(&format!("version = 1\n{RULE}[[exception]]\nrule = \"r\"\nreason = \"x\"\napproved = \"b\"\n\
+                    expires = \"2099-12-31\"\n"), 7, 1, "`path`");
 }
 
 #[test]
@@ -195,7 +199,7 @@ fn a_toml_syntax_error_is_one_problem_at_its_position() {
 #[test]
 fn every_problem_in_a_file_comes_back_in_line_and_column_order() {
     let text = "version = 3\nzeta = 1\nalpha = 2\n[[rule]]\nid = \"Bad\"\nengine = \"nope\"\n\
-                [[exception]]\nrule = \"ghost\"\npath = \"a.rs\"\n";
+                [[exception]]\nrule = \"ghost\"\nexpires = \"2099-12-31\"\npath = \"a.rs\"\n";
     let found: Vec<(usize, usize)> = problems(text).iter().map(|p| (p.line, p.col)).collect();
     let expected = vec![(1, 11), (2, 1), (3, 1), (4, 1), (4, 1), (5, 6), (6, 10), (7, 1), (7, 1), (8, 8)];
     assert_eq!(found, expected);
@@ -207,7 +211,7 @@ fn a_file_with_only_the_version_is_valid_and_empty() {
     assert!(file.kits.is_empty() && file.rules.is_empty() && file.exceptions.is_empty());
 }
 
-/// The SPEC's example rule file (WO-rules-1).
+/// The SPEC's example rule file (WO-rules-1), with the `expires` every exception now needs.
 const SPEC_EXAMPLE: &str = r#"version = 1
 
 [kits.core]                      # optional: a named set of paths
@@ -231,6 +235,7 @@ path = "Sources/Core/Legacy.swift"   # one file, exact
 what = "isArchived"              # optional: matches only findings whose `what` contains this text
 reason = "migration ships in 2.4"
 approved = "Bob 2026-11-17"      # required
+expires = "2099-12-31"           # required: the last day it holds, in UTC
 "#;
 
 #[test]
@@ -265,6 +270,7 @@ fn the_spec_example_parses_to_its_fields() {
     assert_eq!(exception.what.as_deref(), Some("isArchived"));
     assert_eq!(exception.reason, "migration ships in 2.4");
     assert_eq!(exception.approved, "Bob 2026-11-17");
+    assert_eq!(exception.expires, Date::new(2099, 12, 31));
 }
 
 /// The baseline sets the cases below take, in place of the sets built into `tm`.
@@ -381,7 +387,8 @@ fn baseline_override_params_merge_into_the_sets() {
 
 #[test]
 fn baseline_override_off_removes_the_rule_and_an_exception_may_still_name_it() {
-    let exception = "[[exception]]\nrule = \"tm-s1\"\npath = \"a.rs\"\nreason = \"x\"\napproved = \"bob\"\n";
+    let exception = "[[exception]]\nrule = \"tm-s1\"\npath = \"a.rs\"\nreason = \"x\"\napproved = \"bob\"\n\
+                    expires = \"2099-12-31\"\n";
     let file = valid(&format!("{BOTH}[[override]]\nrule = \"tm-s1\"\noff = true\n{exception}"));
     assert_eq!(ids(&file.rules), vec!["tm-h1"]);
     assert_eq!(ids(&file.not_applicable_rules), vec!["tm-h2"]);
@@ -398,7 +405,8 @@ fn baseline_required_param_given_by_an_override_makes_the_rule_apply() {
 
 #[test]
 fn baseline_exception_naming_a_baseline_rule_is_accepted() {
-    let exception = "[[exception]]\nrule = \"tm-h1\"\npath = \"a.rs\"\nreason = \"x\"\napproved = \"bob\"\n";
+    let exception = "[[exception]]\nrule = \"tm-h1\"\npath = \"a.rs\"\nreason = \"x\"\napproved = \"bob\"\n\
+                    expires = \"2099-12-31\"\n";
     let file = valid(&format!("{BOTH}{exception}"));
     assert_eq!(file.exceptions.iter().map(|e| e.rule.as_str()).collect::<Vec<_>>(), vec!["tm-h1"]);
 }

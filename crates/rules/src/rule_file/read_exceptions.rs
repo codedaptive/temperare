@@ -6,12 +6,14 @@ use super::problem_at::problem_at;
 use super::required_string::required_string;
 use super::string_value::string_value;
 use super::wrong_type::wrong_type;
-use crate::{Exception, Problem, RelPath};
+use crate::{Date, Exception, Problem, RelPath};
 use std::collections::BTreeSet;
 use toml::de::DeTable;
 
 const PLACE: &str = "[[exception]]";
 const EXCEPTION_KEYS: [&str; 6] = ["rule", "path", "what", "reason", "approved", "expires"];
+/// `required_string`'s generic fix would ask for a string; an exception's end needs the date form and its meaning.
+const EXPIRES_FIX: &str = "Add `expires = \"YYYY-MM-DD\"`, the exception's last day (UTC), to this [[exception]].";
 
 /// The exceptions of the `[[exception]]` tables without problems; `rule_ids` holds the id of every `[[rule]]` and
 /// every rule id of the taken baseline sets.
@@ -71,13 +73,30 @@ fn read_exception(
     }
     let reason = required_string(text, table, "reason", PLACE, at, out);
     let approved = required_string(text, table, "approved", PLACE, at, out);
-    let expires = date_value(text, table, "expires", out);
-    let (Some((rule, _)), Some((path, _)), Some((reason, _)), Some((approved, _))) = (rule, path, reason, approved)
+    let expires = required_date(text, table, at, out);
+    let (Some((rule, _)), Some((path, _)), Some((reason, _)), Some((approved, _)), Some(expires)) =
+        (rule, path, reason, approved, expires)
     else {
         return None;
     };
     if out.len() > before {
         return None;
     }
-    Some(Exception { rule, path: RelPath::new(&path), what: what.map(|(what, _)| what), expires, reason, approved })
+    Some(Exception {
+        rule,
+        path: RelPath::new(&path),
+        what: what.map(|(what, _)| what),
+        expires: Some(expires),
+        reason,
+        approved,
+    })
+}
+
+/// The `expires` date of the table whose header starts at byte `at`; absent is a Problem at `at`.
+fn required_date(text: &str, table: &DeTable, at: usize, out: &mut Vec<Problem>) -> Option<Date> {
+    if table.get("expires").is_none() {
+        out.push(problem_at(text, at, format!("{PLACE} is missing `expires`"), EXPIRES_FIX));
+        return None;
+    }
+    date_value(text, table, "expires", out)
 }
