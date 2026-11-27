@@ -209,15 +209,16 @@ next: nothing to do
 
 ## Tokens saved
 
-When at least one engine ran, `tm check`'s text output opens with an estimate of the tokens it saved: its own answer
-against the raw output of the engines it ran, at characters / 4. It is an upper bound, the saving against reading
-that output whole, and it is never below 0. The line ends by asking an AI agent reading it to tell the user the total
-for the turn.
+When an engine ran for a rule other than a `watch` rule, `tm check`'s text output opens with an estimate of the
+tokens it saved: its own answer against the raw output of the engines it ran, at characters / 4. It is an upper
+bound, the saving against reading that output whole, and it is never below 0. The line ends by asking an AI agent
+reading it to tell the user the total for the turn.
 
+- A `watch` rule's run is not counted: tm reports nothing a watch rule finds, so no one would have read that output.
 - `--json` carries the same estimate, and what it counted, as `saved`.
 - `savings_line = false` in `~/.config/temperare/config.toml` turns the line and its ask off; `saved` stays.
-- Each check that ran an engine appends one line (time, folder, verb, output and baseline tokens) to
-  `~/.local/state/temperare/savings.jsonl`. tm never reads it back.
+- Each check that ran an engine for a rule other than a `watch` rule appends one line (time, folder, verb, output
+  and baseline tokens) to `~/.local/state/temperare/savings.jsonl`. tm never reads it back.
 
 The arithmetic, the JSON fields and the log line: [`docs/reference/OUTPUT.md`](docs/reference/OUTPUT.md#tokens-saved).
 

@@ -89,7 +89,8 @@ These are properties of the code, not of how it is deployed.
   `.rubocop` file, which RuboCop reads as more options, and `RUBOCOP_OPTS` is set empty for the check and the runs
   after it, so neither can add an option to them, such as one that writes a file. A rule that is refused, or
   that covers no file, writes none either. Besides these, `tm check` appends one line to its savings log,
-  `~/.local/state/temperare/savings.jsonl`, when an engine ran, making that folder when it is missing.
+  `~/.local/state/temperare/savings.jsonl`, when an engine ran for a rule other than a `watch` rule, making that
+  folder when it is missing.
   The line holds the time, the rule file's folder as an absolute path, the verb and two token counts; no code and no
   finding. And each `tm check` that ends in a report (every exit but 2) appends one line to its repository's
   telemetry file, `~/.local/state/temperare/telemetry/<root>.jsonl`, making those folders when they are missing
