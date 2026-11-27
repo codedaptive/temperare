@@ -32,7 +32,7 @@ impl Drop for TempFolder {
     }
 }
 
-const RULES: &str = r#"version = 1
+const RULES_HEAD: &str = r#"version = 1
 owner = "fallback"
 
 [kits.rust]
@@ -56,7 +56,9 @@ check = "clippy::bool_comparison"
 severity = "warning"
 fix = "Simplify the comparison."
 
-[[rule]]
+"#;
+
+const SWIFT_RULE: &str = r#"[[rule]]
 id = "swift-cast"
 engine = "swiftlint"
 kind = "security"
@@ -64,7 +66,9 @@ check = "force_cast"
 severity = "error"
 fix = "Use a checked cast."
 
-[[rule]]
+"#;
+
+const RULES_TAIL: &str = r#"[[rule]]
 id = "python-none"
 engine = "ruff"
 kind = "quality"
@@ -90,10 +94,25 @@ severity = "warning"
 fix = "Remove slop."
 "#;
 
+/// Whether the rule `id` runs on this platform: SwiftLint publishes no Windows build.
+fn runs_here(id: &str) -> bool {
+    !cfg!(windows) || id != "swift-cast"
+}
+
+fn rules_text() -> String {
+    let swift = if runs_here("swift-cast") { SWIFT_RULE } else { "" };
+    format!("{RULES_HEAD}{swift}{RULES_TAIL}")
+}
+
+fn outcome<'a>(outcomes: &'a [(String, RuleOutcome)], id: &str) -> &'a RuleOutcome {
+    outcomes.iter().find(|(rule, _)| rule == id).map(|(_, outcome)| outcome).unwrap_or_else(|| panic!("no outcome for {id}"))
+}
+
 #[test]
 fn run_rules_reports_ordered_findings_and_filters_to_one_file() {
     let folder = TempFolder::new("all");
-    for engine in [Engine::Clippy, Engine::SwiftLint, Engine::Ruff, Engine::AstGrep] {
+    let engines = [Engine::Clippy, Engine::SwiftLint, Engine::Ruff, Engine::AstGrep];
+    for engine in engines.into_iter().filter(|engine| !cfg!(windows) || *engine != Engine::SwiftLint) {
         assert_eq!(availability_in(engine, &folder.0), Availability::Available, "{engine:?}");
     }
     fs::create_dir(folder.0.join("src")).unwrap();
@@ -103,7 +122,7 @@ fn run_rules_reports_ordered_findings_and_filters_to_one_file() {
     fs::write(folder.0.join("example.py"), "value = None\nif value == None:\n    pass\n").unwrap();
     fs::write(folder.0.join("example.js"), "console.log(foo);\nconsole.log(baz);\n").unwrap();
     fs::write(folder.0.join("names.yml"), "id: selected-names\nlanguage: JavaScript\nmessage: matched name\nseverity: warning\nrule:\n  kind: identifier\n  regex: '^(?:{{names}})$'\n").unwrap();
-    fs::write(folder.0.join("temperare.toml"), RULES).unwrap();
+    fs::write(folder.0.join("temperare.toml"), rules_text()).unwrap();
     let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
     let outcomes = outcomes_of(&file, &folder.0, &[]);
     let filtered = outcomes_of(&file, &folder.0, &[RelPath::new("example.py")]);
@@ -112,15 +131,17 @@ fn run_rules_reports_ordered_findings_and_filters_to_one_file() {
 
     assert!(!cache_exists, "ruff left a .ruff_cache directory");
     let ids: Vec<_> = outcomes.iter().map(|(id, _)| id.as_str()).collect();
-    assert_eq!(ids, ["rust-bool", "swift-cast", "python-none", "js-names", "tessera-slop"]);
+    let expected_ids: Vec<_> = ["rust-bool", "swift-cast", "python-none", "js-names", "tessera-slop"].into_iter().filter(|id| runs_here(id)).collect();
+    assert_eq!(ids, expected_ids);
     let expected = [
         ("rust-bool", Engine::Clippy, "src/lib.rs", 2, "true", Kind::Quality, Severity::Warning, "Simplify the comparison.", "rust-team"),
         ("swift-cast", Engine::SwiftLint, "Example.swift", 2, "cast", Kind::Security, Severity::Error, "Use a checked cast.", "swift-team"),
         ("python-none", Engine::Ruff, "example.py", 2, "None", Kind::Quality, Severity::Error, "Use identity for None.", "python-team"),
         ("js-names", Engine::AstGrep, "example.js", 1, "matched name", Kind::Security, Severity::Warning, "Rename the identifier.", "javascript-team"),
     ];
-    for ((_, outcome), (id, engine, path, line, message, kind, severity, fix, owner)) in outcomes.iter().zip(expected) {
-        let RuleOutcome::Findings(findings) = outcome else { panic!("{id}: {outcome:?}") };
+    for (id, engine, path, line, message, kind, severity, fix, owner) in expected.into_iter().filter(|row| runs_here(row.0)) {
+        let found = outcome(&outcomes, id);
+        let RuleOutcome::Findings(findings) = found else { panic!("{id}: {found:?}") };
         assert_eq!(findings.len(), 1, "{id}: {findings:?}");
         let hit = &findings[0];
         assert_eq!(hit.rule, id);
@@ -133,16 +154,17 @@ fn run_rules_reports_ordered_findings_and_filters_to_one_file() {
         assert_eq!(hit.fix, fix);
         assert_eq!(hit.owner.as_deref(), Some(owner));
     }
-    assert_eq!(outcomes[4].1, RuleOutcome::NotAvailable {
+    assert_eq!(*outcome(&outcomes, "tessera-slop"), RuleOutcome::NotAvailable {
         rule: "tessera-slop".into(), engine: Engine::Tessera,
         why: "Tessera's slop records are not defined yet".into(),
     });
     assert_eq!(filtered.iter().map(|(id, _)| id.as_str()).collect::<Vec<_>>(), ids);
-    for index in [0, 1, 3] {
-        assert_eq!(filtered[index].1, RuleOutcome::Findings(vec![]));
+    for id in ["rust-bool", "swift-cast", "js-names"].into_iter().filter(|id| runs_here(id)) {
+        assert_eq!(*outcome(&filtered, id), RuleOutcome::Findings(vec![]), "{id}");
     }
-    assert_eq!(filtered[2].1, outcomes[2].1);
-    assert_eq!(filtered[4].1, outcomes[4].1);
+    for id in ["python-none", "tessera-slop"] {
+        assert_eq!(outcome(&filtered, id), outcome(&outcomes, id), "{id}");
+    }
 }
 
 #[test]

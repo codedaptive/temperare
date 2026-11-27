@@ -6,6 +6,7 @@ use engines::{availability_in, entry_cmd, run_rules_versioned_at, swiftlint::{pa
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
 #[test]
+#[cfg_attr(windows, ignore = "SwiftLint publishes no Windows build")]
 fn swiftlint_reports_force_cast_but_not_other_rules_or_clean_lines() {
     let folder = std::env::temp_dir().join(format!("engines-zit-{}-swiftlint", std::process::id()));
     fs::create_dir(&folder).unwrap();
@@ -44,6 +45,7 @@ fn swiftlint_finding_in_a_private_tmp_repo_is_kept() {
 }
 
 #[test]
+#[cfg_attr(windows, ignore = "SwiftLint publishes no Windows build")]
 fn swiftlint_unknown_rule_is_not_available_naming_the_identifier() {
     let folder = std::env::temp_dir().join(format!("engines-zit-{}-swiftlint-unknown", std::process::id()));
     fs::create_dir(&folder).unwrap();
@@ -75,6 +77,7 @@ fn swiftlint_unknown_rule_is_not_available_naming_the_identifier() {
 }
 
 #[test]
+#[cfg_attr(windows, ignore = "SwiftLint publishes no Windows build")]
 fn d1_swiftlint_comma_separated_identifier_is_an_error() {
     let folder = std::env::temp_dir().join(format!("engines-zit-{}-swiftlint-invalid", std::process::id()));
     fs::create_dir(&folder).unwrap();
