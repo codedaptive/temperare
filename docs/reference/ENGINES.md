@@ -1853,9 +1853,9 @@ exit 0, leave Tessera rules out of the rule file, or check with a rule file that
 A Tessera rule with `only_with_base = true`, run without `--base`, is not applicable rather than not available, as
 any such rule is ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)).
 
-## The engines version 0.1.0 was accepted with
+## The engines version 0.5.0 was accepted with
 
-The acceptance checks for 0.1.0 ran against clippy 0.1.95, SwiftLint 0.65.1, ruff 0.17.4, ast-grep 0.51.1,
+The acceptance checks for 0.5.0 ran against clippy 0.1.95, SwiftLint 0.65.1, ruff 0.17.4, ast-grep 0.51.1,
 golangci-lint 2.15.0 (built with go 1.27.2), pylint 4.1.4, clang-tidy 23.1.6 (Homebrew LLVM), vulture 2.16,
 Periphery 3.8.0, gitleaks 8.30.1, cargo-audit 0.23.0, ESLint 10.15.0, mypy 2.4.1, PMD 7.29.0, detekt 1.23.8,
 RuboCop 1.92.3, PHPStan 2.3.7, dart 3.14.1, actionlint 1.7.12, sqlfluff 4.5.0, hadolint 2.15.1, yamllint 1.38.0,
