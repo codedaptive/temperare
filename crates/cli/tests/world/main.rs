@@ -5,7 +5,7 @@
 //! file and case says which. `baseline_git_env` checks isolation from inherited git settings; `check_base_real` runs
 //! the binary against a git rule with and without a base; `baseline_change_real` runs a change-only baseline rule
 //! against real bases. `rules_loosened_real` compares rule files against real git bases; `rules_not_applicable_real`
-//! compares the rules listing with a check in a throwaway repository.
+//! compares the rules listing with a check in a throwaway repository. `telemetry_real` checks telemetry on real git histories.
 
 mod baseline_change_real;
 mod baseline_git_env;
@@ -16,3 +16,4 @@ mod local_eslint_real;
 mod rules_loosened_real;
 mod rules_not_applicable_real;
 mod rules_world_real;
+mod telemetry_real;

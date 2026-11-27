@@ -1,4 +1,4 @@
-//! Tests the comparison open_log uses to accept an opened handle; these tests do not run open_log.
+//! Tests the comparison open_file uses to accept an opened handle; these tests do not run open_file.
 
 use crate::home_files::same_file;
 use std::fs::{self, File};

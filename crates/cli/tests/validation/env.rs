@@ -26,9 +26,10 @@ pub fn clean_env(path: Option<&str>) -> Vec<(String, String)> {
 }
 
 /// The variables for one run of `temperare`: `clean_env(path)` with HOME replaced by `home`, so the run reads no real
-/// ~/.config/temperare/config.toml and appends to no real ~/.local/state/temperare/savings.jsonl. PATH still comes from
-/// the real HOME (its ~/.cargo/bin first), and CARGO_HOME and RUSTUP_HOME are pinned to the real ones (the variable if
-/// set, else ~/.cargo and ~/.rustup of the real HOME), so rustup's cargo and clippy still find their toolchain. Git run
+/// ~/.config/temperare/config.toml and appends to no real ~/.local/state/temperare/savings.jsonl and no real telemetry
+/// file under ~/.local/state/temperare/telemetry. PATH still comes from the real HOME (its ~/.cargo/bin first), and
+/// CARGO_HOME and RUSTUP_HOME are pinned to the real ones (the variable if set, else ~/.cargo and ~/.rustup of the real
+/// HOME), so rustup's cargo and clippy still find their toolchain. Git run
 /// by `temperare` here reads no real ~/.gitconfig; `clean_env` keeps the real HOME for the fixture's own commits.
 pub fn tm_env(path: Option<&str>, home: &Path) -> Vec<(String, String)> {
     let real = std::env::var("HOME").expect("HOME is set");

@@ -36,8 +36,9 @@ pub struct CheckWorld<'a> {
         Option<(&Path, &Oid)>,
         Vec<(String, String)>,
     ) -> Result<Report, ReportError>,
-    /// The user's home folder, where the savings switch and log live; None when HOME is unset or empty.
+    /// The user's home folder, where the savings switch and log and the telemetry file live; None when HOME is unset or
+    /// empty.
     pub home: &'a dyn Fn() -> Option<PathBuf>,
-    /// Seconds since the Unix epoch, for the savings log line.
+    /// Seconds since the Unix epoch, for the savings log line and the telemetry line.
     pub now: &'a dyn Fn() -> u64,
 }

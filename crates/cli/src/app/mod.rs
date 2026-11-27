@@ -2,6 +2,7 @@
 //! loosened since a base, `tm check` from finding the rule file to the report, `tm baseline test` from the sets' rules
 //! to each case's verdict, and `temperare install` and `uninstall` on the disk.
 
+mod append_telemetry;
 mod availability_at;
 mod base_error;
 mod baseline_world;
@@ -12,6 +13,7 @@ mod case_rule;
 mod check_world;
 mod check_world_real;
 mod discover_rule_file;
+mod first_parent_root;
 mod git_rev_parse;
 mod git_toplevel;
 mod judge_case;
@@ -56,6 +58,8 @@ mod case_rule_tests;
 mod check_world_tests;
 #[cfg(test)]
 mod discover_rule_file_tests;
+#[cfg(test)]
+mod first_parent_root_tests;
 #[cfg(test)]
 mod judge_case_tests;
 #[cfg(test)]

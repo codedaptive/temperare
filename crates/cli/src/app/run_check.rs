@@ -1,5 +1,6 @@
 //! `run_check`: `tm check`, from finding the rule file to the report and its exit code.
 
+use super::append_telemetry::append_telemetry;
 use super::discover_rule_file::discover_rule_file;
 use super::only_paths::only_paths;
 use super::report_engines::report_engines;
@@ -9,6 +10,7 @@ use super::select_rules::select_rules;
 use super::write_failure::write_failure;
 use super::write_problems::write_problems;
 use super::CheckWorld;
+use crate::home_files::TelemetryRun;
 use crate::{
     append_savings_log, check_json, exit_code, failed_tails, next_step, saved_json, savings_from, savings_line_on,
     savings_log_line, tokens_saved_line, CheckArgs, RuleCount, Savings, UsageError,
@@ -32,11 +34,12 @@ use std::path::Path;
 /// code. The text opens with the tokens-saved line when at least one engine run was counted and the switch under HOME
 /// is on; the JSON object always carries `saved`. When at least one engine run was counted, text or JSON, the switch is
 /// read, so a config it cannot use warns once on `err` (under `--json` the switch's value changes nothing), and one
-/// line goes to the savings log under HOME, naming the rule file's folder as an absolute path. A rule file that cannot
-/// be found, a path outside its folder, a base that does not resolve or a report that cannot be built is a usage error
-/// on `err` (and, under `--json`, an `{"error", "exit", "next"}` object on `out`); a rule file with problems lists them
-/// on `out`. Both exit 2, with no savings line and no log line. Write errors are ignored: a closed pipe is not tm's
-/// failure.
+/// line goes to the savings log under HOME, naming the rule file's folder as an absolute path. After printing, with
+/// HOME set and a HEAD that names a commit, one line goes to the telemetry file under HOME, named after HEAD's
+/// first-parent root. A rule file that cannot be found, a path outside its folder, a base that does not resolve or a
+/// report that cannot be built is a usage error on `err` (and, under `--json`, an `{"error", "exit", "next"}` object
+/// on `out`); a rule file with problems lists them on `out`. Both exit 2, with no savings line, no log line and no
+/// telemetry line. Write errors are ignored: a closed pipe is not tm's failure.
 pub fn run_check(args: &CheckArgs, cwd: &Path, world: &CheckWorld, out: &mut dyn Write, err: &mut dyn Write) -> u8 {
     let path = match discover_rule_file(args.rules.as_deref(), cwd, &|| (world.toplevel)(cwd), world.exists) {
         Ok(path) => path,
@@ -94,6 +97,9 @@ pub fn run_check(args: &CheckArgs, cwd: &Path, world: &CheckWorld, out: &mut dyn
             &savings_log_line((world.now)(), &folder, savings.output_tokens, savings.baseline_tokens),
         );
     }
+    let base = base.as_ref().map(|(_, oid)| oid.as_str());
+    let run = TelemetryRun { folder: &folder, base, kind: args.kind, paths: &only, exit };
+    append_telemetry(&run, &report, home.as_deref(), world);
     exit
 }
 
