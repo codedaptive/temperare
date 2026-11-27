@@ -44,8 +44,9 @@ exceptions somebody agreed to. Temperare puts them in one file, `temperare.toml`
   when its `check` or `params` were refused, never clean.
 - **Not a fixer or a formatter.** It never edits the code it checks. There is no `--fix`.
 - **Not a gate.** It reports and sets an exit code. What a finding blocks belongs to whoever calls it.
-- **Not a service.** No daemon, no cache, no network code, nothing read back between runs. A check only appends a
-  line to a savings log (see [Tokens saved](#tokens-saved)).
+- **Not a service.** No daemon, no cache, no network code, nothing read back between runs. A check only appends
+  lines it never reads: one to a savings log (see [Tokens saved](#tokens-saved)) and one to a telemetry file (see
+  [The telemetry file](#the-telemetry-file)).
 - **Not an installer for the engines.** You install clippy, SwiftLint, ruff and ast-grep yourself.
 
 ## Install
@@ -220,6 +221,25 @@ for the turn.
 
 The arithmetic, the JSON fields and the log line: [`docs/reference/OUTPUT.md`](docs/reference/OUTPUT.md#tokens-saved).
 
+## The telemetry file
+
+Each `tm check` that ends in a report appends one JSON line, after it has printed, to
+`~/.local/state/temperare/telemetry/<root>.jsonl`. `<root>` is the id of the commit HEAD's first-parent line starts
+from, so every clone and worktree of a repository writes to the same file. The line holds the run (time, version,
+the rule file's folder, HEAD, the base, `--kind`, the paths, the exit code, the engines that ran) and, for each rule,
+its severity, what it came to, and its kept findings: path, line and the engine's message. A `watch` rule's
+findings are reported nowhere else.
+
+- tm never reads the file, and no output names it. `tm uninstall` leaves it.
+- A run that exits 2 writes no line, and neither do `tm rules`, `tm baseline test` or install. With no `HOME`, before
+  the first commit, or when the file cannot be written, there is no line, nothing is said, and the output and exit
+  code are the same.
+- A shallow clone writes a file of its own. Two repositories that share a root commit, such as a fork that kept its
+  history, share one. In a history with more than one root, a branch whose first-parent line ends in another root
+  writes another file. The file has no size bound.
+
+The line and its fields: [`docs/reference/OUTPUT.md`](docs/reference/OUTPUT.md#the-telemetry-file).
+
 ## Commands
 
 | Command | What it does |
@@ -328,8 +348,8 @@ Every key, the glob rules and every problem `tm` reports: [`docs/reference/RULE_
 | 5 | A rule failed: its engine gave no answer, or its `check` could not be used |
 | 6 | A rule of your own covers nothing: no file it checks is in its scope |
 
-When more than one applies, the first of 2, 1, 5, 3, 4, 6 wins. So exit 0 means every rule ran or is listed under
-`not_applicable`, and exit 4 the same except that a rule may cover nothing. Exit 1 does not: read the
+When more than one applies, the first of 2, 1, 5, 3, 4, 6 wins. So exit 0 means every rule that is not at severity
+`watch` ran or is listed under `not_applicable`, and exit 4 the same except that a rule may cover nothing. Exit 1 does not: read the
 `not available`, `failed` and `covers nothing` counts as well.
 
 `tm check` ends with a `next:` line that says what to do, and `--json` carries the same text as `next` beside
@@ -456,7 +476,7 @@ one works alone.
 
 With neither installed, `tm` checks a plain git repository. Its one setting outside the rule file is the savings
 switch in `~/.config/temperare/config.toml`. It reads no environment variable of its own beyond `HOME`, which places
-that file and the savings log; it finds git and the engines on `PATH` (ESLint first in the rule file's folder's
+that file, the savings log and the telemetry file; it finds git and the engines on `PATH` (ESLint first in the rule file's folder's
 `node_modules/.bin`).
 
 ## For AI agents

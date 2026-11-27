@@ -92,7 +92,7 @@ nothing or are not applicable are in no list and no count, so it never sets an e
 ([`RULE_FILE.md`](RULE_FILE.md#a-rule-rule)). Its engine is still on the engines line when it ran, since that line
 names what ran, not what was found. An exception for a watch rule still counts among the exceptions in force, and as
 expired after its `expires` day, because those counts say what the rule file holds. `tm rules` lists a watch rule
-as any other, with severity `watch`.
+as any other, with severity `watch`. What a watch rule found goes to the [telemetry file](#the-telemetry-file) alone.
 
 ## `tm check --json`
 
@@ -302,17 +302,87 @@ switch says, appends one line to `~/.local/state/temperare/savings.jsonl`, makin
 and never reads it. With no `HOME` there is no log, and a log that cannot be written changes nothing in the run.
 `tm uninstall` does not remove it.
 
+## The telemetry file
+
+Each `tm check` that ends in a report, as text or under `--json`, appends one line to its repository's telemetry
+file after it has printed, making the folders when they are missing:
+
+```
+~/.local/state/temperare/telemetry/<root>.jsonl
+```
+
+`<root>` is the id of HEAD's first-parent root: the commit reached from HEAD by following first parents until one
+has none. Every clone and worktree of a repository has that commit, so they all write to the same file. git is
+asked at the top of the repository that holds the rule file's folder.
+
+A run that exits 2 writes no line, since nothing was checked, and neither do `tm rules`, `tm baseline test`,
+`tm install`, `tm uninstall`, `tm help` or `tm --version`. With no `HOME`, before the repository's first commit, when
+git cannot give the root, or when the file cannot be written, there is no line, nothing is said, and the output and
+the exit code are the same. A symbolic link, or anything that is not a folder or a regular file, on the file's path
+is refused, and nothing is written through it.
+
+The line is one JSON object, with its keys in this order:
+
+```json
+{"format":1,"time":"2026-11-27T10:15:37Z","version":"0.1.0 (<commit>)","folder":"/path/to/repo","head":"<HEAD's commit id>","base":null,"kind":null,"paths":[],"exit":0,"engines":[{"engine":"ruff","version":"0.17.4"}],"rules":[{"rule":"no-print","engine":"ruff","severity":"watch","state":"ran","why":null,"findings":[{"path":"app.py","line":3,"what":"`print` found"}],"silenced":0}]}
+```
+
+| Key | Value |
+|---|---|
+| `format` | `1` |
+| `time` | When the line was written, UTC to the second |
+| `version` | What `tm --version` prints after the name: the version and the commit it was built from |
+| `folder` | The rule file's folder, as an absolute path |
+| `head` | The id of the commit HEAD names |
+| `base` | The id of the commit `--base` named; `null` without `--base` |
+| `kind` | `quality` or `security`, as `--kind` gave it; `null` without `--kind` |
+| `paths` | Each path given to `tm check`, relative to the rule file's folder; `[]` for the whole tree |
+| `exit` | The exit code |
+| `engines` | The engines that ran, as `engines` in [`--json`](#tm-check---json) |
+| `rules` | One entry per rule the run selected (after `--kind`), `watch` rules included, in the rule file's order |
+
+`paths` and `kind` keep a run over part of the tree, or over one kind of rule, from reading as a whole check.
+
+Each entry of `rules`:
+
+| Key | Value |
+|---|---|
+| `rule` | The rule's id |
+| `engine` | The rule's engine |
+| `severity` | `error`, `warning` or `watch`, after the rule file's overrides |
+| `state` | `ran` (its engine ran, with findings or none), `not_available`, `failed`, `not_applicable` or `covers_nothing` |
+| `why` | Why, for `not_available` and `not_applicable` as the report gives it, and for `covers_nothing` as the engine gave it; `null` for `ran` and `failed` |
+| `findings` | The rule's kept findings, in the report's order, each `{ "path", "line", "what" }`: the path relative to the rule file's folder, the line (`null` when the engine gives none) and the engine's message. With `--base`, only the findings in added lines |
+| `silenced` | How many of the rule's findings an exception covered |
+
+A `watch` rule's findings, and what its engine came to, are in this file and nowhere else (see
+[`tm check`, as text](#tm-check-as-text)). The line carries no fix text, owner or column: those are the rule's and
+the rule file's, which the commit holds.
+
+tm only appends to the file and never reads it, and no output names it. `tm uninstall` does not remove it.
+
+What the file cannot tell apart:
+
+- A shallow clone's first-parent line ends at its boundary, so a shallow clone writes a file of its own.
+- Two repositories that share a root commit, such as a fork that kept its history, share one file.
+- In a history with more than one root, such as one with an unrelated history merged in, a branch whose
+  first-parent line ends in another root writes another file.
+
+The root is found again on every run that writes a line, with about 2 log2(D) + 1 runs of git for D first-parent
+commits: 17 for 222. The file has no size bound; it grows by one line per check. Where `HOME` is not set, usual on
+Windows, no line is written, as for the savings log.
+
 ## Exit codes
 
 The exit codes of `tm check`:
 
 | Code | Meaning |
 |---|---|
-| 0 | Nothing to refuse: no finding of severity `error`, and every rule ran or is under `not_applicable`. Warnings alone end here |
+| 0 | Nothing to refuse: no finding of severity `error`, and every rule that is not at severity `watch` ran or is under `not_applicable`. Warnings alone end here |
 | 1 | At least one kept finding of kind `quality` and severity `error` |
 | 2 | Nothing was checked: the command was used wrongly, there is no rule file, the rule file has a problem, a path is outside the rule file's folder, or `--base` does not name a commit |
 | 3 | At least one rule was not available |
-| 4 | The only kept findings of severity `error` are of kind `security`, and every rule ran, covered nothing, or is under `not_applicable` |
+| 4 | The only kept findings of severity `error` are of kind `security`, and every rule that is not at severity `watch` ran, covered nothing, or is under `not_applicable` |
 | 5 | At least one rule failed: its engine gave no answer that can be read, or the rule was refused before its engine ran (see [`ENGINES.md`](ENGINES.md#not-available-and-failed)) |
 | 6 | At least one of the repository's own rules covers nothing: no file it checks is in its scope (see [`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)) |
 
@@ -321,10 +391,12 @@ whatever it found, and whether its engine was absent or failed: it is in none of
 
 What that order means for a caller:
 
-- **0** means every rule ran or is listed under `not_applicable`. Nothing was unavailable, no engine failed, and
-  every rule of the repository's own had a file to check, when git could list the folder's files (when it cannot,
-  no rule is found to cover nothing). A baseline set's rule with no file is not applicable, so 0 does not say that
-  of the set's rules.
+- **0** means every rule that is not at severity `watch` ran or is listed under `not_applicable`. None of those
+  rules was unavailable, no engine of theirs failed, and every one of them that is the repository's own had a file
+  to check, when git could list the folder's files (when it cannot, no rule is found to cover nothing). A baseline
+  set's rule with no file is not applicable, so 0 does not say that of the set's rules. Nor does 0 say anything of
+  a `watch` rule: its engine may have been absent or failed, and only the
+  [telemetry file](#the-telemetry-file) says so.
 - **4** says the same of the engines, but a rule that covers nothing does not change it: 4 ranks above 6. Read
   `counts.covers_nothing`, or the counts line.
 - **6** means the rule file has a rule that checks nothing. Its fix is in the rule file: the rule's paths, or the
