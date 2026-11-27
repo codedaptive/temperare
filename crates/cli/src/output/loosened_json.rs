@@ -1,4 +1,4 @@
-//! `loosened_json`: what `tm rules --loosened` found, as one JSON object.
+//! `loosened_json`: what `cctao rules --loosened` found, as one JSON object.
 
 use serde_json::{json, Value};
 use std::path::Path;

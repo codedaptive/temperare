@@ -1,4 +1,4 @@
-//! RIT: `tm rules --loosened` compares working files with real git commits in disposable repositories.
+//! RIT: `cctao rules --loosened` compares working files with real git commits in disposable repositories.
 //! RuleNotApplicable is covered with a real rule file; SetOlder is covered only by ZUTs (the cli formatter ZUTs, and
 //! rules' own set_loosenings_tests.rs), because only version 1 of each set exists.
 
@@ -16,7 +16,7 @@ impl TempFolder {
     fn new() -> Self {
         loop {
             let n = NEXT.fetch_add(1, Ordering::Relaxed);
-            let path = std::env::temp_dir().join(format!("tm-loosened-{}-{n}", std::process::id()));
+            let path = std::env::temp_dir().join(format!("cctao-loosened-{}-{n}", std::process::id()));
             match fs::create_dir(&path) {
                 Ok(()) => return Self(fs::canonicalize(path).unwrap()),
                 Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
@@ -70,7 +70,7 @@ impl Repo {
     }
 
     fn write(&self, text: &str) {
-        fs::write(self.repo.join("temperare.toml"), text).unwrap();
+        fs::write(self.repo.join("tao.toml"), text).unwrap();
     }
 
     fn commit(&self, base: Option<&str>) -> String {
@@ -89,13 +89,13 @@ impl Repo {
         (code, String::from_utf8(out).unwrap(), String::from_utf8(err).unwrap())
     }
 
-    /// tm names the rule file from git's top in the native form, not from `self.repo` (the canonical temp path,
+    /// cctao names the rule file from git's top in the native form, not from `self.repo` (the canonical temp path,
     /// `\\?\C:\...` on Windows), so the expected path is built from git's answer the same way.
     fn path(&self) -> String {
         PathBuf::from(self.git(&["rev-parse", "--show-toplevel"]))
             .components()
             .collect::<PathBuf>()
-            .join("temperare.toml")
+            .join("tao.toml")
             .display()
             .to_string()
     }
@@ -345,14 +345,14 @@ fn error_case(case: ErrorCase) {
         ErrorCase::MissingRevision => vec!["rules", "--loosened", "--base", "nope"],
         ErrorCase::MissingBase => vec!["rules", "--loosened"],
         ErrorCase::BaseAlone => vec!["rules", "--base", &base],
-        ErrorCase::OutsideGit => vec!["rules", "--loosened", "--base", "nope", "--rules", "temperare.toml"],
+        ErrorCase::OutsideGit => vec!["rules", "--loosened", "--base", "nope", "--rules", "tao.toml"],
         _ => vec!["rules", "--loosened", "--base", &base],
     };
     let (code, out, err) = repo.run(&args);
     assert_eq!(code, 2, "stdout: {out}\nstderr: {err}");
     match case {
         ErrorCase::MissingRevision => {
-            assert_eq!(err, "tm: base 'nope' does not name a commit\nnext: Pass a commit, branch or tag that exists, e.g. --base main.\n");
+            assert_eq!(err, "cctao: base 'nope' does not name a commit\nnext: Pass a commit, branch or tag that exists, e.g. --base main.\n");
             let (code, out, err) = repo.run(&["rules", "--loosened", "--base", "nope", "--json"]);
             assert_eq!(code, 2, "stdout: {out}\nstderr: {err}");
             assert_eq!(serde_json::from_str::<Value>(&out).unwrap(), json!({
@@ -360,12 +360,12 @@ fn error_case(case: ErrorCase) {
                 "next": "Pass a commit, branch or tag that exists, e.g. --base main."
             }));
         }
-        ErrorCase::MissingFile => assert_eq!(err, format!("tm: no rule file temperare.toml at base '{base}'\nnext: Pass a --base that has temperare.toml, or leave --loosened out.\n")),
+        ErrorCase::MissingFile => assert_eq!(err, format!("cctao: no rule file tao.toml at base '{base}'\nnext: Pass a --base that has tao.toml, or leave --loosened out.\n")),
         ErrorCase::InvalidBaseToml | ErrorCase::InvalidBaseCheck => assert!(out.contains(&format!("{} (at {base})", repo.path())), "{out}") ,
         ErrorCase::InvalidNow => assert!(out.contains(&repo.path()), "{out}"),
-        ErrorCase::MissingBase => assert_eq!(err, "tm: tm rules --loosened needs --base <rev>\nnext: Pass --base <rev>, the commit to compare with.\n"),
-        ErrorCase::BaseAlone => assert_eq!(err, "tm: --base is only for tm rules --loosened\nnext: Add --loosened, or leave --base out.\n"),
-        ErrorCase::OutsideGit => assert!(err.starts_with("tm: git could not resolve base 'nope'"), "{err}"),
+        ErrorCase::MissingBase => assert_eq!(err, "cctao: cctao rules --loosened needs --base <rev>\nnext: Pass --base <rev>, the commit to compare with.\n"),
+        ErrorCase::BaseAlone => assert_eq!(err, "cctao: --base is only for cctao rules --loosened\nnext: Add --loosened, or leave --base out.\n"),
+        ErrorCase::OutsideGit => assert!(err.starts_with("cctao: git could not resolve base 'nope'"), "{err}"),
     }
 }
 row!(missing_revision_is_an_error, error_case, ErrorCase::MissingRevision);

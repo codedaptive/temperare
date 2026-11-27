@@ -1,15 +1,15 @@
 //! Done 1 (SwiftLint) (S-31, SPEC-accept WO-orc-accept-2): the stock linter check with SwiftLint run for real. One
 //! rule, `engine = "swiftlint"`, `check = "force_cast"`: a Swift file holding `as!` is reported with its rule, path,
 //! line and fix, exit 1; a Swift file without it passes, exit 0. The repository holds no `.swiftlint.yml`. Only when
-//! swiftlint is not on the PATH `temperare` gets (`on_tm_path`, which runs nothing) is a case NOT RUN, with `temperare`'s reason,
-//! never PASS; `temperare` must then report the rule not available. With swiftlint there, the case asserts as usual.
+//! swiftlint is not on the PATH `cctao` gets (`on_cctao_path`, which runs nothing) is a case NOT RUN, with `cctao`'s reason,
+//! never PASS; `cctao` must then report the rule not available. With swiftlint there, the case asserts as usual.
 //! On macOS a third case puts the repository under /private/tmp, whose paths SwiftLint prints without `/private`
 //! (Designer #476, engines #477): the finding is still reported, never dropped as outside the folder.
 
 use crate::check::Check;
-use crate::on_tm_path::on_tm_path;
+use crate::on_cctao_path::on_cctao_path;
 use crate::repo::Repo;
-use crate::tm::{tm, Answer};
+use crate::cctao::{cctao, Answer};
 
 const FIX: &str = "Use `as?` and handle nil.";
 
@@ -34,7 +34,7 @@ fn repo_with(files: &[(&str, &str)]) -> Repo {
 
 /// `repo` with the rule file and each (path, text), committed.
 fn fill(repo: Repo, files: &[(&str, &str)]) -> Repo {
-    repo.write("temperare.toml", RULES);
+    repo.write("tao.toml", RULES);
     for (path, text) in files {
         repo.write(path, text);
     }
@@ -42,10 +42,10 @@ fn fill(repo: Repo, files: &[(&str, &str)]) -> Repo {
     repo
 }
 
-/// NOT RUN's reason when swiftlint is not on the PATH `temperare` gets: `temperare`'s own reason for reporting the rule not
+/// NOT RUN's reason when swiftlint is not on the PATH `cctao` gets: `cctao`'s own reason for reporting the rule not
 /// available, which it must then give (panics when it does not). None when swiftlint is there.
 fn not_run_reason(a: &Answer) -> Option<String> {
-    if on_tm_path("swiftlint") {
+    if on_cctao_path("swiftlint") {
         return None;
     }
     let why = a.json["not_available"]
@@ -53,9 +53,9 @@ fn not_run_reason(a: &Answer) -> Option<String> {
         .and_then(|list| list.iter().find(|n| n["rule"] == "no-force-cast"))
         .and_then(|n| n["why"].as_str())
         .unwrap_or_else(|| {
-            panic!("swiftlint is not on the PATH tm gets, yet tm did not report no-force-cast: {:#}", a.json)
+            panic!("swiftlint is not on the PATH cctao gets, yet cctao did not report no-force-cast: {:#}", a.json)
         });
-    Some(format!("tm: {why}"))
+    Some(format!("cctao: {why}"))
 }
 
 #[test]
@@ -67,8 +67,8 @@ fn a_force_cast_is_reported_with_its_rule_place_and_fix() {
     );
     let repo = repo_with(&[("Sources/Cast.swift", CAST), ("Sources/Safe.swift", SAFE)]);
     let args = ["check", "--json"];
-    let a = tm(&repo, &args);
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao(&repo, &args);
+    check.saw_cctao(&args, a.code, &a.json);
     if let Some(why) = not_run_reason(&a) {
         check.not_run(why);
         return;
@@ -92,8 +92,8 @@ fn a_file_without_a_force_cast_passes() {
     );
     let repo = repo_with(&[("Sources/Safe.swift", SAFE)]);
     let args = ["check", "--json"];
-    let a = tm(&repo, &args);
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao(&repo, &args);
+    check.saw_cctao(&args, a.code, &a.json);
     if let Some(why) = not_run_reason(&a) {
         check.not_run(why);
         return;
@@ -113,8 +113,8 @@ fn a_force_cast_under_private_tmp_is_reported() {
     let files = [("Sources/Cast.swift", CAST), ("Sources/Safe.swift", SAFE)];
     let repo = fill(Repo::new_in(std::path::Path::new("/private/tmp")), &files);
     let args = ["check", "--json"];
-    let a = tm(&repo, &args);
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao(&repo, &args);
+    check.saw_cctao(&args, a.code, &a.json);
     if let Some(why) = not_run_reason(&a) {
         check.not_run(why);
         return;

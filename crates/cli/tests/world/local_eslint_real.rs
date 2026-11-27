@@ -1,4 +1,4 @@
-//! ZIT: tm runs for real with stub engines (sh scripts on unix, `.cmd` files elsewhere) in a throwaway git folder
+//! ZIT: cctao runs for real with stub engines (sh scripts on unix, `.cmd` files elsewhere) in a throwaway git folder
 //! under the system temp folder, removed on drop.
 
 use procio::{Cmd, Output};
@@ -24,7 +24,7 @@ impl Repo {
     fn new() -> Self {
         let dir = loop {
             let n = NEXT.fetch_add(1, Ordering::Relaxed);
-            let path = std::env::temp_dir().join(format!("tm-local-eslint-{}-{n}", std::process::id()));
+            let path = std::env::temp_dir().join(format!("cctao-local-eslint-{}-{n}", std::process::id()));
             match fs::create_dir(&path) {
                 #[cfg(unix)]
                 Ok(()) => break fs::canonicalize(path).unwrap(),
@@ -40,7 +40,7 @@ impl Repo {
         fs::create_dir_all(repo.0.join("node_modules/.bin")).unwrap();
         fs::create_dir(repo.0.join("stubs")).unwrap();
         fs::create_dir(repo.0.join("home")).unwrap();
-        fs::write(repo.0.join("temperare.toml"), r#"version = 1
+        fs::write(repo.0.join("tao.toml"), r#"version = 1
 [[rule]]
 id = "js-no-var"
 engine = "eslint"
@@ -118,7 +118,7 @@ impl Drop for Repo {
 fn rules_lists_local_eslint(json_output: bool) {
     let repo = Repo::new();
     let args: &[&str] = if json_output { &["rules", "--json"] } else { &["rules"] };
-    let output = repo.run(env!("CARGO_BIN_EXE_temperare"), args);
+    let output = repo.run(env!("CARGO_BIN_EXE_cctao"), args);
     assert_eq!(output.code, Some(0), "{}", String::from_utf8_lossy(&output.stderr));
     if json_output {
         let listing: Value = serde_json::from_slice(&output.stdout).unwrap();
@@ -144,7 +144,7 @@ rules_case!(rules_json_lists_local_eslint_as_available, true);
 #[test]
 fn check_reports_local_eslint_and_version() {
     let repo = Repo::new();
-    let output = repo.run(env!("CARGO_BIN_EXE_temperare"), &["check", "--json"]);
+    let output = repo.run(env!("CARGO_BIN_EXE_cctao"), &["check", "--json"]);
     let report: Value = serde_json::from_slice(&output.stdout).unwrap_or_else(|e| {
         panic!("{e}; stdout: {}; stderr: {}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr))
     });

@@ -1,4 +1,4 @@
-//! `parse_rules_args`: the arguments after `tm rules`.
+//! `parse_rules_args`: the arguments after `cctao rules`.
 
 use std::path::PathBuf;
 
@@ -19,25 +19,25 @@ pub(super) fn parse_rules_args(args: &[String]) -> Result<RulesArgs, UsageError>
             "--base" => parsed.base = Some(flag_value("--base", "<rev>", &mut rest)?),
             flag if flag.starts_with('-') => {
                 return Err(UsageError {
-                    what: format!("unknown flag '{flag}' for tm rules"),
-                    fix: "Run tm help to see the flags of tm rules.".to_string(),
+                    what: format!("unknown flag '{flag}' for cctao rules"),
+                    fix: "Run cctao help to see the flags of cctao rules.".to_string(),
                 })
             }
             other => {
                 return Err(UsageError {
-                    what: format!("unexpected argument '{other}' for tm rules"),
-                    fix: "Run tm help to see the flags of tm rules.".to_string(),
+                    what: format!("unexpected argument '{other}' for cctao rules"),
+                    fix: "Run cctao help to see the flags of cctao rules.".to_string(),
                 })
             }
         }
     }
     match (parsed.loosened, parsed.base.is_some()) {
         (true, false) => Err(UsageError {
-            what: "tm rules --loosened needs --base <rev>".to_string(),
+            what: "cctao rules --loosened needs --base <rev>".to_string(),
             fix: "Pass --base <rev>, the commit to compare with.".to_string(),
         }),
         (false, true) => Err(UsageError {
-            what: "--base is only for tm rules --loosened".to_string(),
+            what: "--base is only for cctao rules --loosened".to_string(),
             fix: "Add --loosened, or leave --base out.".to_string(),
         }),
         _ => Ok(parsed),

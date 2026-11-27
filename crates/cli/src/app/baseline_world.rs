@@ -1,4 +1,4 @@
-//! `BaselineWorld`: what `tm baseline test` needs from the built-in sets, the disk, git and the engines, as eight
+//! `BaselineWorld`: what `cctao baseline test` needs from the built-in sets, the disk, git and the engines, as eight
 //! seams.
 
 use engines::CheckedRules;
@@ -7,13 +7,13 @@ use std::collections::BTreeMap;
 use std::ops::Range;
 use std::path::{Path, PathBuf};
 
-/// `BaselineWorld::real()` wires the sets built into tm, case folders under the system temp folder, the real disk,
+/// `BaselineWorld::real()` wires the sets built into cctao, case folders under the system temp folder, the real disk,
 /// the case's git repository made, staged, committed and diffed through ccvcslib, and
 /// `engines::run_rules_versioned_at` (given the case's base commit, `None` without one); a unit test passes closures,
-/// so `tm baseline test` is tested without touching the disk or running git or an engine.
+/// so `cctao baseline test` is tested without touching the disk or running git or an engine.
 pub struct BaselineWorld<'a> {
-    /// Every set tm carries, as ("name@version", ready), in tm's order: without `--set`, the ready ones are tested in
-    /// this order.
+    /// Every set cctao carries, as ("name@version", ready), in cctao's order: without `--set`, the ready ones are
+    /// tested in this order.
     pub default_sets: &'a [(String, bool)],
     /// The rules of the set "name@version", in the set's order, whatever its ready mark; a set that cannot be read is
     /// its problems (rules' `Problem`s: their line and column index rules' own text, not the user's).

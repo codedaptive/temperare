@@ -37,7 +37,7 @@ impl TempFolder {
     fn new(tag: &str) -> TempFolder {
         loop {
             let n = NEXT.fetch_add(1, Ordering::Relaxed);
-            let path = std::env::temp_dir().join(format!("tm-cli-cw-{}-{n}-{tag}", std::process::id()));
+            let path = std::env::temp_dir().join(format!("cctao-cli-cw-{}-{n}-{tag}", std::process::id()));
             match fs::create_dir(&path) {
                 Ok(()) => return TempFolder(path),
                 Err(e) if e.kind() == ErrorKind::AlreadyExists => continue,
@@ -66,7 +66,7 @@ fn empty_rules(folder: PathBuf, exceptions: Vec<Exception>) -> RuleFile {
 fn exists_is_true_for_a_file_only() {
     let world = CheckWorld::real();
     let dir = TempFolder::new("exists");
-    let file = dir.0.join("temperare.toml");
+    let file = dir.0.join("tao.toml");
     fs::write(&file, RULE_FILE).unwrap();
     assert!((world.exists)(&file));
     assert!(!(world.exists)(&dir.0), "a folder is not a rule file");
@@ -78,7 +78,7 @@ fn exists_is_true_for_a_file_only() {
 fn read_reads_a_rule_file_from_disk() {
     let world = CheckWorld::real();
     let dir = TempFolder::new("read");
-    let file = dir.0.join("temperare.toml");
+    let file = dir.0.join("tao.toml");
     fs::write(&file, RULE_FILE).unwrap();
     let rule_file = (world.read)(&file).unwrap();
     let ids: Vec<&str> = rule_file.rules.iter().map(|r| r.id.as_str()).collect();

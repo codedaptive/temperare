@@ -13,7 +13,7 @@ const UNKNOWN_WHY: &str =
 type Entry = (NotAvailable, Option<NotAvailableCause>);
 
 fn file() -> &'static Path {
-    Path::new("repo/temperare.toml")
+    Path::new("repo/tao.toml")
 }
 
 /// `next_step` given `entries`, each entry paired with its cause as run_check pairs them.
@@ -48,15 +48,15 @@ fn exit_0_has_nothing_to_do_whatever_the_other_arguments() {
 fn exit_1_fixes_the_findings_or_adds_an_exception_to_the_rule_file() {
     assert_eq!(
         step(1, Some("Write it."), &[absent(Engine::Ruff)]),
-        "fix the findings above, or add an approved [[exception]] with its expires date to repo/temperare.toml"
+        "fix the findings above, or add an approved [[exception]] with its expires date to repo/tao.toml"
     );
 }
 
 #[test]
 fn exit_2_gives_the_fix() {
     assert_eq!(
-        step(2, Some("Run tm help to see the commands."), &[absent(Engine::Ruff)]),
-        "Run tm help to see the commands."
+        step(2, Some("Run cctao help to see the commands."), &[absent(Engine::Ruff)]),
+        "Run cctao help to see the commands."
     );
 }
 
@@ -199,8 +199,8 @@ fn exit_5_and_unknown_codes_point_at_the_output() {
 fn next_step_exit_6_names_the_rule_file() {
     let (entry, cause) = absent(Engine::Ruff);
     assert_eq!(
-        next_step(6, Some("Write it."), Path::new("team/rules/temperare.toml"), &[(&entry, cause)], false),
-        "fix the paths of each rule that covers nothing above, or remove it from team/rules/temperare.toml"
+        next_step(6, Some("Write it."), Path::new("team/rules/tao.toml"), &[(&entry, cause)], false),
+        "fix the paths of each rule that covers nothing above, or remove it from team/rules/tao.toml"
     );
 }
 
@@ -208,7 +208,7 @@ fn next_step_exit_6_names_the_rule_file() {
 fn next_step_exit_6_under_json_names_covers_nothing_and_the_rule_file() {
     let (entry, cause) = absent(Engine::Ruff);
     assert_eq!(
-        next_step(6, Some("Write it."), Path::new("team/rules/temperare.toml"), &[(&entry, cause)], true),
-        "fix the paths of each rule in covers_nothing, or remove it from team/rules/temperare.toml"
+        next_step(6, Some("Write it."), Path::new("team/rules/tao.toml"), &[(&entry, cause)], true),
+        "fix the paths of each rule in covers_nothing, or remove it from team/rules/tao.toml"
     );
 }

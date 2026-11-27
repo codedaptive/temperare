@@ -2,11 +2,11 @@
 //! test made, with its rule, its place and its fix text, and the report lists the engine's version; with the engine
 //! off the PATH, the same rule reports "not available" (exit 3). One rule, `engine = "eslint"`, `check = "no-var"`,
 //! over the repository's own eslint.config.mjs (`export default [{}];`, no rule of its own); example.js declares
-//! with `var` on line 2, clean.js with `const`. tm runs with PATH the folders that give it eslint and node
-//! (`tm_path_for`) then /usr/bin:/bin: eslint is a `#!/usr/bin/env node` script, and the entry needs both eslint and
-//! node, so tm looks for each on that PATH. Only when eslint is not on the PATH
-//! `temperare` gets (`on_tm_path`, which runs nothing) is the reported case NOT RUN, with `temperare`'s reason, never
-//! PASS; `temperare` must then report the rule not available. eslint found in the repository's node_modules/.bin is
+//! with `var` on line 2, clean.js with `const`. cctao runs with PATH the folders that give it eslint and node
+//! (`cctao_path_for`) then /usr/bin:/bin: eslint is a `#!/usr/bin/env node` script, and the entry needs both eslint and
+//! node, so cctao looks for each on that PATH. Only when eslint is not on the PATH
+//! `cctao` gets (`on_cctao_path`, which runs nothing) is the reported case NOT RUN, with `cctao`'s reason, never
+//! PASS; `cctao` must then report the rule not available. eslint found in the repository's node_modules/.bin is
 //! not covered here; tests/world/local_eslint_real.rs covers it.
 
 use serde_json::json;
@@ -16,8 +16,8 @@ use crate::check::Check;
 use crate::not_available_pairs::not_available_pairs;
 use crate::probed_version::probed_version;
 use crate::repo::Repo;
-use crate::tm::tm_with_path;
-use crate::tm_path_for::tm_path_for;
+use crate::cctao::cctao_with_path;
+use crate::cctao_path_for::cctao_path_for;
 
 const RULE: &str = "js-no-var";
 const FIX: &str = "Declare with `let` or `const`.";
@@ -44,7 +44,7 @@ const PATH_WITHOUT_ENGINES: &str = "/usr/bin:/bin";
 /// A repository holding the rule file, eslint.config.mjs, example.js and clean.js, committed.
 fn js_repo() -> Repo {
     let repo = Repo::new();
-    repo.write("temperare.toml", RULES);
+    repo.write("tao.toml", RULES);
     repo.write("eslint.config.mjs", CONFIG);
     repo.write("example.js", EXAMPLE);
     repo.write("clean.js", CLEAN);
@@ -61,9 +61,9 @@ fn an_eslint_problem_is_reported_with_its_rule_place_fix_and_version() {
     );
     let repo = js_repo();
     let args = ["check", "--json"];
-    let path = tm_path_for(&["eslint", "node"]);
-    let a = tm_with_path(&repo, &args, Some(&path));
-    check.saw_tm(&args, a.code, &a.json);
+    let path = cctao_path_for(&["eslint", "node"]);
+    let a = cctao_with_path(&repo, &args, Some(&path));
+    check.saw_cctao(&args, a.code, &a.json);
     if let Some(why) = absent_engine_reason(&a, &["eslint"], RULE) {
         check.not_run(why);
         return;
@@ -84,12 +84,12 @@ fn an_eslint_problem_is_reported_with_its_rule_place_fix_and_version() {
 fn eslint_off_path_is_not_available() {
     let mut check = Check::new(
         "eslint_off_path_is_not_available",
-        "rule js-no-var (eslint, no-var) over the same files; tm runs with PATH /usr/bin:/bin, which holds no eslint",
+        "rule js-no-var (eslint, no-var) over the same files; cctao runs with PATH /usr/bin:/bin, which holds no eslint",
     );
     let repo = js_repo();
     let args = ["check", "--json"];
-    let a = tm_with_path(&repo, &args, Some(PATH_WITHOUT_ENGINES));
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao_with_path(&repo, &args, Some(PATH_WITHOUT_ENGINES));
+    check.saw_cctao(&args, a.code, &a.json);
     assert_eq!(a.code, 3, "not available has its own code: {:#}\n{}", a.json, a.stderr);
     assert!(a.findings().is_empty(), "nothing is reported as found: {:#}", a.json);
     assert_eq!(not_available_pairs(&a), vec![(RULE.to_string(), "eslint".to_string())], "{:#}", a.json);

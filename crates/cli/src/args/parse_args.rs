@@ -1,4 +1,4 @@
-//! `parse_args`: tm's arguments to a `Command`, by hand on std (S-16).
+//! `parse_args`: cctao's arguments to a `Command`, by hand on std (S-16).
 
 use super::parse_baseline_args::parse_baseline_args;
 use super::parse_check_args::parse_check_args;
@@ -26,7 +26,7 @@ pub fn parse_args(args: &[String]) -> Result<Command, UsageError> {
         other => {
             return Err(UsageError {
                 what: format!("unknown command '{other}'"),
-                fix: "Run tm help to see the commands.".to_string(),
+                fix: "Run cctao help to see the commands.".to_string(),
             })
         }
     };
@@ -45,7 +45,7 @@ fn alone(word: &str, command: Command, rest: &[String]) -> Result<Command, Usage
         None => Ok(command),
         Some(extra) => Err(UsageError {
             what: format!("unexpected argument '{extra}' after {word}"),
-            fix: format!("Run tm {word} with nothing after it."),
+            fix: format!("Run cctao {word} with nothing after it."),
         }),
     }
 }

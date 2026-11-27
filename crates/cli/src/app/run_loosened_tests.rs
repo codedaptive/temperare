@@ -36,15 +36,15 @@ fn git_error() -> VcsError {
     VcsError::Failed(VcsFailure { message: "fatal: boom".into(), exit_status: Some(128) })
 }
 
-/// Runs `tm rules --loosened --base v1` in /repo/src, the repository top /repo; `now` is the working rule file's text,
-/// or None for a file with one problem. (exit, out, err).
+/// Runs `cctao rules --loosened --base v1` in /repo/src, the repository top /repo; `now` is the working rule file's
+/// text, or None for a file with one problem. (exit, out, err).
 fn loosened(base: Base, now: Option<&'static str>) -> (u8, String, String) {
     let toplevel = |cwd: &Path| -> Result<PathBuf, VcsError> {
         assert_eq!(cwd, Path::new("/repo/src"));
         Ok(PathBuf::from("/repo"))
     };
     let read = |path: &Path| -> Result<RuleFile, Vec<Problem>> {
-        assert_eq!(path, Path::new("/repo/temperare.toml"));
+        assert_eq!(path, Path::new("/repo/tao.toml"));
         match now {
             Some(text) => Ok(RuleFile::parse(text, Path::new("/repo")).unwrap()),
             None => Err(vec![Problem { line: 2, col: 1, what: "unknown key".into(), fix: "Remove the key.".into() }]),
@@ -59,7 +59,7 @@ fn loosened(base: Base, now: Option<&'static str>) -> (u8, String, String) {
         }
     };
     let blob_at = |folder: &Path, oid: &Oid, path: &str| -> Result<Option<Vec<u8>>, VcsError> {
-        assert_eq!((folder, oid, path), (Path::new("/repo"), &Oid::parse(OID).unwrap(), "temperare.toml"));
+        assert_eq!((folder, oid, path), (Path::new("/repo"), &Oid::parse(OID).unwrap(), "tao.toml"));
         match base {
             Base::BlobGitError => Err(git_error()),
             Base::NoFile => Ok(None),
@@ -89,8 +89,8 @@ fn loosened(base: Base, now: Option<&'static str>) -> (u8, String, String) {
 
 #[test]
 fn each_outcome_with_its_exit_and_text() {
-    // The rule file as tm prints it: `/repo` joined with `temperare.toml`, `/repo/temperare.toml` on unix.
-    let rf = Path::new("/repo").join("temperare.toml").display().to_string();
+    // The rule file as cctao prints it: `/repo` joined with `tao.toml`, `/repo/tao.toml` on unix.
+    let rf = Path::new("/repo").join("tao.toml").display().to_string();
     let base_problems = format!(
         "{rf} (at v1):1:11  `version` must be 1, not 2  Write `version = 1`.\n\
          next: fix each problem listed for {rf} (at v1)\n"
@@ -106,19 +106,19 @@ fn each_outcome_with_its_exit_and_text() {
     let loosened_none = format!("rule file: {rf}\nbase: v1\nloosened (0):\nnext: nothing to do\n");
     let rows: [(&str, Base, Option<&'static str>, u8, &str, &str); 9] = [
         ("rev names nothing", Base::NoCommit, Some(ONE_RULE), 2, "",
-         "tm: base 'v1' does not name a commit\nnext: Pass a commit, branch or tag that exists, e.g. --base main.\n"),
+         "cctao: base 'v1' does not name a commit\nnext: Pass a commit, branch or tag that exists, e.g. --base main.\n"),
         ("rev_parse git error", Base::RevGitError, Some(ONE_RULE), 2, "",
-         "tm: git could not resolve base 'v1': fatal: boom\n\
-          next: Run tm rules inside a git repository to use --base.\n"),
+         "cctao: git could not resolve base 'v1': fatal: boom\n\
+          next: Run cctao rules inside a git repository to use --base.\n"),
         ("blob_at git error", Base::BlobGitError, Some(ONE_RULE), 2, "",
-         "tm: git could not read temperare.toml at base 'v1': fatal: boom\n\
-          next: Run tm rules inside a git repository to use --base.\n"),
+         "cctao: git could not read tao.toml at base 'v1': fatal: boom\n\
+          next: Run cctao rules inside a git repository to use --base.\n"),
         ("blob missing", Base::NoFile, Some(ONE_RULE), 2, "",
-         "tm: no rule file temperare.toml at base 'v1'\n\
-          next: Pass a --base that has temperare.toml, or leave --loosened out.\n"),
+         "cctao: no rule file tao.toml at base 'v1'\n\
+          next: Pass a --base that has tao.toml, or leave --loosened out.\n"),
         ("not UTF-8", Base::NotUtf8, Some(ONE_RULE), 2, "",
-         "tm: temperare.toml at base 'v1' is not UTF-8 text\n\
-          next: Pass a --base whose temperare.toml is UTF-8 text, or leave --loosened out.\n"),
+         "cctao: tao.toml at base 'v1' is not UTF-8 text\n\
+          next: Pass a --base whose tao.toml is UTF-8 text, or leave --loosened out.\n"),
         ("base problems", Base::Text("version = 2\n"), None, 2, &base_problems, ""),
         ("now problems", Base::Text(ONE_RULE), None, 2, &now_problems, ""),
         ("something loosened", Base::Text(ONE_RULE), Some("version = 1\n"), 1, &loosened_one, ""),

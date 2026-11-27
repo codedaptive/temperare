@@ -1,4 +1,4 @@
-//! `rules_text`: the `tm rules` listing as text.
+//! `rules_text`: the `cctao rules` listing as text.
 
 use super::serde_name::serde_name;
 use super::split_exceptions::split_exceptions;

@@ -13,7 +13,7 @@
 40|an_absent_linter_and_absent_tessera_each_report_not_available|Done 4: an absent engine
 50|an_approved_exception_silences_its_finding_and_is_counted|Done 5: an exception
 50|the_exceptions_in_force_are_counted_with_nothing_to_silence|Done 5: an exception
-60|tm_checks_a_plain_git_repository_with_only_path_and_home|Done 6: alone
+60|cctao_checks_a_plain_git_repository_with_only_path_and_home|Done 6: alone
 70|a_security_finding_is_reported_with_severity_place_and_owner_and_never_refuses|Done 7: a security rule
 80|a_command_named_only_inside_one_kit_is_reported_in_another_and_passes_inside|Done 8: named only inside
 90|clippy_line_reports_test_code_not_allowed_lints|A clippy check line: test code reported, allowed lints not

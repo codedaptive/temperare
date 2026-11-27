@@ -1,4 +1,4 @@
-//! `select_rules`: the rule file cut to the rules, and not-applicable rules, of one kind for `tm check --kind`.
+//! `select_rules`: the rule file cut to the rules, and not-applicable rules, of one kind for `cctao check --kind`.
 
 use rules::{Kind, RuleFile};
 

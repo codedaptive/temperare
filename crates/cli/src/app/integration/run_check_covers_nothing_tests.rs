@@ -10,8 +10,8 @@ use std::path::{Path, PathBuf};
 
 #[test]
 fn run_check_reports_rules_with_no_files() {
-    // The rule file as tm prints it: `/repo/temperare.toml` on unix.
-    let rule_file = Path::new("/repo").join("temperare.toml");
+    // The rule file as cctao prints it: `/repo/tao.toml` on unix.
+    let rule_file = Path::new("/repo").join("tao.toml");
     let fix_covers_nothing =
         format!("fix the paths of each rule in covers_nothing, or remove it from {}", rule_file.display());
     let rows = [

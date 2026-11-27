@@ -1,7 +1,7 @@
-//! tm's output: the problem line, the next-step text, the `tm rules` listing as text and as JSON (its
-//! exceptions split into in force and expired), what `tm rules --loosened` found as text and as JSON, and tm check's
-//! exit code, `--json` object, failed rules' stderr tails and savings estimate (its line and its `saved` JSON), the
-//! `--version` line and the version and commit it shares with the telemetry line, and tm baseline test's results
+//! cctao's output: the problem line, the next-step text, the `cctao rules` listing as text and as JSON (its
+//! exceptions split into in force and expired), what `cctao rules --loosened` found as text and as JSON, and cctao
+//! check's exit code, `--json` object, failed rules' stderr tails and savings estimate (its line and its `saved` JSON),
+//! the `--version` line and the version and commit it shares with the telemetry line, and cctao baseline test's results
 //! (each case's verdict and each rule's result), exit code, next-step text, text and `--json` object.
 
 mod baseline_exit;

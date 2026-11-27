@@ -120,7 +120,7 @@ fn text_line_rounds_half_up_and_precedes_the_unchanged_body() {
     // Baseline 2,161,007 chars: (2,161,007 + 2) / 4 = 540,252 tok; the body's tokens come from its printed length.
     let tokens = output_tokens(body.chars().count());
     let saved = 540_252 - tokens;
-    assert_eq!(line, format!("[temperare] tokens saved ≈ {},{:03} (99%) — this output ≈ {tokens} tok vs the raw output of 1 engine run(s) ≈ 540,252 tok (estimate). At the end of your reply, tell the user the total temperare tokens saved this turn — sum each such line across your temperare calls — e.g. \"🌱 temperare saved ~N tokens this turn\".", saved / 1000, saved % 1000));
+    assert_eq!(line, format!("[cctao] tokens saved ≈ {},{:03} (99%) — this output ≈ {tokens} tok vs the raw output of 1 engine run(s) ≈ 540,252 tok (estimate). At the end of your reply, tell the user the total cctao tokens saved this turn — sum each such line across your cctao calls — e.g. \"🌱 cctao saved ~N tokens this turn\".", saved / 1000, saved % 1000));
 }
 
 #[test]
@@ -128,7 +128,7 @@ fn savings_floor_at_zero_when_output_exceeds_baseline() {
     let runs = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| checked(vec![run("q", Engine::Ruff, Some(4))]);
     let (_, out, _) = check(&CheckArgs::default(), &CheckWorld { run_rules: &runs, ..world() });
     let (line, tokens) = clean_text(&out);
-    assert!(line.starts_with(&format!("[temperare] tokens saved ≈ 0 (0%) — this output ≈ {tokens} tok vs the raw output of 1 engine run(s) ≈ 1 tok")), "{out}");
+    assert!(line.starts_with(&format!("[cctao] tokens saved ≈ 0 (0%) — this output ≈ {tokens} tok vs the raw output of 1 engine run(s) ≈ 1 tok")), "{out}");
 }
 
 #[test]
@@ -136,7 +136,7 @@ fn zero_baseline_still_prints_line_for_an_empty_run() {
     let runs = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| checked(vec![run("q", Engine::Ruff, Some(0))]);
     let (_, out, _) = check(&CheckArgs::default(), &CheckWorld { run_rules: &runs, ..world() });
     let (line, tokens) = clean_text(&out);
-    assert!(line.starts_with(&format!("[temperare] tokens saved ≈ 0 (0%) — this output ≈ {tokens} tok vs the raw output of 1 engine run(s) ≈ 0 tok")), "{out}");
+    assert!(line.starts_with(&format!("[cctao] tokens saved ≈ 0 (0%) — this output ≈ {tokens} tok vs the raw output of 1 engine run(s) ≈ 0 tok")), "{out}");
 }
 
 #[test]
@@ -144,7 +144,7 @@ fn only_some_counts_as_a_run_and_none_alone_has_no_line() {
     let mixed = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| checked(vec![run("a", Engine::Ruff, None), run("b", Engine::AstGrep, Some(0))]);
     let (_, out, _) = check(&CheckArgs::default(), &CheckWorld { run_rules: &mixed, ..world() });
     let (line, tokens) = clean_text(&out);
-    assert!(line.starts_with(&format!("[temperare] tokens saved ≈ 0 (0%) — this output ≈ {tokens} tok vs the raw output of 1 engine run(s) ≈ 0 tok")), "{out}");
+    assert!(line.starts_with(&format!("[cctao] tokens saved ≈ 0 (0%) — this output ≈ {tokens} tok vs the raw output of 1 engine run(s) ≈ 0 tok")), "{out}");
     let none = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| checked(vec![run("a", Engine::Ruff, None)]);
     let (code, out, err) = check(&CheckArgs::default(), &CheckWorld { run_rules: &none, ..world() });
     assert_eq!((code, err.as_str()), (0, ""));

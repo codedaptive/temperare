@@ -1,4 +1,4 @@
-//! `RuleCount`: one rule's share of the raw engine output tm check's savings estimate counts.
+//! `RuleCount`: one rule's share of the raw engine output cctao check's savings estimate counts.
 
 /// One rule's count (a watch rule has none), in rule-file order: `rule` its id, `engine` its engine's name, `chars`
 /// the characters (Unicode scalar values) of its counted engine run's stdout and stderr (0 when it has no counted

@@ -1,5 +1,5 @@
-//! cli's build script: compiles the commit into the binary as `TEMPERARE_COMMIT`, for `temperare --version`
-//! (S-32, S-33), and whether it was built in a git checkout as `TEMPERARE_CHECKOUT` (`yes` or `no`), which the
+//! cli's build script: compiles the commit into the binary as `CCTAO_COMMIT`, for `cctao --version`
+//! (S-32, S-33), and whether it was built in a git checkout as `CCTAO_CHECKOUT` (`yes` or `no`), which the
 //! version tests read. git runs through ccvcslib; this file only reads the `.git` file's `gitdir:` line and the git
 //! folder's `commondir`, to tell cargo which paths change when the commit does.
 
@@ -9,9 +9,9 @@ use std::path::{Path, PathBuf};
 
 fn main() {
     let manifest = PathBuf::from(std::env::var_os("CARGO_MANIFEST_DIR").unwrap_or_default());
-    println!("cargo:rustc-env=TEMPERARE_COMMIT={}", commit(&manifest));
+    println!("cargo:rustc-env=CCTAO_COMMIT={}", commit(&manifest));
     let dot_git = manifest.ancestors().map(|dir| dir.join(".git")).find(|p| p.exists());
-    println!("cargo:rustc-env=TEMPERARE_CHECKOUT={}", if dot_git.is_some() { "yes" } else { "no" });
+    println!("cargo:rustc-env=CCTAO_CHECKOUT={}", if dot_git.is_some() { "yes" } else { "no" });
     println!("cargo:rerun-if-changed=build.rs");
     for file in dot_git.map(|dot_git| watched(&dot_git)).unwrap_or_default() {
         println!("cargo:rerun-if-changed={}", file.display());

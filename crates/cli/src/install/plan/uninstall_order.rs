@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 use crate::RecordEntry;
 
-/// Two lists, removed one after the other. The first is every file and link in the order given (the record's own
+/// Two lists, removed one after the other. The first is every file in the order given (the record's own
 /// entry left out), then the folders that do not hold the record deepest first, then `File(record)` last. The
 /// second is the folders that hold the record (each `Dir(dir)` with `record.starts_with(dir)`), deepest first.
 /// Deepest first is most path components, folders of equal depth in the order given, so a folder is emptied of
@@ -20,7 +20,7 @@ pub(crate) fn uninstall_order(entries: &[RecordEntry], record: &Path) -> (Vec<Re
             RecordEntry::File(path) if path == record => {}
             RecordEntry::Dir(dir) if record.starts_with(dir) => record_dirs.push(dir.clone()),
             RecordEntry::Dir(dir) => other_dirs.push(dir.clone()),
-            RecordEntry::File(_) | RecordEntry::Link(..) => first.push(entry.clone()),
+            RecordEntry::File(_) => first.push(entry.clone()),
         }
     }
     first.extend(deepest_first(other_dirs));

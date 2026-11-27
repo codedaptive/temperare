@@ -1,4 +1,4 @@
-//! `baseline_next`: the text after `next: ` for `tm baseline test`.
+//! `baseline_next`: the text after `next: ` for `cctao baseline test`.
 
 use super::baseline_rule_result::BaselineRuleResult;
 use super::case_verdict::CaseVerdict;
@@ -24,7 +24,7 @@ fn not_run_parts(results: &[BaselineRuleResult]) -> Vec<String> {
     let (engines, whys) = installs_and_whys(results);
     let mut parts = Vec::new();
     if !engines.is_empty() {
-        parts.push(format!("install {}, then run tm baseline test again", engines.join(", ")));
+        parts.push(format!("install {}, then run cctao baseline test again", engines.join(", ")));
     }
     parts.extend(whys.into_iter().map(str::to_string));
     if results.iter().any(|r| r.verdict() == "not applicable") {

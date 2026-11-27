@@ -4,7 +4,7 @@ use super::write_failure::write_failure;
 use crate::UsageError;
 
 fn usage_error() -> UsageError {
-    UsageError { what: "no rule file at /repo/temperare.toml".to_string(), fix: "Write temperare.toml.".to_string() }
+    UsageError { what: "no rule file at /repo/tao.toml".to_string(), fix: "Write tao.toml.".to_string() }
 }
 
 #[test]
@@ -15,7 +15,7 @@ fn text_writes_the_error_on_stderr_only_and_returns_2() {
     assert_eq!(String::from_utf8(out).unwrap(), "");
     assert_eq!(
         String::from_utf8(err).unwrap(),
-        "tm: no rule file at /repo/temperare.toml\nnext: Write temperare.toml.\n"
+        "cctao: no rule file at /repo/tao.toml\nnext: Write tao.toml.\n"
     );
 }
 
@@ -26,10 +26,10 @@ fn json_also_writes_the_one_line_object_on_stdout() {
     assert_eq!(code, 2);
     assert_eq!(
         String::from_utf8(out).unwrap(),
-        "{\"error\":\"no rule file at /repo/temperare.toml\",\"exit\":2,\"next\":\"Write temperare.toml.\"}\n"
+        "{\"error\":\"no rule file at /repo/tao.toml\",\"exit\":2,\"next\":\"Write tao.toml.\"}\n"
     );
     assert_eq!(
         String::from_utf8(err).unwrap(),
-        "tm: no rule file at /repo/temperare.toml\nnext: Write temperare.toml.\n"
+        "cctao: no rule file at /repo/tao.toml\nnext: Write tao.toml.\n"
     );
 }

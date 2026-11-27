@@ -5,7 +5,7 @@
 
 use crate::check::Check;
 use crate::repo::Repo;
-use crate::tm::tm;
+use crate::cctao::cctao;
 
 const RULES: &str = r#"version = 1
 owner = "repo"
@@ -50,15 +50,15 @@ fn a_command_named_only_inside_one_kit_is_reported_in_another_and_passes_inside(
          and of app/src/sync.rs each call Command::new(\"git\")",
     );
     let repo = Repo::new();
-    repo.write("temperare.toml", RULES);
+    repo.write("tao.toml", RULES);
     repo.write("rules/git-only-in-deploy.yml", AST_GREP_RULE);
     repo.write("deploy/src/push.rs", DEPLOY);
     repo.write("app/src/sync.rs", APP);
     repo.commit("two kits");
 
     let args = ["check", "--json"];
-    let a = tm(&repo, &args);
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao(&repo, &args);
+    check.saw_cctao(&args, a.code, &a.json);
     assert_eq!(a.code, 1, "the use outside the kit refuses: {:#}\n{}", a.json, a.stderr);
     assert_eq!(
         a.places(),

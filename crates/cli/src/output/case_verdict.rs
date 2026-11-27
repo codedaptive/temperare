@@ -1,4 +1,4 @@
-//! `CaseVerdict`: what one case of a rule came to under `tm baseline test`.
+//! `CaseVerdict`: what one case of a rule came to under `cctao baseline test`.
 
 /// One case's verdict: it holds (the rule gave what the case expects), it is broken (`why` says what went wrong), the
 /// rule's engine could not be run here (`why` says why, and `cause` is engines' cause for it, `None` when the run

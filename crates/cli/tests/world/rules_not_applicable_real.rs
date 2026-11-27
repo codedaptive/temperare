@@ -17,7 +17,7 @@ impl TempFolder {
     fn new() -> Self {
         loop {
             let n = NEXT.fetch_add(1, Ordering::Relaxed);
-            let path = std::env::temp_dir().join(format!("tm-rules-na-{}-{n}", std::process::id()));
+            let path = std::env::temp_dir().join(format!("cctao-rules-na-{}-{n}", std::process::id()));
             match fs::create_dir(&path) {
                 Ok(()) => return Self(fs::canonicalize(path).unwrap()),
                 Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
@@ -65,7 +65,7 @@ fn rules_not_applicable_matches_check_and_lists_literal_reasons() {
     fs::create_dir(&repo).unwrap();
     fs::create_dir(&home).unwrap();
     git(&repo, &home, &temp.0, &["init", "-q"]);
-    fs::write(repo.join("temperare.toml"), r#"version = 1
+    fs::write(repo.join("tao.toml"), r#"version = 1
 owner = "team"
 baseline = ["standard@1", "house@1"]
 [[rule]]
@@ -93,7 +93,7 @@ fix = "Remove the import."
     let bin = git.parent().expect("git's folder").to_path_buf();
 
     let run = |args: &[&str]| {
-        let mut cmd = clean_command(env!("CARGO_BIN_EXE_temperare"), &repo, &home, &temp.0, bin.as_os_str());
+        let mut cmd = clean_command(env!("CARGO_BIN_EXE_cctao"), &repo, &home, &temp.0, bin.as_os_str());
         cmd.args = args.iter().map(OsString::from).collect();
         procio::run(&cmd).unwrap()
     };

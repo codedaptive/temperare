@@ -1,6 +1,6 @@
-//! tm's run: the command line to an exit code, `tm rules` from finding the rule file to the listing or to what it
-//! loosened since a base, `tm check` from finding the rule file to the report, `tm baseline test` from the sets' rules
-//! to each case's verdict, and `temperare install` and `uninstall` on the disk.
+//! cctao's run: the command line to an exit code, `cctao rules` from finding the rule file to the listing or to what it
+//! loosened since a base, `cctao check` from finding the rule file to the report, `cctao baseline test` from the sets'
+//! rules to each case's verdict, and `cctao install` and `uninstall` on the disk.
 
 mod append_telemetry;
 mod availability_at;

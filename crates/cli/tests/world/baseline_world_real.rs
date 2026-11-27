@@ -19,7 +19,7 @@ impl TempFolder {
     fn new() -> Self {
         loop {
             let n = NEXT.fetch_add(1, Ordering::Relaxed);
-            let path = std::env::temp_dir().join(format!("tm-cli-baseline-test-{}-{n}", std::process::id()));
+            let path = std::env::temp_dir().join(format!("cctao-cli-baseline-test-{}-{n}", std::process::id()));
             match fs::create_dir(&path) {
                 Ok(()) => return Self(path),
                 Err(e) if e.kind() == ErrorKind::AlreadyExists => continue,
@@ -106,7 +106,7 @@ fn run_with_real_sets(set: Option<&str>) -> (u8, String, String, Vec<String>) {
     };
     let world = BaselineWorld {
         rules_of: &rules_of,
-        make_folder: &|| Ok(PathBuf::from("/nonexistent-tm-baseline-case")),
+        make_folder: &|| Ok(PathBuf::from("/nonexistent-cctao-baseline-case")),
         write_file: &|_, _| Ok(()),
         commit_all: &|_| Ok("base".to_string()),
         added_since: &|_, _| Ok(Default::default()),
@@ -178,7 +178,7 @@ fn real_house_required_params_run_both_cases() {
         }
     };
     let world = BaselineWorld {
-        make_folder: &|| Ok(PathBuf::from("/nonexistent-tm-baseline-case")),
+        make_folder: &|| Ok(PathBuf::from("/nonexistent-cctao-baseline-case")),
         write_file: &|_, _| Ok(()),
         commit_all: &|_| Ok("base".to_string()),
         added_since: &added_since,

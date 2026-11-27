@@ -18,5 +18,5 @@ toml = "1"
 ccvcslib.workspace = true
 
 [[bin]]
-name = "temperare"
+name = "cctao"
 path = "src/main.rs"

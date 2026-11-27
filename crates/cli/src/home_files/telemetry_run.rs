@@ -3,7 +3,7 @@
 
 use std::path::Path;
 
-/// What one `tm check` was asked and how it ended, as its telemetry line carries it.
+/// What one `cctao check` was asked and how it ended, as its telemetry line carries it.
 pub(crate) struct TelemetryRun<'a> {
     /// The rule file's folder, absolute.
     pub(crate) folder: &'a Path,

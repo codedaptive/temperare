@@ -1,4 +1,4 @@
-//! `check_json`: tm check's `--json` object.
+//! `check_json`: cctao check's `--json` object.
 
 use report::Report;
 use serde_json::{Map, Value};

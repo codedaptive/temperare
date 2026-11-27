@@ -1,10 +1,10 @@
 //! Done 9 (hadolint) (SPEC-engines-common Done 9): a rule naming the engine reports a known violation, in a file the
 //! test made, with its rule, its place and its fix text, and the report lists the engine's version; with the engine
 //! off the PATH, the same rule reports "not available" (exit 3). One rule, `engine = "hadolint"`, `check = "DL3006"`
-//! (an untagged image); Dockerfile's line 2 is `FROM ubuntu`, web.Dockerfile tags its image. tm runs with PATH the
-//! folder that gives it hadolint (`tm_path_for`) then /usr/bin:/bin. Only when hadolint is not on the PATH
-//! `temperare` gets (`on_tm_path`, which runs nothing) is the reported case NOT RUN, with `temperare`'s reason, never
-//! PASS; `temperare` must then report the rule not available.
+//! (an untagged image); Dockerfile's line 2 is `FROM ubuntu`, web.Dockerfile tags its image. cctao runs with PATH the
+//! folder that gives it hadolint (`cctao_path_for`) then /usr/bin:/bin. Only when hadolint is not on the PATH
+//! `cctao` gets (`on_cctao_path`, which runs nothing) is the reported case NOT RUN, with `cctao`'s reason, never
+//! PASS; `cctao` must then report the rule not available.
 
 use serde_json::json;
 
@@ -13,8 +13,8 @@ use crate::check::Check;
 use crate::not_available_pairs::not_available_pairs;
 use crate::probed_version::probed_version;
 use crate::repo::Repo;
-use crate::tm::tm_with_path;
-use crate::tm_path_for::tm_path_for;
+use crate::cctao::cctao_with_path;
+use crate::cctao_path_for::cctao_path_for;
 
 const RULE: &str = "docker-tag";
 const FIX: &str = "Tag the image.";
@@ -36,7 +36,7 @@ const CLEAN: &str = "FROM ubuntu:22.04\n";
 /// A repository holding the rule file, Dockerfile and web.Dockerfile, committed.
 fn docker_repo() -> Repo {
     let repo = Repo::new();
-    repo.write("temperare.toml", RULES);
+    repo.write("tao.toml", RULES);
     repo.write("Dockerfile", EXAMPLE);
     repo.write("web.Dockerfile", CLEAN);
     repo.commit("dockerfiles");
@@ -52,8 +52,8 @@ fn a_hadolint_warning_is_reported_with_its_rule_place_fix_and_version() {
     );
     let repo = docker_repo();
     let args = ["check", "--json"];
-    let a = tm_with_path(&repo, &args, Some(&tm_path_for(&["hadolint"])));
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao_with_path(&repo, &args, Some(&cctao_path_for(&["hadolint"])));
+    check.saw_cctao(&args, a.code, &a.json);
     if let Some(why) = absent_engine_reason(&a, &["hadolint"], RULE) {
         check.not_run(why);
         return;
@@ -74,13 +74,13 @@ fn a_hadolint_warning_is_reported_with_its_rule_place_fix_and_version() {
 fn hadolint_off_path_is_not_available() {
     let mut check = Check::new(
         "hadolint_off_path_is_not_available",
-        "rule docker-tag (hadolint, DL3006) over the same files; tm runs with PATH /usr/bin:/bin, which holds no \
+        "rule docker-tag (hadolint, DL3006) over the same files; cctao runs with PATH /usr/bin:/bin, which holds no \
          hadolint",
     );
     let repo = docker_repo();
     let args = ["check", "--json"];
-    let a = tm_with_path(&repo, &args, Some("/usr/bin:/bin"));
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao_with_path(&repo, &args, Some("/usr/bin:/bin"));
+    check.saw_cctao(&args, a.code, &a.json);
     assert_eq!(a.code, 3, "not available has its own code: {:#}\n{}", a.json, a.stderr);
     assert!(a.findings().is_empty(), "nothing is reported as found: {:#}", a.json);
     assert_eq!(not_available_pairs(&a), vec![(RULE.to_string(), "hadolint".to_string())], "{:#}", a.json);

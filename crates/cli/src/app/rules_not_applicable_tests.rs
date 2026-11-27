@@ -1,5 +1,5 @@
-//! ZUT for app/rules_not_applicable.rs: which rules `tm rules` lists as not applicable, with which why, in what order,
-//! from rule files built in code and no-file flags as literals.
+//! ZUT for app/rules_not_applicable.rs: which rules `cctao rules` lists as not applicable, with which why, in what
+//! order, from rule files built in code and no-file flags as literals.
 
 use super::rules_not_applicable::rules_not_applicable;
 use engines::NoFileRule;

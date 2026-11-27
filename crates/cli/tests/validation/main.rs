@@ -1,6 +1,6 @@
-//! Validation: tests that run the built `temperare` binary.
+//! Validation: tests that run the built `cctao` binary, the command of Code Chi Tao.
 //!
-//! `cli_check` and `cli_tm` run `temperare` with engines stubbed on PATH, except cli_check's `real_ruff_` cases;
+//! `cli_check` and `cli_cctao` run `cctao` with engines stubbed on PATH, except cli_check's `real_ruff_` cases;
 //! `savings_real_engine`, `done_10_shared_run` and those cases run the real ruff; `check_text_na_count_real_engines`
 //! runs the real ruff and ast-grep.
 //! `house_2_old_citation_not_reported` runs the real ast-grep.
@@ -10,12 +10,12 @@
 //! Acceptance: the mission's Done list (MISSION-temperare-2026-11-16, Done 1-8, SPEC-engines-common's Done 9 for
 //! golangci-lint, pylint, clang-tidy, vulture, Periphery, gitleaks, cargo-audit, eslint, mypy, PMD, detekt, RuboCop,
 //! PHPStan, dart analyze, markdownlint-cli2, yamllint, actionlint, hadolint, Vale, stylelint, SQLFluff, ShellCheck
-//! and git, and Done 10's shared run and baseline test), run against the built `temperare` with the real engines,
+//! and git, and Done 10's shared run and baseline test), run against the built `cctao` with the real engines,
 //! each case in a throwaway folder it makes and removes.
 //! Validation, not a unit or integration test: a run of the shipped binary, written by the cli lane to the
 //! orchestrator's measures (rule 11).
 //! `make accept` runs it.
-//! No codeteam variable reaches `temperare` in any case (Done 6): each case passes only the variables it sets (`env.rs`
+//! No codeteam variable reaches `cctao` in any case (Done 6): each case passes only the variables it sets (`env.rs`
 //! for the acceptance cases, `install_temp_home.rs` its own).
 //!
 //! The report (SPEC-accept): each acceptance case records what it set up and saw in a `Check`, which writes the
@@ -25,31 +25,31 @@
 mod baseline_test_cmd;
 mod baseline_test_real_ruff;
 mod check_text_na_count_real_engines;
+mod cli_cctao;
 // Unix only: its engine stubs are sh scripts and its PATH is the stubs folder alone.
 #[cfg(unix)]
 mod cli_check;
-mod cli_tm;
 mod house_2_old_citation_not_reported;
 mod savings_real_engine;
 
 mod absent_engine_reason;
+mod cctao;
+mod cctao_lines;
+mod cctao_path_folder;
+mod cctao_path_for;
 mod check;
 mod check_drop;
 mod check_new;
 mod check_not_run;
-mod check_saw_tm;
+mod check_saw_cctao;
 mod clean_cmd;
 mod env;
 mod not_available_pairs;
-mod on_tm_path;
+mod on_cctao_path;
 mod probed_version;
 mod repo;
 mod run_clean;
 mod temp_home;
-mod tm;
-mod tm_lines;
-mod tm_path_folder;
-mod tm_path_for;
 mod write_head_once;
 
 mod done_1_clippy;
@@ -88,9 +88,9 @@ mod done_10_shared_run;
 mod done_10_baseline_test;
 
 // The install on the built binary, into a throwaway HOME.
-// Unix only: it checks the install's symlink and file modes.
+// Unix only: it checks the installed binary's file mode.
 #[cfg(unix)]
 mod install_temp_home;
 
-// A clippy check line with allowed lints, on the built temperare.
+// A clippy check line with allowed lints, on the built cctao.
 mod clippy_line_reports_test_code_not_allowed_lints;

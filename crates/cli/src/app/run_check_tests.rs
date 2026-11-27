@@ -1,5 +1,5 @@
 //! ZUT for run_check.rs, with closure worlds: no git, no disk, no PATH. Every run is in /repo with the rule file
-//! /repo/temperare.toml parsed from literal TOML; a seam a test must not reach panics.
+//! /repo/tao.toml parsed from literal TOML; a seam a test must not reach panics.
 
 use super::run_check_savings_tests::{assert_counts_tail, without_counts_tail};
 use super::{run_check, CheckWorld};
@@ -41,14 +41,14 @@ fn there(_: &Path) -> bool {
 }
 
 fn read(path: &Path) -> Result<RuleFile, Vec<Problem>> {
-    assert_eq!(path, Path::new("/repo/temperare.toml"));
+    assert_eq!(path, Path::new("/repo/tao.toml"));
     Ok(RuleFile::parse(TEXT, Path::new("/repo")).unwrap())
 }
 
-/// The rule file as tm prints it: `/repo` joined with `temperare.toml` in the platform's separator,
-/// `/repo/temperare.toml` on unix.
+/// The rule file as cctao prints it: `/repo` joined with `tao.toml` in the platform's separator,
+/// `/repo/tao.toml` on unix.
 fn rule_file() -> String {
-    Path::new("/repo").join("temperare.toml").display().to_string()
+    Path::new("/repo").join("tao.toml").display().to_string()
 }
 
 fn no_runs(_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>) -> CheckedRules {
@@ -92,7 +92,7 @@ fn quality_error() -> Finding {
     f
 }
 
-/// Runs `tm check` in /repo; (exit, out, err).
+/// Runs `cctao check` in /repo; (exit, out, err).
 fn check(args: &CheckArgs, world: &CheckWorld) -> (u8, String, String) {
     let (mut out, mut err) = (Vec::new(), Vec::new());
     let code = run_check(args, Path::new("/repo"), world, &mut out, &mut err);
@@ -119,11 +119,11 @@ fn outside_a_repository_is_a_usage_error() {
     assert_usage_error(
         CheckArgs::default(),
         &w,
-        "tm: not in a git repository: /repo\nnext: Run tm inside a git repository, or pass --rules <path>.\n",
+        "cctao: not in a git repository: /repo\nnext: Run cctao inside a git repository, or pass --rules <path>.\n",
         json!({
             "error": "not in a git repository: /repo",
             "exit": 2,
-            "next": "Run tm inside a git repository, or pass --rules <path>.",
+            "next": "Run cctao inside a git repository, or pass --rules <path>.",
         }),
     );
 }
@@ -167,7 +167,7 @@ fn a_path_outside_the_rule_files_folder_is_a_usage_error() {
     assert_usage_error(
         args,
         &w,
-        "tm: /elsewhere/x.py is not under the rule file's folder /repo\n\
+        "cctao: /elsewhere/x.py is not under the rule file's folder /repo\n\
          next: Pass paths inside /repo, or pass --rules with the rule file that covers them.\n",
         json!({
             "error": "/elsewhere/x.py is not under the rule file's folder /repo",
@@ -184,7 +184,7 @@ fn a_base_naming_no_commit_is_a_usage_error_before_any_engine_runs() {
     assert_usage_error(
         args,
         &w,
-        "tm: base 'nosuchrev' does not name a commit\n\
+        "cctao: base 'nosuchrev' does not name a commit\n\
          next: Pass a commit, branch or tag that exists, e.g. --base main.\n",
         json!({
             "error": "base 'nosuchrev' does not name a commit",
@@ -203,7 +203,7 @@ fn a_report_that_cannot_be_built_is_a_usage_error() {
     assert_usage_error(
         CheckArgs::default(),
         &w,
-        "tm: cannot build the report: rule file folder /repo: not inside /top\n\
+        "cctao: cannot build the report: rule file folder /repo: not inside /top\n\
          next: Check that the rule file's folder is inside the repository and git runs here.\n",
         json!({
             "error": "cannot build the report: rule file folder /repo: not inside /top",

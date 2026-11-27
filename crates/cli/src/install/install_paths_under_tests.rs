@@ -10,10 +10,9 @@ fn the_paths_under_a_home() {
         InstallPaths::under(Path::new("/home/ann")),
         InstallPaths {
             bin_dir: PathBuf::from("/home/ann/.local/bin"),
-            binary: PathBuf::from("/home/ann/.local/bin/temperare"),
-            link: PathBuf::from("/home/ann/.local/bin/tm"),
-            state_dir: PathBuf::from("/home/ann/.local/state/temperare"),
-            record: PathBuf::from("/home/ann/.local/state/temperare/installed"),
+            binary: PathBuf::from("/home/ann/.local/bin/cctao"),
+            state_dir: PathBuf::from("/home/ann/.local/state/cctao"),
+            record: PathBuf::from("/home/ann/.local/state/cctao/installed"),
         }
     );
 }

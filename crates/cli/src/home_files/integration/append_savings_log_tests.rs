@@ -1,5 +1,5 @@
 //! Integration tests for append_savings_log on a test HOME: creation, append order, silent failures,
-//! refusal to write through links, and unchanged directory logs or files at the state or temperare paths.
+//! refusal to write through links, and unchanged directory logs or files at the state or cctao paths.
 
 use crate::home_files::append_savings_log;
 use std::path::{Path, PathBuf};
@@ -9,7 +9,7 @@ struct Home(PathBuf);
 impl Home {
     fn new() -> Self {
         static NEXT: AtomicU64 = AtomicU64::new(0);
-        let path = std::env::temp_dir().join(format!("tm-log-test-{}-{}", std::process::id(), NEXT.fetch_add(1, Ordering::Relaxed)));
+        let path = std::env::temp_dir().join(format!("cctao-log-test-{}-{}", std::process::id(), NEXT.fetch_add(1, Ordering::Relaxed)));
         std::fs::create_dir(&path).unwrap();
         Self(path)
     }
@@ -22,7 +22,7 @@ impl Drop for Home {
 fn savings_contract_creates_folders_and_writes_line_with_newline() {
     let home = Home::new();
     append_savings_log(Some(&home.0), "first");
-    assert_eq!(std::fs::read(home.0.join(".local/state/temperare/savings.jsonl")).unwrap(), b"first\n");
+    assert_eq!(std::fs::read(home.0.join(".local/state/cctao/savings.jsonl")).unwrap(), b"first\n");
 }
 
 #[test]
@@ -30,7 +30,7 @@ fn savings_contract_appends_two_lines_in_order() {
     let home = Home::new();
     append_savings_log(Some(&home.0), "first");
     append_savings_log(Some(&home.0), "second");
-    assert_eq!(std::fs::read(home.0.join(".local/state/temperare/savings.jsonl")).unwrap(), b"first\nsecond\n");
+    assert_eq!(std::fs::read(home.0.join(".local/state/cctao/savings.jsonl")).unwrap(), b"first\nsecond\n");
 }
 
 #[test]
@@ -39,13 +39,13 @@ fn savings_contract_unwritable_path_is_silent_and_unchanged() {
     std::fs::write(home.0.join(".local"), b"occupied").unwrap();
     append_savings_log(Some(&home.0), "line");
     assert_eq!(std::fs::read(home.0.join(".local")).unwrap(), b"occupied");
-    assert!(!home.0.join(".local/state/temperare/savings.jsonl").exists());
+    assert!(!home.0.join(".local/state/cctao/savings.jsonl").exists());
 }
 
 #[test]
 fn savings_contract_directory_at_log_path_remains_empty() {
     let home = Home::new();
-    let log = home.0.join(".local/state/temperare/savings.jsonl");
+    let log = home.0.join(".local/state/cctao/savings.jsonl");
     std::fs::create_dir_all(&log).unwrap();
 
     append_savings_log(Some(&home.0), "line");
@@ -67,16 +67,16 @@ fn savings_contract_file_at_state_path_is_unchanged() {
 }
 
 #[test]
-fn savings_contract_file_at_temperare_path_is_unchanged() {
+fn savings_contract_file_at_cctao_path_is_unchanged() {
     let home = Home::new();
     std::fs::create_dir_all(home.0.join(".local/state")).unwrap();
-    let temperare = home.0.join(".local/state/temperare");
-    std::fs::write(&temperare, b"keep").unwrap();
+    let cctao = home.0.join(".local/state/cctao");
+    std::fs::write(&cctao, b"keep").unwrap();
 
     append_savings_log(Some(&home.0), "line");
 
-    assert!(temperare.is_file());
-    assert_eq!(std::fs::read(&temperare).unwrap(), b"keep");
+    assert!(cctao.is_file());
+    assert_eq!(std::fs::read(&cctao).unwrap(), b"keep");
 }
 
 #[test]
@@ -96,7 +96,7 @@ fn savings_contract_absent_or_empty_home_does_nothing() {
 fn savings_contract_does_not_follow_log_link_to_existing_file() {
     use std::os::unix::fs::symlink;
     let home = Home::new();
-    let folder = home.0.join(".local/state/temperare");
+    let folder = home.0.join(".local/state/cctao");
     std::fs::create_dir_all(&folder).unwrap();
     let target = home.0.join("target.txt");
     std::fs::write(&target, b"keep").unwrap();
@@ -114,7 +114,7 @@ fn savings_contract_does_not_follow_log_link_to_existing_file() {
 fn savings_contract_does_not_follow_dangling_log_link() {
     use std::os::unix::fs::symlink;
     let home = Home::new();
-    let folder = home.0.join(".local/state/temperare");
+    let folder = home.0.join(".local/state/cctao");
     std::fs::create_dir_all(&folder).unwrap();
     let target = home.0.join("absent.txt");
     let link = folder.join("savings.jsonl");
@@ -128,13 +128,13 @@ fn savings_contract_does_not_follow_dangling_log_link() {
 
 #[cfg(unix)]
 #[test]
-fn savings_contract_does_not_follow_temperare_folder_link() {
+fn savings_contract_does_not_follow_cctao_folder_link() {
     use std::os::unix::fs::symlink;
     let home = Home::new();
     std::fs::create_dir_all(home.0.join(".local/state")).unwrap();
     let target = home.0.join("elsewhere");
     std::fs::create_dir(&target).unwrap();
-    let link = home.0.join(".local/state/temperare");
+    let link = home.0.join(".local/state/cctao");
     symlink(&target, &link).unwrap();
 
     append_savings_log(Some(&home.0), "line");

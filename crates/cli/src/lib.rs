@@ -1,6 +1,6 @@
-//! tm's library: argument parsing, the rule-file listing and what it loosened since a base, tm check and its savings
-//! estimate, the files under HOME (the savings config switch and log, and the telemetry file), tm baseline test,
-//! install and the run; the binary in main.rs is a thin shell.
+//! cctao's library: argument parsing, the rule-file listing and what it loosened since a base, cctao check and its
+//! savings estimate, the files under HOME (the savings config switch and log, and the telemetry file), cctao baseline
+//! test, install and the run; the binary in main.rs is a thin shell.
 
 mod app;
 mod args;

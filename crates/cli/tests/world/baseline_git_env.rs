@@ -9,7 +9,7 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
-const CHILD: &str = "TEMPERARE_BASELINE_GIT_ENV_CHILD";
+const CHILD: &str = "CCTAO_BASELINE_GIT_ENV_CHILD";
 static NEXT: AtomicU64 = AtomicU64::new(0);
 
 struct TempFolder(PathBuf);
@@ -18,7 +18,7 @@ impl TempFolder {
     fn new() -> Self {
         loop {
             let n = NEXT.fetch_add(1, Ordering::Relaxed);
-            let path = std::env::temp_dir().join(format!("tm-baseline-git-env-{}-{n}", std::process::id()));
+            let path = std::env::temp_dir().join(format!("cctao-baseline-git-env-{}-{n}", std::process::id()));
             match fs::create_dir(&path) {
                 Ok(()) => return Self(path),
                 Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,

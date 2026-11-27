@@ -13,7 +13,7 @@ impl TempFolder {
     fn new() -> Self {
         loop {
             let n = NEXT.fetch_add(1, Ordering::Relaxed);
-            let path = std::env::temp_dir().join(format!("tm-check-base-{}-{n}", std::process::id()));
+            let path = std::env::temp_dir().join(format!("cctao-check-base-{}-{n}", std::process::id()));
             match fs::create_dir(&path) {
                 Ok(()) => return Self(fs::canonicalize(path).unwrap()),
                 Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
@@ -62,7 +62,7 @@ fn check_base(with_base: bool) {
     git(&repo, &home, &temp.0, &["init", "-q"]);
     fs::write(repo.join("src/lib.rs"), "base code\n").unwrap();
     fs::write(repo.join("tests/a_tests.rs"), "base test\n").unwrap();
-    fs::write(repo.join("temperare.toml"), r#"version = 1
+    fs::write(repo.join("tao.toml"), r#"version = 1
 owner = "team"
 [kits.project]
 paths = ["src/**", "tests/**"]
@@ -85,7 +85,7 @@ test_paths = ["tests/**"]
     fs::write(repo.join("src/lib.rs"), "base code\nadded code\n").unwrap();
     fs::write(repo.join("tests/a_tests.rs"), "base test\none\ntwo\nthree\nfour\nfive\nsix\n").unwrap();
 
-    let mut cmd = clean_command(env!("CARGO_BIN_EXE_temperare"), &repo, &home, &temp.0);
+    let mut cmd = clean_command(env!("CARGO_BIN_EXE_cctao"), &repo, &home, &temp.0);
     cmd.args = if with_base { vec!["check".into(), "--base".into(), base.into()] } else { vec!["check".into()] };
     let output = procio::run(&cmd).unwrap();
     let text = String::from_utf8(output.stdout).unwrap();
