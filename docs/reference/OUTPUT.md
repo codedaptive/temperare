@@ -7,7 +7,8 @@ What `tm` prints, as text and as JSON, and what each exit code means. Both forms
 - **stdout:** the result of a check, the `tm rules` listing, what `tm rules --loosened` found, the results of
   `tm baseline test`, the problems of a rule file, the usage text and the version.
 - **stderr:** a usage error, as two lines: `tm: <what is wrong>` and `next: <what to type instead>`. And, from
-  `tm check` when at least one engine ran, one line when the user configuration cannot be used:
+  `tm check` when an engine ran for a rule other than a `watch` rule, one line when the user configuration cannot
+  be used:
   `tm: ignoring ~/.config/temperare/config.toml: <why>` (see [Tokens saved](#tokens-saved)).
 
 `tm install` and `tm uninstall` print one line per step on stdout. A failure is two lines on stderr,
@@ -37,7 +38,8 @@ next: fix the findings above, or add an approved [[exception]] with its expires 
 
 In order:
 
-0. **The tokens-saved line,** when at least one engine ran and the user configuration leaves it on. Its numbers are
+0. **The tokens-saved line,** when an engine ran for a rule other than a `watch` rule and the user configuration
+   leaves it on. Its numbers are
    those of the run; the letters here stand for them. See [Tokens saved](#tokens-saved).
 1. **One block per finding,** three lines and a blank line:
    - `<path>:<line>:<col>`, two spaces, `<severity> <kind> <rule id>`, then `  owner <owner>` when the file has an
@@ -92,7 +94,8 @@ nothing or are not applicable are in no list and no count, so it never sets an e
 ([`RULE_FILE.md`](RULE_FILE.md#a-rule-rule)). Its engine is still on the engines line when it ran, since that line
 names what ran, not what was found. An exception for a watch rule still counts among the exceptions in force, and as
 expired after its `expires` day, because those counts say what the rule file holds. `tm rules` lists a watch rule
-as any other, with severity `watch`. What a watch rule found goes to the [telemetry file](#the-telemetry-file) alone.
+as any other, with severity `watch`. What a watch rule found goes to the [telemetry file](#the-telemetry-file) alone,
+and its run is not counted in [tokens saved](#tokens-saved).
 
 ## `tm check --json`
 
@@ -237,14 +240,17 @@ ran. The estimate is an upper bound: it is the saving against reading that outpu
 - **K** is the number of engine runs whose output became findings: one per run, whether it found something, found
   nothing, or failed after it ran. Rules that share one run (see [`ENGINES.md`](ENGINES.md#what-holds-for-every-engine))
   count it once. A rule whose engine ran and said it does not know the rule's check counts as a run; any other rule
-  that was not available ran nothing.
+  that was not available ran nothing. A `watch` rule's run is not counted: tm reports nothing a watch rule finds, so
+  no reader would have read that output. A run that `watch` rules share with other rules counts once, on one of the
+  others; a run of `watch` rules alone is not counted.
 - **B**, the baseline, is the tokens of everything those runs printed, stdout and stderr together. Set-up runs
   (clippy's lint list and workspace lookup) and version checks are not counted.
 - **X** is the tokens of tm's own answer: in text, everything after the tokens-saved line; in JSON, the object as
   printed without `saved`. So the same run gives a different X, and a different N and P, as text and as JSON.
 - **N** = B − X, never below 0. **P** = N × 100 / B, rounded down; 0 when B is 0.
 
-**The line.** When at least one engine ran, the text output opens with one line. From the README's first run, with
+**The line.** When an engine ran for a rule other than a `watch` rule (K is at least 1), the text output opens with
+one line. From the README's first run, with
 its rule file in a longer folder than `/path/to`:
 
 ```
@@ -253,7 +259,7 @@ its rule file in a longer folder than `/path/to`:
 
 N, X, K and B carry thousands commas. The sentence after `(estimate).` is addressed to an AI agent reading the
 output: it asks the agent to tell the user the total for the turn. The `~N` in its example is the letter N. There is
-no line when no engine ran, under `--json`, when the run stops with exit 2, or on any command but `check`.
+no line when no engine ran for a rule other than a `watch` rule, under `--json`, when the run stops with exit 2, or on any command but `check`.
 
 **`saved`.** Under `--json` the object always carries `saved` when the run produced a report. The run above:
 
@@ -273,7 +279,7 @@ Here the JSON answer is longer than ruff's own output, so nothing is saved: N is
 
 | Field | Meaning |
 |---|---|
-| `counted` | One entry per rule this check ran (after `--kind`), in rule-file order: `rule`, `engine`, and `chars`, the characters its engine run printed; 0 when its engine did not run. A shared run's characters are on the first rule it answered, and the other rules that shared it show 0 |
+| `counted` | One entry per rule this check ran (after `--kind`) other than a `watch` rule, in rule-file order: `rule`, `engine`, and `chars`, the characters its engine run printed; 0 when its engine did not run. A shared run's characters are on the first rule it answered that is not a `watch` rule, and the other rules that shared it show 0 |
 | `engine_runs` | K |
 | `baseline_chars`, `baseline_tokens` | The sum of `counted`'s `chars`, and B |
 | `output_chars`, `output_tokens` | The JSON object's characters without `saved`, and X |
@@ -288,11 +294,11 @@ savings_line = false
 The line and its ask go; `saved` and the log stay. `savings_line` is the file's only key, and nothing in tm writes
 the file. A missing file, or no `HOME`, leaves the line on. A file tm cannot read, that is not TOML, that has another
 key, or whose `savings_line` is not `true` or `false` leaves the line on and prints one line on stderr,
-`tm: ignoring ~/.config/temperare/config.toml: <why>`. The file is read only when at least one engine ran, in text
-and under `--json` alike, and it never changes the exit code.
+`tm: ignoring ~/.config/temperare/config.toml: <why>`. The file is read only when an engine ran for a rule other
+than a `watch` rule, in text and under `--json` alike, and it never changes the exit code.
 
-**The log.** Each `tm check` that produced a report and ran at least one engine, as text or JSON and whatever the
-switch says, appends one line to `~/.local/state/temperare/savings.jsonl`, making the folder when it is missing:
+**The log.** Each `tm check` that produced a report and ran an engine for a rule other than a `watch` rule, as text
+or JSON and whatever the switch says, appends one line to `~/.local/state/temperare/savings.jsonl`, making the folder when it is missing:
 
 ```json
 {"time":"2026-11-20T11:15:37Z","folder":"/path/to/tm-first-run","verb":"check","output_tokens":105,"baseline_tokens":211}

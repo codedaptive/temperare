@@ -39,7 +39,11 @@ The engines, in the order of this page: [clippy](#clippy), [swiftlint](#swiftlin
   RuboCop, PHPStan, dart, actionlint, sqlfluff, hadolint, yamllint, Vale, stylelint, markdownlint and Tessera. Each
   rule still keeps only its own check's
   findings, in its own paths and with its own exceptions. A rule that is refused, or
-  that covers no file ([below](#the-order-a-rule-settles-in)), runs nothing and joins no shared run.
+  that covers no file ([below](#the-order-a-rule-settles-in)), runs nothing and joins no shared run. A shared run is
+  one counted run in tokens saved: its characters go on the first rule it settles whose severity is not `watch`; a
+  run that settles only `watch` rules has no count; every other rule of the group has no count. In `saved.counted`
+  a rule with no count shows `chars` 0, and a `watch` rule is not listed at all
+  ([`OUTPUT.md`](OUTPUT.md#tokens-saved)).
 - **The order of runs.** A rule joins the first group, in rule-file order, whose rules can all share with it. The
   groups run one after another, in the order of each group's first rule, and the rule runs' results are kept in
   rule-file order; the report sorts findings as OUTPUT.md describes.
@@ -327,7 +331,7 @@ The report shows such a rule by where it comes from:
 
 A refused rule is not such a rule: it is settled first and is failed, whatever it covers. A rule with
 `only_with_base = true`, run without `--base`, is not applicable for want of `--base` whatever it covers,
-as any such rule is. A check whose only rule is one of its own and covers no file prints
+as any such rule is. A check whose only rule is one of its own, not at severity `watch`, and covers no file prints
 `covers nothing: <rule> (<engine>)`, then
 `0 findings (0 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable, 1 covers nothing, 0 expired`
 and `next: fix the paths of each rule that covers nothing above, or remove it from <rule file>`, and exits 6. (The

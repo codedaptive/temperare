@@ -263,9 +263,10 @@ sources.
   findings as {path, line, what}, and its silenced count). tm never reads it, no output names it, and tm uninstall
   leaves it. No HOME, no commit yet, or a write that fails: no line and nothing said. A shallow clone writes a file of
   its own; repositories that share a root commit share one. docs/reference/OUTPUT.md has the fields.
-- When an engine ran, tm check's text output opens with an estimate of the tokens saved against the engines' raw
-  output, ending in an ask to the agent to tell the user the turn's total; --json carries it as "saved", and
-  savings_line = false in ~/.config/temperare/config.toml turns the line off.
+- When an engine ran for a rule other than a watch rule, tm check's text output opens with an estimate of the tokens
+  saved against the engines' raw output, ending in an ask to the agent to tell the user the turn's total; --json
+  carries it as "saved", and savings_line = false in ~/.config/temperare/config.toml turns the line off. A watch
+  rule's run is not counted, and a watch rule is not in saved.counted.
 - Rules with engine = "tessera" are accepted and, when they cover a file and have no params, are reported "not
   available" today, whether or not Tessera is installed. A Tessera rule with a param fails (exit 5).
 - The acceptance checks for 0.1.0 did not run eslint, mypy, pmd, detekt, rubocop, phpstan, dart, actionlint,
