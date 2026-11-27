@@ -535,9 +535,10 @@ Tao runs other programs with your privileges, and the rule file decides what the
   test for its code). They also run `cctao baseline test` on the ready sets, `house@1`, `house@2` and `standard@1`;
   in the last acceptance record all 89 rules of `house@1` and `standard@1` (36 and 53) hold on their own failing
   and passing cases. The engine versions are listed in [`docs/reference/ENGINES.md`](docs/reference/ENGINES.md#the-engines-version-010-was-accepted-with).
-- **Platforms:** built and accepted on macOS, where the acceptance checks run every engine for real. At each
-  accepted commit the unit and integration tests also run green on Windows (`make accept`'s Windows run), and the
-  workspace type-checks for Linux and Windows (`make check-cross`). `cctao install` has no Windows form yet: on
+- **Platforms:** built and accepted on macOS, where the acceptance checks run every engine for real. The unit and
+  integration tests also run on Windows (`make accept`'s Windows run) when the maintainers' Windows machine can be
+  reached; a release does not wait for it, and its record says whether that run was made. The workspace
+  type-checks for Linux and Windows (`make check-cross`). `cctao install` has no Windows form yet: on
   Windows, run the binary cargo builds, `target\release\cctao.exe`.
 - **Not available today:** rules with `engine = "tessera"` (see [Engines](#engines)).
 - **License:** MIT. See [`LICENSE`](LICENSE).
