@@ -89,9 +89,10 @@ if [ ! -f "$exits" ]; then
   exit 2
 fi
 test_rc=$(sed -n 's/^cargo_test=//p' "$exits" | tr -d '\r')
-# exits.txt with no cargo_test= line, or one that is not a number, is no test result: the run was not made.
-case "$test_rc" in
-  "" | *[!0-9-]*)
+# exits.txt with no cargo_test= line, or one that is not a whole number (digits, at most one leading minus: a Windows
+# status such as -1073741819 is negative), is no test result: the run was not made.
+case "${test_rc#-}" in
+  "" | *[!0-9]*)
     printf '%s\n' "windows_run: $short on $host: no result came back (exits.txt holds no cargo test exit code)"
     exit 2
     ;;
