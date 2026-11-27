@@ -18,7 +18,9 @@ const PARSE_FAILURE: &str = "DL1000";
 /// - when stderr holds hadolint's config error: hadolint could not read its config and ran on its defaults
 ///   (`parse_failed` then shows hadolint's own stderr);
 /// - when the log holds a `DL1000` result under `folder`: hadolint could not parse that Dockerfile, so its other
-///   findings are missing; the why names the first one's path and line and quotes hadolint's text.
+///   findings are missing; the why names the first one's path and line and quotes hadolint's text;
+/// - when a result of `check`, or a `DL1000` result, names a file not under `folder`: `parse_sarif`'s `ParseError`,
+///   naming its URI as printed.
 ///
 /// stdout that is not one SARIF log is `parse_sarif`'s `ParseError`; that covers a config `format:` key, which makes
 /// hadolint print a second format glued before the log.

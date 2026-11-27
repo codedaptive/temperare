@@ -9,11 +9,11 @@ use std::path::{Path, PathBuf};
 /// `file:///` URI, or a URI relative to `config_dir`), then its `packageUri` (`lib/` when absent), then `<path>`, each
 /// percent-decoded. None when `uri` is not of that form, the JSON does not parse, no entry has the name, or a field
 /// is missing, not a string, not decodable, or a URI of another scheme: the caller reads None as an include that
-/// does not resolve. A `file://` URI with a host (UNC, `file://server/share`) is None on every platform. `windows`
-/// is the platform, given as data (the caller passes `cfg!(windows)`): when set, the path is made native by
-/// `windows_path`, so a file URL with a drive (`file:///C:/x`) gives `C:\x`, with `.` and `..` resolved lexically as
-/// dart does, and a path with no drive, UNC included, is returned as built; when not set, it is returned as built.
-/// Pure: it reads no file.
+/// does not resolve. A `file://` URI with a host (UNC, `file://server/share`, or its four-slash form
+/// `file:////server/share`) is None on every platform. `windows` is the platform, given as data (the caller passes
+/// `cfg!(windows)`): when set, the path is made native by `windows_path`, so a file URL with a drive (`file:///C:/x`)
+/// gives `C:\x`, with `.` and `..` resolved lexically as dart does, and a path with no drive, UNC included, is
+/// returned as built; when not set, it is returned as built. Pure: it reads no file.
 pub(crate) fn package_path(uri: &str, config_json: &str, config_dir: &Path, windows: bool) -> Option<PathBuf> {
     let (name, rest) = uri.strip_prefix("package:")?.split_once('/')?;
     let config: Value = serde_json::from_str(config_json).ok()?;
@@ -21,7 +21,7 @@ pub(crate) fn package_path(uri: &str, config_json: &str, config_dir: &Path, wind
     let package = packages.iter().find(|package| package.get("name").and_then(Value::as_str) == Some(name))?;
     let root_uri = package.get("rootUri")?.as_str()?;
     let root = match root_uri.strip_prefix("file://") {
-        Some(path) if path.starts_with('/') => PathBuf::from(decoded(path)?),
+        Some(path) if path.starts_with('/') && !path.starts_with("//") => PathBuf::from(decoded(path)?),
         Some(_) => return None,
         None if root_uri.contains(':') => return None,
         None => config_dir.join(decoded(root_uri)?),

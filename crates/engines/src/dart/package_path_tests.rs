@@ -16,6 +16,7 @@ const CONFIG: &str = r#"{
     {"name": "root", "rootUri": "file:///C:/"},
     {"name": "encdrive", "rootUri": "file:///C%3A/x"},
     {"name": "remote", "rootUri": "file://host/share/remote"},
+    {"name": "unc", "rootUri": "file:////server/share/x"},
     {"name": "web", "rootUri": "https://example.com/web"},
     {"name": "numbered", "rootUri": 7}
   ]
@@ -25,7 +26,7 @@ const CONFIG: &str = r#"{
 fn package_path_cases() {
     // A Windows row's dir is the canonical (verbatim) folder Windows gives config_dir; only the relative row reads it.
     let dir = |windows| Path::new(if windows { r"\\?\C:\w\pkg\.dart_tool" } else { "/w/pkg/.dart_tool" });
-    let rows: [(&str, &str, &str, bool, Option<&str>); 17] = [
+    let rows: [(&str, &str, &str, bool, Option<&str>); 19] = [
         ("drive file uri", "package:drive/a.yaml", CONFIG, true, Some(r"C:\x\lib\a.yaml")),
         ("lowercase drive with escape", "package:lowdrive/b.yaml", CONFIG, true, Some(r"c:\a b\lib\b.yaml")),
         ("drive root", "package:root/a.yaml", CONFIG, true, Some(r"C:\lib\a.yaml")),
@@ -43,6 +44,8 @@ fn package_path_cases() {
         ("not a package uri", "lints/recommended.yaml", CONFIG, false, None),
         ("no path", "package:lints", CONFIG, false, None),
         ("file uri with a host", "package:remote/a.yaml", CONFIG, false, None),
+        ("four-slash UNC rootUri, windows", "package:unc/a.yaml", CONFIG, true, None),
+        ("four-slash UNC rootUri, unix", "package:unc/a.yaml", CONFIG, false, None),
         ("other scheme", "package:web/a.yaml", CONFIG, false, None),
         ("rootUri not a string", "package:numbered/a.yaml", CONFIG, false, None),
         ("config not json", "package:lints/recommended.yaml", "packages:", false, None),
