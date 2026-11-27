@@ -34,11 +34,11 @@ sources.
 - tm rules --loosened --base <rev> [--rules <path>] [--json]: compares the rule file as committed at <rev> with the
   working file, baseline sets included, and lists each loosening as {kind, about, before, after}: rule_gone,
   rule_not_applicable, severity_lowered, path_removed, paths_limited, exclude_added, kit_removed, kits_limited,
-  outside_kit_added, exception_added, expiry_later, expiry_dropped, set_dropped, set_older. Runs no engine. Exits 0
+  outside_kit_added, exception_added, expiry_later, set_dropped, set_older. Runs no engine. Exits 0
   nothing loosened; 1 something did; 2 a usage error, a --base that names no commit or has no such rule file, or a
   problem in either file. --loosened and --base come together.
 - tm baseline test [--set <name@version>] [--json]: tests each rule of the baseline sets built into tm (with no
-  --set the ready ones, house@1 then standard@1; --set names one set, such as standard@1) on its failing case
+  --set the ready ones, house@1, house@2, then standard@1; --set names one set, such as standard@1) on its failing case
   (exactly the expected finding) and its passing case (no finding), each in a throwaway git repository. A rule
   holds, is broken, not available or not applicable (a rule that requires a param its case does not give). Each
   case runs with the params it gives over the rule's own. Exits 0
@@ -51,7 +51,11 @@ sources.
   complexity, nesting, dbg! and print, bare and blind except and commented-out code (8), then what a change adds
   (28, each only_with_base: under not_applicable without --base). house@1 is ready too: 36 rules, all kind quality,
   30 at warning and 6 at error. Five of them require params (entity_types, own_package) that the rule file gives in
-  an [[override]]; until it does they are not applicable. A file may take both sets.
+  an [[override]]; until it does they are not applicable. house@2 is ready: house@1's 36 rules, then three ast-grep
+  warnings, tm-house-no-register-citation-rust, -swift and -python, each only_with_base, for a comment (or a string
+  in test code) that cites an R-, S- or D-number, a fact id after the word fact, or a (Bob, date) label; fix "Say the
+  reason, or delete the comment." A file may take standard@1 and one version of house; house@1 and house@2 together
+  is the problem baseline set "house" is taken twice.
 - A set's rules come first, in baseline order and each set's own order, then the file's own. tm rules lists them
   that way; nothing names a rule's set. A set rule's id starts with tm-, and an own rule's id may not.
 - [[override]] changes one set rule: rule (its id, required) and any of severity, off = true (the rule is left out:
