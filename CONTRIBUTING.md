@@ -98,7 +98,7 @@ These hold today, and a pull request that breaks one will be asked to change.
    new engine adapter.
 2. **Engines are programs.** No engine is linked. In this repository every program is started by `procio` and
    nowhere else; the git questions go through `ccvcslib`, which starts git itself. The repository's own
-   `temperare.toml` checks this repository's part: run `cctao check --rules temperare.toml` in your checkout.
+   `tao.toml` checks this repository's part: run `cctao check` in your checkout.
 3. **"Not available" is never "clean".** A rule that could not be run says so. So does an engine that ran and gave
    no answer that can be read, and so does a rule whose `check` cannot be matched back to the engine's findings: it
    fails, it does not report nothing.

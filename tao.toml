@@ -1,4 +1,4 @@
-# Temperare's own rule file: the repository is checked by itself (mission, How the code is written; Done 8;
+# Code Chi Tao's own rule file: the repository is checked by itself (mission, How the code is written; Done 8;
 # SPEC-selfcheck WO-orc-selfcheck-1; S-25, S-26). It takes standard@1, the first repository on the baseline (Bob #2235).
 version = 1
 owner = "maintainers"
