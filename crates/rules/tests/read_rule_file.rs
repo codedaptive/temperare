@@ -34,6 +34,7 @@ path = "crates/core/src/a.rs"
 what = "isArchived"
 reason = "Legacy schema."
 approved = "bob 2026-11-17"
+expires = "2099-12-31"
 "#;
 
 const CHECK_FILE: &str = "id: no-bool\nlanguage: rust\nrule:\n  pattern: bool\n";
@@ -137,6 +138,17 @@ fn exception_for_matches_rule_path_and_what() {
 const EXCEPTION_FILE: &str = "version = 1\n[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"f\"\n[[exception]]\nrule = \"r\"\npath = \"a.rs\"\nreason = \"legacy\"\napproved = \"reviewer\"\n";
 
 #[test]
+fn exception_without_expiry_is_one_problem_at_the_header() {
+    let parsed = RuleFile::parse(EXCEPTION_FILE, Path::new("."));
+    assert!(parsed.is_err(), "an exception without expiry must not produce a rule file");
+    let problems = parsed.unwrap_err();
+    assert_eq!(problems.len(), 1, "{problems:?}");
+    assert_eq!((problems[0].line, problems[0].col), (7, 1), "{problems:?}");
+    assert_eq!(problems[0].what, "[[exception]] is missing `expires`");
+    assert_eq!(problems[0].fix, "Add `expires = \"YYYY-MM-DD\"`, the exception's last day (UTC), to this [[exception]].");
+}
+
+#[test]
 fn exception_with_valid_expiry_is_read() {
     let text = format!("{EXCEPTION_FILE}expires = \"2026-12-31\"\n");
     let parsed = RuleFile::parse(&text, Path::new("."));
@@ -187,7 +199,7 @@ fn broken_file_reports_every_problem_with_its_line() {
 fn baseline_sets_keep_own_rule_and_exception() {
     let tmp = TempFolder::new("baseline-own");
     let path = tmp.0.join("temperare.toml");
-    fs::write(&path, "version = 1\nbaseline = [\"standard@1\"]\n\n[[rule]]\nid = \"own-rule\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"Fix it.\"\n\n[[exception]]\nrule = \"own-rule\"\npath = \"a.rs\"\nreason = \"legacy\"\napproved = \"reviewer\"\n").unwrap();
+    fs::write(&path, "version = 1\nbaseline = [\"standard@1\"]\n\n[[rule]]\nid = \"own-rule\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"Fix it.\"\n\n[[exception]]\nrule = \"own-rule\"\npath = \"a.rs\"\nreason = \"legacy\"\napproved = \"reviewer\"\nexpires = \"2099-12-31\"\n").unwrap();
     let file = RuleFile::read(&path).expect("standard@1 and an own rule should read");
     let ids: Vec<&str> = file.rules.iter().map(|rule| rule.id.as_str()).collect();
     assert_eq!((ids.len(), ids.first(), ids.last()), (54, Some(&"tm-rust-dead-code"), Some(&"own-rule")));
