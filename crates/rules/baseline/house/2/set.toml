@@ -5,11 +5,11 @@
 # Rules for the code come first, grouped by practice; then nine rules for four warnings that keep tests lean.
 # A rule with required_params carries no value for them here: the repository gives them in an [[override]], and a
 # rule file that takes the set without them reads that rule not applicable. Its failing and passing cases carry the
-# params a run needs, and tm baseline test runs each case with them over the rule's params. own_package and entity_types
-# are lists of strings (type "strings"), each item matched as written, since engines escapes it.
+# params a run needs, and cctao baseline test runs each case with them over the rule's params. own_package and
+# entity_types are lists of strings (type "strings"), each item matched as written, since engines escapes it.
 # The nine test-economy rules (tm-house-test-ratio and tm-house-test-setup-heavier-*, for example) and the three
-# register-citation rules report only against a base, so tm baseline test runs their cases as a change against a base
-# commit it makes.
+# register-citation rules report only against a base, so cctao baseline test runs their cases as a change against a
+# base commit it makes.
 # The set is ready: every rule holds on its failing and passing cases.
 
 version = 1

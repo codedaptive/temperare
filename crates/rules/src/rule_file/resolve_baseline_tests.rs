@@ -143,7 +143,7 @@ fn a_set_with_its_own_problem_is_a_problem_at_its_entry_and_gives_nothing() {
         line: 1,
         col: 13,
         what: "baseline set broken@2 has a problem at 2:1: unknown key `colour` in the top level".to_string(),
-        fix: "This is a fault in tm's embedded set; report it with this message.".to_string(),
+        fix: "This is a fault in cctao's embedded set; report it with this message.".to_string(),
     };
     assert_eq!(out, vec![expected]);
     assert_eq!(ids(&resolved.rules), vec!["tm-b1"]);

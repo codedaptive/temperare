@@ -13,7 +13,7 @@ impl RuleFile {
                 line: 0,
                 col: 0,
                 what: format!("cannot read {}: {e}", path.display()),
-                fix: "Pass the path of a readable temperare.toml.".to_string(),
+                fix: "Pass the path of a readable tao.toml.".to_string(),
             }]
         })?;
         let folder = match path.parent() {

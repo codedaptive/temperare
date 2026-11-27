@@ -22,7 +22,7 @@ use toml::de::DeTable;
 const TOP_KEYS: [&str; 7] = ["version", "owner", "kits", "baseline", "override", "rule", "exception"];
 
 impl RuleFile {
-    /// Parses `text` as the rule file in `folder`, taking its `baseline` sets from the sets built into `tm`. A TOML
+    /// Parses `text` as the rule file in `folder`, taking its `baseline` sets from the sets built into `cctao`. A TOML
     /// syntax error is one Problem at its position; otherwise every check runs and Err holds all problems sorted by
     /// (line, col). `rules` holds the taken sets' rules that apply, with the `[[override]]`s applied (their params
     /// type-checked against the types the sets declare), then the file's own; a set rule turned off is left out, and

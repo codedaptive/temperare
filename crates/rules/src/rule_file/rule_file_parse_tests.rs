@@ -273,7 +273,7 @@ fn the_spec_example_parses_to_its_fields() {
     assert_eq!(exception.expires, Date::new(2099, 12, 31));
 }
 
-/// The baseline sets the cases below take, in place of the sets built into `tm`.
+/// The baseline sets the cases below take, in place of the sets built into `cctao`.
 const SETS: &[BaselineSet] = &[
     BaselineSet {
         name: "standard",
@@ -481,7 +481,7 @@ fn baseline_problem_override_off_not_a_boolean() {
 #[test]
 fn baseline_problem_a_set_files_own_problem() {
     let what = "baseline set broken@1 has a problem at 2:1: unknown key `colour` in the top level";
-    let fix = "This is a fault in tm's embedded set; report it with this message.";
+    let fix = "This is a fault in cctao's embedded set; report it with this message.";
     exactly("version = 1\nbaseline = [\"broken@1\"]\n", 2, 13, what, fix);
 }
 

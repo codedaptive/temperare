@@ -70,7 +70,7 @@ fn a_set_rule_naming_yaml_the_set_does_not_carry_is_a_problem_at_its_baseline_en
         what: "baseline set gap@3 has a problem at 5:9: check \"gone.yml\" names a YAML file that baseline set gap@3 \
                does not carry"
             .to_string(),
-        fix: "This is a fault in tm's embedded set; report it with this message.".to_string(),
+        fix: "This is a fault in cctao's embedded set; report it with this message.".to_string(),
     };
     assert_eq!(found, vec![expected]);
 }

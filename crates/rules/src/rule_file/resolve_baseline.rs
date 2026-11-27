@@ -91,7 +91,7 @@ fn load_or_problems(
                     text,
                     at,
                     format!("baseline set {label} has a problem at {}:{}: {}", p.line, p.col, p.what),
-                    "This is a fault in tm's embedded set; report it with this message.",
+                    "This is a fault in cctao's embedded set; report it with this message.",
                 )
             }));
             None
