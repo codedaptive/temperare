@@ -114,7 +114,7 @@ the owner of the findings in its files.
 | `engine` | yes | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`, `git`, `tessera`, `golangci-lint`, `pylint`, `clang-tidy`, `vulture`, `periphery`, `gitleaks`, `cargo-audit`, `eslint`, `mypy`, `pmd`, `detekt`, `rubocop`, `phpstan`, `dart`, `markdownlint`, `yamllint`, `actionlint`, `hadolint`, `vale`, `stylelint` or `sqlfluff`, exactly as written here. What each runs: [`ENGINES.md`](ENGINES.md). `markdownlint` runs the program `markdownlint-cli2`. A `tessera` rule is "not available" today ([`ENGINES.md`](ENGINES.md#tessera)). A `git` rule needs `--base` ([`ENGINES.md`](ENGINES.md#git)) |
 | `check` | yes | What the engine is asked. See below |
 | `fix` | yes | The text shown with each finding of this rule |
-| `severity` | no | `error` (the default) or `warning` |
+| `severity` | no | `error` (the default), `warning` or `watch`. A `watch` rule runs, and nothing it gives is reported: its findings, and its engine being absent or failing, are in no list and no count, and it never sets an exit code ([`OUTPUT.md`](OUTPUT.md#tm-check-as-text)) |
 | `kind` | no | `quality` (the default) or `security` |
 | `paths` | no | Globs. The rule covers files that match one. Absent or empty: every file |
 | `exclude` | no | Globs. The rule never covers a file that matches one |

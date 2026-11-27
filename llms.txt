@@ -78,6 +78,10 @@ sources.
   problem, nothing checked; 3 a rule was not available; 4 the only errors are security findings, which never
   refuse; 5 a rule failed; 6 a rule of the repository's own covers nothing. The first of 2, 1, 5, 3, 4, 6 that
   applies wins.
+- A rule's severity is error (the default), warning or watch. A watch rule runs, and nothing it gives is reported:
+  its findings (kept or silenced), its not-available or failed outcome, and its covers-nothing or not-applicable
+  entry are in no list and no count, text or --json, so it sets no exit code. Its engine stays on the engines line
+  when it ran. Its exceptions still count in force and expired. tm rules lists it with severity watch.
 - Exit 0 means every rule ran or is listed under not_applicable. Exit 4 means the same, except that a rule may cover
   nothing (4 ranks above 6). Exit 1 does not: read counts.not_available, counts.failed and counts.covers_nothing.
 - A rule that covers none of the files git lists in the rule file's folder (tracked files in the work tree, and

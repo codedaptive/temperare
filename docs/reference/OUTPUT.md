@@ -86,6 +86,14 @@ ESLint or RuboCop rule settled after its run has a why of its own). A
 rule with `only_with_base = true` run without `--base` is not applicable for want of `--base` whatever it covers
 ([`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)).
 
+A rule at severity `watch` runs as any rule does, and nothing it gives is reported, in text or in `--json`: its
+findings, kept or silenced, its `not available:` or `failed:` outcome, and its place among the rules that cover
+nothing or are not applicable are in no list and no count, so it never sets an exit code
+([`RULE_FILE.md`](RULE_FILE.md#a-rule-rule)). Its engine is still on the engines line when it ran, since that line
+names what ran, not what was found. An exception for a watch rule still counts among the exceptions in force, and as
+expired after its `expires` day, because those counts say what the rule file holds. `tm rules` lists a watch rule
+as any other, with severity `watch`.
+
 ## `tm check --json`
 
 The run above, as `--json` prints it (on one line; wrapped here to read):
@@ -190,7 +198,7 @@ in the text; `saved.counted` names it, with `chars` 0 ([`ENGINES.md`](ENGINES.md
 | `rule` | The rule's `id` |
 | `engine` | The rule's engine, as the rule file names it (see [`RULE_FILE.md`](RULE_FILE.md#a-rule-rule)) |
 | `kind` | `quality` or `security`, from the rule |
-| `severity` | `error` or `warning`, from the rule |
+| `severity` | `error` or `warning`, from the rule. A `watch` rule's findings are never listed |
 | `owner` | Who owns the file, from the rule file. Left out when it names none |
 | `path` | The file, relative to the rule file's folder, with `/` between its parts |
 | `line` | The line, counted from 1. Always present: `null` for a finding with no line, such as cargo-audit's on `Cargo.lock` (where earlier versions wrote `0`) |
@@ -308,7 +316,8 @@ The exit codes of `tm check`:
 | 5 | At least one rule failed: its engine gave no answer that can be read, or the rule was refused before its engine ran (see [`ENGINES.md`](ENGINES.md#not-available-and-failed)) |
 | 6 | At least one of the repository's own rules covers nothing: no file it checks is in its scope (see [`ENGINES.md`](ENGINES.md#a-rule-that-covers-no-file)) |
 
-The first that applies wins, in this order: 2, 1, 5, 3, 4, 6, 0.
+The first that applies wins, in this order: 2, 1, 5, 3, 4, 6, 0. A rule at severity `watch` sets none of them,
+whatever it found, and whether its engine was absent or failed: it is in none of the lists the code is chosen from.
 
 What that order means for a caller:
 
