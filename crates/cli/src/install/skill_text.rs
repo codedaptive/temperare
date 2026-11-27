@@ -39,7 +39,8 @@ of each such line across your temperare calls. With `--json` there is no line: t
 ## Exit codes
 
 - 0: nothing refuses; warnings alone exit 0.
-- 1: a quality error finding refuses the change. Fix it, or add an approved exception to the rule file.
+- 1: a quality error finding refuses the change. Fix it, or add an approved exception, with its expires date, to
+  the rule file.
 - 2: a usage error. The message says what to type instead.
 - 3: a rule could not run because its engine, or what the rule needs, is not available. Do what the message names
   (install the engine; for clippy, put the rule file inside the Cargo project it checks), or run without those rules;

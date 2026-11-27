@@ -48,7 +48,7 @@ fn exit_0_has_nothing_to_do_whatever_the_other_arguments() {
 fn exit_1_fixes_the_findings_or_adds_an_exception_to_the_rule_file() {
     assert_eq!(
         step(1, Some("Write it."), &[absent(Engine::Ruff)]),
-        "fix the findings above, or add an approved [[exception]] to repo/temperare.toml"
+        "fix the findings above, or add an approved [[exception]] with its expires date to repo/temperare.toml"
     );
 }
 

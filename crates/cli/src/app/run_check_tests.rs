@@ -329,7 +329,10 @@ fn a_quality_error_exits_1_and_names_the_rule_file() {
     let (code, out, err) = check(&CheckArgs::default(), &CheckWorld { build_report: &found, ..world() });
     assert_eq!((code, err.as_str()), (1, ""));
     assert!(out.starts_with("a.py:7:3  error quality q  owner core\n"), "{out}");
-    let next = format!("next: fix the findings above, or add an approved [[exception]] to {}\n", rule_file());
+    let next = format!(
+        "next: fix the findings above, or add an approved [[exception]] with its expires date to {}\n",
+        rule_file()
+    );
     assert!(out.ends_with(&next), "{out}");
 }
 
@@ -388,7 +391,10 @@ fn json_is_one_line_with_the_report_exit_and_next_at_the_top() {
     assert_eq!(out.lines().count(), 1, "{out}");
     let value: serde_json::Value = serde_json::from_str(&out).unwrap();
     assert_eq!(value["exit"], 1);
-    assert_eq!(value["next"], format!("fix the findings above, or add an approved [[exception]] to {}", rule_file()));
+    assert_eq!(
+        value["next"],
+        format!("fix the findings above, or add an approved [[exception]] with its expires date to {}", rule_file())
+    );
     assert_eq!(value["findings"][0]["rule"], "q");
     assert_eq!(value["findings"][0]["path"], "a.py");
     assert!(value["counts"].is_object(), "{out}");
