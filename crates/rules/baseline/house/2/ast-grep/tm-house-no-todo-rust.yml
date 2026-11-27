@@ -1,0 +1,11 @@
+# A TODO left in a Rust comment: a line or block comment, doc comments included, holding the word TODO in capitals.
+# clippy's todo lint sees only the todo! macro, so the comment needs this rule. A string literal is not a comment.
+id: tm-house-no-todo-rust
+language: rust
+message: a TODO is left in this comment
+severity: warning
+rule:
+  any:
+    - kind: line_comment
+    - kind: block_comment
+  regex: \bTODO\b

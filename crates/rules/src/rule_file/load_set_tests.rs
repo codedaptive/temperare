@@ -35,7 +35,7 @@ fn problems_carrying(text: &'static str, cases: &'static [(&'static str, &'stati
 const RETIRED_FIX: &str = "Take the rule out of the set, or out of retired: an id is never reused.";
 const PREFIX_FIX: &str = "Start every baseline rule's id with \"tm-\".";
 
-/// Each set's rules are its own tests' to check (house_1_tests, standard_1_tests).
+/// Each set's rules are its own tests' to check (house_1_tests, house_2_tests, standard_1_tests).
 #[test]
 fn every_embedded_set_loads_clean_with_no_retired_ids() {
     for embedded in EMBEDDED_SETS {

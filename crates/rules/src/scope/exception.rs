@@ -3,7 +3,7 @@
 use crate::{Date, RelPath};
 
 /// An approved exception to one rule at one path; `what`, when given, limits it to findings whose `what` contains it,
-/// and `expires`, when set, ends it after that day.
+/// and `expires` ends it after that day. A rule-file exception always has `expires`; `Exception::new` leaves it None.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Exception {
     pub rule: String,

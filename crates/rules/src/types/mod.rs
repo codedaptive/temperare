@@ -22,6 +22,7 @@ mod rule_cases;
 mod rule_outcome;
 mod severity;
 mod severity_from_name;
+mod severity_name;
 
 #[cfg(test)]
 mod case_file_tests;
@@ -63,6 +64,8 @@ mod rule_cases_tests;
 mod rule_outcome_tests;
 #[cfg(test)]
 mod severity_from_name_tests;
+#[cfg(test)]
+mod severity_name_tests;
 #[cfg(test)]
 mod severity_tests;
 

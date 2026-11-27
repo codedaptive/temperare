@@ -225,7 +225,7 @@ config = ".swiftlint.yml"        # optional: the engine's own configuration, poi
 paths = ["**/*.swift", "**/*.rs"]   # include globs, relative to the rule file's folder; default all
 exclude = ["**/generated/**"]    # optional
 kits = ["core"]                  # optional: also limited to these kits' paths
-severity = "error"               # error | warning
+severity = "error"               # error | warning | watch
 fix = "Store a bitmap field; expose the Bool as a computed accessor."   # required: a refusal names the fix
 params = { entity_types = ["Order", "Invoice"] }   # optional: free table handed to the engine adapter
 
@@ -576,7 +576,7 @@ fn baseline_override_with_a_bad_severity_and_an_unknown_rule_is_both_problems_in
         line: 5,
         col: 12,
         what: "unknown severity \"loud\"".to_string(),
-        fix: "Use \"error\" or \"warning\".".to_string(),
+        fix: "Use \"error\", \"warning\" or \"watch\".".to_string(),
     };
     assert_eq!(parse(&text).expect_err("two problems"), vec![unknown, severity]);
 }

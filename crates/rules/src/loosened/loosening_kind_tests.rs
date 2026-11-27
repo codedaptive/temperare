@@ -22,7 +22,6 @@ fn every_variant_serializes_to_its_name() {
         (LooseningKind::OutsideKitAdded, "outside_kit_added"),
         (LooseningKind::ExceptionAdded, "exception_added"),
         (LooseningKind::ExpiryLater, "expiry_later"),
-        (LooseningKind::ExpiryDropped, "expiry_dropped"),
         (LooseningKind::SetDropped, "set_dropped"),
         (LooseningKind::SetOlder, "set_older"),
     ];
