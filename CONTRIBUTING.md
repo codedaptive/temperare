@@ -57,7 +57,19 @@ Apple's `swift` at `/usr/bin/swift`; and for cargo-audit, its advisory database 
 the check runs `tm` with a home of its own linked to `~/.cargo/advisory-db` and no `CARGO_HOME`, so that is the
 path it needs even when `CARGO_HOME` is set. A check whose engine or database is missing does not run, and the
 report says so. The integration tests of the `engines` crate run those engines for real.
-`make accept` writes its report to `target/accept-report.md` and fails when a check fails or does not run.
+
+After those checks, `make accept` runs the unit and integration tests on Windows at the same commit, with
+`scripts/windows_run.sh`. That needs a Windows machine you reach with `ssh` and no password prompt (`WINDOWS_HOST`;
+the default, `gammaAI`, is the maintainers'), with PowerShell, Rust's MSVC toolchain and clippy under its user's
+`.rustup`, git that can fetch from your `origin` and from GitHub, and ruff, ast-grep and dart, which the `engines`
+integration tests run there. It also pushes to `origin`: the commit goes up as a throwaway branch `ci/<short>`
+(`<short>` is the commit's first 12 hex digits), deleted after the run. The run's output comes back to
+`target/windows-run/<short>/out/`.
+
+`make accept` writes its report to `target/accept-report.md`, its head saying how the Windows run went. It fails
+when a check fails or does not run, exits 1 when the Windows run finds a failing test, and exits 3 when the Windows
+run cannot be made, as for a check that does not run: no machine, no push, or a checkout with uncommitted changes,
+which the machine cannot clone.
 
 Start with the smallest test that proves your change, then widen.
 

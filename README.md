@@ -485,9 +485,11 @@ make test-one DIR=crates/rules    # one crate
 make accept                       # the acceptance checks, with a report
 ```
 
-`make accept` builds the binary and runs it against the real engines on throwaway repositories, then writes a
-report to `target/accept-report.md` (`ACCEPT_REPORT=<file>` for another place). It fails when a check fails or does
-not run, for example when an engine is not installed.
+`make accept` builds the binary and runs it against the real engines on throwaway repositories. Then it runs the
+unit and integration tests on a Windows machine at the same commit, which needs `ssh` to that machine and a push of
+a throwaway branch to `origin`. It writes a report to `target/accept-report.md` (`ACCEPT_REPORT=<file>` for another
+place), whose head says how the Windows run went. It fails when a check fails or does not run, for example when an
+engine is not installed, and when the Windows run finds a failing test or cannot be made.
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
