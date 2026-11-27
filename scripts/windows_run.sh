@@ -12,7 +12,8 @@
 # It brings back the output and the exit code into target/windows-run/<short>/out/, prints the failing test names,
 # and deletes the folder on the machine. Nothing else there is touched: cargo's home is inside the folder.
 #
-# Exit 0 when the suite exits 0; 1 when it does not; 2 when the run could not be made (no machine, no push).
+# Exit 0 when the suite exits 0; 1 when it does not; 2 when the run could not be made (no machine, no push, or no
+# cargo test exit code came back).
 # Settings: WINDOWS_HOST (default gammaAI), TEMPERARE_REPO (default this checkout).
 set -eu
 
@@ -88,6 +89,13 @@ if [ ! -f "$exits" ]; then
   exit 2
 fi
 test_rc=$(sed -n 's/^cargo_test=//p' "$exits" | tr -d '\r')
+# exits.txt with no cargo_test= line, or one that is not a number, is no test result: the run was not made.
+case "$test_rc" in
+  "" | *[!0-9-]*)
+    printf '%s\n' "windows_run: $short on $host: no result came back (exits.txt holds no cargo test exit code)"
+    exit 2
+    ;;
+esac
 printf '%s\n' "windows_run: $short on $host: cargo test exit $test_rc"
 grep -a '^test .* FAILED' "$out/out/cargo-test.txt" | tr -d '\r' || true
 printf '%s\n' "windows_run: output in $out/out"
