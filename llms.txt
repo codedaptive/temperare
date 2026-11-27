@@ -81,9 +81,11 @@ sources.
 - A rule's severity is error (the default), warning or watch. A watch rule runs, and nothing it gives is reported:
   its findings (kept or silenced), its not-available or failed outcome, and its covers-nothing or not-applicable
   entry are in no list and no count, text or --json, so it sets no exit code. Its engine stays on the engines line
-  when it ran. Its exceptions still count in force and expired. tm rules lists it with severity watch.
-- Exit 0 means every rule ran or is listed under not_applicable. Exit 4 means the same, except that a rule may cover
-  nothing (4 ranks above 6). Exit 1 does not: read counts.not_available, counts.failed and counts.covers_nothing.
+  when it ran. Its exceptions still count in force and expired. tm rules lists it with severity watch. What it
+  found goes to the telemetry file alone.
+- Exit 0 means every rule that is not at severity watch ran or is listed under not_applicable; a watch rule's engine
+  may still have been absent or failed. Exit 4 means the same, except that a rule may cover nothing (4 ranks above
+  6). Exit 1 does not: read counts.not_available, counts.failed and counts.covers_nothing.
 - A rule that covers none of the files git lists in the rule file's folder (tracked files in the work tree, and
   untracked files git does not ignore), or a ShellCheck rule that covers none of the scripts there, or a
   cargo-audit rule whose folder has no Cargo.lock it covers, or a clang-tidy rule that covers none of the C-family
@@ -252,8 +254,15 @@ sources.
 - It does not decide what a finding blocks.
 - It does not install the engines.
 - A check reads nothing back between runs; it only appends a line to its savings log
-  (~/.local/state/temperare/savings.jsonl). Temperare has no network code of its own. The engines it runs are
-  separate programs.
+  (~/.local/state/temperare/savings.jsonl) and one to its repository's telemetry file. Temperare has no network code
+  of its own. The engines it runs are separate programs.
+- The telemetry file is ~/.local/state/temperare/telemetry/<root>.jsonl, <root> the id of HEAD's first-parent root
+  commit, so every clone and worktree of a repository writes the same file. Each tm check that ends in a report
+  (every exit but 2) appends one JSON line after printing: format, time, version, folder, head, base, kind, paths,
+  exit, engines, and rules (each selected rule, watch rules included: rule, engine, severity, state, why, its kept
+  findings as {path, line, what}, and its silenced count). tm never reads it, no output names it, and tm uninstall
+  leaves it. No HOME, no commit yet, or a write that fails: no line and nothing said. A shallow clone writes a file of
+  its own; repositories that share a root commit share one. docs/reference/OUTPUT.md has the fields.
 - When an engine ran, tm check's text output opens with an estimate of the tokens saved against the engines' raw
   output, ending in an ask to the agent to tell the user the turn's total; --json carries it as "saved", and
   savings_line = false in ~/.config/temperare/config.toml turns the line off.

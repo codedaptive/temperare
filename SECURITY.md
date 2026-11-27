@@ -91,14 +91,19 @@ These are properties of the code, not of how it is deployed.
   that covers no file, writes none either. Besides these, `tm check` appends one line to its savings log,
   `~/.local/state/temperare/savings.jsonl`, when an engine ran, making that folder when it is missing.
   The line holds the time, the rule file's folder as an absolute path, the verb and two token counts; no code and no
-  finding.
+  finding. And each `tm check` that ends in a report (every exit but 2) appends one line to its repository's
+  telemetry file, `~/.local/state/temperare/telemetry/<root>.jsonl`, making those folders when they are missing
+  ([`OUTPUT.md`](docs/reference/OUTPUT.md#the-telemetry-file)). That line does hold findings: the rule file's folder as
+  an absolute path, the commit ids of HEAD and the base, and each rule's kept findings with their paths, lines and
+  the engine's message, which can name what the engine found in the code. A gitleaks finding's message is still
+  Temperare's fixed text, never the secret. Both files are made with the permissions your umask gives.
 - **No network code.** Temperare opens no connection. Its dependencies are parsers (TOML, JSON, YAML, globs,
   regular-expression syntax) and their support crates, and on Unix `libc`, for the calls that open a file without
-  following a symlink: an ast-grep rule file, the first bytes of a file that may be a shell script, and the savings
-  log.
+  following a symlink: an ast-grep rule file, the first bytes of a file that may be a shell script, the savings
+  log and the telemetry file.
 - **A check reads nothing back between runs.** There is no cache and no background process. The files Temperare
   keeps are the record `temperare install` writes (see [What install touches](#what-install-touches)) and the savings
-  log above, which it only appends to and never reads. It reads one file of the user's,
+  log and the telemetry files above, which it only appends to and never reads. It reads one file of the user's,
   `~/.config/temperare/config.toml`, for the switch that turns the savings line off, and never writes it.
 - **git is pointed at one repository.** git runs with the variables that could redirect it to another repository,
   index or object store removed, with credential prompts turned off, and without taking the index lock.
