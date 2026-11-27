@@ -55,7 +55,11 @@ The engines, in the order of this page: [clippy](#clippy), [swiftlint](#swiftlin
   its URI: the path after `file://`, or a path relative to the rule file's folder, where the engine runs, with each
   `%XX` escape decoded. On Windows a URI with a drive (`file:///C:/x/a.py`, or `file:///C%3A/x/a.py`) is the native
   path `C:\x\a.py`, with `.` and `..` resolved as text, and the rule file's folder is compared with it in the same
-  form.
+  form. A result `tm` reads for the rule whose file it cannot place inside the folder fails the rule rather than
+  being dropped, since these engines are given only the folder's files. Its reason, unless the engine's stderr
+  stands in its place as for any failed rule ([below](#not-available-and-failed)), names the URI as the engine
+  printed it: ``SARIF result names `<uri>`, a path not under the rule folder `<folder>` ``. A result with no file
+  is not a finding, and a result of another rule is not placed.
 - **Its version is read once per check.** Before the rules run, each engine named by the rules this check runs is
   asked its version once, in the rule file's folder, when it is available: `cargo clippy --version`,
   `swiftlint version`, `ruff --version`, `ast-grep --version`, `shellcheck --version`, `git --version`,
@@ -158,9 +162,10 @@ list that the installed detekt lacks.) dart is asked in a run of its own, in a t
 check.
 
 **Failed** (exit 5) means the rule gave no answer that can be trusted. Either the engine gave none: it was found
-and could not be started, it printed something that is not its findings format, or a clippy build did not succeed.
-Or Temperare refused the rule before running the engine, because the result could not be matched back to the rule
-or the rule's own files could not be used:
+and could not be started, it printed something that is not its findings format, a clippy build did not succeed, or
+SwiftLint or an engine that prints SARIF named a file outside the rule file's folder. Or Temperare refused the rule
+before running the engine, because the result could not be matched back to the rule or the rule's own files could
+not be used:
 
 - a clippy `check` that is a lint group or a `rustdoc::` lint;
 - a SwiftLint `check` of `custom_rules`;
@@ -835,7 +840,9 @@ only the version question, `git --version`, is run by `tm` itself.
 - **Not available** when gitleaks says `Requested rule <id> not found in rules` for a part of `check`. The reason
   quotes that line.
 - **Failed** when what gitleaks prints is not a SARIF log. The reason is `gitleaks printed no SARIF log and no
-  error`, with its error lines in its place when it printed any.
+  error`, with its error lines in its place when it printed any. Failed too when a result of the check names a file
+  outside the rule file's folder ([above](#what-holds-for-every-engine)); that reason quotes only the result's URI
+  and the folder, never the secret, and gitleaks' error lines stand in its place when it printed any.
 - **`config`:** passed as `--config=<config>`, as written, so a relative path is taken from the rule file's folder.
   Without one, gitleaks reads the folder's `.gitleaks.toml` when there is one, else its own default rules. The
   config's own rules apply.
@@ -1160,7 +1167,8 @@ only the version question, `git --version`, is run by `tm` itself.
   `[ERROR] Cannot load ruleset <part>:` (a category it does not have) for a part of `check`. The reason quotes that
   line.
 - **Failed** when PMD exits 5: it could not process every file, so some went unchecked. Failed too on any exit but 0
-  (no violation) and 4 (violations), and when what it prints is not a SARIF log.
+  (no violation) and 4 (violations), when what it prints is not a SARIF log, and when a result names a file outside
+  the rule file's folder ([above](#what-holds-for-every-engine)).
 - **`// NOPMD` silences nothing.** PMD has no switch for its suppression marker, only an option that renames it, so
   `tm` renames it to a text no code carries.
 - **What PMD still honours,** which `tm` cannot turn off: `@SuppressWarnings` naming `"PMD"`, `"PMD.<Rule>"`,
@@ -1225,8 +1233,10 @@ only the version question, `git --version`, is run by `tm` itself.
 - **Failed** when detekt exits with anything but 0 (no issues) or 2 (issues): 1 is a usage error or a crash, and 3
   a config that fails validation. The `comments` rule set holds `AbsentOrWrongFileLicense`, which needs a license
   template file; without one detekt exits 1, so a rule that names `comments` fails rather than reading clean. Failed
-  too, before detekt runs, when a file or config path holds `,` or `;` (detekt splits its paths on both), or the
-  list of files is longer than 98304 bytes; narrower `paths` keep it short.
+  too when a result of the check names a file outside the rule file's folder ([above](#what-holds-for-every-engine)).
+  When detekt has run, the reason is the end of what it printed, its console output then its stderr, and `tm`'s own
+  only when it printed nothing. Failed too, before detekt runs, when a file or config path holds `,` or `;` (detekt
+  splits its paths on both), or the list of files is longer than 98304 bytes; narrower `paths` keep it short.
 - **`params`:** none. Any param fails the rule before detekt runs, with the reason
   `detekt param <name>: a detekt rule takes no params`.
 - **A finding** is placed at the result's line and column, and its message is detekt's.
@@ -1392,8 +1402,9 @@ only the version question, `git --version`, is run by `tm` itself.
   (`lib/` when there is none), then the rest of the URI. On Windows a `rootUri` that is a file URL with a drive
   (`file:///C:/x`, the letter in either case, `%XX` escapes decoded first) is the native path `C:\x`, its drive
   letter as written, and `.` and `..` in the path are resolved as text, as dart's `Uri.resolve` resolves them, a
-  relative `rootUri` such as `../` included. A `rootUri` with a host (`file://server/share/...`) resolves on no
-  platform, so the include is reported as not resolving. On other platforms the path is used as dart writes it.
+  relative `rootUri` such as `../` included. A `rootUri` with a host (`file://server/share/...`), or the same
+  written with four slashes (`file:////server/share/...`), resolves on no platform, so the include is reported as
+  not resolving. On other platforms the path is used as dart writes it.
 - **Failed when the options hide findings.** dart cannot be told to ignore these, so each fails the rule and the
   reason names the file and the line:
   - a key `exclude`, in any case, anywhere in an options file, which covers `analyzer: exclude:`;
@@ -1568,8 +1579,9 @@ only the version question, `git --version`, is run by `tm` itself.
 - **What hadolint still honours,** which `tm` cannot turn off: a `# shellcheck disable=` comment inside a `RUN`
   script.
 - **Failed** when hadolint says it could not read its config (it would then run on its defaults); when it reports
-  `DL1000` for a file, which it could not parse and whose other findings are then missing; and when what it prints
-  is not one SARIF log. Any exit code with a SARIF log on stdout is otherwise an answer.
+  `DL1000` for a file, which it could not parse and whose other findings are then missing; when what it prints is
+  not one SARIF log; and when a result of the check, or a `DL1000` result, names a file outside the rule file's
+  folder ([above](#what-holds-for-every-engine)). Any exit code with a SARIF log on stdout is otherwise an answer.
 - **`params`:** none. Any param fails the rule before hadolint runs, with the reason
   `hadolint param <name>: a hadolint rule takes no params`.
 - **A finding** is placed at the result's line and column, and its message is hadolint's.

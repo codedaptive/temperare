@@ -222,7 +222,9 @@ A rule covers a file when all of these hold:
 4. `kits` is absent or empty, or the file is in one of those kits.
 
 An engine runs over the rule file's whole folder. Findings in files the rule does not cover are dropped, and so are
-findings outside the rule file's folder.
+findings outside the rule file's folder, with one exception: a SwiftLint finding, or a result of an engine that
+prints SARIF (PMD, detekt, hadolint, gitleaks), outside the folder fails the rule ([swiftlint](ENGINES.md#swiftlint),
+[SARIF](ENGINES.md#what-holds-for-every-engine)).
 
 A rule that covers none of the files git lists in the rule file's folder (the tracked files in the work tree and
 the untracked files git does not ignore) runs nothing. One of your own covers nothing: the report lists it and the
