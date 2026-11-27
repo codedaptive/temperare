@@ -50,16 +50,19 @@ The engines, in the order of this page: [clippy](#clippy), [swiftlint](#swiftlin
   ESLint, RuboCop and dart are handed the folder, and their own config decides which files they read.
   Temperare then keeps the findings that are inside that folder, in the files the rule covers (its `paths`,
   `exclude`, `kits`, `outside_kits`) and, when you gave paths on the command line, in those paths. Paths on the
-  command line narrow the result; they do not make the engines do less work.
+  command line narrow the result; they do not make the engines do less work. On Windows the rule file's folder is
+  read in its canonical, verbatim form (`\\?\C:\...`), while engines print plain disk paths (`C:\...`): `tm`
+  compares the two in plain disk form, so a finding is placed under the folder whichever form the engine prints. A
+  drive letter matches in either case (`c:` and `C:`); the folder's own names must match as written, case included.
 - **Where a SARIF result is.** PMD, detekt, hadolint and gitleaks print SARIF, and each result's file is read from
   its URI: the path after `file://`, or a path relative to the rule file's folder, where the engine runs, with each
   `%XX` escape decoded. On Windows a URI with a drive (`file:///C:/x/a.py`, or `file:///C%3A/x/a.py`) is the native
-  path `C:\x\a.py`, with `.` and `..` resolved as text, and the rule file's folder is compared with it in the same
-  form. A result `tm` reads for the rule whose file it cannot place inside the folder fails the rule rather than
-  being dropped, since these engines are given only the folder's files. Its reason, unless the engine's stderr
-  stands in its place as for any failed rule ([below](#not-available-and-failed)), names the URI as the engine
-  printed it: ``SARIF result names `<uri>`, a path not under the rule folder `<folder>` ``. A result with no file
-  is not a finding, and a result of another rule is not placed.
+  path `C:\x\a.py`, with `.` and `..` resolved as text, and it is placed under the folder as above. A result `tm`
+  reads for the rule whose file it cannot place inside the folder fails the rule rather than being dropped, since
+  these engines are given only the folder's files. Its reason, unless the engine's stderr stands in its place as for
+  any failed rule ([below](#not-available-and-failed)), names the URI as the engine printed it:
+  ``SARIF result names `<uri>`, a path not under the rule folder `<folder>` ``. A result with no file is not a
+  finding, and a result of another rule is not placed.
 - **Its version is read once per check.** Before the rules run, each engine named by the rules this check runs is
   asked its version once, in the rule file's folder, when it is available: `cargo clippy --version`,
   `swiftlint version`, `ruff --version`, `ast-grep --version`, `shellcheck --version`, `git --version`,
@@ -400,7 +403,8 @@ list of its files git gives, fails, and the others run as they do when git canno
 
 ## swiftlint
 
-- **Available when** `swiftlint` is on `PATH`.
+- **Available when** `swiftlint` is on `PATH`. SwiftLint publishes no Windows build, so on Windows a SwiftLint rule
+  is not available: `swiftlint not found on PATH`.
 - **Where:** the rule file's folder.
 - **What runs:**
 
@@ -1673,7 +1677,8 @@ only the version question, `git --version`, is run by `tm` itself.
   - Vale finds no config at or above the rule file's folder and the rule names none:
     `Vale finds no config (.vale.ini, _vale.ini, vale.ini, .vale or _vale) at or above the rule file's folder: tm runs Vale only with the repository's own config`;
   - a config Vale read is outside the repository. Vale looks upward past the repository's top, so that one would be
-    another project's or your own;
+    another project's or your own. On Windows the config's path and the repository's top are compared in plain disk
+    form, as a finding's path is ([above](#what-holds-for-every-engine));
   - no `BasedOnStyles` in the config names the check's style:
     ``no BasedOnStyles in <config> names the style `<style>`: tm never turns on a Vale style the repository did not choose``;
   - no rule Vale loaded has the check's name. `<expression>` makes Vale stop with an error then, where a plain
