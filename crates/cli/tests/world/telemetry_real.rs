@@ -16,12 +16,29 @@ impl TempFolder {
             let n = NEXT.fetch_add(1, Ordering::Relaxed);
             let path = std::env::temp_dir().join(format!("tm-telemetry-{}-{n}", std::process::id()));
             match fs::create_dir(&path) {
-                Ok(()) => return Self(fs::canonicalize(path).unwrap()),
+                Ok(()) => return Self(native(fs::canonicalize(path).unwrap())),
                 Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
                 Err(e) => panic!("cannot make {}: {e}", path.display()),
             }
         }
     }
+}
+
+/// tm writes git's top in the native form, not the canonical temp path (`\\?\C:\...` on Windows), and git also
+/// refuses the verbatim form as a worktree path, so a verbatim disk prefix is dropped to give `C:\...`.
+#[cfg(windows)]
+fn native(path: PathBuf) -> PathBuf {
+    match path.to_str().and_then(|s| s.strip_prefix(r"\\?\")) {
+        Some(rest) if matches!(rest.as_bytes(), [d, b':', b'\\', ..] if d.is_ascii_alphabetic()) => {
+            PathBuf::from(rest)
+        }
+        _ => path,
+    }
+}
+
+#[cfg(not(windows))]
+fn native(path: PathBuf) -> PathBuf {
+    path
 }
 
 impl Drop for TempFolder {
