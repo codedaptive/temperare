@@ -29,7 +29,6 @@ mod rule_record;
 mod rule_state;
 mod rules_record;
 mod set_aside_why;
-mod severity_name;
 mod silenced;
 mod silenced_by_rule;
 mod split_by_exceptions;
@@ -94,8 +93,6 @@ mod rules_record_tests;
 #[cfg(test)]
 mod set_aside_why_tests;
 #[cfg(test)]
-mod severity_name_tests;
-#[cfg(test)]
 mod silenced_by_rule_tests;
 #[cfg(test)]
 mod silenced_tests;
@@ -114,7 +111,6 @@ use assemble_report::assemble_report;
 use fold_untracked::fold_untracked;
 use folder_from_top::folder_from_top;
 use rules_record::rules_record;
-use severity_name::severity_name;
 use silenced_by_rule::silenced_by_rule;
 use stderr_tail::stderr_tail;
 use utc_day::utc_day;

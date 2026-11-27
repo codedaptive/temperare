@@ -32,7 +32,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// reason and its outcomes; a flagged id naming no rule of the file is ignored (see `out_of_play`).
 ///
 /// The report's `record` holds the telemetry record's rules (see `rules_record`), from the same outcomes; with a base,
-/// its findings are cut by the same added-lines map asked of ccvcslib once.
+/// its findings are cut by the same added-lines map asked of ccvcslib once. A watch rule's outcomes reach only `record`
+/// (see `assemble_report`).
 pub fn build_report_with_no_files(
     rules: &RuleFile,
     outcomes: Vec<(String, RuleOutcome)>,

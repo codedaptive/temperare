@@ -703,6 +703,113 @@ fn record_with_base_contains_only_added_line_findings() {
     }]);
 }
 
+fn watch_outcome(case: &str, state: crate::RuleState, why: Option<&str>, kept: bool, silenced: usize) {
+    let mut rules = with_rules(&["watch-rule", "ordinary"], vec![]);
+    rules.rules[0].severity = Severity::Watch;
+    let mut found = finding("watch-rule", "watch.rs", 7, None);
+    found.severity = Severity::Warning;
+    found.kind = Kind::Security;
+    let mut no_files = vec![];
+    let outcome = match case {
+        "kept" => RuleOutcome::Findings(vec![found]),
+        "silenced" => {
+            rules.exceptions.push(exception("watch-rule", "watch.rs"));
+            RuleOutcome::Findings(vec![found])
+        }
+        "unavailable" => RuleOutcome::NotAvailable { rule: "watch-rule".into(), engine: Engine::Clippy, why: "missing engine".into() },
+        "failed" => RuleOutcome::Failed { rule: "watch-rule".into(), engine: Engine::Clippy, code: Some(1), stderr: "broken".into() },
+        "covers" => {
+            no_files = flags(&[("watch-rule", "no files")]);
+            RuleOutcome::Findings(vec![])
+        }
+        "not applicable" => {
+            let mut rule = rules.rules.remove(0);
+            rule.not_applicable = Some("set aside".into());
+            rules.not_applicable_rules.push(rule);
+            RuleOutcome::Findings(vec![])
+        }
+        _ => unreachable!(),
+    };
+    let outcomes = vec![
+        ("watch-rule".into(), outcome),
+        ("ordinary".into(), RuleOutcome::Findings(vec![finding("ordinary", "ordinary.rs", 1, None)])),
+    ];
+    let report = assemble_report(&rules, outcomes, None, day(), date(), &no_files, |f| f);
+    let record = report.record.iter().find(|r| r.rule == "watch-rule").unwrap();
+    assert_eq!((record.severity.as_str(), record.state, record.why.as_deref(), record.silenced), ("watch", state, why, silenced), "{case}");
+    let expected = if kept { vec![crate::RecordFinding { path: RelPath::new("watch.rs"), line: Some(7), what: "violation".into() }] } else { vec![] };
+    assert_eq!(record.findings, expected, "{case}");
+    assert_eq!(rule_ids(&report.findings), vec!["ordinary"], "{case}");
+    assert!(report.silenced.is_empty() && report.silenced_by_rule.is_empty(), "{case}");
+    assert!(report.not_available.is_empty() && report.failed.is_empty(), "{case}");
+    assert!(report.covers_nothing.is_empty() && report.not_applicable.is_empty(), "{case}");
+    assert_eq!(report.counts, crate::Counts { findings: 1, errors: 1, quality: 1, ..Default::default() }, "{case}");
+    let text = crate::render_text(&report);
+    let json = crate::test_json::to_json(&report);
+    assert!(text.contains("ordinary") && !text.contains("watch-rule"), "{case}");
+    assert!(json.contains("ordinary") && !json.contains("watch-rule"), "{case}");
+}
+
+macro_rules! watch_cases {
+    ($($name:ident: ($case:literal, $state:ident, $why:expr, $kept:expr, $silenced:expr)),* $(,)?) => {
+        $(#[test] fn $name() { watch_outcome($case, crate::RuleState::$state, $why, $kept, $silenced); })*
+    };
+}
+
+watch_cases! {
+    watch_finding: ("kept", Ran, None, true, 0),
+    watch_silenced: ("silenced", Ran, None, false, 1),
+    watch_not_available: ("unavailable", NotAvailable, Some("missing engine"), false, 0),
+    watch_failed: ("failed", Failed, None, false, 0),
+    watch_covers_nothing: ("covers", CoversNothing, Some("no files"), false, 0),
+    watch_not_applicable: ("not applicable", NotApplicable, Some("set aside"), false, 0),
+}
+
+#[test]
+fn watch_exceptions_stay_counted() {
+    let mut rules = with_rules(&["watch-rule", "ordinary"], vec![
+        expiring("watch-rule", "watch.rs", (2026, 11, 20)),
+        expiring("watch-rule", "old.rs", (2026, 11, 19)),
+    ]);
+    rules.rules[0].severity = Severity::Watch;
+    let report = assemble_report(&rules, of(vec![finding("watch-rule", "watch.rs", 7, None), finding("ordinary", "ordinary.rs", 1, None)]), None, day(), date(), &[], |f| f);
+    assert_eq!(report.exceptions_in_force, 1);
+    assert_eq!(expired_rules(&report), vec!["watch-rule"]);
+    assert_eq!(report.counts.expired, 1);
+    assert_eq!(report.record.iter().find(|r| r.rule == "watch-rule").unwrap().silenced, 1);
+    assert_eq!(rule_ids(&report.findings), vec!["ordinary"]);
+    assert!(report.silenced.is_empty() && report.silenced_by_rule.is_empty());
+    assert_eq!(report.counts.silenced, 0);
+}
+
+#[test]
+fn watch_record_with_base_keeps_only_added_lines() {
+    use std::{collections::BTreeMap, path::Path};
+    let mut rules = with_rules(&["watch-rule", "ordinary"], vec![]);
+    rules.rules[0].severity = Severity::Watch;
+    let lines = BTreeMap::from([(PathBuf::from("a.rs"), vec![10..12])]);
+    let outcomes = of(vec![finding("watch-rule", "a.rs", 3, None), finding("watch-rule", "a.rs", 10, None), finding("ordinary", "a.rs", 11, None)]);
+    let base = Oid::parse("0123456789abcdef0123456789abcdef01234567");
+    let report = assemble_report(&rules, outcomes, base, day(), date(), &[], |f| crate::keep_added(f, &lines, &[], Path::new("")));
+    let record = report.record.iter().find(|r| r.rule == "watch-rule").unwrap();
+    assert_eq!(record.findings, vec![crate::RecordFinding { path: RelPath::new("a.rs"), line: Some(10), what: "violation".into() }]);
+    assert_eq!(rule_ids(&report.findings), vec!["ordinary"]);
+    assert_eq!(report.counts.findings, 1);
+}
+
+#[test]
+fn watch_finding_severity_does_not_decide_rule_status() {
+    let mut rules = with_rules(&["ordinary", "watch-rule"], vec![]);
+    rules.rules[1].severity = Severity::Watch;
+    let mut ordinary = finding("ordinary", "a.rs", 1, None);
+    ordinary.severity = Severity::Watch;
+    let mut unknown = finding("unknown", "a.rs", 2, None);
+    unknown.severity = Severity::Watch;
+    let report = assemble_report(&rules, of(vec![ordinary, unknown, finding("watch-rule", "a.rs", 3, None)]), None, day(), date(), &[], |f| f);
+    assert_eq!(rule_ids(&report.findings), vec!["ordinary", "unknown"]);
+    assert_eq!(report.counts.findings, 2);
+}
+
 #[test]
 fn record_counts_findings_silenced_by_real_exceptions_per_rule() {
     let rules = with_rules(&["a", "b"], vec![exception("a", "a.rs"), exception("b", "b.rs")]);

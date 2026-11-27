@@ -5,25 +5,29 @@ use crate::{
     NotAvailable, Report, RuleState, Silenced,
 };
 use crate::Oid;
-use rules::{Date, Exception, Finding, RuleFile, RuleOutcome};
+use rules::{Date, Exception, Finding, RuleFile, RuleOutcome, Severity};
 
 /// The report of `outcomes`. Their findings go through `keep_new` first, so a finding it drops is neither kept nor
 /// silenced nor counted; the rest are split by the rule file's exceptions (`RuleFile::exception_on`, given `day`).
 /// `date` is carried as the report's date: the caller passes the "YYYY-MM-DD" text of `day`. The silenced findings are
 /// counted by rule into `silenced_by_rule` (see `silenced_by_rule`). The `engines` list is left empty for the caller.
 /// `expired` lists `rules.exceptions_expired(day)` in rule-file order, `exceptions_in_force` counts the rest, both
-/// judged on the same `day` the exceptions silence by; `counts.expired` is the list's length.
-/// Findings, and silenced ones by their finding, are sorted by path, line, col (none first) and rule; not-available and
-/// failed rules by rule. The sorts are stable, so the same input gives the same report. A NotAvailable or
-/// Failed outcome carries its own rule and a Findings outcome names its rule through its findings; the tuple's name,
-/// the only name a clean rule's Findings has, is read only for the record. `record` is `rules_record`'s list from the
-/// same outcomes, after keep_new and the exceptions. Pure: it runs nothing and reads no file.
+/// judged on the same `day` the exceptions silence by, a watch rule's exceptions included; `counts.expired` is the
+/// list's length. Findings, and silenced ones by their finding, are sorted by path, line, col (none first) and rule;
+/// not-available and failed rules by rule. The sorts are stable, so the same input gives the same report. A
+/// NotAvailable or Failed outcome carries its own rule and a Findings outcome names its rule through its findings; the
+/// tuple's name, the only name a clean rule's Findings has, is read only for the record. `record` is `rules_record`'s
+/// list from the same outcomes, after keep_new and the exceptions. Pure: it runs nothing and reads no file.
 ///
 /// `covers_nothing` and `not_applicable` are `out_of_play`'s lists, with `no_base` when `base` is None (see
 /// `out_of_play` for which rules they hold and in what order). The outcomes of the rules in its third list are dropped,
 /// a finding by its own `rule` and a not-available or failed outcome by its own `rule`, before `keep_new` and the
 /// exceptions, so none reaches findings, silenced, `silenced_by_rule`, not_available, failed or the counts.
-/// `counts.covers_nothing` and `counts.not_applicable` are the lists' lengths.
+///
+/// A watch rule (its `severity` in the rule file is `Severity::Watch`, whatever its findings say) is set apart after
+/// the exceptions and after `record` is taken: its kept and silenced findings, its not-available or failed outcome and
+/// its covers-nothing or not-applicable entry reach no list and no count, only `record`. The counts are the remaining
+/// lists' lengths.
 pub(crate) fn assemble_report(
     rules: &RuleFile,
     outcomes: Vec<(String, RuleOutcome)>,
@@ -33,7 +37,7 @@ pub(crate) fn assemble_report(
     no_files: &[(String, String)],
     keep_new: impl FnOnce(Vec<Finding>) -> Vec<Finding>,
 ) -> Report {
-    let (covers_nothing, not_applicable, dropped_ids) = out_of_play(rules, base.is_none(), no_files);
+    let (mut covers_nothing, mut not_applicable, dropped_ids) = out_of_play(rules, base.is_none(), no_files);
     let dropped = |rule: &str| dropped_ids.contains(&rule);
     let mut findings = Vec::new();
     let mut not_available = Vec::new();
@@ -66,6 +70,14 @@ pub(crate) fn assemble_report(
     not_available.sort_by(|a, b| a.rule.cmp(&b.rule));
     failed.sort_by(|a, b| a.rule.cmp(&b.rule));
     let record = rules_record(rules, &states, (&covers_nothing, &not_applicable), no_files, &kept, &silenced);
+    let watch = watch_ids(rules);
+    let counted = |rule: &str| !watch.contains(&rule);
+    kept.retain(|finding| counted(&finding.rule));
+    silenced.retain(|entry| counted(&entry.finding.rule));
+    not_available.retain(|entry| counted(&entry.rule));
+    failed.retain(|entry| counted(&entry.rule));
+    covers_nothing.retain(|entry| counted(&entry.rule));
+    not_applicable.retain(|entry| counted(&entry.rule));
     Report {
         counts: Counts::of(
             &kept,
@@ -90,6 +102,16 @@ pub(crate) fn assemble_report(
         expired,
         record,
     }
+}
+
+/// The ids of the rule file's watch rules, `not_applicable_rules` included.
+fn watch_ids(rules: &RuleFile) -> Vec<&str> {
+    rules
+        .rules_in_order()
+        .into_iter()
+        .filter(|rule| rule.severity == Severity::Watch)
+        .map(|rule| rule.id.as_str())
+        .collect()
 }
 
 /// The report's entry for an expired exception; None only without `expires`, which `exceptions_expired` never lists,

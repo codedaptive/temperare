@@ -1,6 +1,6 @@
 //! `render_text`: the report as the text a person reads.
 
-use crate::{severity_name, CoversNothing, EngineVersion, Expired, Failed, NotAvailable, Report};
+use crate::{CoversNothing, EngineVersion, Expired, Failed, NotAvailable, Report};
 use rules::{Finding, Kind};
 
 /// The report as text: a three-line block and a blank line per kept finding, one line per not-available rule, one
@@ -48,7 +48,7 @@ fn finding_block(finding: &Finding) -> String {
     let owner = finding.owner.as_ref().map(|owner| format!("  owner {owner}")).unwrap_or_default();
     format!(
         "{location}  {} {} {}{owner}\n  {}\n  fix: {}\n\n",
-        &severity_name(finding.severity),
+        finding.severity.name(),
         kind_name(finding.kind),
         finding.rule,
         finding.what,
@@ -89,7 +89,7 @@ fn engines_line(engines: &[EngineVersion]) -> String {
 }
 
 /// Kind's rule-file name; `rules` reads it (`from_name`) and writes it through `Serialize`, but has no `&str` name
-/// accessor for it. Severity's name comes from `crate::severity_name`.
+/// accessor for it, as it has for `Severity` (`Severity::name`).
 fn kind_name(kind: Kind) -> &'static str {
     match kind {
         Kind::Quality => "quality",
