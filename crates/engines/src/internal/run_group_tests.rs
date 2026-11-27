@@ -33,6 +33,19 @@ severity = "warning"
 paths = ["src/**"]
 fix = "g"
 [[rule]]
+id = "watched"
+engine = "ruff"
+check = "E711"
+severity = "watch"
+fix = "w"
+[[rule]]
+id = "watched-unused"
+engine = "ruff"
+check = "F401"
+severity = "watch"
+paths = ["src/**"]
+fix = "v"
+[[rule]]
 id = "newer"
 engine = "ruff"
 check = "ZZZ999"
@@ -103,6 +116,36 @@ fn one_run_answers_each_rule_with_its_own_codes_and_paths_and_counts_once() {
     assert_eq!(got, vec![
         rule_run("none-compare", RuleOutcome::Findings(vec![finding("none-compare", "a.py", (1, 4), "none", "f")]), Some(262)),
         rule_run("unused", RuleOutcome::Findings(vec![finding("unused", "src/b.py", (3, 8), "unused b", "g")]), None),
+    ]);
+    assert_eq!(ran.into_inner(), vec!["--select=E711,F401"]);
+}
+
+#[test]
+fn watch_first_shared_run_counts_on_the_non_watch_rule() {
+    let ran = RefCell::new(Vec::new());
+    let run = |cmd: &Cmd| {
+        ran.borrow_mut().push(selects(cmd));
+        ok(1, BOTH, "")
+    };
+    let got = grouped(&["watched", "unused"], &run, true);
+    assert_eq!(got, vec![
+        rule_run("watched", RuleOutcome::Findings(vec![Finding { severity: Severity::Watch, ..finding("watched", "a.py", (1, 4), "none", "w") }]), None),
+        rule_run("unused", RuleOutcome::Findings(vec![finding("unused", "src/b.py", (3, 8), "unused b", "g")]), Some(262)),
+    ]);
+    assert_eq!(ran.into_inner(), vec!["--select=E711,F401"]);
+}
+
+#[test]
+fn all_watch_shared_run_is_not_counted() {
+    let ran = RefCell::new(Vec::new());
+    let run = |cmd: &Cmd| {
+        ran.borrow_mut().push(selects(cmd));
+        ok(1, BOTH, "")
+    };
+    let got = grouped(&["watched", "watched-unused"], &run, true);
+    assert_eq!(got, vec![
+        rule_run("watched", RuleOutcome::Findings(vec![Finding { severity: Severity::Watch, ..finding("watched", "a.py", (1, 4), "none", "w") }]), None),
+        rule_run("watched-unused", RuleOutcome::Findings(vec![Finding { severity: Severity::Watch, ..finding("watched-unused", "src/b.py", (3, 8), "unused b", "v") }]), None),
     ]);
     assert_eq!(ran.into_inner(), vec!["--select=E711,F401"]);
 }
