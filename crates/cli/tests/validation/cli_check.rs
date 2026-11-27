@@ -300,7 +300,11 @@ fn quality_error_names_rule_place_fix_and_exception() {
     let stdout = text(&repo.check(&[]), 1);
     assert!(stdout.contains("a.py:1:8  error quality python-lint"), "{stdout}");
     assert!(stdout.contains("  fix: Remove the unused import."), "{stdout}");
-    assert_eq!(stdout.lines().last(), Some(format!("next: fix the findings above, or add an approved [[exception]] to {}", repo.dir.join("temperare.toml").display()).as_str()));
+    let next = format!(
+        "next: fix the findings above, or add an approved [[exception]] with its expires date to {}",
+        repo.dir.join("temperare.toml").display()
+    );
+    assert_eq!(stdout.lines().last(), Some(next.as_str()));
 }
 
 #[test]
@@ -359,7 +363,11 @@ fn base_head_keeps_finding_on_added_line() {
     repo.diagnostic(2);
     let stdout = text(&repo.check(&["--base", "HEAD"]), 1);
     assert!(stdout.contains("a.py:2:8  error quality python-lint"), "{stdout}");
-    assert_eq!(stdout.lines().last(), Some(format!("next: fix the findings above, or add an approved [[exception]] to {}", repo.dir.join("temperare.toml").display()).as_str()));
+    let next = format!(
+        "next: fix the findings above, or add an approved [[exception]] with its expires date to {}",
+        repo.dir.join("temperare.toml").display()
+    );
+    assert_eq!(stdout.lines().last(), Some(next.as_str()));
 }
 
 #[test]
@@ -371,7 +379,11 @@ fn json_is_one_object_with_report_exit_and_next() {
     let value: serde_json::Value = serde_json::from_str(&stdout).unwrap();
     assert!(value.is_object());
     assert_eq!(value["exit"], 1);
-    assert_eq!(value["next"], format!("fix the findings above, or add an approved [[exception]] to {}", repo.dir.join("temperare.toml").display()));
+    let next = format!(
+        "fix the findings above, or add an approved [[exception]] with its expires date to {}",
+        repo.dir.join("temperare.toml").display()
+    );
+    assert_eq!(value["next"], next);
     assert_eq!(value["findings"].as_array().unwrap().len(), 1);
     assert_eq!(value["findings"][0]["rule"], "python-lint");
     assert_eq!(value["counts"]["findings"], 1);

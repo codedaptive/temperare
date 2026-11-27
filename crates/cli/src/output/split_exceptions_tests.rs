@@ -5,24 +5,21 @@ use super::split_exceptions::split_exceptions;
 use rules::{Date, RuleFile};
 use std::path::Path;
 
-/// (path, expires) in file order. On 2026-11-21 in force: f (expires that day), d (none), e (later); expired: b, a, c
-/// (each before it). Neither list is sorted by path or by expires, either way, wherever a missing date goes.
-const EXCEPTIONS: [(&str, Option<&str>); 6] = [
-    ("f.rs", Some("2026-11-21")),
-    ("b.rs", Some("2026-06-01")),
-    ("d.rs", None),
-    ("a.rs", Some("2026-11-20")),
-    ("e.rs", Some("2026-12-01")),
-    ("c.rs", Some("2026-01-02")),
+/// (path, expires) in file order. On 2026-11-21 in force: f (expires that day), d and e (later); expired: b, a, c
+/// (each before it). Neither list is sorted by path or by expires, either way.
+const EXCEPTIONS: [(&str, &str); 6] = [
+    ("f.rs", "2026-11-21"),
+    ("b.rs", "2026-06-01"),
+    ("d.rs", "2099-12-31"),
+    ("a.rs", "2026-11-20"),
+    ("e.rs", "2026-12-01"),
+    ("c.rs", "2026-01-02"),
 ];
 
 fn rule_file() -> RuleFile {
     let mut text = String::from("version = 1\n[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"c\"\nfix = \"f\"\n");
     for (path, expires) in EXCEPTIONS {
-        text.push_str(&format!("[[exception]]\nrule = \"r\"\npath = \"{path}\"\nreason = \"x\"\napproved = \"bob\"\n"));
-        if let Some(date) = expires {
-            text.push_str(&format!("expires = \"{date}\"\n"));
-        }
+        text.push_str(&format!("[[exception]]\nrule = \"r\"\npath = \"{path}\"\nreason = \"x\"\napproved = \"bob\"\nexpires = \"{expires}\"\n"));
     }
     RuleFile::parse(&text, Path::new(".")).unwrap()
 }

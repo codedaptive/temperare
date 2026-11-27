@@ -132,12 +132,6 @@ path = "late.py"
 reason = "legacy"
 approved = "team"
 expires = "2030-01-01"
-[[exception]]
-rule = "z-scope"
-path = "drop.py"
-reason = "legacy"
-approved = "team"
-expires = "2031-02-03"
 "#;
 
 const NOW: &str = r#"version = 1
@@ -174,17 +168,13 @@ path = "new.py"
 what = "E3"
 reason = "legacy"
 approved = "team"
+expires = "2099-12-31"
 [[exception]]
 rule = "z-scope"
 path = "late.py"
 reason = "legacy"
 approved = "team"
 expires = "2032-01-01"
-[[exception]]
-rule = "z-scope"
-path = "drop.py"
-reason = "legacy"
-approved = "team"
 "#;
 
 #[test]
@@ -196,7 +186,7 @@ fn rule_and_exception_kinds_in_order() {
     let (code, out, err) = repo.run(&["rules", "--loosened", "--base", "base", "--json"]);
     assert_eq!(code, 1, "stdout: {out}\nstderr: {err}");
     assert_eq!(serde_json::from_str::<Value>(&out).unwrap(), json!({
-        "rule_file": repo.path(), "base": "base", "count": 12, "exit": 1,
+        "rule_file": repo.path(), "base": "base", "count": 11, "exit": 1,
         "next": format!("have each loosening in loosened approved, or undo it in {}", repo.path()),
         "loosened": [
             {"kind":"rule_gone", "about":"tm-rust-dead-code"},
@@ -209,15 +199,14 @@ fn rule_and_exception_kinds_in_order() {
             {"kind":"paths_limited", "about":"a-limited", "after":"a/**, b/**"},
             {"kind":"kits_limited", "about":"a-limited", "after":"b, a"},
             {"kind":"exception_added", "about":"a-limited", "after":"new.py (E3)"},
-            {"kind":"expiry_later", "about":"z-scope", "before":"2030-01-01", "after":"2032-01-01"},
-            {"kind":"expiry_dropped", "about":"z-scope", "before":"2031-02-03"}
+            {"kind":"expiry_later", "about":"z-scope", "before":"2030-01-01", "after":"2032-01-01"}
         ]
     }));
     assert!(err.is_empty(), "{err}");
     let (code, out, err) = repo.run(&["rules", "--loosened", "--base", "base"]);
     assert_eq!(code, 1, "stdout: {out}\nstderr: {err}");
     assert_eq!(out, format!(concat!(
-        "rule file: {}\nbase: base\nloosened (12):\n",
+        "rule file: {}\nbase: base\nloosened (11):\n",
         "  rule_gone  tm-rust-dead-code\n",
         "  severity_lowered  z-scope  before: error  after: warning\n",
         "  path_removed  z-scope  before: z/**\n",
@@ -229,7 +218,6 @@ fn rule_and_exception_kinds_in_order() {
         "  kits_limited  a-limited  after: b, a\n",
         "  exception_added  a-limited  after: new.py (E3)\n",
         "  expiry_later  z-scope  before: 2030-01-01  after: 2032-01-01\n",
-        "  expiry_dropped  z-scope  before: 2031-02-03\n",
         "next: have each loosening above approved, or undo it in {}\n"
     ), repo.path(), repo.path()));
     assert!(err.is_empty(), "{err}");
@@ -296,6 +284,7 @@ rule = "r"
 path = "old.py"
 reason = "legacy"
 approved = "team"
+expires = "2099-12-31"
 "#;
 const TIGHT_NOW: &str = r#"version = 1
 [[rule]]
