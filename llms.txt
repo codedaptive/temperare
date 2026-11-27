@@ -230,9 +230,10 @@ sources.
 - A finding has: rule, engine, kind, severity, owner (when the rule file names one), path, line (always present;
   null when the finding has no line, as cargo-audit's on Cargo.lock), col (when the engine gives one), what (the
   engine's message), fix (the rule's fix text).
-- An exception is an [[exception]] table in the rule file with rule, path, reason and approved. It records a
-  person's approval. An agent does not add one on its own. An optional expires = "YYYY-MM-DD" is its last day (UTC):
-  from the day after, it silences nothing and tm check lists it as expired: an "expired: <rule> <path> (expired
+- An exception is an [[exception]] table in the rule file with rule, path, reason, approved and expires. It records
+  a person's approval. An agent does not add one on its own. expires = "YYYY-MM-DD" is required, its last day (UTC);
+  an exception without it is a rule-file problem (exit 2: "[[exception]] is missing `expires`"). From the day after
+  its expires, it silences nothing and tm check lists it as expired: an "expired: <rule> <path> (expired
   <YYYY-MM-DD>)" line, expired in JSON ({rule, path, what|null, expires, reason, approved}) and counts.expired.
   Exceptions in force counts only the exceptions not expired, in tm check and tm rules alike; tm rules lists the
   expired ones apart (expired and exceptions_expired in JSON, each with expires).

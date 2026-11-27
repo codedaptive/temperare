@@ -22,7 +22,7 @@ A repository's rules are scattered: the lints it turned on, the house rules no s
 exceptions somebody agreed to. Temperare puts them in one file, `temperare.toml`:
 
 - each rule names the engine that checks it, where it applies, and the fix text shown when it is broken;
-- each approved exception is a table in the same file, never a comment in the code, and every report counts them;
+- each approved exception is a dated table in the same file, never a code comment, and every report counts them;
 - one run gives one report in one shape, as text for a person or JSON for a program, with a fixed exit code and a
   last line that says what to do next.
 
@@ -190,7 +190,7 @@ app.py:2:17  error quality no-none-compare  owner payments
 
 engines: ruff 0.17.4
 1 findings (1 error, 0 warning; 0 security), 0 silenced, 0 exceptions in force, 0 not available, 0 failed, 0 not applicable, 0 covers nothing, 0 expired
-next: fix the findings above, or add an approved [[exception]] to /path/to/tm-first-run/temperare.toml
+next: fix the findings above, or add an approved [[exception]] with its expires date to /path/to/tm-first-run/temperare.toml
 ```
 
 The first line estimates the tokens this answer saved against reading ruff's raw output; your numbers will differ
@@ -270,6 +270,7 @@ rule = "git-only-in-deploy"
 path = "tools/release.rs"
 reason = "the release tool is rewritten in 2.0"
 approved = "who approved it"
+expires = "2027-03-31"
 ```
 
 | Key of a `[[rule]]` | Meaning |
@@ -291,13 +292,13 @@ approved = "who approved it"
 `[kits.<name>]`, with an optional `owner`. A finding's owner is the owner of the first kit that holds its file, else
 the top-level `owner`.
 
-An exception names one rule and one file. `reason` and `approved` are required, and an optional `what` limits it to
-the findings whose message contains that text. A finding it covers is counted as silenced and left out of the
-findings; the JSON report lists it under `silenced` with the exception that covered it. An optional
-`expires = "YYYY-MM-DD"` is the exception's last day, in UTC: from the day after, it silences nothing and its
-findings are reported again, unless a later exception in the file covers them. `tm check` then lists it on an
-`expired: <rule> <path> (expired <YYYY-MM-DD>)` line (under `expired` in JSON), counts it as expired, and leaves
-it out of the exceptions in force.
+An exception names one rule and one file. `reason`, `approved` and `expires` are required, and an optional `what`
+limits it to the findings whose message contains that text. A finding it covers is counted as silenced and left out
+of the findings; the JSON report lists it under `silenced` with the exception that covered it. `expires`, written
+`"YYYY-MM-DD"`, is the exception's last day, in UTC; a rule file with an exception that has none is a problem, and
+`tm` exits 2. From the day after, the exception silences nothing and its findings are reported again, unless a
+later exception in the file covers them. `tm check` lists it on an `expired: <rule> <path> (expired <YYYY-MM-DD>)`
+line (under `expired` in JSON), counts it as expired, and leaves it out of the exceptions in force.
 
 A rule file can also take a baseline set, a list of rules built into `tm`: `baseline = ["standard@1"]` at the top
 level adds that set's 53 rules, all at severity `warning`, ahead of the file's own, and an `[[override]]` changes
