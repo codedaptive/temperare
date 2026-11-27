@@ -9,8 +9,8 @@ use serde::{Serialize, Serializer};
 
 /// The report of one check. `exceptions_in_force`, `covers_nothing`, `not_applicable`, `expired`, `date`,
 /// `silenced_by_rule` and `engines` are always serialized, 0, "" and `[]` included; `base` is left out when the check
-/// had no base commit and otherwise is the commit id's hex text. `record` is never serialized, so the `--json` body
-/// does not carry it.
+/// had no base commit and otherwise is the commit id's hex text. A watch rule's outcomes reach no list and no count,
+/// only `record`, which is never serialized, so the `--json` body does not carry it.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct Report {
     /// The kept findings: on new lines when there is a base, and covered by no exception.
@@ -35,7 +35,7 @@ pub struct Report {
     pub silenced_by_rule: Vec<RuleCount>,
     /// One per engine that ran (found and probed for its version), in the order of each one's first applicable rule in
     /// the rule file; its version is `None` when it could not be read. An absent engine is left out of this list; its
-    /// rules show under `not_available`, `not_applicable` or `covers_nothing`.
+    /// rules other than watch rules show under `not_available`, `not_applicable` or `covers_nothing`.
     /// Filled by the caller: `build_report_with_no_files` leaves it empty.
     pub engines: Vec<EngineVersion>,
     pub counts: Counts,

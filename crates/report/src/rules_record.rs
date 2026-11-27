@@ -1,6 +1,6 @@
 //! `rules_record`: the telemetry record's rules list.
 
-use crate::{severity_name, CoversNothing, NotApplicable, RecordFinding, RuleRecord, RuleState, Silenced};
+use crate::{CoversNothing, NotApplicable, RecordFinding, RuleRecord, RuleState, Silenced};
 use rules::{Finding, Rule, RuleFile};
 
 /// One entry per rule of `rules.rules_in_order()`, in that order. A rule's state is, by the first that holds:
@@ -8,7 +8,7 @@ use rules::{Finding, Rule, RuleFile};
 /// the why of the first `no_files` pair for its id (the pair `out_of_play` reads), when it is in the covers-nothing
 /// list; else the state and why of the first `outcomes` entry for its id. A rule with none of these is left out (in a
 /// run none is: engines runs every rule of the file and cli passes each as (rule id, outcome)). See `out_of_play`
-/// for which rules the two lists hold. `severity` is the rule's own (`severity_name`); `findings` are the `kept`
+/// for which rules the two lists hold. `severity` is the rule's own (`Severity::name`); `findings` are the `kept`
 /// findings of the rule, in `kept`'s order; `silenced` counts the `silenced` entries of the rule. Pure.
 pub(crate) fn rules_record(
     rules: &RuleFile,
@@ -42,7 +42,7 @@ fn record(rule: &Rule, state: RuleState, why: Option<String>, kept: &[Finding], 
     RuleRecord {
         rule: rule.id.clone(),
         engine: rule.engine,
-        severity: severity_name(rule.severity),
+        severity: rule.severity.name().to_string(),
         state,
         why,
         findings: kept
