@@ -19,10 +19,11 @@ fn an_absent_severity_is_error() {
 }
 
 #[test]
-fn warning_is_read() {
-    let (severity, out) = read("severity = \"warning\"\n");
-    assert_eq!(severity, Some(Severity::Warning));
-    assert_eq!(out, vec![]);
+fn a_named_severity_is_read() {
+    let rows = [("severity = \"warning\"\n", Severity::Warning), ("severity = \"watch\"\n", Severity::Watch)];
+    for (text, expected) in rows {
+        assert_eq!(read(text), (Some(expected), vec![]), "{text:?}");
+    }
 }
 
 #[test]
@@ -35,7 +36,7 @@ fn an_unknown_severity_is_none_with_a_problem_at_the_value() {
             line: 2,
             col: 12,
             what: "unknown severity \"fatal\"".to_string(),
-            fix: "Use \"error\" or \"warning\".".to_string(),
+            fix: "Use \"error\", \"warning\" or \"watch\".".to_string(),
         }]
     );
 }

@@ -1,0 +1,35 @@
+# A citation left in a Swift comment or test string: a line or block comment, doc comments included, or a string
+# literal inside a func marked @Test or a method of a class whose inheritance list names XCTestCase, whose text holds
+# an R- or S-number, a D-number with or without its hyphen, a fact id after the word fact, or a label of Bob's name
+# and a date in parentheses. A citation points at a record the reader may not have; the code should say the reason
+# itself. A bare eight-hex id is not matched, since a short commit id looks the same. A string outside test code is
+# not a comment and passes.
+id: tm-house-no-register-citation-swift
+language: swift
+message: this comment or test string cites a register number, a fact id or a (Bob, date) label
+severity: warning
+utils:
+  string:
+    any: [{ kind: line_string_literal }, { kind: multi_line_string_literal }, { kind: raw_string_literal }]
+  test-code:
+    kind: function_declaration
+    any:
+      # Swift Testing: a func marked @Test, with or without arguments.
+      - has:
+          kind: modifiers
+          has: { kind: attribute, has: { kind: user_type, regex: ^Test$ } }
+      # XCTest: any method of a class that inherits from XCTestCase by name.
+      - inside:
+          kind: class_body
+          inside:
+            kind: class_declaration
+            has: { kind: inheritance_specifier, has: { kind: user_type, regex: ^XCTestCase$ } }
+rule:
+  regex: '\b[RS]-[0-9]+\b|\bD-?[0-9]+\b|\bfacts? [0-9a-f]{8}\b|\(Bob,? ([0-9]{4}-)?[0-9]{2}-[0-9]{2}'
+  any:
+    - kind: comment
+    - kind: multiline_comment
+    # A string interpolated into another is reported once, as the outer string.
+    - matches: string
+      inside: { matches: test-code, stopBy: end }
+      not: { inside: { matches: string, stopBy: end } }

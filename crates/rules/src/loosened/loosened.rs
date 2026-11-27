@@ -13,7 +13,7 @@ use crate::RuleFile;
 /// - RuleGone: now has it in neither `rules` nor `not_applicable_rules`. A rule an `[[override]]` turns off is left
 ///   out of the `RuleFile` entirely, so off and gone are one kind; so is a rule a newer set retired.
 /// - RuleNotApplicable: now has it in `not_applicable_rules`, with its reason.
-/// - SeverityLowered: now's severity is lower (error to warning).
+/// - SeverityLowered: now's severity is lower (error or warning to watch, or error to warning).
 /// - Paths narrowed: `paths` empty covers every file. Paths are narrowed when a pattern written in the base's `paths`
 ///   is missing from now's non-empty `paths` (PathRemoved, one per pattern), or when the base's `paths` is empty and
 ///   now's is not (PathsLimited). Excludes are widened when a pattern written in now's `exclude` is missing from the
@@ -28,7 +28,7 @@ use crate::RuleFile;
 /// base exception covers one now when it has the same rule and path and its `what` is None or the same, so dropping a
 /// `what` widens and adding one narrows. ExceptionAdded: an exception now that no base exception covers. For a covered
 /// one, the base's date is the latest `expires` of its covering exceptions when all have one: ExpiryLater when now's
-/// `expires` is later; ExpiryDropped when now has none. Then for baseline sets
+/// `expires` is later. Then for baseline sets
 /// ("name@version"): SetDropped when now takes no set of the name; SetOlder when now's version is lower, both read
 /// as u32. A dropped set's rules are still reported RuleGone.
 ///

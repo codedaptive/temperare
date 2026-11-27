@@ -1,4 +1,5 @@
-//! ZUT for rule_loosenings.rs, on rule files built here: one row per kind, and a rewritten pattern.
+//! ZUT for rule_loosenings.rs, on rule files built here: a row for each kind, each severity move, and a rewritten
+//! pattern.
 
 use super::rule_loosenings::rule_loosenings;
 use super::{Loosening, LooseningKind};
@@ -40,6 +41,24 @@ fn each_way_a_rule_loosens_is_found() {
             rule(),
             file(vec![Rule { severity: Severity::Warning, ..rule() }], vec![]),
             vec![found(LooseningKind::SeverityLowered, Some("error"), Some("warning"))],
+        ),
+        (
+            "error lowered to watch",
+            rule(),
+            file(vec![Rule { severity: Severity::Watch, ..rule() }], vec![]),
+            vec![found(LooseningKind::SeverityLowered, Some("error"), Some("watch"))],
+        ),
+        (
+            "warning lowered to watch",
+            Rule { severity: Severity::Warning, ..rule() },
+            file(vec![Rule { severity: Severity::Watch, ..rule() }], vec![]),
+            vec![found(LooseningKind::SeverityLowered, Some("warning"), Some("watch"))],
+        ),
+        (
+            "watch raised to warning",
+            Rule { severity: Severity::Watch, ..rule() },
+            file(vec![Rule { severity: Severity::Warning, ..rule() }], vec![]),
+            vec![],
         ),
         (
             "path removed",

@@ -13,7 +13,7 @@ pub enum LooseningKind {
     /// A rule in force at the base is not applicable now. `after` holds now's reason; `before` is None.
     #[serde(rename = "rule_not_applicable")]
     RuleNotApplicable,
-    /// A rule's severity is lower now. `before` and `after` hold the severity names ("error", "warning").
+    /// A rule's severity is lower now. `before` and `after` hold the severity names ("error", "warning" or "watch").
     #[serde(rename = "severity_lowered")]
     SeverityLowered,
     /// A pattern of the base's `paths` is missing from now's non-empty `paths`. `before` holds the pattern;
@@ -46,10 +46,6 @@ pub enum LooseningKind {
     /// "YYYY-MM-DD".
     #[serde(rename = "expiry_later")]
     ExpiryLater,
-    /// An exception now with no `expires` where the base's covering exceptions all had one; `about` is its rule id.
-    /// `before` holds the base's date (the latest among them) as "YYYY-MM-DD"; `after` is None.
-    #[serde(rename = "expiry_dropped")]
-    ExpiryDropped,
     /// A baseline set taken at the base is not taken now. `before` holds the base's version; `after` is None.
     #[serde(rename = "set_dropped")]
     SetDropped,

@@ -2,7 +2,7 @@
 //! `temperare.toml` in a throwaway folder; expiry tests parse strings directly. The tests cover check-file resolution,
 //! rule scopes, exception matching and expiry, and problems with their locations (SPEC-rules WO-rules-1..4, Tests).
 
-use rules::{Engine, Finding, Kind, RelPath, RuleFile, Severity};
+use rules::{Date, Engine, Finding, Kind, RelPath, RuleFile, Severity};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -120,18 +120,19 @@ fn rule_without_paths_applies_to_every_file() {
 }
 
 #[test]
-fn exception_for_matches_rule_path_and_what() {
+fn exception_on_matches_rule_path_and_what() {
     let tmp = TempFolder::new("exception");
     let file = write_and_read(&tmp.0);
-    let hit = file.exception_for(&finding("crates/core/src/a.rs", "stored Bool isArchived on Order"));
+    let day = Date::new(2026, 11, 27).unwrap();
+    let hit = file.exception_on(&finding("crates/core/src/a.rs", "stored Bool isArchived on Order"), day);
     let exception = hit.expect("same rule, same path, `what` contains isArchived");
     assert_eq!(exception.rule, "no-bool");
     assert_eq!(exception.path, RelPath::new("crates/core/src/a.rs"));
     assert_eq!(exception.what.as_deref(), Some("isArchived"));
     assert_eq!(exception.reason, "Legacy schema.");
     assert_eq!(exception.approved, "bob 2026-11-17");
-    assert!(file.exception_for(&finding("crates/core/src/a.rs", "stored Bool isPaid on Order")).is_none());
-    assert!(file.exception_for(&finding("crates/core/src/b.rs", "stored Bool isArchived on Order")).is_none());
+    assert!(file.exception_on(&finding("crates/core/src/a.rs", "stored Bool isPaid on Order"), day).is_none());
+    assert!(file.exception_on(&finding("crates/core/src/b.rs", "stored Bool isArchived on Order"), day).is_none());
     assert_eq!(file.exceptions.len(), 1);
 }
 
@@ -214,7 +215,7 @@ fn baseline_sets_unknown_set_reports_entry_location_and_fix() {
     let problems = RuleFile::read(&path).expect_err("unknown baseline set must be rejected");
     assert_eq!(
         problems.iter().map(|p| (p.line, p.col, p.what.as_str(), p.fix.as_str())).collect::<Vec<_>>(),
-        vec![(2, 13, "unknown baseline set \"nosuch\"", "Use one of: house@1, standard@1.")],
+        vec![(2, 13, "unknown baseline set \"nosuch\"", "Use one of: house@1, house@2, standard@1.")],
     );
 }
 

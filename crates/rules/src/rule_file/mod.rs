@@ -28,6 +28,7 @@ mod date_value;
 mod embedded_sets;
 mod engine_value;
 mod house_1;
+mod house_2;
 mod kind_value;
 mod kit;
 mod kit_holds;
@@ -52,7 +53,6 @@ mod required_string;
 mod resolve_baseline;
 mod resolved_baseline;
 mod rule_file;
-mod rule_file_exception_for;
 mod rule_file_exception_on;
 mod rule_file_exceptions_expired;
 mod rule_file_new;
@@ -118,6 +118,8 @@ mod engine_value_tests;
 #[cfg(test)]
 mod house_1_tests;
 #[cfg(test)]
+mod house_2_tests;
+#[cfg(test)]
 mod integration;
 #[cfg(test)]
 mod kind_value_tests;
@@ -177,8 +179,6 @@ mod string_value_tests;
 mod syntax_problem_tests;
 #[cfg(test)]
 mod wrong_type_tests;
-#[cfg(test)]
-mod rule_file_exception_for_tests;
 #[cfg(test)]
 mod rule_file_exception_on_tests;
 #[cfg(test)]

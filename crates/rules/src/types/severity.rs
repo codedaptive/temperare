@@ -9,4 +9,6 @@ pub enum Severity {
     Error,
     #[serde(rename = "warning")]
     Warning,
+    #[serde(rename = "watch")]
+    Watch,
 }
