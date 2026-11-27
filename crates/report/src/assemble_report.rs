@@ -1,8 +1,8 @@
 //! `assemble_report`: the report from the rules' outcomes, given the new-only filter.
 
 use crate::{
-    out_of_play, silenced_by_rule, split_by_exceptions, stderr_tail, Counts, Expired, Failed, NotAvailable, Report,
-    Silenced,
+    out_of_play, rules_record, silenced_by_rule, split_by_exceptions, stderr_tail, Counts, Expired, Failed,
+    NotAvailable, Report, RuleState, Silenced,
 };
 use crate::Oid;
 use rules::{Date, Exception, Finding, RuleFile, RuleOutcome};
@@ -14,8 +14,10 @@ use rules::{Date, Exception, Finding, RuleFile, RuleOutcome};
 /// `expired` lists `rules.exceptions_expired(day)` in rule-file order, `exceptions_in_force` counts the rest, both
 /// judged on the same `day` the exceptions silence by; `counts.expired` is the list's length.
 /// Findings, and silenced ones by their finding, are sorted by path, line, col (none first) and rule; not-available and
-/// failed rules by rule. The sorts are stable, so the same input gives the same report. Each outcome carries its own
-/// rule, so the tuple's name is not read. Pure: it runs nothing and reads no file.
+/// failed rules by rule. The sorts are stable, so the same input gives the same report. A NotAvailable or
+/// Failed outcome carries its own rule and a Findings outcome names its rule through its findings; the tuple's name,
+/// the only name a clean rule's Findings has, is read only for the record. `record` is `rules_record`'s list from the
+/// same outcomes, after keep_new and the exceptions. Pure: it runs nothing and reads no file.
 ///
 /// `covers_nothing` and `not_applicable` are `out_of_play`'s lists, with `no_base` when `base` is None (see
 /// `out_of_play` for which rules they hold and in what order). The outcomes of the rules in its third list are dropped,
@@ -36,13 +38,22 @@ pub(crate) fn assemble_report(
     let mut findings = Vec::new();
     let mut not_available = Vec::new();
     let mut failed = Vec::new();
-    for (_, outcome) in outcomes {
+    let mut states: Vec<(String, RuleState, Option<String>)> = Vec::new();
+    for (name, outcome) in outcomes {
         match outcome {
-            RuleOutcome::Findings(found) => findings.extend(found.into_iter().filter(|f| !dropped(&f.rule))),
+            RuleOutcome::Findings(found) => {
+                states.push((name, RuleState::Ran, None));
+                states.extend(found.iter().map(|f| (f.rule.clone(), RuleState::Ran, None)));
+                findings.extend(found.into_iter().filter(|f| !dropped(&f.rule)));
+            }
             RuleOutcome::NotAvailable { rule, .. } | RuleOutcome::Failed { rule, .. } if dropped(&rule) => {}
-            RuleOutcome::NotAvailable { rule, engine, why } => not_available.push(NotAvailable { rule, engine, why }),
+            RuleOutcome::NotAvailable { rule, engine, why } => {
+                states.push((rule.clone(), RuleState::NotAvailable, Some(why.clone())));
+                not_available.push(NotAvailable { rule, engine, why });
+            }
             RuleOutcome::Failed { rule, engine, code, stderr } => {
-                failed.push(Failed { rule, engine, code, stderr_tail: stderr_tail(&stderr) })
+                states.push((rule.clone(), RuleState::Failed, None));
+                failed.push(Failed { rule, engine, code, stderr_tail: stderr_tail(&stderr) });
             }
         }
     }
@@ -54,6 +65,7 @@ pub(crate) fn assemble_report(
     silenced.sort_by(|a, b| place(&a.finding).cmp(&place(&b.finding)));
     not_available.sort_by(|a, b| a.rule.cmp(&b.rule));
     failed.sort_by(|a, b| a.rule.cmp(&b.rule));
+    let record = rules_record(rules, &states, (&covers_nothing, &not_applicable), no_files, &kept, &silenced);
     Report {
         counts: Counts::of(
             &kept,
@@ -76,6 +88,7 @@ pub(crate) fn assemble_report(
         covers_nothing,
         not_applicable,
         expired,
+        record,
     }
 }
 

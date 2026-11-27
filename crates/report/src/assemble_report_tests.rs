@@ -666,3 +666,48 @@ fn the_expired_count_and_exceptions_in_force_split_the_exceptions() {
         assert_eq!((report.expired.len(), report.counts.covers_nothing), (expired, 0), "{case}");
     }
 }
+
+#[test]
+fn record_carries_outcome_and_out_of_play_states() {
+    use crate::RuleState;
+    let mut rules = with_rules(&["q", "own-flag", "base-only", "absent"], vec![]);
+    rules.rules[2].only_with_base = true;
+    rules.not_applicable_rules = vec![not_applicable_rule("aside", Engine::Ruff, Some("set aside"))];
+    let outcomes = vec![
+        ("q".into(), RuleOutcome::Findings(vec![])),
+        ("flag".into(), RuleOutcome::Findings(vec![finding("own-flag", "a.rs", 1, None)])),
+        ("absent".into(), RuleOutcome::NotAvailable { rule: "absent".into(), engine: Engine::Clippy, why: "engine missing".into() }),
+    ];
+    let report = assemble_report(&rules, outcomes, None, day(), date(), &flags(&[("own-flag", "no files")]), |f| f);
+    let rows: Vec<_> = report.record.iter().map(|r| (r.rule.as_str(), r.state, r.why.as_deref())).collect();
+    assert_eq!(rows, vec![
+        ("q", RuleState::Ran, None),
+        ("own-flag", RuleState::CoversNothing, Some("no files")),
+        ("base-only", RuleState::NotApplicable, Some(rules::ONLY_WITH_BASE_WHY)),
+        ("absent", RuleState::NotAvailable, Some("engine missing")),
+        ("aside", RuleState::NotApplicable, Some("set aside")),
+    ]);
+}
+
+#[test]
+fn record_with_base_contains_only_added_line_findings() {
+    use std::{collections::BTreeMap, path::Path};
+    let rules = with_rules(&["r"], vec![]);
+    let lines = BTreeMap::from([(PathBuf::from("a.rs"), vec![10..12])]);
+    let outcomes = of(vec![finding("r", "a.rs", 3, None), finding("r", "a.rs", 10, None)]);
+    let base = Oid::parse("0123456789abcdef0123456789abcdef01234567");
+    let report = assemble_report(&rules, outcomes, base, day(), date(), &[], |f| crate::keep_added(f, &lines, &[], Path::new("")));
+    assert_eq!(report.record.len(), 1);
+    assert_eq!(report.record[0].findings, vec![crate::RecordFinding {
+        path: RelPath::new("a.rs"), line: Some(10), what: "violation".into(),
+    }]);
+}
+
+#[test]
+fn record_counts_findings_silenced_by_real_exceptions_per_rule() {
+    let rules = with_rules(&["a", "b"], vec![exception("a", "a.rs"), exception("b", "b.rs")]);
+    let outcomes = of(vec![finding("a", "a.rs", 1, None), finding("a", "a.rs", 2, None), finding("b", "b.rs", 3, None)]);
+    let report = assemble_report(&rules, outcomes, None, day(), date(), &[], |f| f);
+    let rows: Vec<_> = report.record.iter().map(|r| (r.rule.as_str(), r.silenced)).collect();
+    assert_eq!(rows, vec![("a", 2), ("b", 1)]);
+}
