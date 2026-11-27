@@ -491,7 +491,7 @@ install and run it for a user. [`llms.txt`](llms.txt) is the index.
 | `crates/engines` | One adapter per engine: run it, read its output into findings |
 | `crates/rules` | The rule file: read it, check it, scope a rule by path and kit, exceptions; the rule and finding types |
 | `crates/procio` | Starts the programs Tao runs; the git questions of `cctao check` and `cctao rules` go through the `ccvcslib` library |
-| `temperare.toml`, `rules/` | Tao's own rule file and its ast-grep rule: this repository is checked by itself |
+| `tao.toml`, `rules/` | Tao's own rule file and its ast-grep rule: this repository is checked by itself |
 | `Makefile`, `scripts/` | The build, test and acceptance targets |
 | `docs/` | The reference: [`docs/README.md`](docs/README.md) |
 
