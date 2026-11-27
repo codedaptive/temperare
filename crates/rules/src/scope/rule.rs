@@ -35,15 +35,16 @@ pub struct Rule {
     pub required_params: Vec<String>,
     /// Why the rule is not applicable (e.g. a required param not given); None when it applies.
     pub not_applicable: Option<String>,
-    /// The rule's ast-grep YAML when the baseline set it came from carries it in tm; None for a repository's own rule.
+    /// The rule's ast-grep YAML when the baseline set it came from carries it in cctao; None for a repository's own
+    /// rule.
     pub embedded_text: Option<&'static str>,
     /// The failing and passing cases a baseline set carries for the rule; None for a repository's own rule.
     pub embedded_cases: Option<RuleCases>,
-    /// The params the baseline set's failing case gives, for `tm baseline test` to run that case with; empty when the
-    /// case gives none and for a rule not from a set.
+    /// The params the baseline set's failing case gives, for `cctao baseline test` to run that case with; empty when
+    /// the case gives none and for a rule not from a set.
     pub failing_params: toml::Table,
-    /// The params the baseline set's passing case gives, for `tm baseline test` to run that case with; empty when the
-    /// case gives none and for a rule not from a set.
+    /// The params the baseline set's passing case gives, for `cctao baseline test` to run that case with; empty when
+    /// the case gives none and for a rule not from a set.
     pub passing_params: toml::Table,
     /// The rule's place, from 0, in the rule file's resolved order (the taken sets' rules in `baseline` order, then
     /// the file's own), not-applicable rules counted in their place and off rules left out; 0 for `Rule::new`.

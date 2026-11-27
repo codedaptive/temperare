@@ -1,4 +1,5 @@
-//! rules: the rule file: read it, check it, scope a rule by path and kit, exceptions; the rule and finding types; what a change loosened. Depends on no workspace crate (serde, toml and globset only, S-1). See the Temperare mission (Layout).
+//! rules: the rule file: read it, check it, scope a rule by path and kit, exceptions; the rule and finding types; what
+//! a change loosened. Depends on no workspace crate (serde, toml and globset only, S-1). See the Tao mission (Layout).
 
 mod loosened;
 mod rule_file;

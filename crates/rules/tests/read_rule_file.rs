@@ -1,5 +1,5 @@
 //! ZIT (rule 11): rule-file reading and parsing work with the rest of the rules crate. Disk-backed tests use a
-//! `temperare.toml` in a throwaway folder; expiry tests parse strings directly. The tests cover check-file resolution,
+//! `tao.toml` in a throwaway folder; expiry tests parse strings directly. The tests cover check-file resolution,
 //! rule scopes, exception matching and expiry, and problems with their locations (SPEC-rules WO-rules-1..4, Tests).
 
 use rules::{Date, Engine, Finding, Kind, RelPath, RuleFile, Severity};
@@ -48,7 +48,7 @@ struct TempFolder(PathBuf);
 impl TempFolder {
     fn new(tag: &str) -> TempFolder {
         let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
-        let path = std::env::temp_dir().join(format!("tm-rules-zit-{}-{}-{}", std::process::id(), nanos, tag));
+        let path = std::env::temp_dir().join(format!("cctao-rules-zit-{}-{}-{}", std::process::id(), nanos, tag));
         fs::create_dir_all(&path).unwrap();
         TempFolder(path)
     }
@@ -64,7 +64,7 @@ impl Drop for TempFolder {
 fn write_and_read(dir: &Path) -> RuleFile {
     fs::create_dir_all(dir.join("rules")).unwrap();
     fs::write(dir.join("rules/no-bool.yml"), CHECK_FILE).unwrap();
-    let path = dir.join("temperare.toml");
+    let path = dir.join("tao.toml");
     fs::write(&path, RULE_FILE).unwrap();
     RuleFile::read(&path).unwrap()
 }
@@ -188,7 +188,7 @@ fn broken_file_reports_every_problem_with_its_line() {
     let tmp = TempFolder::new("broken");
     let dir = tmp.0.join("broken");
     fs::create_dir_all(&dir).unwrap();
-    let path = dir.join("temperare.toml");
+    let path = dir.join("tao.toml");
     fs::write(&path, BROKEN_FILE).unwrap();
     let problems = RuleFile::read(&path).expect_err("version 2 and an unknown key");
     let mut lines: Vec<usize> = problems.iter().map(|p| p.line).collect();
@@ -199,7 +199,7 @@ fn broken_file_reports_every_problem_with_its_line() {
 #[test]
 fn baseline_sets_keep_own_rule_and_exception() {
     let tmp = TempFolder::new("baseline-own");
-    let path = tmp.0.join("temperare.toml");
+    let path = tmp.0.join("tao.toml");
     fs::write(&path, "version = 1\nbaseline = [\"standard@1\"]\n\n[[rule]]\nid = \"own-rule\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"Fix it.\"\n\n[[exception]]\nrule = \"own-rule\"\npath = \"a.rs\"\nreason = \"legacy\"\napproved = \"reviewer\"\nexpires = \"2099-12-31\"\n").unwrap();
     let file = RuleFile::read(&path).expect("standard@1 and an own rule should read");
     let ids: Vec<&str> = file.rules.iter().map(|rule| rule.id.as_str()).collect();
@@ -210,7 +210,7 @@ fn baseline_sets_keep_own_rule_and_exception() {
 #[test]
 fn baseline_sets_unknown_set_reports_entry_location_and_fix() {
     let tmp = TempFolder::new("baseline-unknown");
-    let path = tmp.0.join("temperare.toml");
+    let path = tmp.0.join("tao.toml");
     fs::write(&path, "version = 1\nbaseline = [\"nosuch@1\"]\n").unwrap();
     let problems = RuleFile::read(&path).expect_err("unknown baseline set must be rejected");
     assert_eq!(
@@ -222,7 +222,7 @@ fn baseline_sets_unknown_set_reports_entry_location_and_fix() {
 #[test]
 fn baseline_sets_unknown_override_reports_rule_location_and_fix() {
     let tmp = TempFolder::new("baseline-override");
-    let path = tmp.0.join("temperare.toml");
+    let path = tmp.0.join("tao.toml");
     fs::write(&path, "version = 1\nbaseline = [\"standard@1\"]\n[[override]]\nrule = \"tm-none\"\noff = true\n").unwrap();
     let problems = RuleFile::read(&path).expect_err("override of an unknown baseline rule must be rejected");
     assert_eq!(
@@ -234,7 +234,7 @@ fn baseline_sets_unknown_override_reports_rule_location_and_fix() {
 #[test]
 fn baseline_sets_reserved_own_id_reports_id_location_and_fix() {
     let tmp = TempFolder::new("baseline-reserved");
-    let path = tmp.0.join("temperare.toml");
+    let path = tmp.0.join("tao.toml");
     fs::write(&path, "version = 1\n[[rule]]\nid = \"tm-mine\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"Fix it.\"\n").unwrap();
     let problems = RuleFile::read(&path).expect_err("own rule ids must not use the baseline prefix");
     assert_eq!(

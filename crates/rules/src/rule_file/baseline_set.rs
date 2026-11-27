@@ -1,4 +1,4 @@
-//! `BaselineSet`: one version of a baseline set that ships inside `tm`.
+//! `BaselineSet`: one version of a baseline set that ships inside `cctao`.
 
 /// The set `name` at `version`, whose rules are the rule-file `text`, and the ast-grep YAML files and case files it
 /// carries.
@@ -7,7 +7,7 @@ pub(crate) struct BaselineSet {
     pub(crate) name: &'static str,
     pub(crate) version: u32,
     /// Whether a rule file's `baseline` may take the set: one not ready is refused there, its rules not yet proven.
-    /// `baseline_rules` loads every set, ready or not, for `tm baseline test` to run its rules' cases.
+    /// `baseline_rules` loads every set, ready or not, for `cctao baseline test` to run its rules' cases.
     pub(crate) ready: bool,
     pub(crate) text: &'static str,
     /// Each YAML file the set carries: its path relative to the set's folder, as a set rule's `check` names it, and

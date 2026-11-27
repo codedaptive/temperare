@@ -1,6 +1,6 @@
-//! `CaseFile`: one file of a baseline rule's failing or passing case, carried in tm.
+//! `CaseFile`: one file of a baseline rule's failing or passing case, carried in cctao.
 
-/// One file of a case, as tm carries it with the baseline set.
+/// One file of a case, as cctao carries it with the baseline set.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CaseFile {
     /// Where the file is written, relative to the folder the case is run in.

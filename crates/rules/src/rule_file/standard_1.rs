@@ -1,4 +1,4 @@
-//! `STANDARD_1`: the baseline set standard@1 as it ships inside `tm`.
+//! `STANDARD_1`: the baseline set standard@1 as it ships inside `cctao`.
 //!
 //! Past 150 lines on purpose: after the const's head, this file is the list of the files the set carries, one per
 //! line, with no logic. Splitting it would scatter one set's file list over several files.

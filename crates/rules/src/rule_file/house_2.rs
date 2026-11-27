@@ -1,4 +1,4 @@
-//! `HOUSE_2`: the baseline set house@2 as it ships inside `tm`.
+//! `HOUSE_2`: the baseline set house@2 as it ships inside `cctao`.
 
 use super::baseline_set::BaselineSet;
 
