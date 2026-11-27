@@ -10,7 +10,7 @@ use crate::shared_cmd::shared_cmd;
 use crate::types::{EngineVersion, Hit, HitsFn, RuleRun, Stop};
 use crate::union_args::union_args;
 use procio::{Cmd, Output, ProcError};
-use rules::{RelPath, Rule, RuleFile};
+use rules::{RelPath, Rule, RuleFile, Severity};
 use std::cell::{Cell, RefCell};
 use std::io;
 use std::path::Path;
@@ -40,9 +40,10 @@ type Flowed = (Result<Vec<Hit>, Stop>, Option<usize>);
 ///    it does not know and fails the whole run, so the others had no answer. Repeat until a pass finds no unknown
 ///    check; then every rule of that pass is settled with its outcome.
 /// 4. Counts: a shared run is one counted run, its characters counted once. Each real check run's characters go on
-///    the first rule, in the given order, that it settled, as `Some(n)`; every other rule gets `None`, never
-///    `Some(0)`, since a count of rules with `Some` counts the runs. Each rerun after an unknown check is one more
-///    real run, counted on the first rule it settles.
+///    the first rule, in the given order, that it settled whose severity is not watch, as `Some(n)`; a run that
+///    settled only watch rules is counted on none, since the spec leaves a watch rule's run out of tokens saved.
+///    Every other rule gets `None`, never `Some(0)`, since a count of rules with `Some` counts the runs.
+///    Each rerun after an unknown check is one more real run, counted the same way over the rules it settles.
 ///
 /// A shared run that gives no output (program not found, timed out) reaches every rule that shares it as `ran`'s
 /// `Stop`, with no count; output no reader can read is each rule's own `Failed`. Each rule is settled from its flow by
@@ -72,16 +73,14 @@ pub(crate) fn run_group(
         let ran = run_pass(rules, &pending, folder, host, &helpers, hits);
         let unknown = |(got, chars): &Flowed| matches!(got, Err(Stop::UnknownCheck { .. })) && chars.is_some();
         let some_unknown = ran.iter().any(unknown);
-        let mut chars = ran.iter().find_map(|(_, chars)| *chars);
-        let mut rest = Vec::new();
-        for (at, flowed) in pending.into_iter().zip(ran) {
-            if some_unknown && !unknown(&flowed) {
-                rest.push(at);
-                continue;
-            }
-            done.push(run_of(at, flowed.0, chars.take()));
+        let chars = ran.iter().find_map(|(_, chars)| *chars);
+        let (rest, settled): (Vec<_>, Vec<_>) =
+            pending.into_iter().zip(ran).partition(|(_, flowed)| some_unknown && !unknown(flowed));
+        let target = settled.iter().map(|(at, _)| *at).find(|at| rules[*at].severity != Severity::Watch);
+        for (at, (got, _)) in settled {
+            done.push(run_of(at, got, if Some(at) == target { chars } else { None }));
         }
-        pending = rest;
+        pending = rest.into_iter().map(|(at, _)| at).collect();
     }
     done.sort_by_key(|(at, _)| *at);
     done.into_iter().map(|(_, run)| run).collect()

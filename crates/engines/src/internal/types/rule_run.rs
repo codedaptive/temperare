@@ -16,9 +16,10 @@ pub struct RuleRun {
     /// `Some(n)`: the rule's check run, or its group's shared run (`run_group`) counted on it, ran and printed n
     /// characters, stdout plus stderr, each read as lossy UTF-8 and counted in chars; `Some(0)` when it printed
     /// nothing. A check the engine's run said it does not know is `NotAvailable` after its counted run, so it is `Some`
-    /// unless that run was counted on another rule. `None`: its engine made no counted run (an engine not available, a
-    /// check refused or found unknown before its run, a run that could not start or timed out, or a rule that ran
-    /// nothing because no file it checks exists), or its shared run was counted on another rule of its group.
+    /// unless that run was counted on another rule or on none. `None`: its engine made no counted run (an engine not
+    /// available, a check refused or found unknown before its run, a run that could not start or timed out, or a rule
+    /// that ran nothing because no file it checks exists), or its shared run was counted on another rule of its group,
+    /// or on none because it settled only watch rules.
     pub raw_chars: Option<usize>,
     /// `Some(why)`: the rule ran nothing because no file it checks exists, and `why` says which case (its paths match
     /// no file of the rule file's folder, or none of the files is one its engine checks). Its outcome is then `Findings` with none and
