@@ -5,7 +5,7 @@ use procio::Cmd;
 use std::path::Path;
 
 /// `periphery <PERIPHERY.args> --index-store-path <store> --json-package-manifest-path <manifest> --config <config>`,
-/// run in `root`. `--skip-build` reads the index store tm's own build wrote; `--config` names the empty file tm
+/// run in `root`. `--skip-build` reads the index store cctao's own build wrote; `--config` names the empty file cctao
 /// wrote, so the package's `.periphery.yml` is never read.
 pub fn periphery_cmd(root: &Path, store: &Path, manifest: &Path, config: &Path) -> Cmd {
     let fixed = PERIPHERY.args.iter().map(Into::into);

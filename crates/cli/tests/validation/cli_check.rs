@@ -54,7 +54,7 @@ impl Repo {
         let parent = fs::canonicalize(std::env::temp_dir()).unwrap();
         let dir = loop {
             let n = NEXT_FOLDER.fetch_add(1, Ordering::Relaxed);
-            let path = parent.join(format!("tm-check-zit-{}-{n}", std::process::id()));
+            let path = parent.join(format!("cctao-check-zit-{}-{n}", std::process::id()));
             match fs::create_dir(&path) {
                 Ok(()) => break path,
                 Err(error) if error.kind() == ErrorKind::AlreadyExists => continue,
@@ -68,7 +68,7 @@ impl Repo {
         fs::create_dir(repo.dir.join("stubs")).unwrap();
         symlink(&repo.git, repo.dir.join("stubs/git")).unwrap();
         repo.git(&["init", "-q"]);
-        fs::write(repo.dir.join("temperare.toml"), rules).unwrap();
+        fs::write(repo.dir.join("tao.toml"), rules).unwrap();
         fs::write(repo.dir.join("a.py"), "import os\n").unwrap();
         repo
     }
@@ -90,11 +90,11 @@ impl Repo {
         ));
     }
 
-    /// Runs the built temperare with PATH = the stubs folder and HOME = the test's temp home.
+    /// Runs the built cctao with PATH = the stubs folder and HOME = the test's temp home.
     fn check(&self, args: &[&str]) -> Output {
         let mut check_args = vec!["check"];
         check_args.extend_from_slice(args);
-        run(env!("CARGO_BIN_EXE_temperare").as_ref(), &check_args, &self.dir, self.dir.join("stubs").as_os_str(), Some(self.home.path()), false)
+        run(env!("CARGO_BIN_EXE_cctao").as_ref(), &check_args, &self.dir, self.dir.join("stubs").as_os_str(), Some(self.home.path()), false)
     }
 }
 
@@ -193,7 +193,7 @@ fn savings_check(repo: &Repo, home: &Path, args: &[&str]) -> Output {
             ("GIT_CEILING_DIRECTORIES".into(), repo.dir.parent().unwrap().as_os_str().into()),
         ],
         env_remove: std::env::vars_os().map(|(name, _)| name).collect(),
-        ..Cmd::new(env!("CARGO_BIN_EXE_temperare"))
+        ..Cmd::new(env!("CARGO_BIN_EXE_cctao"))
     }).unwrap()
 }
 
@@ -251,14 +251,14 @@ fn savings_text_line_and_json_savings_each_follow_their_printed_body() {
     let text_tokens = output_tokens(text_body.chars().count());
     let text_saved = 93usize.saturating_sub(text_tokens);
     assert_eq!(percent(53, 93), 56);
-    assert!(line.starts_with(&format!("[temperare] tokens saved ≈ {text_saved} ({}%) — this output ≈ {text_tokens} tok", percent(text_saved, 93))), "{stdout}");
+    assert!(line.starts_with(&format!("[cctao] tokens saved ≈ {text_saved} ({}%) — this output ≈ {text_tokens} tok", percent(text_saved, 93))), "{stdout}");
 }
 
 #[test]
 fn savings_config_disables_the_text_line() {
     let (repo, home) = savings_repo();
-    fs::create_dir_all(home.join(".config/temperare")).unwrap();
-    fs::write(home.join(".config/temperare/config.toml"), "savings_line = false\n").unwrap();
+    fs::create_dir_all(home.join(".config/cctao")).unwrap();
+    fs::write(home.join(".config/cctao/config.toml"), "savings_line = false\n").unwrap();
     let stdout = text(&savings_check(&repo, &home, &[]), 0);
     assert!(stdout.starts_with("engines: ruff (version unknown)\n0 findings"), "{stdout}");
     assert!(!stdout.contains("tokens saved"), "{stdout}");
@@ -267,7 +267,7 @@ fn savings_config_disables_the_text_line() {
 #[test]
 fn savings_log_appends_one_line_per_check() {
     let (repo, home) = savings_repo();
-    let log = home.join(".local/state/temperare/savings.jsonl");
+    let log = home.join(".local/state/cctao/savings.jsonl");
     assert!(!log.exists());
     text(&savings_check(&repo, &home, &[]), 0);
     assert_eq!(fs::read_to_string(&log).unwrap().lines().count(), 1);
@@ -289,7 +289,7 @@ fn check_runs_with_home_at_the_test_home() {
     let repo = Repo::new(QUALITY);
     repo.stub("printf '[]\\n'\nexit 0");
     text(&repo.check(&[]), 0);
-    let log = repo.home.path().join(".local/state/temperare/savings.jsonl");
+    let log = repo.home.path().join(".local/state/cctao/savings.jsonl");
     assert_eq!(fs::read_to_string(&log).unwrap().lines().count(), 1);
 }
 
@@ -300,7 +300,11 @@ fn quality_error_names_rule_place_fix_and_exception() {
     let stdout = text(&repo.check(&[]), 1);
     assert!(stdout.contains("a.py:1:8  error quality python-lint"), "{stdout}");
     assert!(stdout.contains("  fix: Remove the unused import."), "{stdout}");
-    assert_eq!(stdout.lines().last(), Some(format!("next: fix the findings above, or add an approved [[exception]] to {}", repo.dir.join("temperare.toml").display()).as_str()));
+    let next = format!(
+        "next: fix the findings above, or add an approved [[exception]] with its expires date to {}",
+        repo.dir.join("tao.toml").display()
+    );
+    assert_eq!(stdout.lines().last(), Some(next.as_str()));
 }
 
 #[test]
@@ -359,7 +363,11 @@ fn base_head_keeps_finding_on_added_line() {
     repo.diagnostic(2);
     let stdout = text(&repo.check(&["--base", "HEAD"]), 1);
     assert!(stdout.contains("a.py:2:8  error quality python-lint"), "{stdout}");
-    assert_eq!(stdout.lines().last(), Some(format!("next: fix the findings above, or add an approved [[exception]] to {}", repo.dir.join("temperare.toml").display()).as_str()));
+    let next = format!(
+        "next: fix the findings above, or add an approved [[exception]] with its expires date to {}",
+        repo.dir.join("tao.toml").display()
+    );
+    assert_eq!(stdout.lines().last(), Some(next.as_str()));
 }
 
 #[test]
@@ -371,7 +379,11 @@ fn json_is_one_object_with_report_exit_and_next() {
     let value: serde_json::Value = serde_json::from_str(&stdout).unwrap();
     assert!(value.is_object());
     assert_eq!(value["exit"], 1);
-    assert_eq!(value["next"], format!("fix the findings above, or add an approved [[exception]] to {}", repo.dir.join("temperare.toml").display()));
+    let next = format!(
+        "fix the findings above, or add an approved [[exception]] with its expires date to {}",
+        repo.dir.join("tao.toml").display()
+    );
+    assert_eq!(value["next"], next);
     assert_eq!(value["findings"].as_array().unwrap().len(), 1);
     assert_eq!(value["findings"][0]["rule"], "python-lint");
     assert_eq!(value["counts"]["findings"], 1);
@@ -384,15 +396,15 @@ fn bad_base_reports_usage_error() {
     assert_eq!(output.code, Some(2));
     assert!(output.stdout.is_empty());
     let stderr = String::from_utf8(output.stderr).unwrap();
-    assert!(stderr.lines().any(|line| line == "tm: base 'nosuchrev' does not name a commit"), "{stderr}");
+    assert!(stderr.lines().any(|line| line == "cctao: base 'nosuchrev' does not name a commit"), "{stderr}");
 }
 
-/// Follows savings_real_engine's on_tm_path branch for an absent ruff.
+/// Follows savings_real_engine's on_cctao_path branch for an absent ruff.
 #[test]
 fn real_ruff_unknown_check_is_not_available_with_engine_version_and_check() {
     let repo = crate::repo::Repo::new();
     let home = TempHome::new();
-    repo.write("temperare.toml", r#"version = 1
+    repo.write("tao.toml", r#"version = 1
 [[rule]]
 id = "unknown-check"
 engine = "ruff"
@@ -401,9 +413,9 @@ fix = "Choose a supported check."
 "#);
     repo.write("a.py", "import os\n");
     repo.commit("unknown check");
-    let output = crate::run_clean::run_clean(env!("CARGO_BIN_EXE_temperare"), &["check"], repo.path(), crate::env::tm_env(None, home.path()));
+    let output = crate::run_clean::run_clean(env!("CARGO_BIN_EXE_cctao"), &["check"], repo.path(), crate::env::cctao_env(None, home.path()));
     let stdout = String::from_utf8(output.stdout).unwrap();
-    if !crate::on_tm_path::on_tm_path("ruff") {
+    if !crate::on_cctao_path::on_cctao_path("ruff") {
         assert_eq!(output.code, Some(3), "{stdout}");
         assert!(stdout.contains("not available: unknown-check (ruff): ruff not found on PATH"), "{stdout}");
         assert!(!stdout.lines().any(|line| line.starts_with("engines:")), "an absent engine is not listed: {stdout}");
@@ -411,9 +423,9 @@ fix = "Choose a supported check."
     }
     assert_eq!(output.code, Some(3), "{stdout}\n{}", String::from_utf8_lossy(&output.stderr));
     let why = stdout.lines().find_map(|line| line.strip_prefix("not available: unknown-check (ruff): ")).expect("not available line");
-    // The version is machine-specific, so it is read from the same ruff tm runs for this expected value only;
+    // The version is machine-specific, so it is read from the same ruff cctao runs for this expected value only;
     // for ruff's `ruff X.Y.Z` output, word nth(1) is the same word engines' `version_word` takes.
-    let version_output = crate::run_clean::run_clean("ruff", &["--version"], repo.path(), crate::env::tm_env(None, home.path()));
+    let version_output = crate::run_clean::run_clean("ruff", &["--version"], repo.path(), crate::env::cctao_env(None, home.path()));
     assert_eq!(version_output.code, Some(0));
     let version_stdout = String::from_utf8(version_output.stdout).unwrap();
     let version = version_stdout.split_whitespace().nth(1).expect("ruff version");
@@ -425,12 +437,12 @@ fix = "Choose a supported check."
     assert_eq!(stdout.lines().last(), Some(format!("next: ruff: {why} (or run without those rules)").as_str()));
 }
 
-/// Follows savings_real_engine's on_tm_path branch for an absent ruff.
+/// Follows savings_real_engine's on_cctao_path branch for an absent ruff.
 #[test]
 fn real_ruff_param_it_does_not_take_fails_before_the_check_runs() {
     let repo = crate::repo::Repo::new();
     let home = TempHome::new();
-    repo.write("temperare.toml", r#"version = 1
+    repo.write("tao.toml", r#"version = 1
 [[rule]]
 id = "param-rule"
 engine = "ruff"
@@ -440,9 +452,9 @@ fix = "Remove the unsupported parameter."
 "#);
     repo.write("a.py", "import os\n");
     repo.commit("unsupported parameter");
-    let output = crate::run_clean::run_clean(env!("CARGO_BIN_EXE_temperare"), &["check"], repo.path(), crate::env::tm_env(None, home.path()));
+    let output = crate::run_clean::run_clean(env!("CARGO_BIN_EXE_cctao"), &["check"], repo.path(), crate::env::cctao_env(None, home.path()));
     let stdout = String::from_utf8(output.stdout).unwrap();
-    if !crate::on_tm_path::on_tm_path("ruff") {
+    if !crate::on_cctao_path::on_cctao_path("ruff") {
         assert_eq!(output.code, Some(3), "{stdout}");
         assert!(stdout.contains("not available: param-rule (ruff): ruff not found on PATH"), "{stdout}");
         return;
@@ -451,15 +463,15 @@ fix = "Remove the unsupported parameter."
     assert!(stdout.contains("failed: param-rule (ruff), no exit code"), "{stdout}");
     assert!(stdout.contains("stderr of param-rule (ruff):\n  ruff param foo: a ruff rule reads only the `max_complexity` param"), "{stdout}");
     assert_eq!(stdout.lines().last(), Some("next: see the engine output above"));
-    assert!(!stdout.contains("[temperare] tokens saved"), "{stdout}");
-    // The version is machine-specific, so it is read from the same ruff tm runs for this expected value only.
-    let version_output = crate::run_clean::run_clean("ruff", &["--version"], repo.path(), crate::env::tm_env(None, home.path()));
+    assert!(!stdout.contains("[cctao] tokens saved"), "{stdout}");
+    // The version is machine-specific, so it is read from the same ruff cctao runs for this expected value only.
+    let version_output = crate::run_clean::run_clean("ruff", &["--version"], repo.path(), crate::env::cctao_env(None, home.path()));
     assert_eq!(version_output.code, Some(0));
     let version_stdout = String::from_utf8(version_output.stdout).unwrap();
     let version = version_stdout.split_whitespace().nth(1).expect("ruff version");
     // A refused param fails the rule, but ruff was found, so it stays listed.
     assert!(stdout.lines().any(|line| line == format!("engines: ruff {version}")), "{stdout}");
-    let json = crate::run_clean::run_clean(env!("CARGO_BIN_EXE_temperare"), &["check", "--json"], repo.path(), crate::env::tm_env(None, home.path()));
+    let json = crate::run_clean::run_clean(env!("CARGO_BIN_EXE_cctao"), &["check", "--json"], repo.path(), crate::env::cctao_env(None, home.path()));
     assert_eq!(json.code, Some(5), "{}", String::from_utf8_lossy(&json.stderr));
     let value: serde_json::Value = serde_json::from_slice(&json.stdout).unwrap();
     assert_eq!(value["engines"], serde_json::json!([{ "engine": "ruff", "version": version }]), "{}", String::from_utf8_lossy(&json.stdout));

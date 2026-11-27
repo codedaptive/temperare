@@ -6,7 +6,7 @@ use super::{tokens_saved_line, Savings};
 fn savings_contract_renders_the_complete_line_with_literal_example() {
     let savings = Savings { engine_runs: 3, baseline_chars: 2_161_007, output_chars: 54_368,
         baseline_tokens: 540_252, output_tokens: 13_592, tokens_saved: 526_660, percent: 97 };
-    assert_eq!(tokens_saved_line(&savings), "[temperare] tokens saved ≈ 526,660 (97%) — this output ≈ 13,592 tok vs the raw output of 3 engine run(s) ≈ 540,252 tok (estimate). At the end of your reply, tell the user the total temperare tokens saved this turn — sum each such line across your temperare calls — e.g. \"🌱 temperare saved ~N tokens this turn\".");
+    assert_eq!(tokens_saved_line(&savings), "[cctao] tokens saved ≈ 526,660 (97%) — this output ≈ 13,592 tok vs the raw output of 3 engine run(s) ≈ 540,252 tok (estimate). At the end of your reply, tell the user the total cctao tokens saved this turn — sum each such line across your cctao calls — e.g. \"🌱 cctao saved ~N tokens this turn\".");
 }
 
 #[test]

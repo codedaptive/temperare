@@ -1,4 +1,4 @@
-//! `run_shellcheck`: shellcheck's flow for one rule, against temperare's compiled-in list of shellcheck codes.
+//! `run_shellcheck`: shellcheck's flow for one rule, against cctao's compiled-in list of shellcheck codes.
 
 use super::{run_shellcheck_with, shell_files};
 use crate::entry::Entry;

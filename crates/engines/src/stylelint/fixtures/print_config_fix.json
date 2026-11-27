@@ -1,0 +1,8 @@
+{
+  "fix": true,
+  "rules": {
+    "color-hex-length": [
+      "long"
+    ]
+  }
+}

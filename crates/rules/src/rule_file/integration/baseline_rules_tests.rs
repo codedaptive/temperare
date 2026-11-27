@@ -139,12 +139,31 @@ fn house_1_loads_every_rule_in_set_order() {
 }
 
 #[test]
+fn house_2_loads_every_rule_in_set_order() {
+    let rules = baseline_rules("house@2").unwrap_or_else(|p| panic!("house@2 should load: {p:?}"));
+    let expected: Vec<_> = expected_rows()
+        .into_iter()
+        .map(|row| row.0)
+        .chain([
+            "tm-house-no-register-citation-rust",
+            "tm-house-no-register-citation-swift",
+            "tm-house-no-register-citation-python",
+        ])
+        .collect();
+    assert_eq!(rules.len(), 39);
+    for (position, (rule, id)) in rules.iter().zip(expected).enumerate() {
+        assert_eq!(rule.id, id);
+        assert_eq!(rule.position, position);
+    }
+}
+
+#[test]
 fn an_unknown_set_is_its_problem() {
     let expected = Problem {
         line: 2,
         col: 13,
         what: "unknown baseline set \"nosuch\"".to_string(),
-        fix: "Use one of: house@1, standard@1.".to_string(),
+        fix: "Use one of: house@1, house@2, standard@1.".to_string(),
     };
     assert_eq!(baseline_rules("nosuch@1").expect_err("nosuch@1 is no set"), vec![expected]);
 }

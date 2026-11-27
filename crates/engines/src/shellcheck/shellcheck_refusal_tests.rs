@@ -22,7 +22,7 @@ fn the_reason_names_the_check() {
     assert_eq!(
         shellcheck_refusal("SC2086,SC2034"),
         Some(
-            "shellcheck check `SC2086,SC2034` is not one ShellCheck code such as `SC2086`, so tm cannot tell which findings it selects"
+            "shellcheck check `SC2086,SC2034` is not one ShellCheck code such as `SC2086`, so cctao cannot tell which findings it selects"
                 .to_string()
         )
     );

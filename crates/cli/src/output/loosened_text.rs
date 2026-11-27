@@ -1,4 +1,4 @@
-//! `loosened_text`: what `tm rules --loosened` found, as text.
+//! `loosened_text`: what `cctao rules --loosened` found, as text.
 
 use super::serde_name::serde_name;
 use std::fmt::Write;

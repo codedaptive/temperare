@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use engines::{availability, run_rules_versioned_at, Availability};
+use engines::{availability_in, run_rules_versioned_at, Availability};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
 struct TempFolder(PathBuf);
@@ -80,8 +80,8 @@ fn assert_incompatible_ruff_runs(repo: &Path, rules: &[String; 2]) {
 
 #[test]
 fn ruff_incompatible_rules_match_separate_runs() {
-    assert_eq!(availability(Engine::Ruff), Availability::Available);
     let repo = TempFolder::new("ruff-incompatible");
+    assert_eq!(availability_in(Engine::Ruff, &repo.0), Availability::Available);
     fs::write(repo.0.join("example.py"), "class A:\n    \"\"\"Doc.\"\"\"\n").unwrap();
     let rules = [rule("d203", "ruff", "D203", None), rule("d211", "ruff", "D211", None)];
     assert_incompatible_ruff_runs(&repo.0, &rules);
@@ -89,8 +89,8 @@ fn ruff_incompatible_rules_match_separate_runs() {
 
 #[test]
 fn ruff_shared_runs_match_separate_rules() {
-    assert_eq!(availability(Engine::Ruff), Availability::Available);
     let repo = TempFolder::new("ruff");
+    assert_eq!(availability_in(Engine::Ruff, &repo.0), Availability::Available);
     let source = "import os\nvalue = None\nif value == None:\n    pass\n";
     fs::write(repo.0.join("keep.py"), source).unwrap();
     fs::write(repo.0.join("omit.py"), source).unwrap();
@@ -103,9 +103,10 @@ fn ruff_shared_runs_match_separate_rules() {
 }
 
 #[test]
+#[cfg_attr(windows, ignore = "SwiftLint publishes no Windows build")]
 fn swiftlint_shared_runs_match_separate_rules() {
-    assert_eq!(availability(Engine::SwiftLint), Availability::Available);
     let repo = TempFolder::new("swiftlint");
+    assert_eq!(availability_in(Engine::SwiftLint, &repo.0), Availability::Available);
     let source = "func example(_ value: Any) throws {\n    let text = value as! String\n    let result = try! throwing()\n    print(text, result)\n}\nfunc throwing() throws -> Int { 1 }\n";
     fs::write(repo.0.join("Keep.swift"), source).unwrap();
     fs::write(repo.0.join("Omit.swift"), source).unwrap();
@@ -119,8 +120,8 @@ fn swiftlint_shared_runs_match_separate_rules() {
 
 #[test]
 fn clippy_shared_runs_match_separate_rules() {
-    assert_eq!(availability(Engine::Clippy), Availability::Available);
     let repo = TempFolder::new("clippy");
+    assert_eq!(availability_in(Engine::Clippy, &repo.0), Availability::Available);
     fs::create_dir(repo.0.join("src")).unwrap();
     fs::create_dir(repo.0.join(".cargo")).unwrap();
     fs::write(repo.0.join(".cargo/config.toml"), "[net]\noffline = true\n").unwrap();
@@ -138,8 +139,8 @@ fn clippy_shared_runs_match_separate_rules() {
 
 #[test]
 fn ast_grep_shared_runs_match_separate_rules() {
-    assert_eq!(availability(Engine::AstGrep), Availability::Available);
     let repo = TempFolder::new("ast-grep");
+    assert_eq!(availability_in(Engine::AstGrep, &repo.0), Availability::Available);
     let source = "console.log(foo);\nconsole.log(bar);\n";
     fs::write(repo.0.join("keep.js"), source).unwrap();
     fs::write(repo.0.join("omit.js"), source).unwrap();

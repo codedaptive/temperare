@@ -28,7 +28,7 @@
           ]
         },
         {
-          "ruleId": "R1",
+          "ruleId": "R4",
           "message": { "text": "outside" },
           "locations": [
             { "physicalLocation": { "artifactLocation": { "uri": "file:///elsewhere/d.py" }, "region": { "startLine": 4, "startColumn": 4 } } }

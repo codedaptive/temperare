@@ -8,7 +8,7 @@ use crate::types::{Hit, Stop};
 use rules::Rule;
 use std::path::Path;
 
-/// `run_git_with` reading the change with `change_of` (git, through procio); a `RunFn`, the flow of `GIT`.
+/// `run_git_with` reading the change with `change_of` (git, through ccvcslib); a `RunFn`, the flow of `GIT`.
 pub(crate) fn run_git(entry: &Entry, rule: &Rule, folder: &Path, host: &Host) -> Result<Vec<Hit>, Stop> {
     run_git_with(&change_of, entry, rule, folder, host)
 }

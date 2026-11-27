@@ -12,6 +12,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "arraydeque"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d902e3d592a523def97af8f317b08ce16b7ab854c1985a0c671e6f15cebc236"
+
+[[package]]
 name = "bstr"
 version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -22,9 +28,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "cli"
-version = "0.4.0"
+name = "ccvcslib"
+version = "0.2.1"
+source = "git+https://github.com/codedaptive/ccvcslib?tag=v0.2.1#d0449568cf28c33631317b41f6d8385e0d7d88f5"
 dependencies = [
+ "libc",
+]
+
+[[package]]
+name = "cli"
+version = "0.5.0"
+dependencies = [
+ "ccvcslib",
  "engines",
  "libc",
  "procio",
@@ -36,12 +51,14 @@ dependencies = [
 
 [[package]]
 name = "engines"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
+ "ccvcslib",
  "libc",
  "procio",
  "regex-syntax",
  "rules",
+ "saphyr-parser",
  "serde",
  "serde_json",
  "toml",
@@ -117,7 +134,7 @@ dependencies = [
 
 [[package]]
 name = "procio"
-version = "0.4.0"
+version = "0.5.0"
 
 [[package]]
 name = "quote"
@@ -147,8 +164,9 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "report"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
+ "ccvcslib",
  "procio",
  "rules",
  "serde",
@@ -156,11 +174,21 @@ dependencies = [
 
 [[package]]
 name = "rules"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "globset",
  "serde",
  "toml",
+]
+
+[[package]]
+name = "saphyr-parser"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a425f8285f1321dd220c4d781a7f757eccd6639359f72bdeceec3cdaac8b3a7"
+dependencies = [
+ "arraydeque",
+ "thiserror",
 ]
 
 [[package]]
@@ -224,6 +252,26 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "thiserror"
+version = "2.0.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09e52cb86a36cede5cb101bf8908837b3e4c6e5e59fe7fd85c23fb56200d189e"
+dependencies = [
+ "thiserror-impl",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "2.0.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe5197923287db20a58125f0bc85c062f7f2c892de97b18c356f9efb14b28524"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

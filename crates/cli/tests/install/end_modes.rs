@@ -8,7 +8,7 @@ use std::os::unix::fs::PermissionsExt;
 
 #[test]
 fn installed_modes_do_not_depend_on_umask() {
-    if let Ok(mask) = std::env::var("TEMPERARE_END_MODES_CHILD") {
+    if let Ok(mask) = std::env::var("CCTAO_END_MODES_CHILD") {
         let f = Fixture::new();
         let probe = f.root.join("umask-probe");
         fs::write(&probe, b"probe").unwrap();
@@ -22,9 +22,9 @@ fn installed_modes_do_not_depend_on_umask() {
         let (status, out, err) = f.install(&InstallArgs { yes: true, ..Default::default() });
         assert_eq!(status, 0, "install failed under umask {mask}: {out} {err}");
         for (path, expected) in [
-            (f.host.home.join(".local/bin/temperare"), 0o755),
+            (f.host.home.join(".local/bin/cctao"), 0o755),
             (skill(&f.host.home, ".claude"), 0o644),
-            (f.host.home.join(".local/state/temperare/installed"), 0o644),
+            (f.host.home.join(".local/state/cctao/installed"), 0o644),
         ] {
             assert_eq!(
                 fs::symlink_metadata(&path).unwrap().permissions().mode() & 0o7777,
@@ -47,7 +47,7 @@ fn installed_modes_do_not_depend_on_umask() {
                 "end_modes::installed_modes_do_not_depend_on_umask".into(),
                 "--nocapture".into(),
             ],
-            env: vec![("TEMPERARE_END_MODES_CHILD".into(), mask.into())],
+            env: vec![("CCTAO_END_MODES_CHILD".into(), mask.into())],
             ..procio::Cmd::new("sh")
         }).unwrap();
         let stdout = String::from_utf8_lossy(&child.stdout);

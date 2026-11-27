@@ -7,8 +7,8 @@ use procio::Output;
 use serde::Deserialize;
 use std::path::Path;
 
-/// The fields of one result tm reads. Only these: a `redundantConformance` result carries no `modules`, and the
-/// other fields (`ids`, `modifiers`, `attributes`, `accessibility`) say nothing tm reports.
+/// The fields of one result cctao reads. Only these: a `redundantConformance` result carries no `modules`, and the
+/// other fields (`ids`, `modifiers`, `attributes`, `accessibility`) say nothing cctao reports.
 #[derive(Deserialize)]
 struct Scanned {
     name: String,
@@ -29,7 +29,7 @@ pub fn parse_periphery(out: &Output, check: &str, cwd: &Path, folder: &Path) -> 
     let mut hits = Vec::new();
     for result in results.into_iter().filter(|result| check == "all" || result.hints.iter().any(|hint| hint == check)) {
         let (path, line, col) = place(&result.location).ok_or_else(|| ParseError {
-            why: format!("periphery printed a location tm cannot read: `{}`", result.location),
+            why: format!("periphery printed a location cctao cannot read: `{}`", result.location),
         })?;
         if let Some(path) = rel_to_folder(cwd, folder, path) {
             let what = format!("{} {}: {}", result.kind, result.name, result.hints.join(", "));

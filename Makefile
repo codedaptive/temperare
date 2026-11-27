@@ -1,7 +1,7 @@
-# Temperare workspace targets. Extra test targets of the team's harness are supplied from outside this
+# Code Chi Tao workspace targets. Extra test targets of the team's harness are supplied from outside this
 # repository (MAKEFILES=<path>); the targets here need no team harness.
 CARGO ?= cargo
-.PHONY: test-one test-group check test accept
+.PHONY: test-one test-group check check-cross test accept windows-run
 
 # Three kinds of test: GROUP=unit (default), integration or validation; scripts/test_one.sh says what each runs.
 GROUP ?= unit
@@ -16,15 +16,27 @@ test-group:
 check:
 	$(CARGO) check --workspace --all-targets
 
+# The type-check for Windows and Linux from this Mac (Linux needs only a type-check; Windows
+# code behind cfg(windows) is caught here before a real Windows run). Each target's standard library must be installed.
+CROSS_TARGETS ?= x86_64-pc-windows-msvc x86_64-unknown-linux-gnu
+check-cross:
+	@rc=0; for t in $(CROSS_TARGETS); do $(CARGO) check --workspace --all-targets --target $$t || rc=1; done; exit $$rc
+
 test:
 	@$(MAKE) --no-print-directory test-group GROUP=$(GROUP)
 
-# The acceptance checks: the built temperare with the real engines, on throwaway repositories
-# (crates/cli/tests/validation, built in release, as every validation target). scripts/accept.sh runs it
-# and writes the report to ACCEPT_REPORT; the default is inside the repository, so it names no path outside it.
+# The Done list (mission, Done 1-10): the built cctao with the real engines, on throwaway repositories
+# (crates/cli/tests/validation, lane-written; release, as every validation target). scripts/accept.sh runs it
+# and writes the report to ACCEPT_REPORT; the default is inside the repository, so it names no team path.
 ACCEPT_REPORT ?= $(CURDIR)/target/accept-report.md
 accept:
 	@CARGO="$(CARGO)" CARGO_TEST_ARGS="$(CARGO_TEST_ARGS)" sh "$(CURDIR)/scripts/accept.sh" "$(ACCEPT_REPORT)"
+
+# The unit and integration suite on the Windows machine (WINDOWS_HOST, default gammaAI), at COMMIT (default
+# develop): scripts/windows_run.sh says how. Output in target/windows-run/<short>/out/.
+COMMIT ?= develop
+windows-run:
+	@sh "$(CURDIR)/scripts/windows_run.sh" "$(COMMIT)"
 
 ifeq ($(GROUP),unit)
 ZONE_TEST = $(CARGO) test --workspace --lib -- --skip integration::

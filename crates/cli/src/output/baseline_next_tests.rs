@@ -67,7 +67,7 @@ fn baseline_next_text() {
                 not_available("tm-alpha", Engine::Ruff),
                 not_available("tm-beta", Engine::SwiftLint),
             ],
-            "install swiftlint, ruff, then run tm baseline test again",
+            "install swiftlint, ruff, then run cctao baseline test again",
         ),
         (
             "not applicable only",
@@ -79,7 +79,7 @@ fn baseline_next_text() {
             "not applicable and not available: both parts, install first",
             3,
             vec![not_applicable("tm-zeta"), not_available("tm-alpha", Engine::Clippy)],
-            "install clippy, then run tm baseline test again; each not-applicable rule above says why it was not run",
+            "install clippy, then run cctao baseline test again; each not-applicable rule above says why it was not run",
         ),
         (
             "unknown check only: the why itself, no install",
@@ -91,7 +91,7 @@ fn baseline_next_text() {
             "absent, unknown check and not applicable: install, then the why, then the pointer",
             3,
             vec![not_applicable("tm-gamma"), unknown_check("tm-alpha"), not_available("tm-zeta", Engine::SwiftLint)],
-            "install swiftlint, then run tm baseline test again; \
+            "install swiftlint, then run cctao baseline test again; \
              ruff 0.4.1 does not know the check `XYZ123`: error: invalid value 'XYZ123' for '--select'; \
              each not-applicable rule above says why it was not run",
         ),
@@ -99,13 +99,13 @@ fn baseline_next_text() {
             "EngineNotOnPath, clippy's own clippy-driver missing: install clippy",
             3,
             vec![not_available_why("tm-alpha", Engine::Clippy, "clippy-driver not found on PATH", Some(EngineNotOnPath))],
-            "install clippy, then run tm baseline test again",
+            "install clippy, then run cctao baseline test again",
         ),
         (
             "EngineNotOnPath with a why that is not the PATH sentence: install ruff",
             3,
             vec![not_available_why("tm-alpha", Engine::Ruff, "the engine's own program is missing", Some(EngineNotOnPath))],
-            "install ruff, then run tm baseline test again",
+            "install ruff, then run cctao baseline test again",
         ),
         (
             "failing case holds, passing case EngineNotOnPath: the passing case alone asks for the install",
@@ -117,7 +117,7 @@ fn baseline_next_text() {
                 },
                 ..result("tm-alpha", Engine::Ruff, CaseVerdict::Holds)
             }],
-            "install ruff, then run tm baseline test again",
+            "install ruff, then run cctao baseline test again",
         ),
         (
             "HelperNotOnPath, clippy's helper cargo missing: the why itself, no install",

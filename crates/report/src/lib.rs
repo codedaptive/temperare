@@ -13,13 +13,21 @@ mod folder_from_top;
 mod keep_added;
 mod not_applicable;
 mod not_available;
+mod oid;
+mod oid_as_str;
+mod oid_display;
+mod oid_parse;
 mod out_of_play;
+mod record_finding;
 mod render_text;
 mod report;
 mod report_error;
 mod report_error_display;
 mod report_error_source;
 mod rule_count;
+mod rule_record;
+mod rule_state;
+mod rules_record;
 mod set_aside_why;
 mod silenced;
 mod silenced_by_rule;
@@ -53,7 +61,17 @@ mod not_applicable_tests;
 #[cfg(test)]
 mod not_available_tests;
 #[cfg(test)]
+mod oid_as_str_tests;
+#[cfg(test)]
+mod oid_display_tests;
+#[cfg(test)]
+mod oid_parse_tests;
+#[cfg(test)]
+mod oid_tests;
+#[cfg(test)]
 mod out_of_play_tests;
+#[cfg(test)]
+mod record_finding_tests;
 #[cfg(test)]
 mod render_text_tests;
 #[cfg(test)]
@@ -66,6 +84,12 @@ mod report_error_tests;
 mod report_tests;
 #[cfg(test)]
 mod rule_count_tests;
+#[cfg(test)]
+mod rule_record_tests;
+#[cfg(test)]
+mod rule_state_tests;
+#[cfg(test)]
+mod rules_record_tests;
 #[cfg(test)]
 mod set_aside_why_tests;
 #[cfg(test)]
@@ -86,6 +110,7 @@ mod utc_day_tests;
 use assemble_report::assemble_report;
 use fold_untracked::fold_untracked;
 use folder_from_top::folder_from_top;
+use rules_record::rules_record;
 use silenced_by_rule::silenced_by_rule;
 use stderr_tail::stderr_tail;
 use utc_day::utc_day;
@@ -99,11 +124,15 @@ pub use failed::Failed;
 pub use keep_added::keep_added;
 pub use not_applicable::NotApplicable;
 pub use not_available::NotAvailable;
+pub use oid::Oid;
 pub use out_of_play::out_of_play;
+pub use record_finding::RecordFinding;
 pub use render_text::render_text;
 pub use report::Report;
 pub use report_error::ReportError;
 pub use rule_count::RuleCount;
+pub use rule_record::RuleRecord;
+pub use rule_state::RuleState;
 pub use set_aside_why::set_aside_why;
 pub use silenced::Silenced;
 pub use split_by_exceptions::split_by_exceptions;

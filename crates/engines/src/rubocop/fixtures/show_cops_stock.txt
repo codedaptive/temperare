@@ -1,0 +1,32 @@
+# Supports --autocorrect
+Lint/UselessAssignment:
+  Description: Checks for useless assignment to a local variable.
+  StyleGuide: "#underscore-unused-vars"
+  Enabled: true
+  AutoCorrect: contextual
+  VersionAdded: '0.11'
+  VersionChanged: '1.66'
+
+Style/Documentation:
+  Description: Document classes and non-namespace modules.
+  Enabled: true
+  VersionAdded: '0.9'
+  VersionChanged: '1.89'
+  AllowedConstants: []
+  Exclude:
+  - "/private/tmp/rubocop-fx.VqLSFl/repo/spec/**/*"
+  - "/private/tmp/rubocop-fx.VqLSFl/repo/test/**/*"
+
+# Supports --autocorrect
+Style/StringLiterals:
+  Description: Checks if uses of quotes match the configured preference.
+  StyleGuide: "#consistent-string-literals"
+  Enabled: true
+  VersionAdded: '0.9'
+  VersionChanged: '0.36'
+  EnforcedStyle: single_quotes
+  SupportedStyles:
+  - single_quotes
+  - double_quotes
+  ConsistentQuotesInMultiline: false
+

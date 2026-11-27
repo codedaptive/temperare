@@ -2,11 +2,11 @@
 //! test made, with its rule, its place and its fix text, and the report lists the engine's version; with the engine
 //! off the PATH, the same rule reports "not available" (exit 3). One rule, `engine = "periphery"`, `check = "unused"`,
 //! over a Swift package the test makes at the repository root with no dependencies, so nothing is fetched: target
-//! Probe's main.swift declares a function nothing calls on line 1, then prints. Periphery needs swift, which tm
-//! builds the package with. tm is not given the caller's PATH, only the folder that gives it periphery
-//! (`tm_path_folder`) then /usr/bin:/bin, so the swift tm runs is /usr/bin/swift unless that folder holds one. Only
-//! when periphery is not on the PATH `temperare` gets, or /usr/bin/swift is not there (`on_tm_path`, which runs
-//! nothing), is the reported case NOT RUN, with `temperare`'s reason, never PASS; `temperare` must then report the
+//! Probe's main.swift declares a function nothing calls on line 1, then prints. Periphery needs swift, which cctao
+//! builds the package with. cctao is not given the caller's PATH, only the folder that gives it periphery
+//! (`cctao_path_folder`) then /usr/bin:/bin, so the swift cctao runs is /usr/bin/swift unless that folder holds one. Only
+//! when periphery is not on the PATH `cctao` gets, or /usr/bin/swift is not there (`on_cctao_path`, which runs
+//! nothing), is the reported case NOT RUN, with `cctao`'s reason, never PASS; `cctao` must then report the
 //! rule not available.
 
 use serde_json::json;
@@ -15,8 +15,8 @@ use crate::absent_engine_reason::absent_engine_reason;
 use crate::check::Check;
 use crate::probed_version::probed_version;
 use crate::repo::Repo;
-use crate::tm::tm_with_path;
-use crate::tm_path_folder::tm_path_folder;
+use crate::cctao::cctao_with_path;
+use crate::cctao_path_folder::cctao_path_folder;
 
 const FIX: &str = "Remove the declaration or use it.";
 
@@ -44,7 +44,7 @@ const PATH_WITHOUT_ENGINES: &str = "/usr/bin:/bin";
 /// A repository holding the rule file and the Swift package, committed.
 fn package_repo() -> Repo {
     let repo = Repo::new();
-    repo.write("temperare.toml", RULES);
+    repo.write("tao.toml", RULES);
     repo.write("Package.swift", MANIFEST);
     repo.write("Sources/Probe/main.swift", MAIN);
     repo.commit("a Swift package");
@@ -60,11 +60,11 @@ fn a_periphery_result_is_reported_with_its_rule_place_fix_and_version() {
     );
     let repo = package_repo();
     let args = ["check", "--json"];
-    let path = tm_path_folder("periphery")
+    let path = cctao_path_folder("periphery")
         .map_or(PATH_WITHOUT_ENGINES.to_string(), |dir| format!("{dir}:{PATH_WITHOUT_ENGINES}"));
-    let a = tm_with_path(&repo, &args, Some(&path));
-    check.saw_tm(&args, a.code, &a.json);
-    // /usr/bin/swift is the swift tm gets unless the periphery folder holds one.
+    let a = cctao_with_path(&repo, &args, Some(&path));
+    check.saw_cctao(&args, a.code, &a.json);
+    // /usr/bin/swift is the swift cctao gets unless the periphery folder holds one.
     if let Some(why) = absent_engine_reason(&a, &["periphery", "/usr/bin/swift"], "swift-unused") {
         check.not_run(why);
         return;
@@ -87,13 +87,13 @@ fn a_periphery_result_is_reported_with_its_rule_place_fix_and_version() {
 fn periphery_off_path_is_not_available() {
     let mut check = Check::new(
         "periphery_off_path_is_not_available",
-        "rule swift-unused (periphery, unused) over the same package; tm runs with PATH /usr/bin:/bin, which holds \
+        "rule swift-unused (periphery, unused) over the same package; cctao runs with PATH /usr/bin:/bin, which holds \
          swift but no periphery",
     );
     let repo = package_repo();
     let args = ["check", "--json"];
-    let a = tm_with_path(&repo, &args, Some(PATH_WITHOUT_ENGINES));
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao_with_path(&repo, &args, Some(PATH_WITHOUT_ENGINES));
+    check.saw_cctao(&args, a.code, &a.json);
     assert_eq!(a.code, 3, "not available has its own code: {:#}\n{}", a.json, a.stderr);
     assert!(a.findings().is_empty(), "nothing is reported as found: {:#}", a.json);
     let missing: Vec<(&str, &str)> = a.json["not_available"]

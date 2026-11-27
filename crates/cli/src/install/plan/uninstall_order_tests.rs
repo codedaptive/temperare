@@ -1,4 +1,4 @@
-//! Unit tests for uninstall_order.rs: the first list is files and links in order, then the folders that do not hold the
+//! Unit test for uninstall_order.rs: the first list is files in order, then the folders that do not hold the
 //! record, deepest first, then the record last; the second is the folders that hold the record, deepest first.
 
 use std::path::{Path, PathBuf};
@@ -6,14 +6,10 @@ use std::path::{Path, PathBuf};
 use super::uninstall_order;
 use crate::RecordEntry;
 
-const RECORD: &str = "/h/.local/state/temperare/installed";
+const RECORD: &str = "/h/.local/state/cctao/installed";
 
 fn file(path: &str) -> RecordEntry {
     RecordEntry::File(PathBuf::from(path))
-}
-
-fn link(path: &str, target: &str) -> RecordEntry {
-    RecordEntry::Link(PathBuf::from(path), PathBuf::from(target))
 }
 
 fn dir(path: &str) -> RecordEntry {
@@ -25,33 +21,31 @@ fn a_whole_install_removes_the_record_last_and_its_folders_after_it() {
     let entries = [
         dir("/h/.local"),
         dir("/h/.local/state"),
-        dir("/h/.local/state/temperare"),
+        dir("/h/.local/state/cctao"),
         dir("/h/.local/bin"),
-        file("/h/.local/bin/temperare"),
-        dir("/h/.claude/skills/temperare"),
-        link("/h/.local/bin/tm", "/h/.local/bin/temperare"),
-        file("/h/.claude/skills/temperare/SKILL.md"),
+        file("/h/.local/bin/cctao"),
+        dir("/h/.claude/skills/cctao"),
+        file("/h/.claude/skills/cctao/SKILL.md"),
     ];
     let (first, second) = uninstall_order(&entries, Path::new(RECORD));
     assert_eq!(
         first,
         vec![
-            file("/h/.local/bin/temperare"),
-            link("/h/.local/bin/tm", "/h/.local/bin/temperare"),
-            file("/h/.claude/skills/temperare/SKILL.md"),
-            dir("/h/.claude/skills/temperare"),
+            file("/h/.local/bin/cctao"),
+            file("/h/.claude/skills/cctao/SKILL.md"),
+            dir("/h/.claude/skills/cctao"),
             dir("/h/.local/bin"),
-            file("/h/.local/state/temperare/installed"),
+            file("/h/.local/state/cctao/installed"),
         ]
     );
-    assert_eq!(second, vec![dir("/h/.local/state/temperare"), dir("/h/.local/state"), dir("/h/.local")]);
+    assert_eq!(second, vec![dir("/h/.local/state/cctao"), dir("/h/.local/state"), dir("/h/.local")]);
 }
 
 #[test]
 fn a_recorded_record_is_given_once_at_the_end_of_the_first_list() {
-    let entries = [file("/h/.local/state/temperare/installed"), file("/h/a")];
+    let entries = [file("/h/.local/state/cctao/installed"), file("/h/a")];
     let (first, second) = uninstall_order(&entries, Path::new(RECORD));
-    assert_eq!(first, vec![file("/h/a"), file("/h/.local/state/temperare/installed")]);
+    assert_eq!(first, vec![file("/h/a"), file("/h/.local/state/cctao/installed")]);
     assert_eq!(second, vec![]);
 }
 
@@ -61,19 +55,9 @@ fn a_folder_that_only_shares_a_name_prefix_with_the_record_is_not_its_ancestor()
     let (first, second) = uninstall_order(&entries, Path::new(RECORD));
     assert_eq!(
         first,
-        vec![dir("/h/.local/state/temp"), dir("/h/.local/sta"), file("/h/.local/state/temperare/installed")]
+        vec![dir("/h/.local/state/temp"), dir("/h/.local/sta"), file("/h/.local/state/cctao/installed")]
     );
     assert_eq!(second, vec![dir("/h/.local/state")]);
-}
-
-#[test]
-fn a_link_before_a_file_keeps_its_place() {
-    let entries = [dir("/h/b"), link("/h/b/tm", "/x"), file("/h/b/a")];
-    let (first, _) = uninstall_order(&entries, Path::new(RECORD));
-    assert_eq!(
-        first,
-        vec![link("/h/b/tm", "/x"), file("/h/b/a"), dir("/h/b"), file("/h/.local/state/temperare/installed")]
-    );
 }
 
 #[test]
@@ -82,7 +66,7 @@ fn folders_of_equal_depth_keep_their_order() {
     let (first, _) = uninstall_order(&entries, Path::new(RECORD));
     assert_eq!(
         first,
-        vec![dir("/h/a/x"), dir("/h/b"), dir("/h/a"), dir("/h/c"), file("/h/.local/state/temperare/installed")]
+        vec![dir("/h/a/x"), dir("/h/b"), dir("/h/a"), dir("/h/c"), file("/h/.local/state/cctao/installed")]
     );
 }
 
@@ -95,5 +79,5 @@ fn the_records_folders_go_deepest_first_whatever_order_they_were_given_in() {
 
 #[test]
 fn nothing_recorded_still_removes_the_record() {
-    assert_eq!(uninstall_order(&[], Path::new(RECORD)), (vec![file("/h/.local/state/temperare/installed")], vec![]));
+    assert_eq!(uninstall_order(&[], Path::new(RECORD)), (vec![file("/h/.local/state/cctao/installed")], vec![]));
 }

@@ -1,35 +1,68 @@
 # The acceptance checks of the make accept report, in report order: one line per case, order|case|section.
 # Check::new looks its case up here for the part's order; scripts/accept.sh lists every case here in the report,
 # NOT RUN when the case wrote no part. A case that is not listed here panics in Check::new.
-10|a_clippy_lint_is_reported_with_its_rule_place_and_fix|a stock linter through a rule file (clippy)
-10|a_clean_file_passes|a stock linter through a rule file (clippy)
-15|a_force_cast_is_reported_with_its_rule_place_and_fix|a stock linter through a rule file (SwiftLint)
-15|a_file_without_a_force_cast_passes|a stock linter through a rule file (SwiftLint)
-15|a_force_cast_under_private_tmp_is_reported|a stock linter through a rule file (SwiftLint)
-20|only_the_violation_added_after_the_base_is_reported|new violations only
-20|a_violation_in_a_new_untracked_file_is_new|new violations only
-20|a_base_that_does_not_resolve_is_a_usage_error|new violations only
-30|a_stored_bool_on_a_listed_type_is_reported_in_swift_and_rust|a house rule
-40|an_absent_linter_and_absent_tessera_each_report_not_available|an absent engine
-50|an_approved_exception_silences_its_finding_and_is_counted|an exception
-50|the_exceptions_in_force_are_counted_with_nothing_to_silence|an exception
-60|tm_checks_a_plain_git_repository_with_only_path_and_home|alone
-70|a_security_finding_is_reported_with_severity_place_and_owner_and_never_refuses|a security rule
-80|a_command_named_only_inside_one_kit_is_reported_in_another_and_passes_inside|named only inside
+10|a_clippy_lint_is_reported_with_its_rule_place_and_fix|Done 1: a stock linter through a rule file (clippy)
+10|a_clean_file_passes|Done 1: a stock linter through a rule file (clippy)
+15|a_force_cast_is_reported_with_its_rule_place_and_fix|Done 1 (SwiftLint): a stock linter through a rule file
+15|a_file_without_a_force_cast_passes|Done 1 (SwiftLint): a stock linter through a rule file
+15|a_force_cast_under_private_tmp_is_reported|Done 1 (SwiftLint): a stock linter through a rule file
+20|only_the_violation_added_after_the_base_is_reported|Done 2: new violations only
+20|a_violation_in_a_new_untracked_file_is_new|Done 2: new violations only
+20|a_base_that_does_not_resolve_is_a_usage_error|Done 2: new violations only
+30|a_stored_bool_on_a_listed_type_is_reported_in_swift_and_rust|Done 3: a house rule
+40|an_absent_linter_and_absent_tessera_each_report_not_available|Done 4: an absent engine
+50|an_approved_exception_silences_its_finding_and_is_counted|Done 5: an exception
+50|the_exceptions_in_force_are_counted_with_nothing_to_silence|Done 5: an exception
+60|cctao_checks_a_plain_git_repository_with_only_path_and_home|Done 6: alone
+70|a_security_finding_is_reported_with_severity_place_and_owner_and_never_refuses|Done 7: a security rule
+80|a_command_named_only_inside_one_kit_is_reported_in_another_and_passes_inside|Done 8: named only inside
 90|clippy_line_reports_test_code_not_allowed_lints|A clippy check line: test code reported, allowed lints not
-92|a_golangci_lint_finding_is_reported_with_its_rule_place_fix_and_version|golangci-lint through a rule file
-92|golangci_lint_off_path_is_not_available|golangci-lint through a rule file
-94|a_pylint_message_is_reported_with_its_rule_place_fix_and_version|pylint through a rule file
-94|pylint_off_path_is_not_available|pylint through a rule file
-96|a_clang_tidy_warning_is_reported_with_its_rule_place_fix_and_version|clang-tidy through a rule file
-96|clang_tidy_off_path_is_not_available|clang-tidy through a rule file
-97|a_vulture_finding_is_reported_with_its_rule_place_fix_and_version|vulture through a rule file
-97|vulture_off_path_is_not_available|vulture through a rule file
-98|a_periphery_result_is_reported_with_its_rule_place_fix_and_version|Periphery through a rule file
-98|periphery_off_path_is_not_available|Periphery through a rule file
-99|a_gitleaks_secret_is_reported_with_its_rule_place_fix_and_version|gitleaks through a rule file
-99|gitleaks_off_path_is_not_available|gitleaks through a rule file
-99|a_cargo_audit_advisory_is_reported_on_cargo_lock_with_no_line|cargo-audit through a rule file
-99|cargo_audit_off_path_is_not_available|cargo-audit through a rule file
-100|two_ruff_rules_share_one_engine_run|the baseline
-100|the_shipped_baseline_sets_hold|the baseline
+92|a_golangci_lint_finding_is_reported_with_its_rule_place_fix_and_version|Done 9: golangci-lint through a rule file
+92|golangci_lint_off_path_is_not_available|Done 9: golangci-lint through a rule file
+94|a_pylint_message_is_reported_with_its_rule_place_fix_and_version|Done 9: pylint through a rule file
+94|pylint_off_path_is_not_available|Done 9: pylint through a rule file
+96|a_clang_tidy_warning_is_reported_with_its_rule_place_fix_and_version|Done 9: clang-tidy through a rule file
+96|clang_tidy_off_path_is_not_available|Done 9: clang-tidy through a rule file
+97|a_vulture_finding_is_reported_with_its_rule_place_fix_and_version|Done 9: vulture through a rule file
+97|vulture_off_path_is_not_available|Done 9: vulture through a rule file
+98|a_periphery_result_is_reported_with_its_rule_place_fix_and_version|Done 9: Periphery through a rule file
+98|periphery_off_path_is_not_available|Done 9: Periphery through a rule file
+99|a_gitleaks_secret_is_reported_with_its_rule_place_fix_and_version|Done 9: gitleaks through a rule file
+99|gitleaks_off_path_is_not_available|Done 9: gitleaks through a rule file
+99|a_cargo_audit_advisory_is_reported_on_cargo_lock_with_no_line|Done 9: cargo-audit through a rule file
+99|cargo_audit_off_path_is_not_available|Done 9: cargo-audit through a rule file
+99|an_eslint_problem_is_reported_with_its_rule_place_fix_and_version|Done 9: eslint through a rule file
+99|eslint_off_path_is_not_available|Done 9: eslint through a rule file
+99|a_mypy_error_is_reported_with_its_rule_place_fix_and_version|Done 9: mypy through a rule file
+99|mypy_off_path_is_not_available|Done 9: mypy through a rule file
+99|a_pmd_violation_is_reported_with_its_rule_place_fix_and_version|Done 9: PMD through a rule file
+99|pmd_off_path_is_not_available|Done 9: PMD through a rule file
+99|a_detekt_finding_is_reported_with_its_rule_place_fix_and_version|Done 9: detekt through a rule file
+99|detekt_off_path_is_not_available|Done 9: detekt through a rule file
+99|a_rubocop_offense_is_reported_with_its_rule_place_fix_and_version|Done 9: RuboCop through a rule file
+99|rubocop_off_path_is_not_available|Done 9: RuboCop through a rule file
+99|a_phpstan_error_is_reported_with_its_rule_place_fix_and_version|Done 9: PHPStan through a rule file
+99|phpstan_off_path_is_not_available|Done 9: PHPStan through a rule file
+99|a_dart_diagnostic_is_reported_with_its_rule_place_fix_and_version|Done 9: dart analyze through a rule file
+99|dart_off_path_is_not_available|Done 9: dart analyze through a rule file
+99|a_markdownlint_violation_is_reported_with_its_rule_place_fix_and_version|Done 9: markdownlint-cli2 through a rule file
+99|markdownlint_off_path_is_not_available|Done 9: markdownlint-cli2 through a rule file
+99|a_yamllint_problem_is_reported_with_its_rule_place_fix_and_version|Done 9: yamllint through a rule file
+99|yamllint_off_path_is_not_available|Done 9: yamllint through a rule file
+99|an_actionlint_error_is_reported_with_its_rule_place_fix_and_version|Done 9: actionlint through a rule file
+99|actionlint_off_path_is_not_available|Done 9: actionlint through a rule file
+99|a_hadolint_warning_is_reported_with_its_rule_place_fix_and_version|Done 9: hadolint through a rule file
+99|hadolint_off_path_is_not_available|Done 9: hadolint through a rule file
+99|a_vale_alert_is_reported_with_its_rule_place_fix_and_version|Done 9: Vale through a rule file
+99|vale_off_path_is_not_available|Done 9: Vale through a rule file
+99|a_stylelint_warning_is_reported_with_its_rule_place_fix_and_version|Done 9: stylelint through a rule file
+99|stylelint_off_path_is_not_available|Done 9: stylelint through a rule file
+99|a_sqlfluff_violation_is_reported_with_its_rule_place_fix_and_version|Done 9: SQLFluff through a rule file
+99|sqlfluff_off_path_is_not_available|Done 9: SQLFluff through a rule file
+99|a_shellcheck_warning_is_reported_with_its_rule_place_fix_and_version|Done 9: ShellCheck through a rule file
+99|shellcheck_off_path_is_not_available|Done 9: ShellCheck through a rule file
+99|a_git_ratio_finding_is_reported_with_its_rule_place_fix_and_version|Done 9: git through a rule file
+99|git_off_path_is_not_available|Done 9: git through a rule file
+100|two_ruff_rules_share_one_engine_run|Done 10: the baseline
+100|the_shipped_baseline_sets_hold|Done 10: the baseline
+105|an_old_citation_in_a_touched_file_is_not_reported|house@2: an old register citation in a touched file is not reported

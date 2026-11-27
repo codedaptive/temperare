@@ -58,6 +58,6 @@ fn hard_link_made_after_open_is_refused() {
     fs::hard_link(tree.folder.join("names.yml"), tree.folder.join("second.yml")).unwrap();
     assert_eq!(
         rule_yaml_text(file, "names.yml"),
-        Err("ast-grep rule names.yml has more than one hard link: tm reads a rule YAML only when its folder holds the only link".to_string())
+        Err("ast-grep rule names.yml has more than one hard link: cctao reads a rule YAML only when its folder holds the only link".to_string())
     );
 }

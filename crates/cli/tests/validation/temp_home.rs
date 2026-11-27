@@ -1,4 +1,4 @@
-//! `TempHome`: an empty folder made for one run of `temperare` to use as HOME, so no acceptance run reads the real
+//! `TempHome`: an empty folder made for one run of `cctao` to use as HOME, so no acceptance run reads the real
 //! ~/.config or writes the real ~/.local. Removed when dropped, pass or fail.
 
 use std::path::{Path, PathBuf};
@@ -13,7 +13,7 @@ impl TempHome {
     /// A new empty folder under the system's temporary folder, named for this process and a counter.
     pub fn new() -> TempHome {
         let n = NEXT.fetch_add(1, Ordering::Relaxed);
-        let dir = std::env::temp_dir().join(format!("temperare-validation-home-{}-{n}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("cctao-validation-home-{}-{n}", std::process::id()));
         std::fs::create_dir(&dir).unwrap_or_else(|e| panic!("could not make {}: {e}", dir.display()));
         TempHome(dir)
     }

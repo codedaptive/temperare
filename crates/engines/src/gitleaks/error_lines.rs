@@ -1,4 +1,4 @@
-//! `error_lines`: the error lines of gitleaks' stderr, the only part of it tm passes on.
+//! `error_lines`: the error lines of gitleaks' stderr, the only part of it cctao passes on.
 
 /// Of gitleaks' `stderr` (lossy UTF-8, ANSI escape sequences removed first), the text of each line whose first
 /// whitespace-separated word is gitleaks' log time ("9:37PM") and whose second is the level ERR or FTL (gitleaks logs

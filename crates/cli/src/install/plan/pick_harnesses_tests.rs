@@ -4,7 +4,7 @@ use super::pick_harnesses;
 use crate::Harness;
 
 const BOTH: [Harness; 2] = [Harness::Claude, Harness::Cursor];
-const PROMPT: &str = "Wire the temperare skill into which harnesses?\n  1. claude\n  2. cursor\n\
+const PROMPT: &str = "Wire the cctao skill into which harnesses?\n  1. claude\n  2. cursor\n\
                       Numbers or names, separated by commas; all; or Enter for none: ";
 
 fn answer(detected: &[Harness], input: &str) -> (Vec<Harness>, String) {

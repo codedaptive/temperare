@@ -15,10 +15,10 @@ use std::path::{Path, PathBuf};
 /// root's `<scratch>/build`, the one its build uses, then `<scratch>/dep-<n>` for the n-th package after it. Each
 /// package can stop the rule, `<subject>` being `package_subject`'s: "the package" for the root and "the local package
 /// <its path relative to `top`>" for any other, "the local package ." for a package at `top` itself:
-/// - a dependency or url binary target to fetch (`remote_dependencies`) is `NotAvailable`, since tm never fetches
+/// - a dependency or url binary target to fetch (`remote_dependencies`) is `NotAvailable`, since cctao never fetches
 ///   packages;
 /// - a local package (`local_dependencies`) whose path does not resolve, or resolves outside `top` (the repository
-///   top, canonical), is `NotAvailable`: tm cannot vouch for code it cannot read or that is not the repository's.
+///   top, canonical), is `NotAvailable`: cctao cannot vouch for code it cannot read or that is not the repository's.
 ///
 /// A dump-package that exits nonzero is `answered`'s `Failed`; output that is not a manifest is `parse_failed`'s.
 pub(crate) fn manifest_walk(root: &Path, top: &Path, scratch: &Path, host: &Host) -> Result<(), Stop> {
@@ -38,7 +38,7 @@ pub(crate) fn manifest_walk(root: &Path, top: &Path, scratch: &Path, host: &Host
         if !remote.is_empty() {
             return Err(Stop::NotAvailable {
                 why: format!(
-                    "{subject} depends on {}, which tm would have to fetch: tm never fetches packages, so Periphery cannot build it here",
+                    "{subject} depends on {}, which cctao would have to fetch: cctao never fetches packages, so Periphery cannot build it here",
                     remote.join(", ")
                 ),
             });
@@ -58,14 +58,14 @@ pub(crate) fn manifest_walk(root: &Path, top: &Path, scratch: &Path, host: &Host
 fn vouched(path: &Path, subject: &str, top: &Path) -> Result<PathBuf, Stop> {
     let local = std::fs::canonicalize(path).map_err(|_| Stop::NotAvailable {
         why: format!(
-            "{subject} depends on the local package {}, which does not resolve: tm cannot vouch for it, so Periphery cannot build it here",
+            "{subject} depends on the local package {}, which does not resolve: cctao cannot vouch for it, so Periphery cannot build it here",
             path.display()
         ),
     })?;
     if !local.starts_with(top) {
         return Err(Stop::NotAvailable {
             why: format!(
-                "{subject} depends on the local package {}, outside the repository: tm cannot vouch for it, so Periphery cannot build it here",
+                "{subject} depends on the local package {}, outside the repository: cctao cannot vouch for it, so Periphery cannot build it here",
                 local.display()
             ),
         });

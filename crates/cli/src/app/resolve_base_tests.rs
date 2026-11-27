@@ -3,17 +3,17 @@
 use super::resolve_base::resolve_base;
 use super::CheckWorld;
 use crate::UsageError;
-use procio::{GitError, Oid};
+use ccvcslib::{VcsError, VcsFailure};
+use report::Oid;
 use std::cell::RefCell;
-use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 const HEX: &str = "0123456789abcdef0123456789abcdef01234567";
 
 /// A world whose `toplevel` and `rev_parse` are the given closures and whose other seams panic if called.
 fn world<'a>(
-    toplevel: &'a dyn Fn(&Path) -> Result<PathBuf, GitError>,
-    rev_parse: &'a dyn Fn(&Path, &str) -> Result<Option<Oid>, GitError>,
+    toplevel: &'a dyn Fn(&Path) -> Result<PathBuf, VcsError>,
+    rev_parse: &'a dyn Fn(&Path, &str) -> Result<Option<Oid>, VcsError>,
 ) -> CheckWorld<'a> {
     CheckWorld {
         toplevel,
@@ -21,7 +21,7 @@ fn world<'a>(
         read: &|_| unreachable!("read"),
         rev_parse,
         run_rules: &|_, _, _, _| unreachable!("run_rules"),
-        availability: &|_| unreachable!("availability"),
+        availability: &|_, _| unreachable!("availability"),
         build_report: &|_, _, _, _| unreachable!("build_report"),
         home: &|| unreachable!("home"),
         now: &|| unreachable!("now"),
@@ -52,13 +52,13 @@ fn a_resolved_base_is_the_top_and_the_commit() {
 
 #[test]
 fn no_repository_is_a_usage_error() {
-    let toplevel = |_: &Path| Err(GitError::NotARepository { repo: PathBuf::from("/tmp/x") });
+    let toplevel = |_: &Path| Err(VcsError::NotAWorkingCopy);
     let got = resolve_base(Some("main"), Path::new("/tmp/x"), &world(&toplevel, &|_, _| unreachable!("rev_parse")));
     assert_eq!(
         got,
         Err(UsageError {
-            what: "git could not find the repository top for --base: /tmp/x: not a git repository".to_string(),
-            fix: "Run tm check inside a git repository to use --base, or leave --base out.".to_string(),
+            what: "git could not find the repository top for --base: not a working copy".to_string(),
+            fix: "Run cctao check inside a git repository to use --base, or leave --base out.".to_string(),
         })
     );
 }
@@ -82,17 +82,13 @@ fn a_rev_naming_no_commit_is_a_usage_error() {
 #[test]
 fn a_git_failure_resolving_the_rev_is_a_usage_error() {
     let rev_parse = |_: &Path, _: &str| {
-        Err(GitError::Exit {
-            args: vec![OsString::from("rev-parse"), OsString::from("main")],
-            code: Some(128),
-            stderr: b"fatal: broken\n".to_vec(),
-        })
+        Err(VcsError::Failed(VcsFailure { message: "fatal: broken".to_string(), exit_status: Some(128) }))
     };
     let got = resolve_base(Some("main"), Path::new("/repo"), &world(&|_| Ok(PathBuf::from("/repo")), &rev_parse));
     assert_eq!(
         got,
         Err(UsageError {
-            what: "git could not resolve base 'main': git rev-parse main: exit 128: fatal: broken".to_string(),
+            what: "git could not resolve base 'main': fatal: broken".to_string(),
             fix: "Check that git runs here and that main exists.".to_string(),
         })
     );

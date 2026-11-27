@@ -1,0 +1,20 @@
+id: tm-house-test-setup-heavier-swift
+language: swift
+message: this test file holds more lines of setup than of tests
+severity: warning
+rule:
+  # The file's root node, so the count reads the file's last line from its range; then the test functions,
+  # so those lines count as test. Every other line is setup.
+  any:
+    - kind: source_file
+    - kind: function_declaration
+      any:
+        # Swift Testing: a func marked @Test, with or without arguments.
+        - has:
+            kind: modifiers
+            has: { kind: attribute, has: { kind: user_type, regex: ^Test$ } }
+        # XCTest: a func test… method of a type (tree-sitter-swift reads a class, struct or extension as a
+        # class_declaration).
+        - all:
+            - has: { field: name, regex: ^test }
+            - inside: { kind: class_declaration, stopBy: end }

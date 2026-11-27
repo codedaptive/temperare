@@ -1,4 +1,4 @@
-//! `swiftlint_refusal`: why tm will not run a swiftlint check, if it will not.
+//! `swiftlint_refusal`: why cctao will not run a swiftlint check, if it will not.
 
 /// The reason a `custom_rules` check is refused; `None` for any other check. Under `--only-rule` that name runs no
 /// custom rule, so swiftlint reports nothing and the rule could match nothing.

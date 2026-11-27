@@ -9,13 +9,17 @@ use std::path::Path;
 
 #[test]
 fn write_case_files_rows() {
+    // Each written path is `/case` joined part by part, in the platform's separator (`/case/src/b.py` on unix).
+    let case = Path::new("/case");
+    let (a, b, full) = (case.join("a.py"), case.join("src").join("b.py"), case.join("full.py"));
+    let (a, b, full) = (a.display().to_string(), b.display().to_string(), full.display().to_string());
     let rows: [(&str, &[&str], Result<(), &str>, &[&str]); 4] = [
-        ("each file inside the folder, in order", &["a.py", "./src/b.py"], Ok(()), &["/case/a.py", "/case/src/b.py"]),
+        ("each file inside the folder, in order", &["a.py", "./src/b.py"], Ok(()), &[a.as_str(), b.as_str()]),
         (
             "a name above the folder is refused, nothing written for it or after it",
             &["a.py", "../x.py", "c.py"],
             Err("case file \"../x.py\" is not a relative path inside the case folder"),
-            &["/case/a.py"],
+            &[a.as_str()],
         ),
         (
             "an absolute name is refused",
@@ -27,7 +31,7 @@ fn write_case_files_rows() {
             "a failed write stops the rest",
             &["full.py", "c.py"],
             Err("cannot write full.py: disk full"),
-            &["/case/full.py"],
+            &[full.as_str()],
         ),
     ];
     for (name, names, want, want_writes) in rows {
@@ -51,7 +55,7 @@ fn write_case_files_rows() {
             run_rules: &|_, _, _, _| unreachable!("run_rules"),
         };
         let files: Vec<CaseFile> = names.iter().map(|n| CaseFile { path: n.to_string(), text: "x = 1\n" }).collect();
-        let got = write_case_files(Path::new("/case"), &files, &world);
+        let got = write_case_files(case, &files, &world);
         assert_eq!(got, want.map_err(str::to_string), "{name}");
         assert_eq!(*writes.borrow(), want_writes.to_vec(), "{name}");
     }

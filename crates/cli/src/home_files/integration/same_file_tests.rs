@@ -1,4 +1,4 @@
-//! Tests the comparison open_log uses to accept an opened handle; these tests do not run open_log.
+//! Tests the comparison open_file uses to accept an opened handle; these tests do not run open_file.
 
 use crate::home_files::same_file;
 use std::fs::{self, File};
@@ -9,7 +9,7 @@ struct Home(PathBuf);
 impl Home {
     fn new() -> Self {
         static NEXT: AtomicU64 = AtomicU64::new(0);
-        let path = std::env::temp_dir().join(format!("tm-same-file-test-{}-{}", std::process::id(), NEXT.fetch_add(1, Ordering::Relaxed)));
+        let path = std::env::temp_dir().join(format!("cctao-same-file-test-{}-{}", std::process::id(), NEXT.fetch_add(1, Ordering::Relaxed)));
         fs::create_dir(&path).unwrap();
         Self(path)
     }

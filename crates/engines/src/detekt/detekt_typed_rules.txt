@@ -1,0 +1,77 @@
+# The detekt 1.23.8 rules (of detekt_rules.txt) that need type resolution: run without --classpath, which cctao never
+# passes, detekt says of each, only under --debug, that it ran it without type resolution ("The rule 'Deprecation'
+# requires type resolution but it was run without it."). Run without --debug, Deprecation alone gave exit 0 and no
+# results on code that calls a deprecated function.
+# Format: one `<rule set>.<rule>` per line, sorted; lines starting with # and blank lines are ignored.
+# version: detekt 1.23.8 (`detekt --version` prints `1.23.8`)
+# source: `detekt --input src/Dep.kt --config all.yml --debug --report sarif:<file>` (exit 2), all.yml activating the
+# 213 of the 214 rules, all but comments.AbsentOrWrongFileLicense; each rule its stdout names in such a line. 67 rules.
+# AbsentOrWrongFileLicense, run alone with a license template and --debug, printed no such line and found its finding.
+# Each command and its output: fixtures/commands.txt, "Type resolution probes".
+complexity.NamedArguments
+complexity.NestedScopeFunctions
+complexity.ReplaceSafeCallChainWithRun
+coroutines.InjectDispatcher
+coroutines.RedundantSuspendModifier
+coroutines.SleepInsteadOfDelay
+coroutines.SuspendFunSwallowedCancellation
+coroutines.SuspendFunWithCoroutineScopeReceiver
+coroutines.SuspendFunWithFlowReturnType
+exceptions.ObjectExtendsThrowable
+exceptions.ReturnFromFinally
+naming.BooleanPropertyNaming
+naming.NoNameShadowing
+naming.NonBooleanPropertyPrefixedWithIs
+performance.ArrayPrimitive
+performance.CouldBeSequence
+potential-bugs.AvoidReferentialEquality
+potential-bugs.CastNullableToNonNullableType
+potential-bugs.Deprecation
+potential-bugs.DontDowncastCollectionTypes
+potential-bugs.DoubleMutabilityForCollection
+potential-bugs.ElseCaseInsteadOfExhaustiveWhen
+potential-bugs.ExitOutsideMain
+potential-bugs.HasPlatformType
+potential-bugs.IgnoredReturnValue
+potential-bugs.ImplicitUnitReturnType
+potential-bugs.MissingWhenCase
+potential-bugs.NullCheckOnMutableProperty
+potential-bugs.NullableToStringCall
+potential-bugs.PropertyUsedBeforeDeclaration
+potential-bugs.RedundantElseInWhen
+potential-bugs.UnnecessaryNotNullCheck
+potential-bugs.UnnecessaryNotNullOperator
+potential-bugs.UnnecessarySafeCall
+potential-bugs.UnreachableCatchBlock
+potential-bugs.UnreachableCode
+potential-bugs.UnsafeCallOnNullableType
+potential-bugs.UnsafeCast
+potential-bugs.UnusedUnaryOperator
+style.CanBeNonNullable
+style.ExplicitCollectionElementAccessMethod
+style.ForbiddenAnnotation
+style.ForbiddenMethodCall
+style.ForbiddenVoid
+style.MaxChainedCallsOnSameLine
+style.MultilineLambdaItParameter
+style.NullableBooleanCheck
+style.ObjectLiteralToLambda
+style.PreferToOverPairSyntax
+style.RedundantExplicitType
+style.RedundantHigherOrderMapUsage
+style.UnnecessaryAbstractClass
+style.UnnecessaryApply
+style.UnnecessaryBracesAroundTrailingLambda
+style.UnnecessaryFilter
+style.UnnecessaryInnerClass
+style.UnnecessaryLet
+style.UseAnyOrNoneInsteadOfFind
+style.UseCheckNotNull
+style.UseEmptyCounterpart
+style.UseIfEmptyOrIfBlank
+style.UseIsNullOrEmpty
+style.UseOrEmpty
+style.UseRequireNotNull
+style.UseSumOfInsteadOfFlatMapSize
+style.UselessCallOnNotNull
+style.VarCouldBeVal

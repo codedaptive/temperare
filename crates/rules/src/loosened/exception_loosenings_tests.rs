@@ -1,5 +1,6 @@
-//! Unit tests for exception_loosenings.rs, on rule files built here: added, widened by dropping `what`, narrowed, and an
-//! `expires` moved later, dropped, moved earlier or kept against one or two covering base exceptions.
+//! Unit test for exception_loosenings.rs, on rule files built here: added, widened by dropping `what`, narrowed, and an
+//! `expires` moved later, undated now, moved earlier or kept against one or two covering base exceptions, and an
+//! undated base exception (no end).
 
 use super::exception_loosenings::exception_loosenings;
 use super::{Loosening, LooseningKind};
@@ -33,10 +34,6 @@ fn later(before: &str, after: &str) -> Loosening {
     }
 }
 
-fn dropped(before: &str) -> Loosening {
-    Loosening { kind: LooseningKind::ExpiryDropped, about: "r1".to_string(), before: Some(before.to_string()), after: None }
-}
-
 #[test]
 fn exceptions_no_base_exception_covers_are_found() {
     let jan26 = Date::new(2026, 1, 1);
@@ -50,11 +47,10 @@ fn exceptions_no_base_exception_covers_are_found() {
         ("what dropped", vec![exception(Some("eval"))], vec![exception(None)], vec![added("src/a.py")]),
         ("narrowed", vec![exception(None)], vec![exception(Some("eval"))], vec![]),
         ("later", vec![dated(None, jan26)], vec![dated(None, jan27)], vec![later("2026-01-01", "2027-01-01")]),
-        ("dropped", vec![dated(None, jan26)], vec![dated(None, None)], vec![dropped("2026-01-01")]),
+        ("base dated, now undated", vec![dated(None, jan26)], vec![dated(None, None)], vec![]),
         ("earlier", vec![dated(None, jan27)], vec![dated(None, jan26)], vec![]),
         ("same date", vec![dated(None, jan26)], vec![dated(None, jan26)], vec![]),
-        ("base undated, now dated", vec![dated(None, None)], vec![dated(None, jan26)], vec![]),
-        ("one coverer undated, now undated", vec![dated(None, jan26), dated(None, None)], vec![dated(None, None)], vec![]),
+        ("base undated (no end), now dated", vec![dated(None, None)], vec![dated(None, jan26)], vec![]),
         ("within the latest coverer", vec![dated(None, jan26), dated(None, jun26)], vec![dated(None, mar26)], vec![]),
         (
             "past the latest coverer",

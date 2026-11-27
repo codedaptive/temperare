@@ -1,0 +1,86 @@
+Real rubocop output captured in a throwaway folder made with `mktemp -d /tmp/rubocop-fx.XXXXXX`
+(/tmp/rubocop-fx.VqLSFl, which macOS resolves to /private/tmp/rubocop-fx.VqLSFl), removed afterwards.
+Version: rubocop 1.92.3 (/opt/homebrew/bin/rubocop, its own ruby 4.0.10); `rubocop --version` printed `1.92.3`.
+Every command ran in the named subfolder with this environment added, so nothing could reach the network:
+  RUBOCOP_OPTS= http_proxy=http://127.0.0.1:9 https_proxy=http://127.0.0.1:9 HTTP_PROXY=http://127.0.0.1:9
+  HTTPS_PROXY=http://127.0.0.1:9 no_proxy= NO_PROXY=
+No ~/.rubocop.yml or ~/.config/rubocop existed. stdout and stderr were captured apart; each file below is one stream,
+untrimmed. The stderr not kept here (of the offenses, clean and syntax runs and of list_stock) was rubocop's "The
+following cops were added to RuboCop, but are not configured..." list, the same as the start of
+check_unknown_stderr.txt.
+
+check_offenses.json (stdout), in offenses/:
+  rubocop --cache false --no-server --format json --ignore-disable-comments --only=Lint/UselessAssignment,Style/StringLiterals .
+  Exit: 1
+check_clean.json (stdout), in clean/:
+  rubocop --cache false --no-server --format json --ignore-disable-comments --only=Lint/UselessAssignment .
+  Exit: 0
+check_syntax.json (stdout), in syntax/:
+  rubocop --cache false --no-server --format json --ignore-disable-comments --only=Lint/UselessAssignment .
+  Exit: 1
+check_unknown.json (stdout) and check_unknown_stderr.txt (stderr), in unknown/:
+  rubocop --cache false --no-server --format json --ignore-disable-comments --only=Style/NoSuchCop .
+  Exit: 2
+show_cops_repo.txt (stdout; stderr empty), in repo/:
+  rubocop --show-cops=Lint/UselessAssignment,Style/StringLiterals,Style/Documentation --debug
+  Exit: 0
+show_cops_stock.txt (stdout; stderr empty), in repo/:
+  rubocop --show-cops=Lint/UselessAssignment,Style/StringLiterals,Style/Documentation --force-default-config
+  Exit: 0
+list_stock.txt (stdout), in repo/:
+  rubocop --list-target-files --force-default-config .
+  Exit: 0
+
+offenses/example.rb:
+# frozen_string_literal: true
+
+def sample
+  unused = 1
+  quiet = 2 # rubocop:disable Lint/UselessAssignment
+  puts "double"
+end
+
+offenses/lib/other.rb:
+# frozen_string_literal: true
+
+def other
+  left = 'single'
+  nil
+end
+
+clean/example.rb and unknown/example.rb:
+# frozen_string_literal: true
+
+def sample
+  nil
+end
+
+syntax/broken.rb:
+# frozen_string_literal: true
+
+def broken(
+  value = 1
+
+repo/.rubocop.yml:
+inherit_from: .rubocop_todo.yml
+
+Style/StringLiterals:
+  Exclude:
+    - 'legacy/**/*'
+
+repo/.rubocop_todo.yml:
+Lint/UselessAssignment:
+  Exclude:
+    - 'a.rb'
+
+repo/a.rb, repo/lib/b.rb, repo/vendor/c.rb and repo/legacy/d.rb, each a method named first, second, third and fourth:
+# frozen_string_literal: true
+
+def first
+  nil
+end
+
+repo/Rakefile:
+# frozen_string_literal: true
+
+task :default

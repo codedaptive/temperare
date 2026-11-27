@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 static NEXT: AtomicUsize = AtomicUsize::new(0);
-pub const EXE_BYTES: &[u8] = b"fake temperare executable\n";
+pub const EXE_BYTES: &[u8] = b"fake cctao executable\n";
 
 pub struct Fixture {
     pub root: PathBuf,
@@ -16,7 +16,7 @@ pub struct Fixture {
 impl Fixture {
     pub fn new() -> Self {
         let root = std::env::temp_dir().join(format!(
-            "temperare-install-{}-{}",
+            "cctao-install-{}-{}",
             std::process::id(),
             NEXT.fetch_add(1, Ordering::Relaxed)
         ));
@@ -27,7 +27,7 @@ impl Fixture {
         fs::create_dir(&home).unwrap();
         fs::create_dir(&cwd).unwrap();
         fs::create_dir(&path).unwrap();
-        let exe = root.join("source/temperare");
+        let exe = root.join("source/cctao");
         executable(&exe, EXE_BYTES);
         let host = InstallHost {
             home,
@@ -73,7 +73,7 @@ pub fn detected(fixture: &Fixture) {
 }
 
 pub fn skill(base: &Path, folder: &str) -> PathBuf {
-    base.join(folder).join("skills/temperare/SKILL.md")
+    base.join(folder).join("skills/cctao/SKILL.md")
 }
 
 #[derive(Debug, PartialEq, Eq)]

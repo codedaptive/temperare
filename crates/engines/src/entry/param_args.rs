@@ -10,8 +10,8 @@ use std::ffi::OsString;
 /// order, each one argument `{flag}{item}`; a listed param the rule does not give adds nothing. A key naming one of
 /// a `Thresholds` entry's thresholds gives no argument and is not refused here (`threshold_of` reads it). `params`
 /// must serialize to an object (else `Bad` named `params`). A key neither list names is `Bad` rather than ignored,
-/// since a misspelt name would otherwise drop what the rule asked for: its why is `a <name> rule reads only the
-/// <names> param` (every arg name, then every threshold name), or `a <name> rule takes no params` when both lists
+/// since a misspelt name would otherwise drop what the rule asked for: its why is `a`/`an <name> rule reads only the
+/// <names> param` (every arg name, then every threshold name), or `a`/`an <name> rule takes no params` when both lists
 /// are empty. A listed param that is not a list of strings is `Bad`. For `Params::Flow`, the params must be an
 /// object whose keys are all in its `names` (else `Bad` with the same why, over `names`), then its `check` decides,
 /// its error returned as it is; it gives no arguments. `Params::Template` gives no arguments whatever the params.
@@ -55,12 +55,15 @@ fn items(params: &Map<String, Value>, arg: &ParamArg) -> Result<Vec<OsString>, P
 }
 
 /// Why a key no list names is refused: the names, each in backticks, joined by ", "; or that the engine takes none.
+/// The article is `an` before a name starting with an ASCII vowel letter: every such engine name (ast-grep, eslint,
+/// actionlint) is said with a vowel sound.
 fn unlisted_why(name: &str, names: &[&str]) -> String {
+    let article = if name.starts_with(['a', 'e', 'i', 'o', 'u']) { "an" } else { "a" };
     if names.is_empty() {
-        return format!("a {name} rule takes no params");
+        return format!("{article} {name} rule takes no params");
     }
     let names = names.iter().map(|param| format!("`{param}`")).collect::<Vec<_>>().join(", ");
-    format!("a {name} rule reads only the {names} param")
+    format!("{article} {name} rule reads only the {names} param")
 }
 
 fn bad(name: &str, why: &str) -> ParamError {

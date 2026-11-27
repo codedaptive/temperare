@@ -1,4 +1,4 @@
-// Unix only: this target makes and reads symlinks and file modes, which the install makes on unix only.
+// Unix only: this target makes and reads symlinks and file modes, and the install sets file modes on unix only.
 #![cfg(unix)]
 
 mod end_modes;

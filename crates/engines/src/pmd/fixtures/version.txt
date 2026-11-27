@@ -1,0 +1,10 @@
+  ████                            ████
+  ██                                ██
+  ██  █████ █ ███    ███  ███████   ██
+ ███  ██  ███ ████  ████  ██    ██  ███
+ ███  ███████ ██ ████ ██  ██    ██  ███
+  ██  ██      ██  ██  ██  ███████   ██
+  ██                                ██
+  ████                            ████
+PMD 7.29.0 (47b3135b2cdd4afa0b4447da91786497b58bc10b, 2026-10-30T08:20:47Z)
+Java version: 27.0.1.1, vendor: Homebrew, runtime: /opt/homebrew/Cellar/openjdk/27.0.1.1/libexec/openjdk.jdk/Contents/Home

@@ -1,4 +1,4 @@
-//! `baseline_text`: the results of `tm baseline test` as text.
+//! `baseline_text`: the results of `cctao baseline test` as text.
 
 use super::baseline_rule_result::BaselineRuleResult;
 use super::case_verdict::CaseVerdict;

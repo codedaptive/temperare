@@ -1,4 +1,4 @@
-//! The baseline acceptance check: the built `temperare` runs `baseline test --json` over the ready sets tm
+//! Done 10's acceptance check, the baseline: the built `cctao` runs `baseline test --json` over the ready sets cctao
 //! tests without `--set` (whichever sets `rules::baseline_sets` marks ready), in a clean environment with HOME
 //! and cwd folders the test made. It never pins the sets' contents: the answer's `exit` is the process's,
 //! `counts.rules` is the length of `rules`, and no rule is broken. Exit 0 is PASS with every rule holding; exit 3
@@ -8,7 +8,7 @@
 use serde_json::Value;
 
 use crate::check::Check;
-use crate::env::tm_env;
+use crate::env::cctao_env;
 use crate::run_clean::run_clean;
 use crate::temp_home::TempHome;
 
@@ -21,13 +21,13 @@ fn the_shipped_baseline_sets_hold() {
     let home = TempHome::new();
     let cwd = TempHome::new();
     let args = ["baseline", "test", "--json"];
-    let output = run_clean(env!("CARGO_BIN_EXE_temperare"), &args, cwd.path(), tm_env(None, home.path()));
+    let output = run_clean(env!("CARGO_BIN_EXE_cctao"), &args, cwd.path(), cctao_env(None, home.path()));
     let code = output.code.expect("run_clean returns only runs that exited");
     let stdout = String::from_utf8(output.stdout).unwrap();
     let stderr = String::from_utf8_lossy(&output.stderr);
     let value: Value =
         serde_json::from_str(&stdout).unwrap_or_else(|e| panic!("stdout is not JSON ({e}): {stdout}\n{stderr}"));
-    check.saw_tm(&args, code, &value);
+    check.saw_cctao(&args, code, &value);
     assert_eq!(value["exit"].as_i64(), Some(i64::from(code)), "{stdout}\n{stderr}");
     let rules = value["rules"].as_array().unwrap_or_else(|| panic!("no rules list: {stdout}"));
     let counted = value["counts"]["rules"].as_u64().and_then(|n| usize::try_from(n).ok());
@@ -42,7 +42,7 @@ fn the_shipped_baseline_sets_hold() {
     }
 }
 
-/// NOT RUN's reason: `tm: ` and, for each not-available or not-applicable rule in order,
+/// NOT RUN's reason: `cctao: ` and, for each not-available or not-applicable rule in order,
 /// `<set> <rule> (<engine>): <why>`, the why of its first case with the rule's result; asserts there is at least one.
 fn not_run_reason(rules: &[Value], stdout: &str) -> String {
     let named: Vec<String> = rules
@@ -58,7 +58,7 @@ fn not_run_reason(rules: &[Value], stdout: &str) -> String {
         })
         .collect();
     assert!(!named.is_empty(), "exit 3 with no rule not available or not applicable: {stdout}");
-    format!("tm: {}", named.join("; "))
+    format!("cctao: {}", named.join("; "))
 }
 
 /// The string at `key`, or empty.

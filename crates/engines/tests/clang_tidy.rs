@@ -30,7 +30,7 @@ impl Repo {
         let repo = Self(fs::canonicalize(path).unwrap());
         support::git::git(&repo.0, &["init", "-q"], b"");
         fs::write(repo.0.join(filename), source).unwrap();
-        fs::write(repo.0.join("temperare.toml"), format!(
+        fs::write(repo.0.join("tao.toml"), format!(
             "version = 1\n[[rule]]\nid = \"braces\"\nengine = \"clang-tidy\"\ncheck = \"{check}\"\nkind = \"quality\"\nseverity = \"warning\"\nfix = \"{FIX}\"\n"
         )).unwrap();
         repo
@@ -47,7 +47,7 @@ impl Repo {
     }
 
     fn run(&self) -> Vec<RuleRun> {
-        let file = RuleFile::read(&self.0.join("temperare.toml")).unwrap();
+        let file = RuleFile::read(&self.0.join("tao.toml")).unwrap();
         run_rules_versioned_at(&file, &self.0, &[], None).runs
     }
 }
@@ -67,6 +67,28 @@ impl Drop for PathGuard {
             None => std::env::remove_var("PATH"),
         }
     }
+}
+
+/// Set on the child process that runs one temp-git test: that test's name.
+const TEMP_GIT_CASE: &str = "ENGINES_CLANG_TIDY_TEMP_GIT_CASE";
+
+/// True in the child that runs `test`; anywhere else, runs `test` in a child of this test binary, asserts it passed
+/// and returns false.
+fn in_own_process(test: &str) -> bool {
+    if std::env::var_os(TEMP_GIT_CASE).is_some_and(|case| case == test) {
+        return true;
+    }
+    // ccvcslib finds git once per process and keeps it, and this case's git lives in a temp folder that is removed,
+    // so it runs in its own process.
+    let out = procio::run(&procio::Cmd {
+        args: vec!["--exact".into(), test.into(), "--test-threads=1".into()],
+        env: vec![(TEMP_GIT_CASE.into(), test.into())],
+        ..procio::Cmd::new(std::env::current_exe().unwrap())
+    }).unwrap();
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert_eq!(out.code, Some(0), "{test}: {stdout}{}", String::from_utf8_lossy(&out.stderr));
+    assert!(stdout.contains("1 passed"), "{test}: {stdout}");
+    false
 }
 
 fn assert_finding(runs: Vec<RuleRun>) {
@@ -150,6 +172,9 @@ fn violation_with_compile_flags() {
 
 #[test]
 fn missing_clang_tidy_is_not_available() {
+    if !in_own_process("missing_clang_tidy_is_not_available") {
+        return;
+    }
     let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let repo = Repo::new("missing-engine", VIOLATION, "readability-braces-around-statements");
     repo.database();
@@ -168,10 +193,13 @@ fn missing_clang_tidy_is_not_available() {
 
 #[test]
 fn no_c_file_precedes_missing_engine() {
+    if !in_own_process("no_c_file_precedes_missing_engine") {
+        return;
+    }
     let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let repo = Repo::with_file("no-c-file", "README.txt", "tracked\n", "readability-braces-around-statements");
     support::git::git(&repo.0, &["add", "README.txt"], b"");
-    let rule_path = repo.0.join("temperare.toml");
+    let rule_path = repo.0.join("tao.toml");
     let mut rule_text = fs::read_to_string(&rule_path).unwrap();
     rule_text.push_str("paths = [\"**\"]\n");
     fs::write(&rule_path, rule_text).unwrap();

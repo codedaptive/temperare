@@ -6,7 +6,7 @@ use crate::types::ParseError;
 use rules::Engine;
 
 /// git run by its own flow, `run_git`, for the one check `test_ratio` (`git_refusal` refuses any other before
-/// anything runs). It counts the lines the change adds against the check's base (`Host::base`): procio's
+/// anything runs). It counts the lines the change adds against the check's base (`Host::base`): ccvcslib's
 /// `added_lines` for tracked files and every line of each untracked file git does not ignore, each file in the
 /// rule's scope counted as test when `test_paths` matches it and as code otherwise. A change that adds at least
 /// `floor` lines of test and more than `max_ratio` lines of test per line of code gets one finding, at the first
@@ -31,7 +31,7 @@ pub static GIT: Entry = Entry {
     params: Params::Flow { names: &["max_ratio", "floor", "test_paths"], check: |p| read_test_ratio(p).map(drop) },
     config: None,
     after: &[],
-    version: Some(VersionProbe { args: &["--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["--version"], read: version_word, wrap: None }),
     refuse: git_refusal,
     unknown: |_, _| None,
     read: |_, _, _, _| Err(ParseError { why: "git output is never read: the git entry's flow counts the change".to_string() }),

@@ -1,4 +1,4 @@
-//! Zone integration tests for no_file_rules: in a throwaway git repository, the rules tm check settles as no-file, without running an
+//! ZIT for no_file_rules: in a throwaway git repository, the rules cctao check settles as no-file, without running an
 //! engine; outside a repository, none.
 
 use engines::{no_file_rules, NoFileRule};
@@ -85,12 +85,25 @@ engine = "shellcheck"
 check = "SC2086"
 paths = ["scripts/**"]
 fix = "f"
+[[rule]]
+id = "vale-no-file"
+engine = "vale"
+check = "Vale.Spelling"
+paths = ["scripts/**"]
+fix = "f"
+[[rule]]
+id = "vale-has-file"
+engine = "vale"
+check = "Vale.Spelling"
+paths = ["docs/**"]
+fix = "f"
 "#;
     let file = RuleFile::parse(text, Path::new("kit")).unwrap();
     assert_eq!(no_file_rules(&file, &repo.0), vec![
         NoFileRule { rule: "no-script".into(), engine: Engine::ShellCheck, why: "no file its engine checks".into() },
         NoFileRule { rule: "ignored".into(), engine: Engine::Ruff, why: "its paths match no file in the rule file's folder".into() },
         NoFileRule { rule: "base-no-file".into(), engine: Engine::Ruff, why: "its paths match no file in the rule file's folder".into() },
+        NoFileRule { rule: "vale-no-file".into(), engine: Engine::Vale, why: "no file its engine checks".into() },
     ]);
 }
 

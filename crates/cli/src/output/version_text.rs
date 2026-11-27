@@ -1,7 +1,8 @@
-//! `version_text`: the line `temperare --version` prints.
+//! `version_text`: the line `cctao --version` prints.
 
-/// `temperare <version> (<commit>)`: the workspace version and the commit the binary was built from (`unknown` when
-/// the build could not read it).
+use super::version_after_name;
+
+/// `cctao <version> (<commit>)`: the program's name, then what `version_after_name` gives for the version and commit.
 pub fn version_text(version: &str, commit: &str) -> String {
-    format!("temperare {version} ({commit})")
+    format!("cctao {}", version_after_name(version, commit))
 }

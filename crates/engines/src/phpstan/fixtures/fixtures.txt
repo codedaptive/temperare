@@ -1,0 +1,80 @@
+Real PHPStan output captured in a throwaway folder, /private/tmp/tm-phpstan-capture, removed afterwards.
+Version: /opt/homebrew/bin/phpstan on PHP 8.6.0 (cli); `phpstan --version` prints exactly this line on stdout:
+PHPStan - PHP Static Analysis Tool 2.3.7
+Every run but no_files.txt's was made in /private/tmp/tm-phpstan-capture, with the wrapper config wrap/tm.neon
+(without the `excludePaths!` line cctao's `phpstan_config` writes):
+includes:
+    - '/private/tmp/tm-phpstan-capture/phpstan.neon'
+parameters:
+    tmpDir: cache
+    ignoreErrors!: []
+and phpstan.neon:
+parameters:
+    level: 0
+    paths:
+        - src
+The JSON keeps the capture folder's absolute paths; the tests pass /private/tmp/tm-phpstan-capture as the folder.
+The program now writes this wrapper as cctao.neon; the runs recorded here used its earlier name, tm.neon.
+
+findings.json (stdout), exit 1:
+phpstan analyse --no-progress --no-interaction --no-ansi --error-format=json --level=6 --configuration=/private/tmp/tm-phpstan-capture/wrap/tm.neon -- src/example.php src/uses_trait.php
+
+clean.json (stdout), exit 0:
+phpstan analyse --no-progress --no-interaction --no-ansi --error-format=json --level=6 --configuration=/private/tmp/tm-phpstan-capture/wrap/tm.neon -- src/clean.php
+
+crashed.json (stdout), exit 1: the same flags with --memory-limit=72M, given big/, a folder of 60 generated files of
+300 functions each, so a parallel worker ran out of memory:
+phpstan analyse --no-progress --no-interaction --no-ansi --error-format=json --level=6 --memory-limit=72M --configuration=/private/tmp/tm-phpstan-capture/wrap/tm.neon -- big
+
+unknown_level.txt (stderr; stdout empty), exit 1:
+phpstan analyse --no-progress --no-interaction --no-ansi --error-format=json --level=11 --configuration=/private/tmp/tm-phpstan-capture/wrap/tm.neon -- src/example.php
+
+no_files.txt (stderr; stdout empty), exit 1: made in a fresh /private/tmp/tm-phpstan-capture holding only
+src/example.php (below), with wrap/tm.neon the text cctao's `phpstan_config` writes for that folder's phpstan.neon:
+includes:
+    - '/private/tmp/tm-phpstan-capture/phpstan.neon'
+parameters:
+    tmpDir: cache
+    ignoreErrors!: []
+    excludePaths!: {analyse: [], analyseAndScan: []}
+and phpstan.neon a config whose `stubFiles` names the only file passed:
+parameters:
+    stubFiles:
+        - src/example.php
+phpstan analyse --no-progress --no-interaction --no-ansi --error-format=json --level=5 --configuration=/private/tmp/tm-phpstan-capture/wrap/tm.neon -- src/example.php
+
+Probe, no fixture kept: the same run with `excludePaths!: []` in the wrapper in place of the map exits 1 with
+"Invalid configuration: The mandatory item 'parameters › excludePaths › analyse' is missing." (and the same for
+`analyseAndScan`), which is why `phpstan_config` writes the map form.
+
+src/example.php:
+<?php
+function takeInt(int $value): void {}
+takeInt('wrong');
+
+function half(int $n): string
+{
+    return $n;
+}
+
+undefinedFunction();
+
+src/uses_trait.php:
+<?php
+trait T
+{
+    public function run(): int
+    {
+        return $this->missing();
+    }
+}
+
+class UsesT
+{
+    use T;
+}
+
+src/clean.php:
+<?php
+function takeInt(int $value): void {}
+takeInt(1);

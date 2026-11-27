@@ -7,8 +7,8 @@ use crate::{Date, Exception, RuleFile};
 /// and path when its `what` is None or the same, so narrowing an exception by adding a `what` gives no ExceptionAdded and
 /// widening one by dropping it gives ExceptionAdded, as does an exception no base exception covers. A covered one is
 /// judged against the base's reach: no end if any covering exception has no `expires`, else the latest `expires`
-/// among them. Against a dated reach, no `expires` now gives ExpiryDropped and a later one ExpiryLater; an earlier or
-/// equal date, or an undated reach, gives nothing. Reason and approval are not compared.
+/// among them. A later date now gives ExpiryLater; an undated exception now, an undated reach, or an earlier or equal
+/// date gives nothing. Reason and approval are not compared.
 pub(super) fn exception_loosenings(base: &RuleFile, now: &RuleFile) -> Vec<Loosening> {
     now.exceptions
         .iter()
@@ -35,14 +35,18 @@ fn covers_exception(earlier: &Exception, later: &Exception) -> bool {
     earlier.rule == later.rule && earlier.path == later.path && (earlier.what.is_none() || earlier.what == later.what)
 }
 
-/// The loosening of `later`'s `expires` against the reach of its non-empty `coverers`; None when the reach has no end
-/// (a coverer with no `expires`) or `later` ends no later than it.
+/// The loosening of `later`'s `expires` against the reach of its non-empty `coverers`; None when `later` has no
+/// `expires`, when the reach has no end (a coverer with no `expires`), or when `later` ends no later than it.
 fn expiry_loosening(coverers: &[&Exception], later: &Exception) -> Option<Loosening> {
+    let day = later.expires?;
     let reach = coverers.iter().map(|earlier| earlier.expires).collect::<Option<Vec<Date>>>()?.into_iter().max()?;
-    let (kind, after) = match later.expires {
-        None => (LooseningKind::ExpiryDropped, None),
-        Some(day) if day > reach => (LooseningKind::ExpiryLater, Some(day.to_string())),
-        Some(_) => return None,
-    };
-    Some(Loosening { kind, about: later.rule.clone(), before: Some(reach.to_string()), after })
+    if day <= reach {
+        return None;
+    }
+    Some(Loosening {
+        kind: LooseningKind::ExpiryLater,
+        about: later.rule.clone(),
+        before: Some(reach.to_string()),
+        after: Some(day.to_string()),
+    })
 }

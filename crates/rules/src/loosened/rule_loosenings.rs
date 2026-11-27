@@ -26,7 +26,7 @@ pub(super) fn rule_loosenings(base: &RuleFile, now: &RuleFile) -> Vec<Loosening>
 /// to not, and an OutsideKitAdded per new `outside_kits` kit.
 fn changed_rule(base: &Rule, now: &Rule, found: &mut Vec<Loosening>) {
     if rank(now.severity) < rank(base.severity) {
-        let (before, after) = (name(base.severity), name(now.severity));
+        let (before, after) = (base.severity.name(), now.severity.name());
         found.push(loosening(LooseningKind::SeverityLowered, base, Some(before.to_string()), Some(after.to_string())));
     }
     if !now.paths.is_empty() {
@@ -62,13 +62,6 @@ fn rank(severity: Severity) -> u8 {
     match severity {
         Severity::Error => 2,
         Severity::Warning => 1,
-    }
-}
-
-/// The severity's rule-file name, as its serde rename gives it.
-fn name(severity: Severity) -> &'static str {
-    match severity {
-        Severity::Error => "error",
-        Severity::Warning => "warning",
+        Severity::Watch => 0,
     }
 }

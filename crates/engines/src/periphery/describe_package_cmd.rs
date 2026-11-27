@@ -5,7 +5,7 @@ use std::path::Path;
 
 /// `swift package --scratch-path <build> describe --type json`, run in `root`: the package description Periphery
 /// reads through `--json-package-manifest-path` to know the package's targets. `--scratch-path` keeps anything SwiftPM
-/// writes in tm's scratch folder rather than the package's `.build`.
+/// writes in cctao's scratch folder rather than the package's `.build`.
 pub fn describe_package_cmd(root: &Path, build: &Path) -> Cmd {
     Cmd {
         args: vec![

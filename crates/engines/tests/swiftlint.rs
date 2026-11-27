@@ -1,14 +1,17 @@
-use std::{ffi::OsStr, fs, path::Path};
+use std::{ffi::OsStr, fs};
+#[cfg(unix)]
+use std::path::Path;
 
-use engines::{availability, entry_cmd, run_rules_versioned_at, swiftlint::{parse_swiftlint, SWIFTLINT}, Availability};
+use engines::{availability_in, entry_cmd, run_rules_versioned_at, swiftlint::{parse_swiftlint, SWIFTLINT}, Availability};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
 #[test]
+#[cfg_attr(windows, ignore = "SwiftLint publishes no Windows build")]
 fn swiftlint_reports_force_cast_but_not_other_rules_or_clean_lines() {
-    assert_eq!(availability(Engine::SwiftLint), Availability::Available);
     let folder = std::env::temp_dir().join(format!("engines-zit-{}-swiftlint", std::process::id()));
     fs::create_dir(&folder).unwrap();
     let folder = fs::canonicalize(folder).unwrap();
+    assert_eq!(availability_in(Engine::SwiftLint, &folder), Availability::Available);
     fs::write(folder.join("Example.swift"), "func example(_ value: Any) {  \n    let text = value as! String\n    print(text)\n}\n").unwrap();
     let result = procio::run(&entry_cmd(&SWIFTLINT, OsStr::new("force_cast"), &[], None, &folder))
         .map(|out| parse_swiftlint(&out, "force_cast", &folder, &folder));
@@ -20,12 +23,14 @@ fn swiftlint_reports_force_cast_but_not_other_rules_or_clean_lines() {
     assert!(hits[0].what.to_lowercase().contains("cast"), "{:?}", hits[0]);
 }
 
+// Unix only: it checks the macOS /tmp to /private/tmp rewrite, and there is no /tmp on Windows.
+#[cfg(unix)]
 #[test]
 fn swiftlint_finding_in_a_private_tmp_repo_is_kept() {
-    assert_eq!(availability(Engine::SwiftLint), Availability::Available);
     let folder = Path::new("/tmp").join(format!("engines-zit-{}-swiftlint-private", std::process::id()));
     fs::create_dir(&folder).unwrap();
     let folder = fs::canonicalize(folder).unwrap();
+    assert_eq!(availability_in(Engine::SwiftLint, &folder), Availability::Available);
     fs::create_dir(folder.join("Sources")).unwrap();
     fs::write(folder.join("Sources/Cast.swift"), "func example(_ value: Any) {\n    let text = value as! String\n    print(text)\n}\n").unwrap();
     let result = procio::run(&entry_cmd(&SWIFTLINT, OsStr::new("force_cast"), &[], None, &folder))
@@ -40,14 +45,15 @@ fn swiftlint_finding_in_a_private_tmp_repo_is_kept() {
 }
 
 #[test]
+#[cfg_attr(windows, ignore = "SwiftLint publishes no Windows build")]
 fn swiftlint_unknown_rule_is_not_available_naming_the_identifier() {
-    assert_eq!(availability(Engine::SwiftLint), Availability::Available);
     let folder = std::env::temp_dir().join(format!("engines-zit-{}-swiftlint-unknown", std::process::id()));
     fs::create_dir(&folder).unwrap();
     let folder = fs::canonicalize(folder).unwrap();
+    assert_eq!(availability_in(Engine::SwiftLint, &folder), Availability::Available);
     fs::write(folder.join("Example.swift"), "let value = 1\n").unwrap();
-    fs::write(folder.join("temperare.toml"), "version = 1\n[[rule]]\nid = \"unknown-swift-rule\"\nengine = \"swiftlint\"\ncheck = \"no_such_rule\"\nfix = \"Name a known rule.\"\n").unwrap();
-    let file = RuleFile::read(&folder.join("temperare.toml")).unwrap();
+    fs::write(folder.join("tao.toml"), "version = 1\n[[rule]]\nid = \"unknown-swift-rule\"\nengine = \"swiftlint\"\ncheck = \"no_such_rule\"\nfix = \"Name a known rule.\"\n").unwrap();
+    let file = RuleFile::read(&folder.join("tao.toml")).unwrap();
     // The version is machine-specific, so read the engine for this expected value only.
     let version_output = procio::run(&procio::Cmd {
         args: vec!["version".into()], cwd: Some(folder.clone()), ..procio::Cmd::new("swiftlint")
@@ -71,11 +77,12 @@ fn swiftlint_unknown_rule_is_not_available_naming_the_identifier() {
 }
 
 #[test]
+#[cfg_attr(windows, ignore = "SwiftLint publishes no Windows build")]
 fn d1_swiftlint_comma_separated_identifier_is_an_error() {
-    assert_eq!(availability(Engine::SwiftLint), Availability::Available);
     let folder = std::env::temp_dir().join(format!("engines-zit-{}-swiftlint-invalid", std::process::id()));
     fs::create_dir(&folder).unwrap();
     let folder = fs::canonicalize(folder).unwrap();
+    assert_eq!(availability_in(Engine::SwiftLint, &folder), Availability::Available);
     fs::write(folder.join("Example.swift"), "let value = 1\n").unwrap();
     let result = procio::run(&entry_cmd(&SWIFTLINT, OsStr::new("force_cast,force_try"), &[], None, &folder))
         .map(|out| parse_swiftlint(&out, "force_cast,force_try", &folder, &folder));

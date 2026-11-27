@@ -1,4 +1,4 @@
-//! `BaselineRuleResult`: one rule's result under `tm baseline test`.
+//! `BaselineRuleResult`: one rule's result under `cctao baseline test`.
 
 use super::case_verdict::CaseVerdict;
 

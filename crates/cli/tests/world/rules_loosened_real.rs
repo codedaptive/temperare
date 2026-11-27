@@ -1,5 +1,5 @@
-//! Cross-crate integration test: `tm rules --loosened` compares working files with real git commits in disposable repositories.
-//! RuleNotApplicable is covered with a real rule file; SetOlder is covered only by ZUTs (the cli formatter ZUTs, and
+//! RIT: `cctao rules --loosened` compares working files with real git commits in disposable repositories.
+//! RuleNotApplicable is covered with a real rule file; SetOlder is covered only by unit tests (the cli formatter unit tests, and
 //! rules' own set_loosenings_tests.rs), because only version 1 of each set exists.
 
 use serde_json::{json, Value};
@@ -16,7 +16,7 @@ impl TempFolder {
     fn new() -> Self {
         loop {
             let n = NEXT.fetch_add(1, Ordering::Relaxed);
-            let path = std::env::temp_dir().join(format!("tm-loosened-{}-{n}", std::process::id()));
+            let path = std::env::temp_dir().join(format!("cctao-loosened-{}-{n}", std::process::id()));
             match fs::create_dir(&path) {
                 Ok(()) => return Self(fs::canonicalize(path).unwrap()),
                 Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
@@ -70,7 +70,7 @@ impl Repo {
     }
 
     fn write(&self, text: &str) {
-        fs::write(self.repo.join("temperare.toml"), text).unwrap();
+        fs::write(self.repo.join("tao.toml"), text).unwrap();
     }
 
     fn commit(&self, base: Option<&str>) -> String {
@@ -89,8 +89,15 @@ impl Repo {
         (code, String::from_utf8(out).unwrap(), String::from_utf8(err).unwrap())
     }
 
+    /// cctao names the rule file from git's top in the native form, not from `self.repo` (the canonical temp path,
+    /// `\\?\C:\...` on Windows), so the expected path is built from git's answer the same way.
     fn path(&self) -> String {
-        self.repo.join("temperare.toml").display().to_string()
+        PathBuf::from(self.git(&["rev-parse", "--show-toplevel"]))
+            .components()
+            .collect::<PathBuf>()
+            .join("tao.toml")
+            .display()
+            .to_string()
     }
 }
 
@@ -125,12 +132,6 @@ path = "late.py"
 reason = "legacy"
 approved = "team"
 expires = "2030-01-01"
-[[exception]]
-rule = "z-scope"
-path = "drop.py"
-reason = "legacy"
-approved = "team"
-expires = "2031-02-03"
 "#;
 
 const NOW: &str = r#"version = 1
@@ -167,17 +168,13 @@ path = "new.py"
 what = "E3"
 reason = "legacy"
 approved = "team"
+expires = "2099-12-31"
 [[exception]]
 rule = "z-scope"
 path = "late.py"
 reason = "legacy"
 approved = "team"
 expires = "2032-01-01"
-[[exception]]
-rule = "z-scope"
-path = "drop.py"
-reason = "legacy"
-approved = "team"
 "#;
 
 #[test]
@@ -189,7 +186,7 @@ fn rule_and_exception_kinds_in_order() {
     let (code, out, err) = repo.run(&["rules", "--loosened", "--base", "base", "--json"]);
     assert_eq!(code, 1, "stdout: {out}\nstderr: {err}");
     assert_eq!(serde_json::from_str::<Value>(&out).unwrap(), json!({
-        "rule_file": repo.path(), "base": "base", "count": 12, "exit": 1,
+        "rule_file": repo.path(), "base": "base", "count": 11, "exit": 1,
         "next": format!("have each loosening in loosened approved, or undo it in {}", repo.path()),
         "loosened": [
             {"kind":"rule_gone", "about":"tm-rust-dead-code"},
@@ -202,15 +199,14 @@ fn rule_and_exception_kinds_in_order() {
             {"kind":"paths_limited", "about":"a-limited", "after":"a/**, b/**"},
             {"kind":"kits_limited", "about":"a-limited", "after":"b, a"},
             {"kind":"exception_added", "about":"a-limited", "after":"new.py (E3)"},
-            {"kind":"expiry_later", "about":"z-scope", "before":"2030-01-01", "after":"2032-01-01"},
-            {"kind":"expiry_dropped", "about":"z-scope", "before":"2031-02-03"}
+            {"kind":"expiry_later", "about":"z-scope", "before":"2030-01-01", "after":"2032-01-01"}
         ]
     }));
     assert!(err.is_empty(), "{err}");
     let (code, out, err) = repo.run(&["rules", "--loosened", "--base", "base"]);
     assert_eq!(code, 1, "stdout: {out}\nstderr: {err}");
     assert_eq!(out, format!(concat!(
-        "rule file: {}\nbase: base\nloosened (12):\n",
+        "rule file: {}\nbase: base\nloosened (11):\n",
         "  rule_gone  tm-rust-dead-code\n",
         "  severity_lowered  z-scope  before: error  after: warning\n",
         "  path_removed  z-scope  before: z/**\n",
@@ -222,7 +218,6 @@ fn rule_and_exception_kinds_in_order() {
         "  kits_limited  a-limited  after: b, a\n",
         "  exception_added  a-limited  after: new.py (E3)\n",
         "  expiry_later  z-scope  before: 2030-01-01  after: 2032-01-01\n",
-        "  expiry_dropped  z-scope  before: 2031-02-03\n",
         "next: have each loosening above approved, or undo it in {}\n"
     ), repo.path(), repo.path()));
     assert!(err.is_empty(), "{err}");
@@ -289,6 +284,7 @@ rule = "r"
 path = "old.py"
 reason = "legacy"
 approved = "team"
+expires = "2099-12-31"
 "#;
 const TIGHT_NOW: &str = r#"version = 1
 [[rule]]
@@ -349,14 +345,14 @@ fn error_case(case: ErrorCase) {
         ErrorCase::MissingRevision => vec!["rules", "--loosened", "--base", "nope"],
         ErrorCase::MissingBase => vec!["rules", "--loosened"],
         ErrorCase::BaseAlone => vec!["rules", "--base", &base],
-        ErrorCase::OutsideGit => vec!["rules", "--loosened", "--base", "nope", "--rules", "temperare.toml"],
+        ErrorCase::OutsideGit => vec!["rules", "--loosened", "--base", "nope", "--rules", "tao.toml"],
         _ => vec!["rules", "--loosened", "--base", &base],
     };
     let (code, out, err) = repo.run(&args);
     assert_eq!(code, 2, "stdout: {out}\nstderr: {err}");
     match case {
         ErrorCase::MissingRevision => {
-            assert_eq!(err, "tm: base 'nope' does not name a commit\nnext: Pass a commit, branch or tag that exists, e.g. --base main.\n");
+            assert_eq!(err, "cctao: base 'nope' does not name a commit\nnext: Pass a commit, branch or tag that exists, e.g. --base main.\n");
             let (code, out, err) = repo.run(&["rules", "--loosened", "--base", "nope", "--json"]);
             assert_eq!(code, 2, "stdout: {out}\nstderr: {err}");
             assert_eq!(serde_json::from_str::<Value>(&out).unwrap(), json!({
@@ -364,12 +360,12 @@ fn error_case(case: ErrorCase) {
                 "next": "Pass a commit, branch or tag that exists, e.g. --base main."
             }));
         }
-        ErrorCase::MissingFile => assert_eq!(err, format!("tm: no rule file temperare.toml at base '{base}'\nnext: Pass a --base that has temperare.toml, or leave --loosened out.\n")),
+        ErrorCase::MissingFile => assert_eq!(err, format!("cctao: no rule file tao.toml at base '{base}'\nnext: Pass a --base that has tao.toml, or leave --loosened out.\n")),
         ErrorCase::InvalidBaseToml | ErrorCase::InvalidBaseCheck => assert!(out.contains(&format!("{} (at {base})", repo.path())), "{out}") ,
         ErrorCase::InvalidNow => assert!(out.contains(&repo.path()), "{out}"),
-        ErrorCase::MissingBase => assert_eq!(err, "tm: tm rules --loosened needs --base <rev>\nnext: Pass --base <rev>, the commit to compare with.\n"),
-        ErrorCase::BaseAlone => assert_eq!(err, "tm: --base is only for tm rules --loosened\nnext: Add --loosened, or leave --base out.\n"),
-        ErrorCase::OutsideGit => assert!(err.starts_with("tm: git could not resolve base 'nope'"), "{err}"),
+        ErrorCase::MissingBase => assert_eq!(err, "cctao: cctao rules --loosened needs --base <rev>\nnext: Pass --base <rev>, the commit to compare with.\n"),
+        ErrorCase::BaseAlone => assert_eq!(err, "cctao: --base is only for cctao rules --loosened\nnext: Add --loosened, or leave --base out.\n"),
+        ErrorCase::OutsideGit => assert!(err.starts_with("cctao: git could not resolve base 'nope'"), "{err}"),
     }
 }
 row!(missing_revision_is_an_error, error_case, ErrorCase::MissingRevision);

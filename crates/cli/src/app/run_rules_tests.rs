@@ -1,11 +1,12 @@
-//! Unit tests for app/run_rules.rs: the listing (with its not-applicable rules), the problems and the discovery errors, as text
-//! and as JSON, with git, the disk, engine availability, the no-file rules and the clock as closures and rule files
-//! parsed from literal TOML (one test builds its rule file in code: `baseline_and_own`).
+//! Unit test for app/run_rules.rs: the listing (with its not-applicable rules), the problems and the discovery errors, as
+//! text and as JSON, with git, the disk, engine availability, the no-file rules and the clock as closures and rule
+//! files parsed from literal TOML (one test builds its rule file in code: `baseline_and_own`).
 
 use super::{run_rules, RulesWorld};
 use crate::RulesArgs;
 use engines::{Availability, NoFileRule};
-use procio::{GitError, Oid};
+use ccvcslib::VcsError;
+use report::Oid;
 use rules::{Engine, Problem, Rule, RuleFile};
 use serde_json::json;
 use std::path::{Path, PathBuf};
@@ -27,7 +28,7 @@ expires = "2099-12-31"
 "#;
 
 fn good(path: &Path) -> Result<RuleFile, Vec<Problem>> {
-    assert_eq!(path, Path::new("/repo/temperare.toml"));
+    assert_eq!(path, Path::new("/repo/tao.toml"));
     Ok(RuleFile::parse(GOOD, Path::new(".")).unwrap())
 }
 
@@ -38,20 +39,26 @@ fn broken(_: &Path) -> Result<RuleFile, Vec<Problem>> {
     ])
 }
 
-fn repo_top(cwd: &Path) -> Result<PathBuf, GitError> {
+fn repo_top(cwd: &Path) -> Result<PathBuf, VcsError> {
     assert_eq!(cwd, Path::new("/repo/src"));
     Ok(PathBuf::from("/repo"))
 }
 
-fn not_a_repository(cwd: &Path) -> Result<PathBuf, GitError> {
-    Err(GitError::NotARepository { repo: cwd.to_path_buf() })
+/// The rule file found at repo_top's top, as cctao prints it: `/repo` joined with `tao.toml` in the platform's
+/// separator, `/repo/tao.toml` on unix.
+fn rule_file() -> String {
+    Path::new("/repo").join("tao.toml").display().to_string()
+}
+
+fn not_a_repository(_: &Path) -> Result<PathBuf, VcsError> {
+    Err(VcsError::NotAWorkingCopy)
 }
 
 fn there(_: &Path) -> bool {
     true
 }
 
-fn all_available(_: Engine) -> Availability {
+fn all_available(_: Engine, _: &Path) -> Availability {
     Availability::Available
 }
 
@@ -61,10 +68,10 @@ fn pinned_now() -> u64 {
     1_795_262_400
 }
 
-/// Runs `tm rules` in /repo/src with the given seams, every engine available; (exit, out, err).
+/// Runs `cctao rules` in /repo/src with the given seams, every engine available; (exit, out, err).
 fn rules_in_repo(
     args: RulesArgs,
-    toplevel: &dyn Fn(&Path) -> Result<PathBuf, GitError>,
+    toplevel: &dyn Fn(&Path) -> Result<PathBuf, VcsError>,
     exists: &dyn Fn(&Path) -> bool,
     read: &dyn Fn(&Path) -> Result<RuleFile, Vec<Problem>>,
 ) -> (u8, String, String) {
@@ -72,40 +79,40 @@ fn rules_in_repo(
 }
 
 /// No rule settled as no-file. It must be asked about the rule file read (every good one here holds only `lint-all`)
-/// in the folder tm runs in, /repo/src, not the top of the repository.
+/// in the folder cctao runs in, /repo/src, not the top of the repository.
 fn none_no_file(rf: &RuleFile, folder: &Path) -> Vec<NoFileRule> {
     assert_eq!(rf.rules.iter().map(|r| r.id.as_str()).collect::<Vec<_>>(), ["lint-all"]);
     assert_eq!(folder, Path::new("/repo/src"));
     Vec::new()
 }
 
-/// Runs `tm rules` in /repo/src with the given seams, engine availability and clock, and no rule settled as no-file;
+/// Runs `cctao rules` in /repo/src with the given seams, engine availability and clock, and no rule settled as no-file;
 /// (exit, out, err).
 fn rules_with(
     args: RulesArgs,
-    toplevel: &dyn Fn(&Path) -> Result<PathBuf, GitError>,
+    toplevel: &dyn Fn(&Path) -> Result<PathBuf, VcsError>,
     exists: &dyn Fn(&Path) -> bool,
     read: &dyn Fn(&Path) -> Result<RuleFile, Vec<Problem>>,
-    availability: &dyn Fn(Engine) -> Availability,
+    availability: &dyn Fn(Engine, &Path) -> Availability,
     now: &dyn Fn() -> u64,
 ) -> (u8, String, String) {
     rules_in_world(args, toplevel, exists, read, availability, now, &none_no_file)
 }
 
-/// `rules_with` with the no-file seam given too. `rev_parse` and `blob_at` panic: `tm rules` without `--loosened`
+/// `rules_with` with the no-file seam given too. `rev_parse` and `blob_at` panic: `cctao rules` without `--loosened`
 /// never asks git for a base.
 fn rules_in_world(
     args: RulesArgs,
-    toplevel: &dyn Fn(&Path) -> Result<PathBuf, GitError>,
+    toplevel: &dyn Fn(&Path) -> Result<PathBuf, VcsError>,
     exists: &dyn Fn(&Path) -> bool,
     read: &dyn Fn(&Path) -> Result<RuleFile, Vec<Problem>>,
-    availability: &dyn Fn(Engine) -> Availability,
+    availability: &dyn Fn(Engine, &Path) -> Availability,
     now: &dyn Fn() -> u64,
     no_file_rules: &dyn Fn(&RuleFile, &Path) -> Vec<NoFileRule>,
 ) -> (u8, String, String) {
-    let rev_parse = |_: &Path, _: &str| -> Result<Option<Oid>, GitError> { panic!("rev_parse must not be called") };
+    let rev_parse = |_: &Path, _: &str| -> Result<Option<Oid>, VcsError> { panic!("rev_parse must not be called") };
     let blob_at =
-        |_: &Path, _: &str, _: &Path| -> Result<Option<Vec<u8>>, GitError> { panic!("blob_at must not be called") };
+        |_: &Path, _: &Oid, _: &str| -> Result<Option<Vec<u8>>, VcsError> { panic!("blob_at must not be called") };
     let world =
         RulesWorld { toplevel, exists, read, availability, now, rev_parse: &rev_parse, blob_at: &blob_at, no_file_rules };
     let (mut out, mut err) = (Vec::new(), Vec::new());
@@ -123,14 +130,17 @@ fn text_lists_the_rules_then_nothing_to_do() {
     assert_eq!(code, 0);
     assert_eq!(
         out,
-        "rule file: /repo/temperare.toml\n\
-         rules (1):\n  \
-         lint-all  clippy  quality  error  paths: all files  available\n\
-         not applicable (0):\n\
-         exceptions in force (1):\n  \
-         lint-all  src/legacy.rs  approved: bob 2026-11-17  reason: Legacy.\n\
-         exceptions expired (0):\n\
-         next: nothing to do\n"
+        format!(
+            "rule file: {}\n\
+             rules (1):\n  \
+             lint-all  clippy  quality  error  paths: all files  available\n\
+             not applicable (0):\n\
+             exceptions in force (1):\n  \
+             lint-all  src/legacy.rs  approved: bob 2026-11-17  reason: Legacy.\n\
+             exceptions expired (0):\n\
+             next: nothing to do\n",
+            rule_file()
+        )
     );
     assert_eq!(err, "");
 }
@@ -144,7 +154,7 @@ fn json_lists_the_rules_with_exit_0_as_one_object() {
     assert_eq!(
         value,
         json!({
-            "rule_file": "/repo/temperare.toml",
+            "rule_file": rule_file(),
             "rules": [{
                 "id": "lint-all", "engine": "clippy", "kind": "quality", "severity": "error",
                 "check": "clippy::all", "paths": [], "exclude": [], "kits": [], "outside_kits": [],
@@ -170,11 +180,14 @@ fn json_lists_the_rules_with_exit_0_as_one_object() {
 fn text_problems_one_line_each_then_the_fix_with_exit_2() {
     let (code, out, err) = rules_in_repo(RulesArgs::default(), &repo_top, &there, &broken);
     assert_eq!(code, 2);
+    let rf = rule_file();
     assert_eq!(
         out,
-        "/repo/temperare.toml:1:11  version must be 1  Write version = 1.\n\
-         /repo/temperare.toml:3:1  unknown key  Remove the key.\n\
-         next: fix each problem listed for /repo/temperare.toml\n"
+        format!(
+            "{rf}:1:11  version must be 1  Write version = 1.\n\
+             {rf}:3:1  unknown key  Remove the key.\n\
+             next: fix each problem listed for {rf}\n"
+        )
     );
     assert_eq!(err, "");
 }
@@ -187,13 +200,13 @@ fn json_problems_with_exit_2_and_the_fix() {
     assert_eq!(
         value,
         json!({
-            "rule_file": "/repo/temperare.toml",
+            "rule_file": rule_file(),
             "problems": [
                 {"line": 1, "col": 11, "what": "version must be 1", "fix": "Write version = 1."},
                 {"line": 3, "col": 1, "what": "unknown key", "fix": "Remove the key."},
             ],
             "exit": 2,
-            "next": "fix each problem listed for /repo/temperare.toml",
+            "next": format!("fix each problem listed for {}", rule_file()),
         })
     );
 }
@@ -205,7 +218,7 @@ fn outside_a_repository_is_an_error_on_stderr_and_nothing_on_stdout() {
     assert_eq!(out, "");
     assert_eq!(
         err,
-        "tm: not in a git repository: /repo/src\nnext: Run tm inside a git repository, or pass --rules <path>.\n"
+        "cctao: not in a git repository: /repo/src\nnext: Run cctao inside a git repository, or pass --rules <path>.\n"
     );
 }
 
@@ -217,21 +230,24 @@ fn a_missing_rule_file_under_json_is_also_an_object_on_stdout() {
     assert_eq!(
         value,
         json!({
-            "error": "no rule file at /repo/temperare.toml",
+            "error": format!("no rule file at {}", rule_file()),
             "exit": 2,
-            "next": "Write temperare.toml at the top of the repository, or pass --rules <path>.",
+            "next": "Write tao.toml at the top of the repository, or pass --rules <path>.",
         })
     );
     assert_eq!(
         err,
-        "tm: no rule file at /repo/temperare.toml\n\
-         next: Write temperare.toml at the top of the repository, or pass --rules <path>.\n"
+        format!(
+            "cctao: no rule file at {}\n\
+             next: Write tao.toml at the top of the repository, or pass --rules <path>.\n",
+            rule_file()
+        )
     );
 }
 
 #[test]
 fn the_rules_flag_reads_that_file_and_never_asks_git() {
-    let toplevel = |_: &Path| -> Result<PathBuf, GitError> { panic!("toplevel must not be called") };
+    let toplevel = |_: &Path| -> Result<PathBuf, VcsError> { panic!("toplevel must not be called") };
     let exists = |_: &Path| -> bool { panic!("exists must not be called") };
     let read = |p: &Path| {
         assert_eq!(p, Path::new("/repo/src/cfg/t.toml"));
@@ -240,10 +256,11 @@ fn the_rules_flag_reads_that_file_and_never_asks_git() {
     let args = RulesArgs { rules: Some(PathBuf::from("cfg/t.toml")), ..RulesArgs::default() };
     let (code, out, _) = rules_in_repo(args, &toplevel, &exists, &read);
     assert_eq!(code, 0);
-    assert!(out.starts_with("rule file: /repo/src/cfg/t.toml\n"), "{out}");
+    let flagged = Path::new("/repo/src").join("cfg/t.toml");
+    assert!(out.starts_with(&format!("rule file: {}\n", flagged.display())), "{out}");
 }
 
-fn clippy_not_available(engine: Engine) -> Availability {
+fn clippy_not_available(engine: Engine, _: &Path) -> Availability {
     assert_eq!(engine, Engine::Clippy);
     Availability::NotAvailable { why: "cargo-clippy not found on PATH".to_string() }
 }
@@ -254,14 +271,17 @@ fn text_with_an_engine_not_available_still_exits_0_with_nothing_to_do() {
     assert_eq!(code, 0);
     assert_eq!(
         out,
-        "rule file: /repo/temperare.toml\n\
-         rules (1):\n  \
-         lint-all  clippy  quality  error  paths: all files  not available: cargo-clippy not found on PATH\n\
-         not applicable (0):\n\
-         exceptions in force (1):\n  \
-         lint-all  src/legacy.rs  approved: bob 2026-11-17  reason: Legacy.\n\
-         exceptions expired (0):\n\
-         next: nothing to do\n"
+        format!(
+            "rule file: {}\n\
+             rules (1):\n  \
+             lint-all  clippy  quality  error  paths: all files  not available: cargo-clippy not found on PATH\n\
+             not applicable (0):\n\
+             exceptions in force (1):\n  \
+             lint-all  src/legacy.rs  approved: bob 2026-11-17  reason: Legacy.\n\
+             exceptions expired (0):\n\
+             next: nothing to do\n",
+            rule_file()
+        )
     );
     assert_eq!(err, "");
 }
@@ -346,12 +366,13 @@ fn an_exception_holds_through_its_expires_day_in_utc_and_is_listed_expired_from_
             json!([d_expired, d1_expired]),
         ),
     ];
+    let rf = rule_file();
     for (row, now, lines, in_force, expired) in rows {
         let clock = || now;
         let (code, out, _) = rules_with(RulesArgs::default(), &repo_top, &there, &read, &all_available, &clock);
         assert_eq!(code, 0, "{row}");
         let expected = format!(
-            "rule file: /repo/temperare.toml\n\
+            "rule file: {rf}\n\
              rules (1):\n  \
              lint-all  clippy  quality  error  paths: all files  available\n\
              not applicable (0):\n\
@@ -390,15 +411,18 @@ fn the_rules_the_no_file_seam_settles_in_cwd_are_listed_not_applicable_with_its_
     assert_eq!(code, 0);
     assert_eq!(
         out,
-        "rule file: /repo/temperare.toml\n\
-         rules (2):\n  \
-         tm-x  clippy  quality  error  paths: all files  available\n  \
-         own  clippy  quality  error  paths: all files  available\n\
-         not applicable (1):\n  \
-         tm-x  clippy  no file here\n\
-         exceptions in force (0):\n\
-         exceptions expired (0):\n\
-         next: nothing to do\n"
+        format!(
+            "rule file: {}\n\
+             rules (2):\n  \
+             tm-x  clippy  quality  error  paths: all files  available\n  \
+             own  clippy  quality  error  paths: all files  available\n\
+             not applicable (1):\n  \
+             tm-x  clippy  no file here\n\
+             exceptions in force (0):\n\
+             exceptions expired (0):\n\
+             next: nothing to do\n",
+            rule_file()
+        )
     );
     let (code, out, _) = run(json_args());
     assert_eq!(code, 0);

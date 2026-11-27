@@ -1,8 +1,7 @@
-//! Zone integration tests for report_engines.rs, in cli's integration group, with engines' real entries: report_engines keeps an engine
-//! only when `engines::entry_for` gives it an entry with a version probe, so these cases hold only while the entries
-//! of ruff, SwiftLint, Clippy and ast-grep have a probe and Tessera's has none (Tessera has an entry; it is left out
-//! for having no probe). The no-adapter case needs at least one variant that `entry_for` gives no entry, picked from
-//! `Engine::ALL` by `entry_for`. The availability is a closure; no engine runs and no PATH lookup.
+//! ZIT for report_engines.rs, in cli's integration group, with engines' real entries: report_engines keeps an engine
+//! only when its entry (`engines::entry_of`, which gives every engine one) has a version probe, so these cases hold
+//! only while the entries of ruff, SwiftLint, Clippy and ast-grep have a probe and Tessera's has none. The
+//! availability is a closure; no engine runs and no PATH lookup.
 
 use super::super::report_engines::report_engines;
 use engines::Availability;
@@ -50,21 +49,6 @@ fn a_version_serializes_as_a_string_and_none_as_null() {
 fn tessera_is_left_out_even_when_found_as_it_has_no_version_probe() {
     let mapped = report_engines(vec![named(Engine::Tessera, None), named(Engine::Clippy, Some("0.1.83"))], &found);
     assert_eq!(mapped, vec![entry(Engine::Clippy, Some("0.1.83"))]);
-}
-
-// Picked from entry_for rather than named, so a new adapter for any one engine leaves this case something to test.
-fn an_engine_with_no_adapter() -> Engine {
-    Engine::ALL
-        .into_iter()
-        .find(|e| engines::entry_for(*e).is_none())
-        .expect("every engine has an adapter in this build, so the no-adapter case has nothing to test")
-}
-
-#[test]
-fn an_engine_with_no_adapter_is_left_out_even_when_found() {
-    let mapped =
-        report_engines(vec![named(an_engine_with_no_adapter(), Some("3.3.1")), named(Engine::Ruff, None)], &found);
-    assert_eq!(mapped, vec![entry(Engine::Ruff, None)]);
 }
 
 #[test]

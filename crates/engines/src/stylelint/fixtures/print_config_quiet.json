@@ -1,0 +1,11 @@
+{
+  "quiet": true,
+  "rules": {
+    "color-no-invalid-hex": [
+      true,
+      {
+        "severity": "warning"
+      }
+    ]
+  }
+}

@@ -3,7 +3,7 @@
 
 use crate::check::Check;
 use crate::repo::Repo;
-use crate::tm::tm;
+use crate::cctao::cctao;
 
 const RULES: &str = r#"version = 1
 
@@ -21,7 +21,7 @@ const CARGO_TOML: &str = "[package]\nname = \"accept-one\"\nversion = \"0.1.0\"\
 
 fn crate_with(lib: &str) -> Repo {
     let repo = Repo::new();
-    repo.write("temperare.toml", RULES);
+    repo.write("tao.toml", RULES);
     repo.write("Cargo.toml", CARGO_TOML);
     repo.write(".gitignore", "target/\n");
     repo.write("src/lib.rs", lib);
@@ -38,8 +38,8 @@ fn a_clippy_lint_is_reported_with_its_rule_place_and_fix() {
     );
     let repo = crate_with("pub fn yes(x: bool) -> bool {\n    if x == true {\n        return true;\n    }\n    false\n}\n");
     let args = ["check", "--json"];
-    let a = tm(&repo, &args);
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao(&repo, &args);
+    check.saw_cctao(&args, a.code, &a.json);
     assert_eq!(a.code, 1, "a quality error is the refusal: {:#}\n{}", a.json, a.stderr);
     let f = a.findings();
     assert_eq!(f.len(), 1, "one finding: {:#}", a.json);
@@ -59,8 +59,8 @@ fn a_clean_file_passes() {
     );
     let repo = crate_with("pub fn yes(x: bool) -> bool {\n    x\n}\n");
     let args = ["check", "--json"];
-    let a = tm(&repo, &args);
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao(&repo, &args);
+    check.saw_cctao(&args, a.code, &a.json);
     assert_eq!(a.code, 0, "clean: {:#}\n{}", a.json, a.stderr);
     assert!(a.findings().is_empty(), "no findings: {:#}", a.json);
 }

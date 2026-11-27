@@ -6,7 +6,8 @@ use super::run_rules;
 use super::RulesWorld;
 use crate::RulesArgs;
 use engines::Availability;
-use procio::{GitError, Oid};
+use ccvcslib::{VcsError, VcsFailure};
+use report::Oid;
 use rules::{Engine, Problem, RuleFile};
 use std::path::{Path, PathBuf};
 
@@ -31,25 +32,25 @@ enum Base {
     Text(&'static str),
 }
 
-fn git_error() -> GitError {
-    GitError::Exit { args: vec!["show".into()], code: Some(128), stderr: b"fatal: boom\n".to_vec() }
+fn git_error() -> VcsError {
+    VcsError::Failed(VcsFailure { message: "fatal: boom".into(), exit_status: Some(128) })
 }
 
-/// Runs `tm rules --loosened --base v1` in /repo/src, the repository top /repo; `now` is the working rule file's text,
-/// or None for a file with one problem. (exit, out, err).
+/// Runs `cctao rules --loosened --base v1` in /repo/src, the repository top /repo; `now` is the working rule file's
+/// text, or None for a file with one problem. (exit, out, err).
 fn loosened(base: Base, now: Option<&'static str>) -> (u8, String, String) {
-    let toplevel = |cwd: &Path| -> Result<PathBuf, GitError> {
+    let toplevel = |cwd: &Path| -> Result<PathBuf, VcsError> {
         assert_eq!(cwd, Path::new("/repo/src"));
         Ok(PathBuf::from("/repo"))
     };
     let read = |path: &Path| -> Result<RuleFile, Vec<Problem>> {
-        assert_eq!(path, Path::new("/repo/temperare.toml"));
+        assert_eq!(path, Path::new("/repo/tao.toml"));
         match now {
             Some(text) => Ok(RuleFile::parse(text, Path::new("/repo")).unwrap()),
             None => Err(vec![Problem { line: 2, col: 1, what: "unknown key".into(), fix: "Remove the key.".into() }]),
         }
     };
-    let rev_parse = |folder: &Path, rev: &str| -> Result<Option<Oid>, GitError> {
+    let rev_parse = |folder: &Path, rev: &str| -> Result<Option<Oid>, VcsError> {
         assert_eq!((folder, rev), (Path::new("/repo"), "v1"));
         match base {
             Base::NoCommit => Ok(None),
@@ -57,8 +58,8 @@ fn loosened(base: Base, now: Option<&'static str>) -> (u8, String, String) {
             _ => Ok(Oid::parse(OID)),
         }
     };
-    let blob_at = |folder: &Path, oid: &str, path: &Path| -> Result<Option<Vec<u8>>, GitError> {
-        assert_eq!((folder, oid, path), (Path::new("/repo"), OID, Path::new("./temperare.toml")));
+    let blob_at = |folder: &Path, oid: &Oid, path: &str| -> Result<Option<Vec<u8>>, VcsError> {
+        assert_eq!((folder, oid, path), (Path::new("/repo"), &Oid::parse(OID).unwrap(), "tao.toml"));
         match base {
             Base::BlobGitError => Err(git_error()),
             Base::NoFile => Ok(None),
@@ -71,7 +72,7 @@ fn loosened(base: Base, now: Option<&'static str>) -> (u8, String, String) {
         toplevel: &toplevel,
         exists: &|_| true,
         read: &read,
-        availability: &|_: Engine| Availability::Available,
+        availability: &|_: Engine, _: &Path| Availability::Available,
         now: &|| 0,
         rev_parse: &rev_parse,
         blob_at: &blob_at,
@@ -88,32 +89,40 @@ fn loosened(base: Base, now: Option<&'static str>) -> (u8, String, String) {
 
 #[test]
 fn each_outcome_with_its_exit_and_text() {
+    // The rule file as cctao prints it: `/repo` joined with `tao.toml`, `/repo/tao.toml` on unix.
+    let rf = Path::new("/repo").join("tao.toml").display().to_string();
+    let base_problems = format!(
+        "{rf} (at v1):1:11  `version` must be 1, not 2  Write `version = 1`.\n\
+         next: fix each problem listed for {rf} (at v1)\n"
+    );
+    let now_problems = format!(
+        "{rf}:2:1  unknown key  Remove the key.\n\
+         next: fix each problem listed for {rf}\n"
+    );
+    let loosened_one = format!(
+        "rule file: {rf}\nbase: v1\nloosened (1):\n  rule_gone  lint-all\n\
+         next: have each loosening above approved, or undo it in {rf}\n"
+    );
+    let loosened_none = format!("rule file: {rf}\nbase: v1\nloosened (0):\nnext: nothing to do\n");
     let rows: [(&str, Base, Option<&'static str>, u8, &str, &str); 9] = [
         ("rev names nothing", Base::NoCommit, Some(ONE_RULE), 2, "",
-         "tm: base 'v1' does not name a commit\nnext: Pass a commit, branch or tag that exists, e.g. --base main.\n"),
+         "cctao: base 'v1' does not name a commit\nnext: Pass a commit, branch or tag that exists, e.g. --base main.\n"),
         ("rev_parse git error", Base::RevGitError, Some(ONE_RULE), 2, "",
-         "tm: git could not resolve base 'v1': git show: exit 128: fatal: boom\n\
-          next: Run tm rules inside a git repository to use --base.\n"),
+         "cctao: git could not resolve base 'v1': fatal: boom\n\
+          next: Run cctao rules inside a git repository to use --base.\n"),
         ("blob_at git error", Base::BlobGitError, Some(ONE_RULE), 2, "",
-         "tm: git could not read temperare.toml at base 'v1': git show: exit 128: fatal: boom\n\
-          next: Run tm rules inside a git repository to use --base.\n"),
+         "cctao: git could not read tao.toml at base 'v1': fatal: boom\n\
+          next: Run cctao rules inside a git repository to use --base.\n"),
         ("blob missing", Base::NoFile, Some(ONE_RULE), 2, "",
-         "tm: no rule file temperare.toml at base 'v1'\n\
-          next: Pass a --base that has temperare.toml, or leave --loosened out.\n"),
+         "cctao: no rule file tao.toml at base 'v1'\n\
+          next: Pass a --base that has tao.toml, or leave --loosened out.\n"),
         ("not UTF-8", Base::NotUtf8, Some(ONE_RULE), 2, "",
-         "tm: temperare.toml at base 'v1' is not UTF-8 text\n\
-          next: Pass a --base whose temperare.toml is UTF-8 text, or leave --loosened out.\n"),
-        ("base problems", Base::Text("version = 2\n"), None, 2,
-         "/repo/temperare.toml (at v1):1:11  `version` must be 1, not 2  Write `version = 1`.\n\
-          next: fix each problem listed for /repo/temperare.toml (at v1)\n", ""),
-        ("now problems", Base::Text(ONE_RULE), None, 2,
-         "/repo/temperare.toml:2:1  unknown key  Remove the key.\n\
-          next: fix each problem listed for /repo/temperare.toml\n", ""),
-        ("something loosened", Base::Text(ONE_RULE), Some("version = 1\n"), 1,
-         "rule file: /repo/temperare.toml\nbase: v1\nloosened (1):\n  rule_gone  lint-all\n\
-          next: have each loosening above approved, or undo it in /repo/temperare.toml\n", ""),
-        ("nothing loosened", Base::Text(ONE_RULE), Some(ONE_RULE), 0,
-         "rule file: /repo/temperare.toml\nbase: v1\nloosened (0):\nnext: nothing to do\n", ""),
+         "cctao: tao.toml at base 'v1' is not UTF-8 text\n\
+          next: Pass a --base whose tao.toml is UTF-8 text, or leave --loosened out.\n"),
+        ("base problems", Base::Text("version = 2\n"), None, 2, &base_problems, ""),
+        ("now problems", Base::Text(ONE_RULE), None, 2, &now_problems, ""),
+        ("something loosened", Base::Text(ONE_RULE), Some("version = 1\n"), 1, &loosened_one, ""),
+        ("nothing loosened", Base::Text(ONE_RULE), Some(ONE_RULE), 0, &loosened_none, ""),
     ];
     for (name, base, now, exit, out, err) in rows {
         assert_eq!(loosened(base, now), (exit, out.to_string(), err.to_string()), "{name}");

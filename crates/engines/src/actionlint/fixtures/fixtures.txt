@@ -1,0 +1,101 @@
+Real actionlint output captured in a throwaway git repository, /tmp/tm-actionlint-capture (`git init -q`, nothing
+committed), removed afterwards. Nothing reached the network.
+Version: /opt/homebrew/bin/actionlint; `actionlint -version` prints exactly these lines on stdout, exit 0:
+1.7.12
+installed from Homebrew
+built with go1.27.1 compiler for darwin/arm64
+ShellCheck on PATH: /opt/homebrew/bin/shellcheck, `version: 0.11.0`. pyflakes is not installed.
+Every run was made in /tmp/tm-actionlint-capture with SHELLCHECK_OPTS removed (`env -u SHELLCHECK_OPTS`) and the
+format template TEMPLATE = {"kinds":{{json allKinds}},"errors":{{json .}}}. `filepath` is the path as passed, relative
+to the working folder.
+
+findings.json (stdout), exit 1:
+actionlint -no-color -format TEMPLATE -config-file=/dev/null -shellcheck= -pyflakes= -- .github/workflows/ci.yml .github/workflows/release.yml
+
+clean.json (stdout), exit 0:
+actionlint -no-color -format TEMPLATE -config-file=/dev/null -shellcheck= -pyflakes= -- .github/workflows/clean.yml
+
+shellcheck.json (stdout), exit 1, with PATH=/opt/homebrew/bin:/usr/bin:/bin:
+actionlint -no-color -format TEMPLATE -config-file=/dev/null -shellcheck=shellcheck -pyflakes= -- .github/workflows/shell.yml
+
+A config actionlint cannot parse (quoted in parse_actionlint_tests.rs, not kept as a file), exit 3, stdout empty:
+actionlint -no-color -format TEMPLATE -config-file=bad-config.yaml -shellcheck= -pyflakes= -- .github/workflows/clean.yml
+stderr, exactly:
+could not parse config file "bad-config.yaml": yaml: line 1: did not find expected ',' or ']'
+
+The files, each ending in a newline:
+.github/workflows/ci.yml:
+name: CI
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          nonexistent-input: value
+      - run: echo "${{ unknown.x }}"
+
+.github/workflows/release.yml:
+name: Release
+on: push
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-versio: 20
+      - run: echo "${{ github.nope }}"
+
+.github/workflows/clean.yml:
+name: Clean
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hello
+
+.github/workflows/shell.yml:
+name: Shell
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo $FOO
+
+bad-config.yaml:
+self-hosted-runner:
+  labels: [a
+
+Config reading (the source of `ACTIONLINT`'s doc on how actionlint reads YAML; no fixture kept, the runs are recorded
+here). In a throwaway git repository /tmp/tm-actionlint-v0oo8A (`git init -q`, removed afterwards) holding only
+.github/workflows/ci.yml above, each run:
+env -u SHELLCHECK_OPTS actionlint -no-color -format TEMPLATE -config-file=<cfg> -shellcheck= -pyflakes= -- .github/workflows/ci.yml
+With /dev/null, exit 1, two errors: `action` (input "nonexistent-input" is not defined in action "actions/checkout@v4")
+and `expression` (undefined variable "unknown"). Each config below is under `paths:` / `.github/workflows/**/*.yml:`
+unless it says otherwise, and its ignore regex is `undefined variable`, which matches the expression error only.
+- plain.yaml, `ignore:` / `- undefined variable`: exit 1, the action error only.
+- dup.yaml, that `ignore` then a second `ignore:` / `- nothing matches this`: exit 3, stdout empty, stderr
+  `could not parse config file "dup.yaml": yaml: unmarshal errors:   line 5: mapping key "ignore" already defined at
+  line 3`.
+- twodocs.yaml, `self-hosted-runner:` / `labels: [a]`, `---`, then plain.yaml's text: exit 1, both errors.
+- firstdoc.yaml, plain.yaml's text, `---`, then `self-hosted-runner:` / `labels: [a]`: exit 1, the action error only.
+  So only the first document applies.
+- merge.yaml, a top key `base: &base` holding the `ignore`, and `<<: *base` under the path: exit 1, the action error
+  only, stderr empty (the unknown key `base` is not an error).
+- upper.yaml, the key `Ignore:`: exit 1, both errors.
+- escaped.yaml, the key `"\x69gnore":`: exit 1, the action error only.
+The YAML library: `go version -m /opt/homebrew/bin/actionlint`, exit 0, lists `dep go.yaml.in/yaml/v4 v4.0.0-rc.3`
+and no other YAML module.
+
+Config discovery (the source of `CONFIG_NAMES`). The same repository and command with no `-config-file`:
+- .github/actionlint.yaml ignoring `undefined variable` and .github/actionlint.yml ignoring `is not defined in action`:
+  exit 1, the action error only, so the `.yaml` applied.
+- .github/actionlint.yml alone: exit 1, the expression error only, so the `.yml` is read when it is the only one.
+- run in sub/ (its own sub/.github/workflows/ci.yml and sub/.github/actionlint.yaml ignoring `undefined variable`),
+  the top's .github holding no config, the workflow passed as .github/workflows/ci.yml: exit 1, both errors.
+- the same with the top's .github/actionlint.yaml ignoring `is not defined in action`: exit 1, the expression error
+  only. So actionlint reads the git top's .github, not a sub-folder's.

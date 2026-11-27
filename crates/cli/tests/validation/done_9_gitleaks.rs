@@ -2,22 +2,22 @@
 //! test made, with its rule, its place and its fix text, and the report lists the engine's version; with the engine
 //! off the PATH, the same rule reports "not available" (exit 3). One security rule, `engine = "gitleaks"`,
 //! `check = "aws-access-token"`, under a top-level owner; config.py holds an AWS access key on line 1. The key is
-//! built at run time (the engines test's key), so it never sits whole in this source, and no output `temperare`
-//! gives, `--json` or text, holds it. tm runs with PATH the folder that gives it gitleaks (`tm_path_folder`) then
-//! /usr/bin:/bin. Only when gitleaks is not on the PATH `temperare` gets (`on_tm_path`, which runs nothing) is the
-//! reported case NOT RUN, with `temperare`'s reason, never PASS; `temperare` must then report the rule not available.
+//! built at run time (the engines test's key), so it never sits whole in this source, and no output `cctao`
+//! gives, `--json` or text, holds it. cctao runs with PATH the folder that gives it gitleaks (`cctao_path_folder`) then
+//! /usr/bin:/bin. Only when gitleaks is not on the PATH `cctao` gets (`on_cctao_path`, which runs nothing) is the
+//! reported case NOT RUN, with `cctao`'s reason, never PASS; `cctao` must then report the rule not available.
 
 use serde_json::json;
 
 use crate::absent_engine_reason::absent_engine_reason;
 use crate::check::Check;
-use crate::env::tm_env;
+use crate::env::cctao_env;
 use crate::probed_version::probed_version;
 use crate::repo::Repo;
 use crate::run_clean::run_clean;
 use crate::temp_home::TempHome;
-use crate::tm::tm_with_path;
-use crate::tm_path_folder::tm_path_folder;
+use crate::cctao::cctao_with_path;
+use crate::cctao_path_folder::cctao_path_folder;
 
 const RULE: &str = "no-aws-key";
 const FIX: &str = "Remove the key and rotate it.";
@@ -41,7 +41,7 @@ fn rules(fix: &str) -> String {
 /// A repository holding the rule file and config.py, whose line 1 assigns the key, committed.
 fn secret_repo() -> Repo {
     let repo = Repo::new();
-    repo.write("temperare.toml", &rules(FIX));
+    repo.write("tao.toml", &rules(FIX));
     repo.write("config.py", &format!("aws_key = \"{}\"\n", key()));
     repo.commit("a leaked key");
     repo
@@ -58,10 +58,10 @@ fn a_gitleaks_secret_is_reported_with_its_rule_place_fix_and_version() {
     let masked = |text: &str| text.replace(&key, "[key]");
     let repo = secret_repo();
     let args = ["check", "--json"];
-    let path = tm_path_folder("gitleaks")
+    let path = cctao_path_folder("gitleaks")
         .map_or(PATH_WITHOUT_ENGINES.to_string(), |dir| format!("{dir}:{PATH_WITHOUT_ENGINES}"));
-    let a = tm_with_path(&repo, &args, Some(&path));
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao_with_path(&repo, &args, Some(&path));
+    check.saw_cctao(&args, a.code, &a.json);
     if let Some(why) = absent_engine_reason(&a, &["gitleaks"], RULE) {
         check.not_run(masked(&why));
         return;
@@ -82,7 +82,7 @@ fn a_gitleaks_secret_is_reported_with_its_rule_place_fix_and_version() {
     assert_eq!(a.json["engines"], json!([{ "engine": "gitleaks", "version": version }]), "{shown}");
 
     let home = TempHome::new();
-    let out = run_clean(env!("CARGO_BIN_EXE_temperare"), &["check"], repo.path(), tm_env(Some(&path), home.path()));
+    let out = run_clean(env!("CARGO_BIN_EXE_cctao"), &["check"], repo.path(), cctao_env(Some(&path), home.path()));
     let stdout = String::from_utf8_lossy(&out.stdout).to_string();
     let stderr = String::from_utf8_lossy(&out.stderr).to_string();
     let shown = masked(&format!("{stdout}\n{stderr}"));
@@ -95,13 +95,13 @@ fn a_gitleaks_secret_is_reported_with_its_rule_place_fix_and_version() {
 fn gitleaks_off_path_is_not_available() {
     let mut check = Check::new(
         "gitleaks_off_path_is_not_available",
-        "rule no-aws-key (gitleaks, aws-access-token, kind security) over the same files; tm runs with PATH \
+        "rule no-aws-key (gitleaks, aws-access-token, kind security) over the same files; cctao runs with PATH \
          /usr/bin:/bin, which holds no gitleaks",
     );
     let repo = secret_repo();
     let args = ["check", "--json"];
-    let a = tm_with_path(&repo, &args, Some(PATH_WITHOUT_ENGINES));
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao_with_path(&repo, &args, Some(PATH_WITHOUT_ENGINES));
+    check.saw_cctao(&args, a.code, &a.json);
     assert_eq!(a.code, 3, "not available has its own code: {:#}\n{}", a.json, a.stderr);
     assert!(a.findings().is_empty(), "nothing is reported as found: {:#}", a.json);
     let missing: Vec<(&str, &str)> = a.json["not_available"]

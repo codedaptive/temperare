@@ -1,0 +1,4 @@
+[WARN] No rules found in ruleset category/java/bestpractices.xml/NoSuchRule
+[WARN] No rules found. Maybe you misspelled a rule name? (category/java/bestpractices.xml/NoSuchRule)
+[WARN] No files to analyze. Check input paths and exclude parameters, use --debug to see file collection traces.
+[INFO] Found no violations.

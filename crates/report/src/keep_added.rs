@@ -8,7 +8,7 @@ use std::path::{Component, Path, PathBuf};
 /// Keeps each finding whose path, re-rooted from the rule file's `folder` to the repository top, is a key of `added`
 /// with a range holding its line, or lies under an entry of `under` (an untracked nested repository) at any line, a
 /// finding with no line included; drops every other finding (a finding with no line is on no added line) and keeps the
-/// order. `added` has `procio::added_lines`' shape: keys relative to the repository top, 1-based half-open line
+/// order. `added` maps each path, relative to the repository top, to its added lines as 1-based half-open
 /// ranges. `under` entries are relative to the repository top and match whole components (`nested/` covers
 /// `nested/deep/d.rs`, never `nestedx/c.rs`). `folder` is relative to the repository top; "" and "." both mean the
 /// top.

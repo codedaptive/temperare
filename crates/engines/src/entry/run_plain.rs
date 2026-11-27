@@ -2,6 +2,7 @@
 
 use super::{entry_cmd, param_args, param_why, threshold_run, Entry, Pick};
 use crate::check_run::check_run;
+use crate::failed::failed;
 use crate::host::Host;
 use crate::parse_failed::parse_failed;
 use crate::types::{Hit, Stop};
@@ -45,8 +46,4 @@ pub(crate) fn run_plain(entry: &Entry, rule: &Rule, folder: &Path, host: &Host) 
         return Err(Stop::UnknownCheck { said });
     }
     (entry.read)(&out, &rule.check, folder, folder).map_err(|err| parse_failed(&out, err))
-}
-
-fn failed(stderr: String) -> Stop {
-    Stop::Failed { code: None, stderr }
 }

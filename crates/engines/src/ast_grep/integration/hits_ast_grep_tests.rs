@@ -204,6 +204,8 @@ fn refuses_parent_check_outside_folder() {
     assert_eq!(got, Err(Stop::Failed { code: None, stderr: "ast-grep rule ../outside.yml is outside the rule file's folder".to_string() }));
 }
 
+// Unix only: it makes the link with std::os::unix::fs::symlink, and a Windows symlink needs a privilege.
+#[cfg(unix)]
 #[test]
 fn refuses_symlink_check_outside_folder() {
     let got = outside_case("symlink", |folder| {

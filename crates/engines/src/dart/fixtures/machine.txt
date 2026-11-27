@@ -1,0 +1,4 @@
+ERROR|COMPILE_TIME_ERROR|URI_DOES_NOT_EXIST|/private/var/folders/zc/zl4w__wx2xdfmd5lps9dp2000000gn/T/dartfix.0bPKGrAnVf/lib/pipe\|name.dart|1|8|20|Target of URI doesn't exist: 'no\|such\\file.dart'.
+WARNING|STATIC_WARNING|UNUSED_LOCAL_VARIABLE|/private/var/folders/zc/zl4w__wx2xdfmd5lps9dp2000000gn/T/dartfix.0bPKGrAnVf/lib/a.dart|2|7|6|The value of the local variable 'unused' isn't used.
+WARNING|STATIC_WARNING|UNUSED_LOCAL_VARIABLE|/private/var/folders/zc/zl4w__wx2xdfmd5lps9dp2000000gn/T/dartfix.0bPKGrAnVf/lib/pipe\|name.dart|4|7|5|The value of the local variable 'spare' isn't used.
+INFO|LINT|PREFER_SINGLE_QUOTES|/private/var/folders/zc/zl4w__wx2xdfmd5lps9dp2000000gn/T/dartfix.0bPKGrAnVf/lib/a.dart|3|9|3|Unnecessary use of double quotes.

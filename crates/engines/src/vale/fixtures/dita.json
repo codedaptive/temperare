@@ -1,0 +1,66 @@
+{
+  "code.c": [
+    {
+      "Action": {
+        "Name": "suggest",
+        "Params": [
+          "spellings"
+        ]
+      },
+      "Suggestions": [],
+      "Span": [
+        6,
+        13
+      ],
+      "Check": "Vale.Spelling",
+      "Description": "",
+      "Link": "",
+      "Message": "Did you really mean 'sentense'?",
+      "Severity": "error",
+      "Match": "sentense",
+      "Line": 2
+    }
+  ],
+  "doc.md": [
+    {
+      "Action": {
+        "Name": "suggest",
+        "Params": [
+          "spellings"
+        ]
+      },
+      "Suggestions": [],
+      "Span": [
+        3,
+        10
+      ],
+      "Check": "Vale.Spelling",
+      "Description": "",
+      "Link": "",
+      "Message": "Did you really mean 'sentense'?",
+      "Severity": "error",
+      "Match": "sentense",
+      "Line": 1
+    },
+    {
+      "Action": {
+        "Name": "suggest",
+        "Params": [
+          "spellings"
+        ]
+      },
+      "Suggestions": [],
+      "Span": [
+        12,
+        19
+      ],
+      "Check": "Vale.Spelling",
+      "Description": "",
+      "Link": "",
+      "Message": "Did you really mean 'mispeled'?",
+      "Severity": "error",
+      "Match": "mispeled",
+      "Line": 3
+    }
+  ]
+}

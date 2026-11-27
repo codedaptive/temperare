@@ -1,4 +1,4 @@
-//! `git_refusal`: why tm refuses a git rule's check, if it does.
+//! `git_refusal`: why cctao refuses a git rule's check, if it does.
 
 /// None for `test_ratio`, the one count the git entry makes; any other check is refused with a reason naming it, so a
 /// misspelt check fails before anything runs rather than reading clean.

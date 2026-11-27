@@ -1,12 +1,12 @@
-//! Unit tests for run_check.rs, with closure worlds: no git, no disk, no PATH. Every run is in /repo with the rule file
-//! /repo/temperare.toml parsed from literal TOML; a seam a test must not reach panics.
+//! Unit test for run_check.rs, with closure worlds: no git, no disk, no PATH. Every run is in /repo with the rule file
+//! /repo/tao.toml parsed from literal TOML; a seam a test must not reach panics.
 
 use super::run_check_savings_tests::{assert_counts_tail, without_counts_tail};
 use super::{run_check, CheckWorld};
 use crate::CheckArgs;
 use engines::{CheckedRules, NotAvailableCause, RuleRun};
-use procio::{GitError, Oid};
-use report::{Failed, NotAvailable, Report, ReportError};
+use ccvcslib::VcsError;
+use report::{Failed, NotAvailable, Oid, Report, ReportError};
 use rules::{Engine, Finding, Kind, Problem, RelPath, RuleFile, RuleOutcome, Severity};
 use serde_json::json;
 use std::cell::{Cell, RefCell};
@@ -32,7 +32,7 @@ const HEX: &str = "0123456789abcdef0123456789abcdef01234567";
 type Outcomes = Vec<(String, RuleOutcome)>;
 type NoFiles = Vec<(String, String)>;
 
-fn top(_: &Path) -> Result<PathBuf, GitError> {
+fn top(_: &Path) -> Result<PathBuf, VcsError> {
     Ok(PathBuf::from("/repo"))
 }
 
@@ -41,8 +41,14 @@ fn there(_: &Path) -> bool {
 }
 
 fn read(path: &Path) -> Result<RuleFile, Vec<Problem>> {
-    assert_eq!(path, Path::new("/repo/temperare.toml"));
+    assert_eq!(path, Path::new("/repo/tao.toml"));
     Ok(RuleFile::parse(TEXT, Path::new("/repo")).unwrap())
+}
+
+/// The rule file as cctao prints it: `/repo` joined with `tao.toml` in the platform's separator,
+/// `/repo/tao.toml` on unix.
+fn rule_file() -> String {
+    Path::new("/repo").join("tao.toml").display().to_string()
 }
 
 fn no_runs(_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>) -> CheckedRules {
@@ -61,7 +67,7 @@ fn world() -> CheckWorld<'static> {
         read: &read,
         rev_parse: &|_, _| unreachable!("rev_parse"),
         run_rules: &no_runs,
-        availability: &|_| engines::Availability::Available,
+        availability: &|_, _| engines::Availability::Available,
         build_report: &clean,
         home: &|| None,
         now: &|| 0,
@@ -86,7 +92,7 @@ fn quality_error() -> Finding {
     f
 }
 
-/// Runs `tm check` in /repo; (exit, out, err).
+/// Runs `cctao check` in /repo; (exit, out, err).
 fn check(args: &CheckArgs, world: &CheckWorld) -> (u8, String, String) {
     let (mut out, mut err) = (Vec::new(), Vec::new());
     let code = run_check(args, Path::new("/repo"), world, &mut out, &mut err);
@@ -105,7 +111,7 @@ fn assert_usage_error(args: CheckArgs, world: &CheckWorld, stderr: &str, object:
 #[test]
 fn outside_a_repository_is_a_usage_error() {
     let w = CheckWorld {
-        toplevel: &|cwd| Err(GitError::NotARepository { repo: cwd.to_path_buf() }),
+        toplevel: &|_| Err(VcsError::NotAWorkingCopy),
         read: &|_| unreachable!("read"),
         run_rules: &|_, _, _, _| unreachable!("run_rules"),
         ..world()
@@ -113,11 +119,11 @@ fn outside_a_repository_is_a_usage_error() {
     assert_usage_error(
         CheckArgs::default(),
         &w,
-        "tm: not in a git repository: /repo\nnext: Run tm inside a git repository, or pass --rules <path>.\n",
+        "cctao: not in a git repository: /repo\nnext: Run cctao inside a git repository, or pass --rules <path>.\n",
         json!({
             "error": "not in a git repository: /repo",
             "exit": 2,
-            "next": "Run tm inside a git repository, or pass --rules <path>.",
+            "next": "Run cctao inside a git repository, or pass --rules <path>.",
         }),
     );
 }
@@ -129,13 +135,15 @@ fn rule_file_problems_are_listed_with_exit_2() {
         Err(vec![Problem { line: 1, col: 11, what, fix: "Write version = 1.".to_string() }])
     };
     let w = CheckWorld { read: &broken, run_rules: &|_, _, _, _| unreachable!("run_rules"), ..world() };
+    let rf = rule_file();
     assert_eq!(
         check(&CheckArgs::default(), &w),
         (
             2,
-            "/repo/temperare.toml:1:11  version must be 1  Write version = 1.\n\
-             next: fix each problem listed for /repo/temperare.toml\n"
-                .to_string(),
+            format!(
+                "{rf}:1:11  version must be 1  Write version = 1.\n\
+                 next: fix each problem listed for {rf}\n"
+            ),
             String::new()
         )
     );
@@ -144,10 +152,10 @@ fn rule_file_problems_are_listed_with_exit_2() {
     assert_eq!(
         serde_json::from_str::<serde_json::Value>(&out).unwrap(),
         json!({
-            "rule_file": "/repo/temperare.toml",
+            "rule_file": rf,
             "problems": [{"line": 1, "col": 11, "what": "version must be 1", "fix": "Write version = 1."}],
             "exit": 2,
-            "next": "fix each problem listed for /repo/temperare.toml",
+            "next": format!("fix each problem listed for {rf}"),
         })
     );
 }
@@ -159,7 +167,7 @@ fn a_path_outside_the_rule_files_folder_is_a_usage_error() {
     assert_usage_error(
         args,
         &w,
-        "tm: /elsewhere/x.py is not under the rule file's folder /repo\n\
+        "cctao: /elsewhere/x.py is not under the rule file's folder /repo\n\
          next: Pass paths inside /repo, or pass --rules with the rule file that covers them.\n",
         json!({
             "error": "/elsewhere/x.py is not under the rule file's folder /repo",
@@ -176,7 +184,7 @@ fn a_base_naming_no_commit_is_a_usage_error_before_any_engine_runs() {
     assert_usage_error(
         args,
         &w,
-        "tm: base 'nosuchrev' does not name a commit\n\
+        "cctao: base 'nosuchrev' does not name a commit\n\
          next: Pass a commit, branch or tag that exists, e.g. --base main.\n",
         json!({
             "error": "base 'nosuchrev' does not name a commit",
@@ -195,7 +203,7 @@ fn a_report_that_cannot_be_built_is_a_usage_error() {
     assert_usage_error(
         CheckArgs::default(),
         &w,
-        "tm: cannot build the report: rule file folder /repo: not inside /top\n\
+        "cctao: cannot build the report: rule file folder /repo: not inside /top\n\
          next: Check that the rule file's folder is inside the repository and git runs here.\n",
         json!({
             "error": "cannot build the report: rule file folder /repo: not inside /top",
@@ -321,10 +329,11 @@ fn a_quality_error_exits_1_and_names_the_rule_file() {
     let (code, out, err) = check(&CheckArgs::default(), &CheckWorld { build_report: &found, ..world() });
     assert_eq!((code, err.as_str()), (1, ""));
     assert!(out.starts_with("a.py:7:3  error quality q  owner core\n"), "{out}");
-    assert!(
-        out.ends_with("next: fix the findings above, or add an approved [[exception]] to /repo/temperare.toml\n"),
-        "{out}"
+    let next = format!(
+        "next: fix the findings above, or add an approved [[exception]] with its expires date to {}\n",
+        rule_file()
     );
+    assert!(out.ends_with(&next), "{out}");
 }
 
 #[test]
@@ -382,7 +391,10 @@ fn json_is_one_line_with_the_report_exit_and_next_at_the_top() {
     assert_eq!(out.lines().count(), 1, "{out}");
     let value: serde_json::Value = serde_json::from_str(&out).unwrap();
     assert_eq!(value["exit"], 1);
-    assert_eq!(value["next"], "fix the findings above, or add an approved [[exception]] to /repo/temperare.toml");
+    assert_eq!(
+        value["next"],
+        format!("fix the findings above, or add an approved [[exception]] with its expires date to {}", rule_file())
+    );
     assert_eq!(value["findings"][0]["rule"], "q");
     assert_eq!(value["findings"][0]["path"], "a.py");
     assert!(value["counts"].is_object(), "{out}");

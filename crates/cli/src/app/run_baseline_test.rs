@@ -1,4 +1,4 @@
-//! `run_baseline_test`: `tm baseline test`, every rule of the sets run on its own failing and passing cases.
+//! `run_baseline_test`: `cctao baseline test`, every rule of the sets run on its own failing and passing cases.
 
 use super::case_rule::case_rule;
 use super::run_case::run_case;
@@ -20,7 +20,7 @@ use std::io::Write;
 /// param is not applicable with that why and is not run: no case folder is made for it.
 /// Prints the results as text with a `next:` line, or as one JSON line carrying `exit` and `next`, and returns the
 /// exit code: 1 when a rule is broken, else 3 when one is not applicable or not available, else 0. Write errors are
-/// ignored: a closed pipe is not tm's failure.
+/// ignored: a closed pipe is not cctao's failure.
 pub fn run_baseline_test(args: &BaselineArgs, world: &BaselineWorld, out: &mut dyn Write, err: &mut dyn Write) -> u8 {
     let sets: Vec<&str> = match &args.set {
         Some(set) => vec![set.as_str()],
@@ -90,7 +90,7 @@ fn unreadable(set: &str, problems: Vec<Problem>) -> UsageError {
     problems.into_iter().next().map_or_else(
         || UsageError {
             what: format!("cannot read baseline set \"{set}\""),
-            fix: "Run tm help to see the commands.".to_string(),
+            fix: "Run cctao help to see the commands.".to_string(),
         },
         |first| UsageError { what: first.what, fix: first.fix },
     )

@@ -1,5 +1,6 @@
-//! Unit tests for param_args.rs: listed params to arguments in the list's order; an unlisted key, a param that is not a
-//! list of strings and params that are not a table are `Bad`, with clippy's texts; an empty list refuses any param
+//! Unit test for param_args.rs: listed params to arguments in the list's order; an unlisted key, a param that is not a
+//! list of strings and params that are not a table are `Bad`, with clippy's texts (`an` before an engine name led by a
+//! vowel letter); an empty list refuses any param
 //! as taking none; `Template` gives no arguments. A `Thresholds` entry's args work as `Args`, its
 //! threshold keys give no arguments, and a key in neither list is `Bad` naming both lists. A `Flow` entry refuses a
 //! key not in its names as `Bad` naming them, returns its check's error, and gives no arguments.
@@ -48,6 +49,19 @@ fn params_come_out_in_the_lists_order() {
 fn an_unlisted_key_is_bad_with_clippys_text() {
     let got = param_args(&clippy_like(), &json!({"alow": ["x"]}));
     assert_eq!(got, bad("alow", "a clippy rule reads only the `allow` param"));
+}
+
+#[test]
+fn an_unlisted_key_is_bad_with_an_before_a_vowel_led_engine_name() {
+    let named = |name, params| Entry { name, ..fake_entry(Pick::Arg("--rule="), params, None) };
+    let rows: [(Entry, Result<Vec<OsString>, ParamError>); 3] = [
+        (named("eslint", Params::Args(&[])), bad("foo", "an eslint rule takes no params")),
+        (named("actionlint", Params::Args(&ALLOW)), bad("foo", "an actionlint rule reads only the `allow` param")),
+        (named("ruff", Params::Args(&[])), bad("foo", "a ruff rule takes no params")),
+    ];
+    for (entry, want) in rows {
+        assert_eq!(param_args(&entry, &json!({"foo": 1})), want, "{}", entry.name);
+    }
 }
 
 #[test]

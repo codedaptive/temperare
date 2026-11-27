@@ -3,7 +3,9 @@
 use serde_json::{json, Value};
 use std::ffi::{OsStr, OsString};
 use std::fs;
-use std::os::unix::fs::{symlink, PermissionsExt};
+// Unix only: a symlink on Windows needs admin rights or developer mode.
+#[cfg(unix)]
+use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -15,7 +17,7 @@ impl TempFolder {
     fn new() -> Self {
         loop {
             let n = NEXT.fetch_add(1, Ordering::Relaxed);
-            let path = std::env::temp_dir().join(format!("tm-rules-na-{}-{n}", std::process::id()));
+            let path = std::env::temp_dir().join(format!("cctao-rules-na-{}-{n}", std::process::id()));
             match fs::create_dir(&path) {
                 Ok(()) => return Self(fs::canonicalize(path).unwrap()),
                 Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
@@ -63,7 +65,7 @@ fn rules_not_applicable_matches_check_and_lists_literal_reasons() {
     fs::create_dir(&repo).unwrap();
     fs::create_dir(&home).unwrap();
     git(&repo, &home, &temp.0, &["init", "-q"]);
-    fs::write(repo.join("temperare.toml"), r#"version = 1
+    fs::write(repo.join("tao.toml"), r#"version = 1
 owner = "team"
 baseline = ["standard@1", "house@1"]
 [[rule]]
@@ -77,18 +79,21 @@ fix = "Remove the import."
     git(&repo, &home, &temp.0, &["-c", "user.name=Test", "-c", "user.email=test@example.invalid", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "base"]);
     let base = git(&repo, &home, &temp.0, &["rev-parse", "HEAD"]);
 
-    let path = std::env::var_os("PATH").expect("PATH must contain an executable git");
-    let git = std::env::split_paths(&path)
-        .map(|dir| dir.join("git"))
-        .find(|candidate| fs::metadata(candidate).is_ok_and(|m| m.is_file() && m.permissions().mode() & 0o111 != 0))
-        .expect("PATH must contain an executable git");
-    let bin = temp.0.join("bin");
-    fs::create_dir(&bin).unwrap();
-    // Only git is on PATH so no engine is found, probed, or run.
-    symlink(fs::canonicalize(git).unwrap(), bin.join("git")).unwrap();
+    let git = procio::which("git").expect("PATH must contain an executable git");
+    // PATH is meant to hold git alone, so no engine is found, probed, or run.
+    #[cfg(unix)]
+    let bin = {
+        let bin = temp.0.join("bin");
+        fs::create_dir(&bin).unwrap();
+        symlink(fs::canonicalize(git).unwrap(), bin.join("git")).unwrap();
+        bin
+    };
+    // Off unix a symlink needs admin rights or developer mode, so PATH is git's own folder, assumed to hold no engine.
+    #[cfg(not(unix))]
+    let bin = git.parent().expect("git's folder").to_path_buf();
 
     let run = |args: &[&str]| {
-        let mut cmd = clean_command(env!("CARGO_BIN_EXE_temperare"), &repo, &home, &temp.0, bin.as_os_str());
+        let mut cmd = clean_command(env!("CARGO_BIN_EXE_cctao"), &repo, &home, &temp.0, bin.as_os_str());
         cmd.args = args.iter().map(OsString::from).collect();
         procio::run(&cmd).unwrap()
     };

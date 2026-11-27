@@ -1,7 +1,9 @@
-//! tm's run: the command line to an exit code, `tm rules` from finding the rule file to the listing or to what it
-//! loosened since a base, `tm check` from finding the rule file to the report, `tm baseline test` from the sets' rules
-//! to each case's verdict, and `temperare install` and `uninstall` on the disk.
+//! cctao's run: the command line to an exit code, `cctao rules` from finding the rule file to the listing or to what it
+//! loosened since a base, `cctao check` from finding the rule file to the report, `cctao baseline test` from the sets'
+//! rules to each case's verdict, and `cctao install` and `uninstall` on the disk.
 
+mod append_telemetry;
+mod availability_at;
 mod base_error;
 mod baseline_world;
 mod baseline_world_real;
@@ -11,9 +13,13 @@ mod case_rule;
 mod check_world;
 mod check_world_real;
 mod discover_rule_file;
+mod first_parent_root;
+mod git_rev_parse;
+mod git_toplevel;
 mod judge_case;
 mod leftover_folders_next;
 mod now_secs;
+mod oid_of_revision;
 mod only_paths;
 mod read_base_rule_file;
 mod report_engines;
@@ -39,6 +45,8 @@ mod write_problems;
 mod write_usage_error;
 
 #[cfg(test)]
+mod availability_at_tests;
+#[cfg(test)]
 mod base_error_tests;
 #[cfg(test)]
 mod case_path_tests;
@@ -51,11 +59,15 @@ mod check_world_tests;
 #[cfg(test)]
 mod discover_rule_file_tests;
 #[cfg(test)]
+mod first_parent_root_tests;
+#[cfg(test)]
 mod judge_case_tests;
 #[cfg(test)]
 mod leftover_folders_next_tests;
 #[cfg(test)]
 mod now_secs_tests;
+#[cfg(test)]
+mod oid_of_revision_tests;
 #[cfg(test)]
 mod only_paths_tests;
 #[cfg(test)]

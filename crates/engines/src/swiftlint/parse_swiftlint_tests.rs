@@ -64,7 +64,10 @@ fn private_path_checked_violation_outside_the_folder_is_an_error() {
     let folder = Path::new(DIR).join("sub");
     assert_eq!(
         parse_swiftlint(&mixed(), "force_cast", Path::new(DIR), &folder),
-        Err(ParseError { why: "swiftlint printed `/work/project/cap-swiftlint/Example.swift`, a path not under the rule folder `/work/project/cap-swiftlint/sub`".to_string() })
+        Err(ParseError { why: format!(
+            "swiftlint printed `/work/project/cap-swiftlint/Example.swift`, a path not under the rule folder `{}`",
+            Path::new("/work/project/cap-swiftlint").join("sub").display()
+        ) })
     );
 }
 
@@ -133,6 +136,6 @@ fn d1_swiftlint_invalid_identifier_warning_is_an_error() {
     let out = output(0, b"[\n\n]", b"warning: 'force_cast,force_try' is not a valid rule identifier\nValid rule identifiers:\nforce_cast\nforce_try\nline_length\n");
     assert_eq!(
         parse_swiftlint(&out, "force_cast,force_try", Path::new(DIR), Path::new(DIR)),
-        Err(ParseError { why: "swiftlint check `force_cast,force_try` is not a rule this swiftlint knows (warning: 'force_cast,force_try' is not a valid rule identifier): tm cannot report it; name a rule `swiftlint rules` lists, or a custom rule the rule's config defines".to_string() })
+        Err(ParseError { why: "swiftlint check `force_cast,force_try` is not a rule this swiftlint knows (warning: 'force_cast,force_try' is not a valid rule identifier): cctao cannot report it; name a rule `swiftlint rules` lists, or a custom rule the rule's config defines".to_string() })
     );
 }

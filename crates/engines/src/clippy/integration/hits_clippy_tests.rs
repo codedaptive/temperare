@@ -1,5 +1,5 @@
-//! Integration tests for hits_clippy.rs. These are integration, not unit: the real `cargo_root` reads real folders, a canonical temp
-//! folder of empty `Cargo.toml` files or, for the no-`Cargo.toml` test, the real ancestors of a missing path. The others compose `hits_clippy` with `CLIPPY` and the real `param_args`,
+//! ZIT for hits_clippy.rs. These are integration, not unit: the real `cargo_root` reads real folders, a canonical temp
+//! folder of empty `Cargo.toml` files (the symlink test has cargo print its root through a link) or, for the no-`Cargo.toml` test, the real ancestors of a missing path. The others compose `hits_clippy` with `CLIPPY` and the real `param_args`,
 //! `parse_lint_groups`, `lint_group`, `parse_lints`, `known_lint` and `parse_clippy`. The fake host answers clippy-driver help with the captured
 //! `lint_groups_help.txt`, and cargo by its first argument (see clippy/hits_clippy_tests.rs); clippy's output is the captured
 //! `lint_and_other.jsonl` / `build_failed.jsonl` (see parse_clippy_tests.rs) or a hand-built message. A test that makes a folder removes it before asserting.
@@ -113,7 +113,7 @@ fn counted_clippy_group_refusal_excludes_help() {
     let root = tree("counted-group", &["."]);
     let (got, chars, seen) = counted_clippy("clippy::style", &root, &finished);
     fs::remove_dir_all(&root).unwrap();
-    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "clippy check `clippy::style` is a lint group: tm cannot tell its lints from other warnings, so it cannot report it; name each lint, or use `warnings`".into() }));
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "clippy check `clippy::style` is a lint group: cctao cannot tell its lints from other warnings, so it cannot report it; name each lint, or use `warnings`".into() }));
     assert_eq!(chars, None);
     assert_eq!(seen.len(), 1);
     assert_eq!(seen[0].program, "clippy-driver");
@@ -140,6 +140,32 @@ fn a_single_crate_is_linted_in_its_own_folder_with_paths_from_there() {
     assert_eq!(seen[2].args, want.map(std::ffi::OsString::from));
     assert!(seen.iter().all(|cmd| cmd.cwd.as_deref() == Some(root.as_path())));
     assert!(seen[2].env.is_empty(), "no CARGO_TARGET_DIR or other env is set");
+}
+
+/// Unix only because creating symlinks on Windows requires privilege.
+#[cfg(unix)]
+#[test]
+fn a_workspace_root_printed_through_a_symlink_still_reads_the_hits() {
+    let root = tree("symlink-root", &["."]);
+    let link = std::env::temp_dir().join(format!("engines-zit-symlink-root-{}", std::process::id()));
+    std::os::unix::fs::symlink(&root, &link).unwrap();
+    let printed = format!("{}\n", link.join("Cargo.toml").display());
+    let (got, _) = run(&root, output(0, printed.as_bytes(), b""), output(0, LINT_AND_OTHER, b""));
+    fs::remove_file(&link).unwrap();
+    fs::remove_dir_all(&root).unwrap();
+    assert_eq!(got, Ok(vec![Hit { path: RelPath::new("src/lib.rs"), line: Some(3), col: Some(5), what: FOUND.to_string() }]));
+}
+
+/// Cargo prints a plain root, while the canonical folder is verbatim on Windows.
+/// On Unix these forms match; the symlink case above proves the fix there.
+#[test]
+fn a_workspace_root_printed_without_the_verbatim_prefix_still_reads_the_hits() {
+    let root = tree("plain-root", &["."]);
+    let plain = root.to_string_lossy().trim_start_matches(r"\\?\").to_string();
+    let printed = format!("{}\n", Path::new(&plain).join("Cargo.toml").display());
+    let (got, _) = run(&root, output(0, printed.as_bytes(), b""), output(0, LINT_AND_OTHER, b""));
+    fs::remove_dir_all(&root).unwrap();
+    assert_eq!(got, Ok(vec![Hit { path: RelPath::new("src/lib.rs"), line: Some(3), col: Some(5), what: FOUND.to_string() }]));
 }
 
 #[test]

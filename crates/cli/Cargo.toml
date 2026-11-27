@@ -5,6 +5,7 @@ edition.workspace = true
 publish.workspace = true
 
 [dependencies]
+ccvcslib.workspace = true
 procio = { path = "../procio" }
 rules = { path = "../rules" }
 engines = { path = "../engines" }
@@ -14,8 +15,8 @@ serde_json = "1"
 toml = "1"
 
 [build-dependencies]
-procio = { path = "../procio" }
+ccvcslib.workspace = true
 
 [[bin]]
-name = "temperare"
+name = "cctao"
 path = "src/main.rs"

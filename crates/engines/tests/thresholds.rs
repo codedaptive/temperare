@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use engines::{availability, run_rules_versioned_at, Availability};
+use engines::{availability_in, run_rules_versioned_at, Availability};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
 static NEXT_FOLDER: AtomicUsize = AtomicUsize::new(0);
@@ -34,7 +34,7 @@ fn run(repo: &Path, engine: &str, check: &str, params: Option<&str>) -> RuleOutc
     if let Some(params) = params {
         text.push_str(&format!("[rule.params]\n{params}\n"));
     }
-    let path = repo.join("temperare.toml");
+    let path = repo.join("tao.toml");
     fs::write(&path, text).unwrap();
     let file = RuleFile::read(&path).unwrap();
     let mut runs = run_rules_versioned_at(&file, repo, &[], None).runs;
@@ -59,8 +59,8 @@ fn assert_clean(outcome: &RuleOutcome) {
 
 #[test]
 fn ruff_complexity_threshold_is_per_run_and_preserves_repository_config() {
-    assert_eq!(availability(Engine::Ruff), Availability::Available);
     let folder = TempFolder::new("ruff");
+    assert_eq!(availability_in(Engine::Ruff, &folder.0), Availability::Available);
     fs::write(folder.0.join("example.py"), "def f(a):\n    if a == 1: return 1\n    elif a == 2: return 2\n    elif a == 3: return 3\n    return 0\n").unwrap();
     let config = folder.0.join("ruff.toml");
     fs::write(&config, "[lint.mccabe]\nmax-complexity = 50\n").unwrap();
@@ -73,9 +73,10 @@ fn ruff_complexity_threshold_is_per_run_and_preserves_repository_config() {
 }
 
 #[test]
+#[cfg_attr(windows, ignore = "SwiftLint publishes no Windows build")]
 fn swiftlint_complexity_threshold_preserves_exclusions_and_repository_config() {
-    assert_eq!(availability(Engine::SwiftLint), Availability::Available);
     let folder = TempFolder::new("swift-complexity");
+    assert_eq!(availability_in(Engine::SwiftLint, &folder.0), Availability::Available);
     let source = "func f(_ a: Int) -> Int {\n    if a == 1 { return 1 }\n    if a == 2 { return 2 }\n    if a == 3 { return 3 }\n    if a == 4 { return 4 }\n    return 0\n}\n";
     fs::write(folder.0.join("Example.swift"), source).unwrap();
     fs::create_dir(folder.0.join("skipme")).unwrap();
@@ -91,9 +92,10 @@ fn swiftlint_complexity_threshold_preserves_exclusions_and_repository_config() {
 }
 
 #[test]
+#[cfg_attr(windows, ignore = "SwiftLint publishes no Windows build")]
 fn swiftlint_file_length_threshold_changes_findings() {
-    assert_eq!(availability(Engine::SwiftLint), Availability::Available);
     let folder = TempFolder::new("swift-length");
+    assert_eq!(availability_in(Engine::SwiftLint, &folder.0), Availability::Available);
     fs::write(folder.0.join("Example.swift"), "let a = 1\nlet b = 2\nlet c = 3\nlet d = 4\nlet e = 5\nlet f = 6\nlet g = 7\n").unwrap();
     let low = run(&folder.0, "swiftlint", "file_length", Some("max_lines = 5"));
     let high = run(&folder.0, "swiftlint", "file_length", Some("max_lines = 100"));
@@ -103,8 +105,8 @@ fn swiftlint_file_length_threshold_changes_findings() {
 
 #[test]
 fn clippy_nesting_threshold_is_per_run_even_with_cargo_cache() {
-    assert_eq!(availability(Engine::Clippy), Availability::Available);
     let folder = TempFolder::new("clippy");
+    assert_eq!(availability_in(Engine::Clippy, &folder.0), Availability::Available);
     fs::create_dir(folder.0.join("src")).unwrap();
     fs::write(folder.0.join("Cargo.toml"), "[package]\nname = \"threshold_zit\"\nversion = \"0.1.0\"\nedition = \"2021\"\n[workspace]\n").unwrap();
     fs::write(folder.0.join("src/lib.rs"), "pub fn f(a: bool, b: bool, c: bool, d: bool) {\n    if a {\n        if b {\n            if c {\n                if d {\n                    println!(\"nested\");\n                }\n            }\n        }\n    }\n}\n").unwrap();
@@ -124,8 +126,8 @@ fn clippy_nesting_threshold_is_per_run_even_with_cargo_cache() {
 
 #[test]
 fn ruff_rejects_zero_and_string_complexity_thresholds_as_failed() {
-    assert_eq!(availability(Engine::Ruff), Availability::Available);
     let folder = TempFolder::new("ruff-bad");
+    assert_eq!(availability_in(Engine::Ruff, &folder.0), Availability::Available);
     fs::write(folder.0.join("example.py"), "def f():\n    return 0\n").unwrap();
     for value in ["0", "\"5\""] {
         let outcome = run(&folder.0, "ruff", "C901", Some(&format!("max_complexity = {value}")));

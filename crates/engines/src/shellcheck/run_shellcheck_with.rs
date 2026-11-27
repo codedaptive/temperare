@@ -1,16 +1,17 @@
 //! `run_shellcheck_with`: shellcheck's flow for one rule, against a given list of shellcheck codes.
 
-use super::{parse_shellcheck, read_code_list, shellcheck_cmd};
+use super::{parse_shellcheck, shellcheck_cmd};
 use crate::check_run::check_run;
 use crate::entry::Entry;
 use crate::host::Host;
 use crate::no_script::no_script;
 use crate::parse_failed::parse_failed;
+use crate::read_code_list::read_code_list;
 use crate::types::{Hit, Stop};
 use rules::Rule;
 use std::path::{Path, PathBuf};
 
-/// The hits of `rule` under `folder` (canonical), `codes` being the text of temperare's list of shellcheck codes and
+/// The hits of `rule` under `folder` (canonical), `codes` being the text of cctao's list of shellcheck codes and
 /// `list` the lister of the scripts under a folder. The central `refused` has already settled the rule's refusals and
 /// params (ShellCheck takes none). Each step can stop the rule:
 /// 1. a list `read_code_list` cannot read is `Failed`;
@@ -33,7 +34,7 @@ pub(crate) fn run_shellcheck_with(
 ) -> Result<Vec<Hit>, Stop> {
     let code_list = read_code_list(codes).map_err(|e| Stop::Failed {
         code: None,
-        stderr: format!("temperare's list of {} codes cannot be read: {e}", entry.name),
+        stderr: format!("cctao's list of {} codes cannot be read: {e}", entry.name),
     })?;
     let files = list(folder)?;
     // The only guard against running ShellCheck with no files when `engine_hits_with`'s first listing errored and fell
@@ -43,7 +44,7 @@ pub(crate) fn run_shellcheck_with(
     }
     if !code_list.codes.contains(&rule.check.as_str()) {
         let (check, name, version) = (&rule.check, entry.name, code_list.version);
-        let said = format!("{check} is not in temperare's list of {name} codes (taken from {name} {version})");
+        let said = format!("{check} is not in cctao's list of {name} codes (taken from {name} {version})");
         return Err(Stop::NotListed { said });
     }
     let out = check_run(&shellcheck_cmd(rule.config.as_deref(), &files, folder), host)?;

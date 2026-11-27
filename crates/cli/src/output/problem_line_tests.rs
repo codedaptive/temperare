@@ -11,8 +11,8 @@ fn problem(line: usize, col: usize, what: &str, fix: &str) -> rules::Problem {
 fn file_line_col_then_what_and_fix_two_spaces_apart() {
     let p = problem(3, 1, "unknown key `colour` in the top level", "Remove the key.");
     assert_eq!(
-        problem_line(Path::new("repo/temperare.toml"), &p),
-        "repo/temperare.toml:3:1  unknown key `colour` in the top level  Remove the key."
+        problem_line(Path::new("repo/tao.toml"), &p),
+        "repo/tao.toml:3:1  unknown key `colour` in the top level  Remove the key."
     );
 }
 

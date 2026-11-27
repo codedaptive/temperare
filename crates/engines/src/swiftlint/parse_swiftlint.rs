@@ -37,7 +37,7 @@ pub fn parse_swiftlint(out: &Output, check: &str, cwd: &Path, folder: &Path) -> 
     if let Some(line) = unknown_rule(out, check) {
         return Err(ParseError {
             why: format!(
-                "swiftlint check `{check}` is not a rule this swiftlint knows ({line}): tm cannot report it; name a \
+                "swiftlint check `{check}` is not a rule this swiftlint knows ({line}): cctao cannot report it; name a \
                  rule `swiftlint rules` lists, or a custom rule the rule's config defines"
             ),
         });

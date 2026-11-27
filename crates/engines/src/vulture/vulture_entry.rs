@@ -8,9 +8,10 @@ use rules::Engine;
 /// `parse_vulture`. The Python files under the folder are scanned, as ruff and pylint scan `.`; findings outside the
 /// rule's scope are dropped later. Tracked files and untracked files git does not ignore are scanned. What git ignores
 /// under the folder (a .gitignore'd virtualenv, build output) is left out through `--exclude`, so vulture neither
-/// reports nor reads it, and a name used only there now counts as unused. Outside a git repository nothing is ignored
-/// and the whole folder is scanned. An ignored path holding `,`, or more ignored Python paths than one argument
-/// holds, makes the rule `Failed` before running (`run_vulture_with`).
+/// reports nor reads it, and a name used only there now counts as unused. Outside a git repository (git on PATH says
+/// so) nothing is ignored and the whole folder is scanned. Any other failure to find the repository's top or to list
+/// what git ignores stops the rule before running (`ignored_python`). An ignored path holding `,`, or more ignored
+/// Python paths than one argument holds, makes the rule `Failed` before running (`run_vulture_with`).
 ///
 /// The check is one vulture code (V101 to V107, V201: the codes vulture's own `# noqa` uses). Vulture has no option
 /// that selects a kind and reports all of them, so the reader keeps the rule's; anything else is refused before
@@ -22,7 +23,7 @@ use rules::Engine;
 /// ignore_decorators, exclude and min_confidence would hide findings outside the rule file, and whose verbose,
 /// sort_by_size and make_whitelist would change what it prints. A rule's config never reaches vulture.
 ///
-/// Suppressions vulture still honours, none of which tm can turn off: a `# noqa` comment on the item's line (bare, or
+/// Suppressions vulture still honours, none of which cctao can turn off: a `# noqa` comment on the item's line (bare, or
 /// naming its V code, F401 or F841); a whitelist module the repository keeps (one made with `--make-whitelist`, say),
 /// which is a .py file under the folder that git does not ignore, so the `.` scan reads it and the names it uses count
 /// as used, as any code's do; and vulture's own bundled whitelists (`vulture/whitelists/<module>_whitelist.py`, for
@@ -44,7 +45,7 @@ pub static VULTURE: Entry = Entry {
     params: Params::Args(&[]),
     config: None,
     after: &["."],
-    version: Some(VersionProbe { args: &["--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["--version"], read: version_word, wrap: None }),
     refuse: vulture_refusal,
     unknown: |_, _| None,
     read: parse_vulture,

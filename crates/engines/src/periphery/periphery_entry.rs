@@ -12,21 +12,21 @@ use rules::Engine;
 /// `periphery scan --skip-build --format json --disable-update-check --quiet` with the index store, the description
 /// and a config (`periphery_cmd`), read by `parse_periphery`.
 ///
-/// Where everything goes: a scratch folder `tm-periphery-<pid>-<n>` under the system's temporary folder holds the
+/// Where everything goes: a scratch folder `cctao-periphery-<pid>-<n>` under the system's temporary folder holds the
 /// build, its index store, the local packages' dump-package scratch paths, the description and the config, and is
 /// removed after the run whatever its end (`ScratchDir`). Nothing is built inside the repository being checked, and nothing goes to the user's DerivedData.
-/// The build is tm's step, not Periphery's, because Periphery's own build looks for the index store under the
+/// The build is cctao's step, not Periphery's, because Periphery's own build looks for the index store under the
 /// package's `.build`.
 ///
 /// Offline: `--disable-update-check` keeps Periphery from asking for a newer release. The manifest of the package and
 /// of every local package it reaches is read (`manifest_walk`), and the package is not available, before anything is
 /// built, when any of them names a source-control or registry dependency or a binary target with a url
-/// (`remote_dependencies`), since tm never fetches packages, or depends on a local package outside the repository or
-/// not resolving, since tm cannot vouch for it. Binary targets are refused because, run with the network denied,
+/// (`remote_dependencies`), since cctao never fetches packages, or depends on a local package outside the repository or
+/// not resolving, since cctao cannot vouch for it. Binary targets are refused because, run with the network denied,
 /// `swift build --disable-automatic-resolution` still tries to download a remote binary artifact. The build's
 /// `--disable-automatic-resolution` fails rather than resolve a dependency. No environment is set.
 ///
-/// Exceptions live in the rule file only: `--config` names an empty file tm writes, so the folder's `.periphery.yml`
+/// Exceptions live in the rule file only: `--config` names an empty file cctao writes, so the folder's `.periphery.yml`
 /// (whose retain, exclude and report-exclude options are exceptions outside the rule file) is never read. Periphery
 /// still honours `// periphery:ignore` comments in the source; no option turns them off.
 ///
@@ -46,7 +46,7 @@ pub static PERIPHERY: Entry = Entry {
     params: Params::Args(&[]),
     config: None,
     after: &[],
-    version: Some(VersionProbe { args: &["version"], read: version_word }),
+    version: Some(VersionProbe { args: &["version"], read: version_word, wrap: None }),
     refuse: periphery_refusal,
     unknown: |_, _| None,
     read: parse_periphery,

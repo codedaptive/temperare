@@ -1,0 +1,32 @@
+# A string literal as display text, such as `Text("Appearance")`, a form this rule forbids, since display text must be
+# localized: a call of Text whose first argument is unlabelled and a string literal, interpolated or not.
+# Text(String(localized: ...)) and Text(LocalizedStringKey(...)) pass, as does Text(verbatim: ...), which is labelled.
+id: tm-house-display-text-literal-swift
+language: swift
+message: Text is given the string literal $TEXT as display text
+severity: error
+rule:
+  kind: call_expression
+  all:
+    - has:
+        kind: simple_identifier
+        regex: ^Text$
+    - has:
+        kind: call_suffix
+        has:
+          kind: value_arguments
+          has:
+            kind: value_argument
+            nthChild:
+              position: 1
+              ofRule:
+                kind: value_argument
+            not:
+              has:
+                kind: value_argument_label
+            has:
+              field: value
+              any:
+                - kind: line_string_literal
+                - kind: multi_line_string_literal
+              pattern: $TEXT

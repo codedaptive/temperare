@@ -5,7 +5,7 @@ use super::check_json::check_json;
 use report::{Counts, Report};
 use rules::{Engine, Finding, Kind, RelPath, Severity};
 
-fn report(base: Option<procio::Oid>) -> Report {
+fn report(base: Option<report::Oid>) -> Report {
     Report {
         findings: vec![Finding::new(
             "no-print",
@@ -41,7 +41,7 @@ fn without_a_base_required_fields_are_present_and_base_is_absent() {
 
 #[test]
 fn with_a_base_required_fields_include_its_hex_text() {
-    let oid = procio::Oid::parse("0123456789abcdef0123456789abcdef01234567");
+    let oid = report::Oid::parse("0123456789abcdef0123456789abcdef01234567");
     let value = check_json(&report(oid), 1, "fix them");
     assert_required_keys(&value);
     assert_eq!(value["base"], "0123456789abcdef0123456789abcdef01234567");

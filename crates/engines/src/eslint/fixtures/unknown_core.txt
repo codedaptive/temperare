@@ -1,0 +1,18 @@
+
+Oops! Something went wrong! :(
+
+ESLint: 10.15.0
+
+TypeError: Key "rules": Key "no-such-rule-xyz": Could not find "no-such-rule-xyz" in plugin "@".
+    at throwRuleNotFoundError (/opt/homebrew/lib/node_modules/eslint/lib/config/config.js:119:16)
+    at Config.validateRulesConfig (/opt/homebrew/lib/node_modules/eslint/lib/config/config.js:725:5)
+    at new Config (/opt/homebrew/lib/node_modules/eslint/lib/config/config.js:581:9)
+    at [finalizeConfig] (/opt/homebrew/lib/node_modules/eslint/lib/config/flat-config-array.js:212:10)
+    at FlatConfigArray.getConfigWithStatus (/opt/homebrew/lib/node_modules/eslint/node_modules/@eslint/config-array/dist/cjs/index.cjs:1849:55)
+    at FlatConfigArray.getConfig (/opt/homebrew/lib/node_modules/eslint/node_modules/@eslint/config-array/dist/cjs/index.cjs:1867:15)
+    at entryFilter (/opt/homebrew/lib/node_modules/eslint/lib/eslint/eslint-helpers.js:325:27)
+    at async NodeHfs.<anonymous> (file:///opt/homebrew/lib/node_modules/eslint/node_modules/@humanfs/core/src/hfs.js:574:24)
+    at async NodeHfs.walk (file:///opt/homebrew/lib/node_modules/eslint/node_modules/@humanfs/core/src/hfs.js:614:3)
+    at async globSearch (/opt/homebrew/lib/node_modules/eslint/lib/eslint/eslint-helpers.js:366:20)
+(node:1115) ESLintEmptyConfigWarning: Running ESLint with an empty config (from /private/tmp/tm-eslint-fixtures/uc/eslint.config.mjs). Please double-check that this is what you want. If you want to run ESLint with an empty config, export [{}] to remove this warning.
+(Use `node --trace-warnings ...` to show where the warning was created)

@@ -3,7 +3,7 @@
 
 use crate::check::Check;
 use crate::repo::Repo;
-use crate::tm::{tm, Answer};
+use crate::cctao::{cctao, Answer};
 
 const RULES: &str = r#"version = 1
 
@@ -22,15 +22,15 @@ approved = "reviewer 2026-11-17"
 expires = "2099-12-31"
 "#;
 
-/// `tm check --json` over a repository holding `legacy` as legacy.py, recorded in `check`.
+/// `cctao check --json` over a repository holding `legacy` as legacy.py, recorded in `check`.
 fn check_legacy(check: &mut Check, legacy: &str) -> Answer {
     let repo = Repo::new();
-    repo.write("temperare.toml", RULES);
+    repo.write("tao.toml", RULES);
     repo.write("legacy.py", legacy);
     repo.commit("legacy module");
     let args = ["check", "--json"];
-    let a = tm(&repo, &args);
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao(&repo, &args);
+    check.saw_cctao(&args, a.code, &a.json);
     a
 }
 

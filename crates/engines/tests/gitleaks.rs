@@ -57,7 +57,7 @@ fn gitleaks_rule_reports_secret_clean_unknown_and_absence() {
         ("ignore file", secret_source.as_str(), "aws-access-token", false),
         ("config allowlist", secret_source.as_str(), "aws-access-token", false),
         ("extended allowlist", secret_source.as_str(), "aws-access-token", false),
-        ("config own rule", token_source.as_str(), "tm-test-token", false),
+        ("config own rule", token_source.as_str(), "cctao-test-token", false),
         ("inline extended allowlist", secret_source.as_str(), "aws-access-token", false),
         ("mixed-case allowlist", secret_source.as_str(), "aws-access-token", false),
         ("config not TOML", secret_source.as_str(), "aws-access-token", false),
@@ -86,7 +86,7 @@ fn gitleaks_rule_reports_secret_clean_unknown_and_absence() {
                         "[extend]\nuseDefault = true\n[allowlist]\npaths = [\"config.py\"]\n").unwrap();
                 }
                 "config own rule" => fs::write(folder.0.join(".gitleaks.toml"), format!(
-                    "[extend]\nuseDefault = true\n[[rules]]\nid = \"tm-test-token\"\nregex = '''{token_regex}'''\n"
+                    "[extend]\nuseDefault = true\n[[rules]]\nid = \"cctao-test-token\"\nregex = '''{token_regex}'''\n"
                 )).unwrap(),
                 "inline extended allowlist" => {
                     fs::create_dir(folder.0.join("base")).unwrap();
@@ -103,10 +103,10 @@ fn gitleaks_rule_reports_secret_clean_unknown_and_absence() {
                 _ => {}
             }
             fs::write(folder.0.join("config.py"), source).unwrap();
-            fs::write(folder.0.join("temperare.toml"), format!(
+            fs::write(folder.0.join("tao.toml"), format!(
                 "version = 1\nowner = \"security-team\"\n[[rule]]\nid = \"aws-secret\"\nengine = \"gitleaks\"\nkind = \"security\"\ncheck = \"{check}\"\nfix = \"Remove the exposed key.\"\n"
             )).unwrap();
-            let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
+            let file = RuleFile::read(&folder.0.join("tao.toml")).unwrap();
             let _path_guard = if absent {
                 let guard = PathGuard(std::env::var_os("PATH"));
                 let without_gitleaks = std::env::join_paths(
@@ -156,13 +156,13 @@ fn gitleaks_rule_reports_secret_clean_unknown_and_absence() {
                         panic!("{name}: expected Failed, got {}", format!("{outcome:?}").replace(&key, "[redacted]").replace(&token, "[redacted]"));
                     };
                     let why = match name {
-                        "ignore file" => "`.gitleaksignore` in the rule's folder lists findings to ignore; the rule file is the only home for an exception, so tm reads no findings under it",
-                        "config allowlist" => "gitleaks config `.gitleaks.toml` declares an allowlist (`allowlists`); the rule file is the only home for an exception, so tm reads no findings under it",
-                        "extended allowlist" => "gitleaks config `cfg/base.toml` declares an allowlist (`allowlist`); the rule file is the only home for an exception, so tm reads no findings under it",
-                        "inline extended allowlist" => "gitleaks config `base/x.toml` declares an allowlist (`rules[0].allowlist`); the rule file is the only home for an exception, so tm reads no findings under it",
-                        "mixed-case allowlist" => "gitleaks config `.gitleaks.toml` declares an allowlist (`AllowList`); the rule file is the only home for an exception, so tm reads no findings under it",
-                        "config not TOML" => "gitleaks config `.gitleaks.toml` does not parse as TOML, so tm cannot tell whether it declares an allowlist and reads no findings under it",
-                        "dotted allowlist key" => "gitleaks config `.gitleaks.toml` declares an allowlist (`allowlist`); the rule file is the only home for an exception, so tm reads no findings under it",
+                        "ignore file" => "`.gitleaksignore` in the rule's folder lists findings to ignore; the rule file is the only home for an exception, so cctao reads no findings under it",
+                        "config allowlist" => "gitleaks config `.gitleaks.toml` declares an allowlist (`allowlists`); the rule file is the only home for an exception, so cctao reads no findings under it",
+                        "extended allowlist" => "gitleaks config `cfg/base.toml` declares an allowlist (`allowlist`); the rule file is the only home for an exception, so cctao reads no findings under it",
+                        "inline extended allowlist" => "gitleaks config `base/x.toml` declares an allowlist (`rules[0].allowlist`); the rule file is the only home for an exception, so cctao reads no findings under it",
+                        "mixed-case allowlist" => "gitleaks config `.gitleaks.toml` declares an allowlist (`AllowList`); the rule file is the only home for an exception, so cctao reads no findings under it",
+                        "config not TOML" => "gitleaks config `.gitleaks.toml` does not parse as TOML, so cctao cannot tell whether it declares an allowlist and reads no findings under it",
+                        "dotted allowlist key" => "gitleaks config `.gitleaks.toml` declares an allowlist (`allowlist`); the rule file is the only home for an exception, so cctao reads no findings under it",
                         _ => unreachable!(),
                     };
                     assert_eq!(stderr, why, "{name}: failure reason");

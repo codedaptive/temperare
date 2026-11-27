@@ -7,10 +7,11 @@ use rules::RuleFile;
 use std::path::{Path, PathBuf};
 
 /// The rule file at `path` as committed at `rev`, read and checked with its folder. git is asked in that folder (an
-/// empty parent is "."): `rev` must name a commit there, and the file is read as `./<file name>`, which git takes
-/// relative to that folder, so the repository's top is never needed. A revision that names no commit, a git
-/// failure, a missing file or bytes that are not UTF-8 are usage errors; the file's problems come labelled
-/// `<path> (at <rev>)`.
+/// empty parent is "."): `rev` must name a commit there, and the file is read by its file name, relative to that
+/// folder, so the repository's top is never needed. ccvcslib refuses a file name beginning with `-` before it asks
+/// git, so such a name is refused here rather than reported as missing. That name, a file name that is not UTF-8, a
+/// revision that names no commit, a git failure, a missing file or bytes that are not UTF-8 are usage errors; the
+/// file's problems come labelled `<path> (at <rev>)`.
 pub(crate) fn read_base_rule_file(path: &Path, rev: &str, world: &RulesWorld) -> Result<RuleFile, BaseError> {
     let folder = match path.parent() {
         Some(parent) if !parent.as_os_str().is_empty() => parent,
@@ -18,6 +19,18 @@ pub(crate) fn read_base_rule_file(path: &Path, rev: &str, world: &RulesWorld) ->
     };
     let name = path.file_name().unwrap_or_default();
     let shown = name.to_string_lossy();
+    let Some(name) = name.to_str() else {
+        return Err(usage(
+            format!("rule file name {shown} is not UTF-8"),
+            "Rename the rule file to a UTF-8 name, or leave --loosened out.".to_string(),
+        ));
+    };
+    if name.starts_with('-') {
+        return Err(usage(
+            format!("rule file name {shown} starts with '-', which cctao cannot read at a --base revision"),
+            "Rename the rule file, or leave --loosened out.".to_string(),
+        ));
+    }
     let oid = match (world.rev_parse)(folder, rev) {
         Ok(Some(oid)) => oid,
         Ok(None) => {
@@ -29,11 +42,11 @@ pub(crate) fn read_base_rule_file(path: &Path, rev: &str, world: &RulesWorld) ->
         Err(g) => {
             return Err(usage(
                 format!("git could not resolve base '{rev}': {g}"),
-                "Run tm rules inside a git repository to use --base.".to_string(),
+                "Run cctao rules inside a git repository to use --base.".to_string(),
             ))
         }
     };
-    let bytes = match (world.blob_at)(folder, oid.as_str(), &Path::new(".").join(name)) {
+    let bytes = match (world.blob_at)(folder, &oid, name) {
         Ok(Some(bytes)) => bytes,
         Ok(None) => {
             return Err(usage(
@@ -44,7 +57,7 @@ pub(crate) fn read_base_rule_file(path: &Path, rev: &str, world: &RulesWorld) ->
         Err(g) => {
             return Err(usage(
                 format!("git could not read {shown} at base '{rev}': {g}"),
-                "Run tm rules inside a git repository to use --base.".to_string(),
+                "Run cctao rules inside a git repository to use --base.".to_string(),
             ))
         }
     };

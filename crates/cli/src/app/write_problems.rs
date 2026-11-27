@@ -7,7 +7,7 @@ use std::path::Path;
 
 /// Writes the problems of the rule file at `path` on `out`: as text, one `problem_line` each then
 /// `next: fix each problem listed for <path>`; under `json`, the `problems_json` object with `exit` 2 and that `next`,
-/// on one line. Returns 2. Write errors are ignored: a closed pipe is not tm's failure.
+/// on one line. Returns 2. Write errors are ignored: a closed pipe is not cctao's failure.
 pub(crate) fn write_problems(path: &Path, problems: &[rules::Problem], json: bool, out: &mut dyn Write) -> u8 {
     let fix = format!("fix each problem listed for {}", path.display());
     let next = next_step(2, Some(&fix), path, &[], json);

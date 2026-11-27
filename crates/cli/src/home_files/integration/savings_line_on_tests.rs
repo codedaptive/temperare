@@ -9,12 +9,12 @@ struct Home(PathBuf);
 impl Home {
     fn new() -> Self {
         static NEXT: AtomicU64 = AtomicU64::new(0);
-        let path = std::env::temp_dir().join(format!("tm-config-test-{}-{}", std::process::id(), NEXT.fetch_add(1, Ordering::Relaxed)));
+        let path = std::env::temp_dir().join(format!("cctao-config-test-{}-{}", std::process::id(), NEXT.fetch_add(1, Ordering::Relaxed)));
         std::fs::create_dir(&path).unwrap();
         Self(path)
     }
     fn config(&self, bytes: &[u8]) -> PathBuf {
-        let path = self.0.join(".config/temperare/config.toml");
+        let path = self.0.join(".config/cctao/config.toml");
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         std::fs::write(&path, bytes).unwrap();
         path
@@ -49,7 +49,7 @@ fn savings_contract_bad_toml_defaults_with_one_diagnostic_and_preserves_file() {
     let mut stderr = Vec::new();
     assert!(savings_line_on(Some(&home.0), &mut stderr));
     let text = std::str::from_utf8(&stderr).unwrap();
-    let reason = text.strip_prefix("tm: ignoring ~/.config/temperare/config.toml: ").unwrap();
+    let reason = text.strip_prefix("cctao: ignoring ~/.config/cctao/config.toml: ").unwrap();
     assert!(!reason.trim().is_empty(), "{text:?}");
     assert!(text.ends_with('\n'));
     assert_eq!(text.lines().count(), 1);
@@ -62,7 +62,7 @@ fn savings_contract_unknown_key_defaults_with_exact_diagnostic_and_preserves_fil
     let path = home.config(b"colour = 1\n");
     let mut stderr = Vec::new();
     assert!(savings_line_on(Some(&home.0), &mut stderr));
-    assert_eq!(stderr, b"tm: ignoring ~/.config/temperare/config.toml: unknown key `colour`\n");
+    assert_eq!(stderr, b"cctao: ignoring ~/.config/cctao/config.toml: unknown key `colour`\n");
     assert_eq!(std::fs::read(path).unwrap(), b"colour = 1\n");
 }
 
@@ -73,7 +73,7 @@ fn savings_contract_invalid_utf8_defaults_with_one_diagnostic() {
     let mut stderr = Vec::new();
     assert!(savings_line_on(Some(&home.0), &mut stderr));
     let text = std::str::from_utf8(&stderr).unwrap();
-    let reason = text.strip_prefix("tm: ignoring ~/.config/temperare/config.toml: ").unwrap();
+    let reason = text.strip_prefix("cctao: ignoring ~/.config/cctao/config.toml: ").unwrap();
     assert!(!reason.trim().is_empty(), "{text:?}");
     assert!(text.ends_with('\n'));
     assert_eq!(text.lines().count(), 1);

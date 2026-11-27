@@ -10,8 +10,8 @@ fn usage(what: &str, fix: &str) -> UsageError {
 
 #[test]
 fn parse_baseline_args_rows() {
-    const FLAGS: &str = "Run tm help to see the flags of tm baseline test.";
-    const SUB: &str = "Run tm baseline test.";
+    const FLAGS: &str = "Run cctao help to see the flags of cctao baseline test.";
+    const SUB: &str = "Run cctao baseline test.";
     let rows: Vec<(&[&str], Result<BaselineArgs, UsageError>)> = vec![
         (&["test"], Ok(BaselineArgs { set: None, json: false })),
         (&["test", "--json"], Ok(BaselineArgs { set: None, json: true })),
@@ -21,15 +21,15 @@ fn parse_baseline_args_rows() {
             &["test", "--set", "house@1", "--set", "standard@1"],
             Ok(BaselineArgs { set: Some("standard@1".to_string()), json: false }),
         ),
-        (&[], Err(usage("tm baseline needs a subcommand", SUB))),
+        (&[], Err(usage("cctao baseline needs a subcommand", SUB))),
         (&["run"], Err(usage("unknown baseline subcommand 'run'", SUB))),
         (&["--json"], Err(usage("unknown baseline subcommand '--json'", SUB))),
         (&["test", "--set"], Err(usage("--set needs a value", "Write --set <name@version>."))),
         (&["test", "--set", "--json"], Err(usage("--set needs a value", "Write --set <name@version>."))),
-        (&["test", "--rules", "t.toml"], Err(usage("unknown flag '--rules' for tm baseline test", FLAGS))),
-        (&["test", "--set=house@1"], Err(usage("unknown flag '--set=house@1' for tm baseline test", FLAGS))),
-        (&["test", "house@1"], Err(usage("unexpected argument 'house@1' for tm baseline test", FLAGS))),
-        (&["test", "test"], Err(usage("unexpected argument 'test' for tm baseline test", FLAGS))),
+        (&["test", "--rules", "t.toml"], Err(usage("unknown flag '--rules' for cctao baseline test", FLAGS))),
+        (&["test", "--set=house@1"], Err(usage("unknown flag '--set=house@1' for cctao baseline test", FLAGS))),
+        (&["test", "house@1"], Err(usage("unexpected argument 'house@1' for cctao baseline test", FLAGS))),
+        (&["test", "test"], Err(usage("unexpected argument 'test' for cctao baseline test", FLAGS))),
     ];
     let wrong: Vec<String> = rows
         .into_iter()

@@ -1,12 +1,12 @@
-//! `parse_install_args`: the arguments after `temperare install`.
+//! `parse_install_args`: the arguments after `cctao install`.
 
 use super::flag_value::flag_value;
 use super::{InstallArgs, UsageError};
 use crate::Harness;
 
-const FIX: &str = "Run tm help to see the flags of tm install.";
+const FIX: &str = "Run cctao help to see the flags of cctao install.";
 
-/// `--no-place`, `--short-name`, `-y`, `--target <list>` (commas between claude, codex and cursor; each kept once,
+/// `--no-place`, `-y`, `--target <list>` (commas between claude, codex and cursor; each kept once,
 /// in order), `--mode skill` and `--location local`. Any other value of those, any other flag and a positional
 /// argument are usage errors. A flag given twice keeps its last value here: `parse_args` reports the repeat.
 pub(super) fn parse_install_args(args: &[String]) -> Result<InstallArgs, UsageError> {
@@ -15,14 +15,13 @@ pub(super) fn parse_install_args(args: &[String]) -> Result<InstallArgs, UsageEr
     while let Some(arg) = rest.next() {
         match arg.as_str() {
             "--no-place" => parsed.no_place = true,
-            "--short-name" => parsed.short_name = true,
             "-y" => parsed.yes = true,
             "--target" => parsed.targets = Some(targets(&flag_value("--target", "claude,codex,cursor", &mut rest)?)?),
             "--mode" => only(
                 "--mode",
                 &flag_value("--mode", "skill", &mut rest)?,
                 "skill",
-                "Write --mode skill: Temperare wires a skill only, no MCP.",
+                "Write --mode skill: cctao wires a skill only, no MCP.",
             )?,
             "--location" => {
                 let fix = "Write --location local, or leave it out to wire the harness folders in HOME.";
@@ -30,11 +29,11 @@ pub(super) fn parse_install_args(args: &[String]) -> Result<InstallArgs, UsageEr
                 parsed.local = true;
             }
             flag if flag.starts_with('-') => {
-                return Err(UsageError { what: format!("unknown flag '{flag}' for tm install"), fix: FIX.to_string() })
+                return Err(UsageError { what: format!("unknown flag '{flag}' for cctao install"), fix: FIX.to_string() })
             }
             other => {
                 return Err(UsageError {
-                    what: format!("unexpected argument '{other}' for tm install"),
+                    what: format!("unexpected argument '{other}' for cctao install"),
                     fix: FIX.to_string(),
                 })
             }

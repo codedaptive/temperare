@@ -23,3 +23,16 @@ fn a_folder_outside_the_top_is_none() {
 fn a_sibling_sharing_the_name_text_is_none() {
     assert_eq!(folder_from_top(Path::new("/repo"), Path::new("/repox/a")), None);
 }
+
+// Windows verbatim disk prefixes are parsed only on Windows.
+#[cfg(windows)]
+#[test]
+fn windows_path_forms_are_compared_by_prefix_kind() {
+    for (top, folder, expected) in [
+        (r"\\?\C:\repo", r"\\?\C:\repo", Some(PathBuf::new())),
+        (r"\\?\C:\repo", r"\\?\C:\repo\crates\x", Some(PathBuf::from(r"crates\x"))),
+        (r"C:/repo", r"\\?\C:\repo\crates\x", None),
+    ] {
+        assert_eq!(folder_from_top(Path::new(top), Path::new(folder)), expected, "top={top:?}, folder={folder:?}");
+    }
+}

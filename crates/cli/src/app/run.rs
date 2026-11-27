@@ -1,4 +1,4 @@
-//! `run`: tm's whole run, from the command line to the exit code.
+//! `run`: cctao's whole run, from the command line to the exit code.
 
 use super::run_baseline_test::run_baseline_test;
 use super::run_check::run_check;
@@ -13,13 +13,14 @@ use std::io::Write;
 use std::path::Path;
 
 /// Runs the command `args` names (the program name left out) in `cwd`, printing on `out` and `err`, and returns the
-/// exit code: a usage error is 2, help and version are 0, `tm rules` (also `tm rules --loosened`) is `run_rules` and
-/// `tm check` is `run_check`, both against the real git, disk, PATH and clock (`tm check` also reads HOME).
-/// `tm baseline test` is `run_baseline_test` on the sets built into tm, its cases in folders under the system temp
-/// folder run by the real engines (`BaselineWorld::real`). `install` and `uninstall`
+/// exit code: a usage error is 2, help and version are 0, `cctao rules` (also `cctao rules --loosened`) is `run_rules`
+/// and `cctao check` is `run_check`, both against the real git, disk, PATH and clock (`cctao check` also reads the
+/// savings switch under HOME and writes the savings log and the telemetry file there; it never reads the telemetry
+/// file). `cctao baseline test` is `run_baseline_test` on the sets built into cctao, its cases in folders under the
+/// system temp folder run by the real engines (`BaselineWorld::real`). `install` and `uninstall`
 /// are `run_install` and `run_uninstall` on the real host (`InstallHost::real`), the harness picker reading stdin
 /// and asking on stderr; a host that cannot be read (HOME not set or not absolute, the running binary not found) is
-/// 2. Write errors are ignored: a closed pipe is not tm's failure.
+/// 2. Write errors are ignored: a closed pipe is not cctao's failure.
 pub fn run(args: &[String], cwd: &Path, out: &mut dyn Write, err: &mut dyn Write) -> u8 {
     let command = match parse_args(args) {
         Ok(command) => command,
@@ -34,7 +35,7 @@ pub fn run(args: &[String], cwd: &Path, out: &mut dyn Write, err: &mut dyn Write
             0
         }
         Command::Version => {
-            let _ = writeln!(out, "{}", version_text(env!("CARGO_PKG_VERSION"), env!("TEMPERARE_COMMIT")));
+            let _ = writeln!(out, "{}", version_text(env!("CARGO_PKG_VERSION"), env!("CCTAO_COMMIT")));
             0
         }
         Command::Rules(rules_args) => run_rules(&rules_args, cwd, &RulesWorld::real(), out, err),
@@ -57,7 +58,7 @@ pub fn run(args: &[String], cwd: &Path, out: &mut dyn Write, err: &mut dyn Write
     }
 }
 
-/// The real install host, or exit 2 with its error on `err` as `write_usage_error` prints it: `tm: <what>` and the
+/// The real install host, or exit 2 with its error on `err` as `write_usage_error` prints it: `cctao: <what>` and the
 /// `next:` line for that cause.
 fn real_host(cwd: &Path, err: &mut dyn Write) -> Result<InstallHost, u8> {
     InstallHost::real(cwd).map_err(|e| {

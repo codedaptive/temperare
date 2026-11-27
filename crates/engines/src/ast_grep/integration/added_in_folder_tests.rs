@@ -1,6 +1,6 @@
 //! Zone integration tests for added_in_folder.rs: a throwaway git repository with a base commit and a change in the working tree.
 //! Symlinks, the paths `keep` rejects and a base git cannot read are change_of's, tested in
-//! src/integration/change_of_tests.rs.
+//! src/internal/integration/change_of_tests.rs.
 
 use super::super::added_in_folder::added_in_folder;
 use rules::RelPath;
@@ -8,22 +8,20 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-fn git(repo: &Path, args: &[&str]) {
-    let out = procio::run(&procio::git_cmd(repo, args.iter().map(Into::into).collect())).unwrap();
-    assert_eq!(out.code, Some(0), "git {args:?}: {}", String::from_utf8_lossy(&out.stderr));
-}
+#[path = "../../../tests/support/git.rs"]
+mod git_support;
 
 /// A repository under the temp folder holding `files` in its one commit; returns its canonical path.
 fn repo_with_base(test: &str, files: &[(&str, &str)]) -> PathBuf {
     let root = std::env::temp_dir().join(format!("engines-zit-{}-added-in-folder-{test}", std::process::id()));
     fs::create_dir(&root).unwrap();
     let root = fs::canonicalize(root).unwrap();
-    git(&root, &["init", "-q"]);
+    git_support::git(&root, &["init", "-q"], b"");
     for (path, text) in files {
         write(&root, path, text);
     }
-    git(&root, &["add", "-A"]);
-    git(&root, &["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "base"]);
+    git_support::git(&root, &["add", "-A"], b"");
+    git_support::git(&root, &["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "base"], b"");
     root
 }
 

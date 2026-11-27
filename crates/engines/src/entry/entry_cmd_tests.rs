@@ -1,5 +1,5 @@
 //! Unit tests for entry_cmd.rs: the argv of a fake entry of each pick kind; the config given, not given, and not taken by
-//! the entry. Also `fake_entry`, the entry the other entry ZUTs build on. Nothing runs.
+//! the entry. Also `fake_entry`, the entry the other entry unit tests build on. Nothing runs.
 
 use super::{entry_cmd, run_plain, Entry, Params, Pick};
 use procio::Output;
@@ -69,8 +69,8 @@ fn an_entry_that_takes_no_config_drops_the_rules_config() {
 #[test]
 fn a_file_pick_passes_the_option_then_the_path_as_two_arguments() {
     let entry = fake_entry(Pick::File("--rule"), Params::Template, None);
-    let got = argv(&entry, "/tmp/tm-ast-grep-1-0.yml", &[], None);
-    assert_eq!(got, os(&["check", "--rule", "/tmp/tm-ast-grep-1-0.yml", "."]));
+    let got = argv(&entry, "/tmp/cctao-ast-grep-1-0.yml", &[], None);
+    assert_eq!(got, os(&["check", "--rule", "/tmp/cctao-ast-grep-1-0.yml", "."]));
 }
 
 #[test]

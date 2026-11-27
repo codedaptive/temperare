@@ -39,8 +39,11 @@ fn clang_tidy_entry_fields() {
         assert_eq!((CLANG_TIDY.unknown)(&out(1, b"", stderr), "nosuch-check").as_deref(), said, "{stderr:?}");
     }
 
-    let finding = out(0, b"/w/a.c:1:22: warning: statement should be inside braces [readability-braces-around-statements]\n", b"");
+    // An absolute folder on this platform: `/w` is not absolute on Windows, where the parser would refuse it.
+    let w = if cfg!(windows) { "C:/w" } else { "/w" };
+    let line = format!("{w}/a.c:1:22: warning: statement should be inside braces [readability-braces-around-statements]\n");
+    let finding = out(0, line.as_bytes(), b"");
     let hit = Hit { path: RelPath::new("a.c"), line: Some(1), col: Some(22), what: "statement should be inside braces".to_string() };
-    let read = (CLANG_TIDY.read)(&finding, "readability-braces-around-statements", Path::new("/w"), Path::new("/w"));
+    let read = (CLANG_TIDY.read)(&finding, "readability-braces-around-statements", Path::new(w), Path::new(w));
     assert_eq!(read, Ok(vec![hit]));
 }

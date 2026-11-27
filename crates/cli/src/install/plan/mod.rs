@@ -1,5 +1,5 @@
 //! The install plan, decided before anything is written and with no I/O of its own: which harnesses to wire, what
-//! to place and link, the picker's dialogue on given streams, the paths the install record cannot hold, and the
+//! to place, the picker's dialogue on given streams, the paths the install record cannot hold, and the
 //! install record's text and removal order.
 
 mod choose_targets;
@@ -13,11 +13,13 @@ mod unrecordable_path;
 
 #[cfg(test)]
 mod choose_targets_tests;
-#[cfg(test)]
+// Unix only: these fixtures are unix absolute paths.
+#[cfg(all(test, unix))]
 mod parse_record_tests;
 #[cfg(test)]
 mod pick_harnesses_tests;
-#[cfg(test)]
+// Unix only: these fixtures are unix absolute paths.
+#[cfg(all(test, unix))]
 mod plan_install_tests;
 #[cfg(test)]
 mod record_text_tests;

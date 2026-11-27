@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use engines::{availability, run_rules_versioned_at, Availability};
+use engines::{availability_in, run_rules_versioned_at, Availability};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
 
 #[path = "support/git.rs"]
@@ -29,8 +29,8 @@ fn git(repo: &Path, args: &[&str]) {
 
 #[test]
 fn no_file_flag_counts_untracked_but_not_ignored_files() {
-    assert_eq!(availability(Engine::Ruff), Availability::Available);
     let repo = TempFolder::new();
+    assert_eq!(availability_in(Engine::Ruff, &repo.0), Availability::Available);
     git(&repo.0, &["init", "-q"]);
     for dir in ["src", "docs", "lib", "build", "inner"] {
         fs::create_dir(repo.0.join(dir)).unwrap();
@@ -44,7 +44,7 @@ fn no_file_flag_counts_untracked_but_not_ignored_files() {
     fs::write(repo.0.join("build/c.py"), violation).unwrap();
     git(&repo.0.join("inner"), &["init", "-q"]);
     fs::write(repo.0.join("inner/b.py"), violation).unwrap();
-    fs::write(repo.0.join("temperare.toml"), r#"version = 1
+    fs::write(repo.0.join("tao.toml"), r#"version = 1
 [[rule]]
 id = "untracked"
 engine = "ruff"
@@ -71,7 +71,7 @@ paths = ["inner"]
 fix = "Use is None."
 "#).unwrap();
 
-    let file = RuleFile::read(&repo.0.join("temperare.toml")).unwrap();
+    let file = RuleFile::read(&repo.0.join("tao.toml")).unwrap();
     let runs = run_rules_versioned_at(&file, &repo.0, &[], None).runs;
     assert_eq!(runs.len(), 4);
     assert_eq!(runs[0].rule, "untracked");

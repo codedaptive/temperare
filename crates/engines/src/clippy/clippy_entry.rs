@@ -15,7 +15,7 @@ use rules::Engine;
 /// `rustdoc::` check is refused (`clippy_refusal`) before any flow: clippy never runs rustdoc lints.
 ///
 /// The `max_nesting` param, read only with check `clippy::excessive_nesting` (a `-` in the rule's check reads as `_`),
-/// is a whole number from 1 to 1000. tm writes `excessive-nesting-threshold = <n>` as `clippy.toml` into a temporary
+/// is a whole number from 1 to 1000. cctao writes `excessive-nesting-threshold = <n>` as `clippy.toml` into a temporary
 /// folder named in `CLIPPY_CONF_DIR` for that run, and removes it after. With it set, clippy reads that file instead
 /// of the repository's own `clippy.toml` for the run, which changes nothing for `excessive_nesting`, whose only
 /// setting is the threshold. A changed `CLIPPY_CONF_DIR` makes cargo lint again, so a cached run is never replayed
@@ -40,7 +40,7 @@ pub static CLIPPY: Entry = Entry {
     },
     config: None,
     after: &[],
-    version: Some(VersionProbe { args: &["clippy", "--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["clippy", "--version"], read: version_word, wrap: None }),
     refuse: clippy_refusal,
     unknown: |_, _| None,
     read: parse_clippy,

@@ -32,7 +32,7 @@ fn refuses_group(name: &str, check: &str, help: Output) {
     let root = tree(name);
     let (got, seen) = run_rules_with_help(&rules(check), &root, help, output(0, b"", b""), output(0, b"", b""));
     fs::remove_dir_all(&root).unwrap();
-    assert_eq!(got, Err(Stop::Failed { code: None, stderr: format!("clippy check `{check}` is a lint group: tm cannot tell its lints from other warnings, so it cannot report it; name each lint, or use `warnings`") }));
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: format!("clippy check `{check}` is a lint group: cctao cannot tell its lints from other warnings, so it cannot report it; name each lint, or use `warnings`") }));
     assert_help_only(&seen, &root);
 }
 

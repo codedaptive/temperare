@@ -96,6 +96,10 @@ fn run(setup: Setup, files: &[CaseFile]) -> (CaseVerdict, Vec<String>, String) {
 fn run_case_removes_the_folder_whatever_the_case_came_to() {
     let ran = |steps: &[&str]| steps.iter().map(|step| step.to_string()).collect::<Vec<_>>();
     let broken = |why: &str| CaseVerdict::Broken { why: why.to_string() };
+    // The writes name `/case` joined part by part, in the platform's separator (`/case/src/b.py` on unix).
+    let case = Path::new("/case");
+    let write_a = format!("write {} \"import os\\n\"", case.join("a.py").display());
+    let write_b = format!("write {} \"import os\\n\"", case.join("src").join("b.py").display());
     let rows = [
         (
             "held",
@@ -104,8 +108,8 @@ fn run_case_removes_the_folder_whatever_the_case_came_to() {
             CaseVerdict::Holds,
             ran(&[
                 "make",
-                "write /case/a.py \"import os\\n\"",
-                "write /case/src/b.py \"import os\\n\"",
+                &write_a,
+                &write_b,
                 "run /case /case [\"tm-zeta\"] 0 None",
                 "remove /case",
             ]),
@@ -115,7 +119,7 @@ fn run_case_removes_the_folder_whatever_the_case_came_to() {
             Setup { findings: vec![finding(2)], ..OK },
             files(&["a.py"]),
             broken("gave tm-zeta at a.py:2; expected tm-zeta at a.py:1"),
-            ran(&["make", "write /case/a.py \"import os\\n\"", "run /case /case [\"tm-zeta\"] 0 None", "remove /case"]),
+            ran(&["make", &write_a, "run /case /case [\"tm-zeta\"] 0 None", "remove /case"]),
         ),
         (
             "not available, with the run's cause",
@@ -125,7 +129,7 @@ fn run_case_removes_the_folder_whatever_the_case_came_to() {
                 why: "ruff not found on PATH".to_string(),
                 cause: Some(NotAvailableCause::HelperNotOnPath),
             },
-            ran(&["make", "write /case/a.py \"import os\\n\"", "run /case /case [\"tm-zeta\"] 0 None", "remove /case"]),
+            ran(&["make", &write_a, "run /case /case [\"tm-zeta\"] 0 None", "remove /case"]),
         ),
         (
             "a name above the folder",
@@ -139,14 +143,14 @@ fn run_case_removes_the_folder_whatever_the_case_came_to() {
             OK,
             files(&["a.py", "/abs.py"]),
             broken("case file \"/abs.py\" is not a relative path inside the case folder"),
-            ran(&["make", "write /case/a.py \"import os\\n\"", "remove /case"]),
+            ran(&["make", &write_a, "remove /case"]),
         ),
         (
             "a failed write stops the case",
             Setup { write_fails: Some("a.py"), ..OK },
             files(&["a.py", "b.py"]),
             broken("cannot write a.py: disk full"),
-            ran(&["make", "write /case/a.py \"import os\\n\"", "remove /case"]),
+            ran(&["make", &write_a, "remove /case"]),
         ),
     ];
     for (name, setup, files, want, want_steps) in rows {
@@ -170,5 +174,5 @@ fn a_folder_that_cannot_be_removed_is_a_line_on_err_and_keeps_the_verdict() {
     let (verdict, steps, err) = run(Setup { remove_fails: true, findings: vec![finding(1)], ..OK }, &files(&["a.py"]));
     assert_eq!(verdict, CaseVerdict::Holds);
     assert_eq!(steps.last().map(String::as_str), Some("remove /case"));
-    assert_eq!(err, "tm: cannot remove the case folder /case: busy\n");
+    assert_eq!(err, "cctao: cannot remove the case folder /case: busy\n");
 }

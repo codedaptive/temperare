@@ -16,8 +16,8 @@ use std::path::Path;
 /// `Failed` with no exit code, ast-grep absent is `NotOnPath`, and output that is not ast-grep's JSON lines is `Failed`
 /// with its exit code. Only then is git asked which files the change adds lines to (`added_in_folder`), so a refused
 /// check run never runs git; a git error there is `git_stop`'s `Stop` (`NotOnPath` when git is missing, else `Failed`
-/// with git's exit code) and a kept regular untracked file that cannot be read is `Failed` naming it. The hits are
-/// `setup_heavier_hits`'s.
+/// with git's exit code when git exited with one), a base that names no commit is `Failed` naming it, and a kept
+/// regular untracked file that cannot be read is `Failed` naming it. The hits are `setup_heavier_hits`'s.
 pub(crate) fn count_ast_grep(
     entry: &Entry,
     rule: &Rule,

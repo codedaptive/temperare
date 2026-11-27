@@ -35,11 +35,11 @@ fn version() {
 fn an_argument_after_help_is_refused() {
     assert_eq!(
         parse(&["help", "rules"]),
-        Err(error("unexpected argument 'rules' after help", "Run tm help with nothing after it."))
+        Err(error("unexpected argument 'rules' after help", "Run cctao help with nothing after it."))
     );
     assert_eq!(
         parse(&["-h", "x"]),
-        Err(error("unexpected argument 'x' after -h", "Run tm -h with nothing after it."))
+        Err(error("unexpected argument 'x' after -h", "Run cctao -h with nothing after it."))
     );
 }
 
@@ -47,7 +47,7 @@ fn an_argument_after_help_is_refused() {
 fn an_argument_after_version_is_refused() {
     assert_eq!(
         parse(&["--version", "--json"]),
-        Err(error("unexpected argument '--json' after --version", "Run tm --version with nothing after it."))
+        Err(error("unexpected argument '--json' after --version", "Run cctao --version with nothing after it."))
     );
 }
 
@@ -77,7 +77,7 @@ fn baseline_command() {
         parse(&["baseline", "test", "--set", "house@1", "--json"]),
         Ok(Command::Baseline(BaselineArgs { set: Some("house@1".to_string()), json: true }))
     );
-    assert_eq!(parse(&["baseline"]), Err(error("tm baseline needs a subcommand", "Run tm baseline test.")));
+    assert_eq!(parse(&["baseline"]), Err(error("cctao baseline needs a subcommand", "Run cctao baseline test.")));
     assert_eq!(
         parse(&["baseline", "test", "--json", "--json"]),
         Err(error("--json given twice", "Give --json once."))
@@ -88,7 +88,7 @@ fn baseline_command() {
 fn sub_parser_errors_come_through() {
     assert_eq!(
         parse(&["rules", "--base", "main"]),
-        Err(error("--base is only for tm rules --loosened", "Add --loosened, or leave --base out."))
+        Err(error("--base is only for cctao rules --loosened", "Add --loosened, or leave --base out."))
     );
 }
 
@@ -123,7 +123,7 @@ fn the_same_path_twice_is_not_a_repeated_flag() {
 fn an_unknown_command() {
     assert_eq!(
         parse(&["frobnicate"]),
-        Err(error("unknown command 'frobnicate'", "Run tm help to see the commands."))
+        Err(error("unknown command 'frobnicate'", "Run cctao help to see the commands."))
     );
 }
 
@@ -131,7 +131,7 @@ fn an_unknown_command() {
 fn a_flag_before_the_command_is_an_unknown_command() {
     assert_eq!(
         parse(&["--json", "rules"]),
-        Err(error("unknown command '--json'", "Run tm help to see the commands."))
+        Err(error("unknown command '--json'", "Run cctao help to see the commands."))
     );
 }
 
@@ -157,7 +157,7 @@ fn install_alone_is_install_with_no_flags() {
 fn install_errors_come_through() {
     assert_eq!(
         parse(&["install", "--mode", "mcp"]),
-        Err(error("--mode mcp is not supported", "Write --mode skill: Temperare wires a skill only, no MCP."))
+        Err(error("--mode mcp is not supported", "Write --mode skill: cctao wires a skill only, no MCP."))
     );
 }
 
@@ -175,6 +175,6 @@ fn uninstall_command() {
 fn an_argument_after_uninstall_is_refused() {
     assert_eq!(
         parse(&["uninstall", "-y"]),
-        Err(error("unexpected argument '-y' after uninstall", "Run tm uninstall with nothing after it."))
+        Err(error("unexpected argument '-y' after uninstall", "Run cctao uninstall with nothing after it."))
     );
 }

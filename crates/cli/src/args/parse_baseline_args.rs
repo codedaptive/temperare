@@ -1,4 +1,4 @@
-//! `parse_baseline_args`: the arguments after `tm baseline`.
+//! `parse_baseline_args`: the arguments after `cctao baseline`.
 
 use super::flag_value::flag_value;
 use super::{BaselineArgs, UsageError};
@@ -10,7 +10,7 @@ pub(super) fn parse_baseline_args(args: &[String]) -> Result<BaselineArgs, Usage
     let mut rest = args.iter();
     match rest.next().map(String::as_str) {
         Some("test") => {}
-        None => return Err(subcommand_error("tm baseline needs a subcommand".to_string())),
+        None => return Err(subcommand_error("cctao baseline needs a subcommand".to_string())),
         Some(other) => return Err(subcommand_error(format!("unknown baseline subcommand '{other}'"))),
     }
     let mut parsed = BaselineArgs::default();
@@ -19,18 +19,18 @@ pub(super) fn parse_baseline_args(args: &[String]) -> Result<BaselineArgs, Usage
             "--set" => parsed.set = Some(flag_value("--set", "<name@version>", &mut rest)?),
             "--json" => parsed.json = true,
             flag if flag.starts_with('-') => {
-                return Err(test_error(format!("unknown flag '{flag}' for tm baseline test")))
+                return Err(test_error(format!("unknown flag '{flag}' for cctao baseline test")))
             }
-            other => return Err(test_error(format!("unexpected argument '{other}' for tm baseline test"))),
+            other => return Err(test_error(format!("unexpected argument '{other}' for cctao baseline test"))),
         }
     }
     Ok(parsed)
 }
 
 fn subcommand_error(what: String) -> UsageError {
-    UsageError { what, fix: "Run tm baseline test.".to_string() }
+    UsageError { what, fix: "Run cctao baseline test.".to_string() }
 }
 
 fn test_error(what: String) -> UsageError {
-    UsageError { what, fix: "Run tm help to see the flags of tm baseline test.".to_string() }
+    UsageError { what, fix: "Run cctao help to see the flags of cctao baseline test.".to_string() }
 }

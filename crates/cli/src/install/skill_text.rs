@@ -1,45 +1,45 @@
-//! `SKILL_TEXT`: the Claude Code skill `temperare install` writes into each harness it wires.
+//! `SKILL_TEXT`: the Claude Code skill `cctao install` writes into each harness it wires, for Code Chi Tao.
 
-/// The skill file's whole text: YAML front matter (`name`, `description`), then how to run Temperare, the tokens-saved
-/// line `temperare check`'s text opens with when an engine ran, and its ask (sum the lines, tell the user at the end of
-/// the reply), that `--json` carries the numbers as `saved` instead, that `savings_line = false` turns line and ask
-/// off, and how to read the exit codes. It teaches the commands as `temperare`, the name that answers wherever it is installed: `tm` exists only
-/// where install made the link. A Rust constant, compiled in: the repository holds no SKILL.md. The exit codes
-/// are the ones crates/cli/src/output/exit_code.rs gives them.
+/// The skill file's whole text: YAML front matter (`name`, `description`), then how to run Tao, the tokens-saved
+/// line `cctao check`'s text opens with when an engine ran for a rule other than a watch rule, and its ask (sum the
+/// lines, tell the user at the end of the reply), that `--json` carries the numbers as `saved` instead, that
+/// `savings_line = false` turns line and ask off, and how to read the exit codes. A Rust constant, compiled in: the
+/// repository holds no SKILL.md. The exit codes are the documented ones, as crates/cli/src/output/exit_code.rs gives them.
 pub const SKILL_TEXT: &str = "\
 ---
-name: temperare
-description: Check code against the rules this repository has chosen, with Temperare (temperare check), and read its report.
+name: cctao
+description: Check code against the rules this repository has chosen, with Code Chi Tao (cctao check), and read its report.
 ---
 
-# Temperare
+# Code Chi Tao
 
-Temperare checks code against the rules a repository or kit has chosen to enforce, and reports what it finds. It
+Tao checks code against the rules a repository or kit has chosen to enforce, and reports what it finds. It
 runs engines (clippy, SwiftLint, ruff and ast-grep; Tessera's checks are not available yet, so a tessera rule always
 reports not available) and never edits the code it checks.
-The rules come from `temperare.toml` at the top of the git repository.
-`tm` is its short name where `temperare install` made the link.
+The rules come from `tao.toml` at the top of the git repository.
 
 ## Commands
 
-- `temperare check [--base <rev>] [--json] [<path>...]`: check the repository, or only the paths given. With
+- `cctao check [--base <rev>] [--json] [<path>...]`: check the repository, or only the paths given. With
   `--base`, only violations new since that commit are reported. `--json` prints the report as JSON.
-- `temperare rules`: list the rules in force and whether each one's engine is available.
-- `temperare rules --loosened --base <rev>`: list what the rule file loosened since that commit; exit 0 nothing, 1
+- `cctao rules`: list the rules in force and whether each one's engine is available.
+- `cctao rules --loosened --base <rev>`: list what the rule file loosened since that commit; exit 0 nothing, 1
   something loosened, 2 a bad --base or rule file.
 
 ## Tokens saved
 
-When an engine ran, the first line of `temperare check`'s text output estimates the tokens it saved:
-`[temperare] tokens saved ≈ N (P%) — this output ≈ X tok vs the raw output of K engine run(s) ≈ B tok (estimate).`
-It is followed by an ask: at the end of your reply, tell the user the total temperare tokens saved this turn, the sum
-of each such line across your temperare calls. With `--json` there is no line: the object carries the numbers as
-`saved`. `savings_line = false` in `~/.config/temperare/config.toml` turns the line and its ask off.
+When an engine ran for a rule other than a watch rule, the first line of `cctao check`'s text output estimates
+the tokens it saved:
+`[cctao] tokens saved ≈ N (P%) — this output ≈ X tok vs the raw output of K engine run(s) ≈ B tok (estimate).`
+It is followed by an ask: at the end of your reply, tell the user the total cctao tokens saved this turn, the sum of
+each such line across your cctao calls. With `--json` there is no line: the object carries the numbers as
+`saved`. `savings_line = false` in `~/.config/cctao/config.toml` turns the line and its ask off.
 
 ## Exit codes
 
 - 0: nothing refuses; warnings alone exit 0.
-- 1: a quality error finding refuses the change. Fix it, or add an approved exception to the rule file.
+- 1: a quality error finding refuses the change. Fix it, or add an approved exception, with its expires date, to
+  the rule file.
 - 2: a usage error. The message says what to type instead.
 - 3: a rule could not run because its engine, or what the rule needs, is not available. Do what the message names
   (install the engine; for clippy, put the rule file inside the Cargo project it checks), or run without those rules;

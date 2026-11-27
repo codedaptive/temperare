@@ -1,0 +1,121 @@
+How each fixture in this folder was made: real sqlfluff output (stdout, or stderr where said), saved unedited.
+
+Version (`sqlfluff --version`): sqlfluff, version 4.5.0
+Program: /opt/homebrew/bin/sqlfluff
+Root: /tmp/sqlfluff-fixtures.E2gbEN (made with `mktemp -d /tmp/sqlfluff-fixtures.XXXXXX`, removed afterwards), one
+folder per fixture, each the run's cwd. Every run had HOME set to the root and XDG_CONFIG_HOME, PYTHONPATH and
+PYTHONUSERBASE removed, as `sqlfluff_cmd` sets them. No config at the root.
+
+Command, in each folder (SQLFLUFF's command as `sqlfluff_cmd` builds it with no config):
+  sqlfluff lint --format json --nocolor --disable-progress-bar --disable-noqa --disregard-sqlfluffignores
+    --exclude-rules= --ignore= --rules=<check> -- <files>
+<check> is LT01 unless said.
+
+Unless said, a folder's .sqlfluff is:
+  [sqlfluff]
+  dialect = ansi
+
+findings.json: stdout, exit 1, stderr empty.
+  cwd: <root>/findings
+  files: a.sql clean.sql sub/b.sql
+  a.sql:
+    SELECT a  FROM t
+  clean.sql:
+    SELECT a FROM t
+  sub/b.sql:
+    SELECT
+        a  +  b
+    FROM t
+
+clean.json: stdout, exit 0, stderr empty.
+  cwd: <root>/clean
+  files: a.sql
+  a.sql:
+    SELECT a FROM t
+
+unparsable.json: stdout, exit 1, stderr empty.
+  cwd: <root>/unparsable
+  files: a.sql b.sql
+  a.sql:
+    SELECT FROM WHERE (((
+  b.sql:
+    SELECT a  FROM t
+
+warnings.json: stdout, exit 0, stderr empty.
+  cwd: <root>/warnings
+  files: a.sql
+  .sqlfluff:
+    [sqlfluff]
+    dialect = ansi
+    warnings = LT01
+  a.sql:
+    SELECT a  FROM t
+
+unknown_rule.txt: STDERR, exit 0. <check> is NOPE99.
+  cwd: <root>/unknown
+  files: a.sql
+  a.sql:
+    SELECT a  FROM t
+  stdout: the JSON array with a.sql and "violations": [] (no rule ran).
+
+no_dialect.txt: STDERR, exit 2, stdout empty.
+  cwd: <root>/nodialect
+  files: a.sql
+  no .sqlfluff
+  a.sql:
+    SELECT a  FROM t
+
+Unknown dialect: no fixture file.
+  Root: /tmp/tm-sqlfluff-aRjSSi (made with `mktemp -d /tmp/tm-sqlfluff-XXXXXX`, removed afterwards), with the same
+  environment.
+  cwd: <root>/unknowndialect
+  files: .sqlfluff a.sql
+  .sqlfluff:
+    [sqlfluff]
+    dialect = nosuchdialect
+  a.sql:
+    SELECT a  FROM t
+  command: /opt/homebrew/bin/sqlfluff lint --format json --nocolor --disable-progress-bar --disable-noqa --disregard-sqlfluffignores --exclude-rules= --ignore= --rules=LT01 -- a.sql
+  exit 1, stdout empty; stderr is a Python traceback (from FluffConfig's dialect_selector) ending:
+    KeyError: 'Unknown dialect'
+  The same dialect given as `--dialect nosuchdialect` after `lint`, in <root>/clidialect (a.sql alone, no .sqlfluff),
+  exits 2 with stderr empty and stdout:
+    Error: Unknown dialect 'nosuchdialect'
+  `sqlfluff_cmd` passes no `--dialect`, so a check meets the first form.
+
+large_file.txt: STDERR, exit 0. stdout was `[]` and a newline: the file is absent from the report.
+  cwd: <root>/large
+  files: big.sql
+  big.sql: the line `SELECT a FROM t;` 1500 times (25500 bytes, over the default large_file_skip_byte_limit 20000)
+
+dbt: STDOUT and STDERR below, exit 2; no fixture file (nothing reads it).
+  Root: /tmp/sqlfluff-fixtures.SxW6Qa (made and removed as above, with the same environment).
+  cwd: <root>/dbt
+  files: .sqlfluff a.sql
+  .sqlfluff:
+    [sqlfluff]
+    dialect = ansi
+    templater = dbt
+  a.sql:
+    SELECT a  FROM t
+  command: /opt/homebrew/bin/sqlfluff lint --format json --nocolor --disable-progress-bar --disable-noqa --disregard-sqlfluffignores --exclude-rules= --ignore= --rules=LT01 -- a.sql
+  stdout:
+    Error loading config: Requested templater 'dbt' which is not currently available. Try one of raw, jinja, python, placeholder
+  stderr:
+    Starting in sqlfluff version 0.7.0 the dbt templater is distributed as a separate python package. Please pip install sqlfluff-templater-dbt to use it.
+
+HOME and ancestor config, sqlfluff 4.5.0 (/opt/homebrew/bin/sqlfluff; no fixture file):
+  Root: /private/tmp/engines-env-measure-djfn80y3 (fresh temp folder, removed afterwards).
+  cwd: <root>/sql/repo (git init); <root>/sql/.sqlfluff: [sqlfluff] and dialect = ansi; no repo config.
+  q.sql: SELECT a  FROM t
+  command: sqlfluff lint --format json --nocolor --disable-progress-bar --disable-noqa --disregard-sqlfluffignores --exclude-rules= --ignore= --rules=LT01 -- q.sql
+  XDG_CONFIG_HOME, PYTHONPATH, PYTHONUSERBASE removed.
+  HOME=<root>/sql/repo: exit 2, stdout empty; stderr begins:
+    User Error: No dialect was specified. You must configure a dialect or specify one on the command line using --dialect after the command. Available dialects:
+  HOME=<root>/home (empty sibling): exit 1, stderr empty; stdout begins:
+    [{"filepath": "q.sql", "violations": [{"start_line_no": 1, "start_line_pos": 9, "code": "LT01", "description": "Expected only single space before 'FROM' keyword. Found '  '."
+  HOME=<root>/home with .sqlfluff (dialect ansi): exit 1, stderr empty; stdout begins with the same LT01 finding.
+  To distinguish the home config from the ancestor config, a second run used root
+  /private/tmp/engines-sql-home-_3ap2s35 (fresh temp folder, removed afterwards), cwd <root>/project/repo,
+  HOME=<root>/home with .sqlfluff (dialect ansi), no ancestor config, and the same q.sql, command and removals.
+  Exit 1, stderr empty; stdout begins with the same LT01 finding: ~/.sqlfluff was loaded.

@@ -36,20 +36,26 @@ fn run_case(name: &str, source_inside: bool, hard_link: bool) -> (Result<Vec<Hit
     (got, seen.into_inner())
 }
 
+// `rule_yaml_text` reads the hard-link count on unix only.
+#[cfg(unix)]
 fn assert_refused(got: Result<Vec<Hit>, Stop>, seen: Vec<Cmd>) {
-    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "ast-grep rule link.yml has more than one hard link: tm reads a rule YAML only when its folder holds the only link".to_string() }));
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "ast-grep rule link.yml has more than one hard link: cctao reads a rule YAML only when its folder holds the only link".to_string() }));
     assert!(seen.is_empty());
 }
 
+// `rule_yaml_text` reads the hard-link count on unix only.
+#[cfg(unix)]
 #[test]
 fn hard_link_to_outside_yaml_is_refused_without_running() {
     let (got, seen) = run_case("outside", false, true);
     assert_refused(got, seen);
 }
 
+// `rule_yaml_text` reads the hard-link count on unix only.
+#[cfg(unix)]
 #[test]
 fn hard_link_with_both_names_inside_is_refused_without_running() {
-    // tm cannot tell where the other links are, so any second link is refused.
+    // cctao cannot tell where the other links are, so any second link is refused.
     let (got, seen) = run_case("inside", true, true);
     assert_refused(got, seen);
 }

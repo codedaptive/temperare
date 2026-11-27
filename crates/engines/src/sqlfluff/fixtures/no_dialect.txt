@@ -1,0 +1,3 @@
+
+User Error: No dialect was specified. You must configure a dialect or specify one on the command line using --dialect after the command. Available dialects:
+ansi, athena, bigquery, clickhouse, databricks, db2, doris, duckdb, exasol, flink, greenplum, hive, impala, mariadb, materialize, mysql, oracle, postgres, redshift, snowflake, soql, sparksql, sqlite, starrocks, teradata, trino, tsql, vertica

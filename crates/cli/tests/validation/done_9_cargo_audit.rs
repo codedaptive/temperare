@@ -4,25 +4,30 @@
 //! `check = "RUSTSEC-2021-0003"`, under a top-level owner; Cargo.lock (the engines test's) names smallvec 1.6.0, which
 //! that advisory covers. Every cargo-audit finding is on Cargo.lock with no line: `--json` writes the line as null and
 //! the text prints the path alone. engines runs cargo-audit with `--no-fetch` and `--no-yanked`, which keep it off the
-//! network: `temperare` runs with HOME a folder the test made, whose .cargo/advisory-db links to the real HOME's, and
-//! no CARGO_HOME, so engines finds the database from HOME and the test writes nothing to the real HOME. tm runs with
-//! PATH the folder that gives it cargo-audit (`tm_path_folder`) then /usr/bin:/bin. The reported case is NOT RUN, with
-//! `temperare`'s reason, never PASS, when cargo-audit is not on the PATH `temperare` gets (`on_tm_path`, which runs
-//! nothing) or the real database has no `crates` folder; `temperare` must then report the rule not available.
+//! network: `cctao` runs with HOME a folder the test made, whose .cargo/advisory-db links to the real HOME's, and
+//! no CARGO_HOME, so engines finds the database from HOME and the test writes nothing to the real HOME. cctao runs with
+//! PATH the folder that gives it cargo-audit (`cctao_path_folder`) then /usr/bin:/bin. The reported case runs on unix
+//! only, where it makes that link. It is NOT RUN, with `cctao`'s reason, never PASS, when cargo-audit is not on
+//! the PATH `cctao` gets (`on_cctao_path`, which runs nothing) or the real database has no `crates` folder;
+//! `cctao` must then report the rule not available.
 
-use std::path::Path;
-
-use serde_json::{json, Value};
-
-use crate::absent_engine_reason::absent_engine_reason;
 use crate::check::Check;
-use crate::env::tm_env;
-use crate::probed_version::probed_version;
 use crate::repo::Repo;
-use crate::run_clean::run_clean;
-use crate::temp_home::TempHome;
-use crate::tm::{tm_with_path, Answer};
-use crate::tm_path_folder::tm_path_folder;
+use crate::cctao::cctao_with_path;
+
+// Unix only: what the advisory case alone uses (it links the advisory database into HOME with a unix symlink).
+#[cfg(unix)]
+use {
+    crate::absent_engine_reason::absent_engine_reason,
+    crate::env::cctao_env,
+    crate::probed_version::probed_version,
+    crate::run_clean::run_clean,
+    crate::temp_home::TempHome,
+    crate::cctao::Answer,
+    crate::cctao_path_folder::cctao_path_folder,
+    serde_json::{json, Value},
+    std::path::Path,
+};
 
 const RULE: &str = "no-vulnerable-crate";
 const FIX: &str = "Upgrade smallvec to 1.6.1 or later.";
@@ -42,21 +47,25 @@ fn rules(fix: &str) -> String {
 }
 
 /// A repository holding the rule file and Cargo.lock, committed. Without Cargo.lock the rule has no file to check,
-/// which `temperare` settles before it looks for the engine.
+/// which `cctao` settles before it looks for the engine.
 fn lock_repo() -> Repo {
     let repo = Repo::new();
-    repo.write("temperare.toml", &rules(FIX));
+    repo.write("tao.toml", &rules(FIX));
     repo.write("Cargo.lock", VULNERABLE);
     repo.commit("a vulnerable lock");
     repo
 }
 
-/// `temperare <args>` in `repo` with HOME `home` and no CARGO_HOME, so engines' database is `<home>/.cargo/advisory-db`.
-fn run_tm(repo: &Repo, args: &[&str], path: &str, home: &Path) -> procio::Output {
-    let env = tm_env(Some(path), home).into_iter().filter(|(k, _)| k != "CARGO_HOME").collect();
-    run_clean(env!("CARGO_BIN_EXE_temperare"), args, repo.path(), env)
+/// `cctao <args>` in `repo` with HOME `home` and no CARGO_HOME, so engines' database is `<home>/.cargo/advisory-db`.
+// Unix only: its one caller is the advisory case.
+#[cfg(unix)]
+fn run_cctao(repo: &Repo, args: &[&str], path: &str, home: &Path) -> procio::Output {
+    let env = cctao_env(Some(path), home).into_iter().filter(|(k, _)| k != "CARGO_HOME").collect();
+    run_clean(env!("CARGO_BIN_EXE_cctao"), args, repo.path(), env)
 }
 
+// Unix only: it links the real advisory database into the test HOME with a unix symlink.
+#[cfg(unix)]
 #[test]
 fn a_cargo_audit_advisory_is_reported_on_cargo_lock_with_no_line() {
     let mut check = Check::new(
@@ -70,14 +79,14 @@ fn a_cargo_audit_advisory_is_reported_on_cargo_lock_with_no_line() {
     let home = TempHome::new();
     std::fs::create_dir(home.path().join(".cargo")).expect("make the test HOME's .cargo");
     std::os::unix::fs::symlink(&real_db, home.path().join(".cargo/advisory-db")).expect("link the advisory database");
-    let path = tm_path_folder("cargo-audit")
+    let path = cctao_path_folder("cargo-audit")
         .map_or(PATH_WITHOUT_ENGINES.to_string(), |dir| format!("{dir}:{PATH_WITHOUT_ENGINES}"));
     let args = ["check", "--json"];
-    let out = run_tm(&repo, &args, &path, home.path());
-    let code = out.code.expect("tm ended by a signal");
+    let out = run_cctao(&repo, &args, &path, home.path());
+    let code = out.code.expect("cctao ended by a signal");
     let stderr = String::from_utf8_lossy(&out.stderr).to_string();
     let json: Value = serde_json::from_slice(&out.stdout).unwrap_or_else(|e| {
-        panic!("tm {args:?} printed no JSON ({e}); exit {code}\nstdout: {}\nstderr: {stderr}", String::from_utf8_lossy(&out.stdout))
+        panic!("cctao {args:?} printed no JSON ({e}); exit {code}\nstdout: {}\nstderr: {stderr}", String::from_utf8_lossy(&out.stdout))
     });
     let a = Answer { code, json, stderr };
     assert_eq!(a.json["exit"], a.code, "the JSON's exit is the process's exit code: {:#}", a.json);
@@ -86,7 +95,7 @@ fn a_cargo_audit_advisory_is_reported_on_cargo_lock_with_no_line() {
         "every answer names the next step: {:#}",
         a.json
     );
-    check.saw_tm(&args, a.code, &a.json);
+    check.saw_cctao(&args, a.code, &a.json);
     if let Some(why) = absent_engine_reason(&a, &["cargo-audit"], RULE) {
         check.not_run(why);
         return;
@@ -96,8 +105,8 @@ fn a_cargo_audit_advisory_is_reported_on_cargo_lock_with_no_line() {
             .as_array()
             .and_then(|list| list.iter().find(|n| n["rule"] == RULE))
             .and_then(|n| n["why"].as_str())
-            .unwrap_or_else(|| panic!("{} has no crates folder, yet tm did not report {RULE}: {:#}", real_db.display(), a.json));
-        check.not_run(format!("tm: {why}"));
+            .unwrap_or_else(|| panic!("{} has no crates folder, yet cctao did not report {RULE}: {:#}", real_db.display(), a.json));
+        check.not_run(format!("cctao: {why}"));
         return;
     }
     assert_eq!(a.code, 4, "a security finding never refuses: {:#}\n{}", a.json, a.stderr);
@@ -111,7 +120,7 @@ fn a_cargo_audit_advisory_is_reported_on_cargo_lock_with_no_line() {
     let version = probed_version("cargo-audit", &["--version"], repo.path());
     assert_eq!(a.json["engines"], json!([{ "engine": "cargo-audit", "version": version }]), "{:#}", a.json);
 
-    let out = run_tm(&repo, &["check"], &path, home.path());
+    let out = run_cctao(&repo, &["check"], &path, home.path());
     let text = format!("{}\n{}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr));
     assert_eq!(out.code, Some(4), "the text run exits as the --json run: {text}");
     assert!(text.lines().any(|line| line.starts_with("Cargo.lock  ")), "the place is Cargo.lock alone: {text}");
@@ -123,13 +132,13 @@ fn a_cargo_audit_advisory_is_reported_on_cargo_lock_with_no_line() {
 fn cargo_audit_off_path_is_not_available() {
     let mut check = Check::new(
         "cargo_audit_off_path_is_not_available",
-        "rule no-vulnerable-crate (cargo-audit, RUSTSEC-2021-0003, kind security) over the same files; tm runs with \
+        "rule no-vulnerable-crate (cargo-audit, RUSTSEC-2021-0003, kind security) over the same files; cctao runs with \
          PATH /usr/bin:/bin, which holds no cargo-audit",
     );
     let repo = lock_repo();
     let args = ["check", "--json"];
-    let a = tm_with_path(&repo, &args, Some(PATH_WITHOUT_ENGINES));
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao_with_path(&repo, &args, Some(PATH_WITHOUT_ENGINES));
+    check.saw_cctao(&args, a.code, &a.json);
     assert_eq!(a.code, 3, "not available has its own code: {:#}\n{}", a.json, a.stderr);
     assert!(a.findings().is_empty(), "nothing is reported as found: {:#}", a.json);
     let missing: Vec<(&str, &str)> = a.json["not_available"]

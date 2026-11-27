@@ -1,6 +1,7 @@
 //! The shared git helper, run with `GIT_DIR` and `GIT_INDEX_FILE` pointing at another repository as a git hook
 //! leaves them, works in its own throwaway repository and leaves the other repository's `.git` tree unchanged.
 
+use ccvcslib::{Vcs, WorkTreeState};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -43,8 +44,7 @@ fn snapshot(root: &Path) -> Vec<(PathBuf, Vec<u8>)> {
 #[test]
 fn the_git_helper_leaves_an_inherited_callers_repository_untouched() {
     let caller = TempFolder::new("caller");
-    let out = procio::run(&procio::git_cmd(&caller.0, vec!["init".into(), "-q".into()])).unwrap();
-    assert_eq!(out.code, Some(0), "{}", String::from_utf8_lossy(&out.stderr));
+    git_support::git(&caller.0, &["init", "-q"], b"");
     let before = snapshot(&caller.0.join(".git"));
 
     std::env::set_var("GIT_DIR", caller.0.join(".git"));
@@ -60,7 +60,7 @@ fn the_git_helper_leaves_an_inherited_callers_repository_untouched() {
 
     assert!(before == snapshot(&caller.0.join(".git")), "caller's .git tree changed");
     assert!(result.is_ok(), "git helper calls failed");
-    let out = procio::run(&procio::git_cmd(&second.0, vec!["ls-files".into()])).unwrap();
-    assert_eq!(out.code, Some(0), "{}", String::from_utf8_lossy(&out.stderr));
-    assert_eq!(out.stdout, b"x.sh\n");
+    let entries = ccvcslib::GitVcs::default().tracked_entries(&second.0).unwrap();
+    let listed: Vec<(PathBuf, WorkTreeState)> = entries.into_iter().map(|e| (e.path, e.state)).collect();
+    assert_eq!(listed, vec![(PathBuf::from("x.sh"), WorkTreeState::CheckedOut)]);
 }

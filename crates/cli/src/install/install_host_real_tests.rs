@@ -10,7 +10,7 @@ use super::InstallHost;
 use crate::UsageError;
 
 fn exe() -> io::Result<PathBuf> {
-    Ok(PathBuf::from("/opt/tools/temperare"))
+    Ok(PathBuf::from("/opt/tools/cctao"))
 }
 
 fn gone() -> io::Result<PathBuf> {
@@ -38,7 +38,7 @@ fn every_value_lands_in_its_field() {
         Ok(InstallHost {
             home: PathBuf::from("/home/ann"),
             path_var: Some(OsString::from("/usr/bin:/bin")),
-            exe: PathBuf::from("/opt/tools/temperare"),
+            exe: PathBuf::from("/opt/tools/cctao"),
             cwd: PathBuf::from("/work/project"),
             prefixes: vec![PathBuf::from("/opt/homebrew"), PathBuf::from("/usr/local")],
             interactive: true,
@@ -90,13 +90,13 @@ fn an_empty_path_stays_an_empty_path() {
 }
 
 #[test]
-fn a_missing_binary_says_to_run_temperare_from_its_file_not_to_set_home() {
+fn a_missing_binary_says_to_run_cctao_from_its_file_not_to_set_home() {
     let host = host_from(Some(OsString::from("/home/ann")), None, gone(), Path::new("/w"), false);
     assert_eq!(
         host,
         Err(UsageError {
             what: "cannot find the running binary: gone".to_string(),
-            fix: "Run temperare from its file (not through a deleted or moved path), then try again.".to_string(),
+            fix: "Run cctao from its file (not through a deleted or moved path), then try again.".to_string(),
         })
     );
 }

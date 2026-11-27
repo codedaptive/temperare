@@ -17,7 +17,7 @@ const ENTRY: Entry = Entry {
     params: Params::Args(&[]),
     config: Some("--config-file="),
     after: &[],
-    version: Some(VersionProbe { args: &["--version"], read: version_word }),
+    version: Some(VersionProbe { args: &["--version"], read: version_word, wrap: None }),
     refuse: |_| None,
     unknown: |_, _| None,
     read: parse_clang_tidy,
@@ -28,13 +28,16 @@ const ENTRY: Entry = Entry {
 fn clang_tidy_cmd_cases() {
     let files = [PathBuf::from("a.c"), PathBuf::from("-dash/b.cpp")];
     let rows: [(&str, Option<&str>, &[&str]); 2] = [
-        ("no config", None, &["--quiet", "--warnings-as-errors=-*", "--checks=-*,bugprone-branch-clone", "--config={}", "/w/a.c", "/w/-dash/b.cpp"]),
-        ("a config", Some("tidy.yml"), &["--quiet", "--warnings-as-errors=-*", "--checks=-*,bugprone-branch-clone", "--config-file=tidy.yml", "/w/a.c", "/w/-dash/b.cpp"]),
+        ("no config", None, &["--quiet", "--warnings-as-errors=-*", "--checks=-*,bugprone-branch-clone", "--config={}"]),
+        ("a config", Some("tidy.yml"), &["--quiet", "--warnings-as-errors=-*", "--checks=-*,bugprone-branch-clone", "--config-file=tidy.yml"]),
     ];
     for (label, config, expected) in rows {
         let cmd = clang_tidy_cmd(&ENTRY, "bugprone-branch-clone", config, &files, Path::new("/w"));
+        let mut expected: Vec<OsString> = expected.iter().map(OsString::from).collect();
+        expected.push(Path::new("/w").join("a.c").into_os_string());
+        expected.push(Path::new("/w").join("-dash/b.cpp").into_os_string());
         assert_eq!(cmd.program, OsString::from("clang-tidy"), "{label}");
         assert_eq!(cmd.cwd, Some(PathBuf::from("/w")), "{label}");
-        assert_eq!(cmd.args, expected.iter().map(OsString::from).collect::<Vec<_>>(), "{label}");
+        assert_eq!(cmd.args, expected, "{label}");
     }
 }

@@ -62,9 +62,9 @@ expires = "2099-12-31"
 #[test]
 fn rules_exceptions_and_count_in_file_order() {
     assert_eq!(
-        rules_json(Path::new("repo/temperare.toml"), &parse(FULL), &all_available, day(), &[]),
+        rules_json(Path::new("repo/tao.toml"), &parse(FULL), &all_available, day(), &[]),
         json!({
-            "rule_file": "repo/temperare.toml",
+            "rule_file": "repo/tao.toml",
             "rules": [
                 {"id": "lint-all", "engine": "clippy", "kind": "quality", "severity": "error",
                  "check": "clippy::all", "paths": [], "exclude": [], "kits": [], "outside_kits": [],

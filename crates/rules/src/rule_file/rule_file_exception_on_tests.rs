@@ -60,3 +60,10 @@ fn an_expired_exception_is_passed_over_for_a_later_one_that_holds() {
         assert_eq!(rules.exception_on(&hit, day(2026, 11, 21)), want, "{name}");
     }
 }
+
+#[test]
+fn the_first_of_two_covering_exceptions_that_hold_wins() {
+    let rules = file(vec![dated("startup only", Date::new(2099, 12, 31)), dated("until the rewrite", None)]);
+    let hit = rules.exception_on(&finding("no-unwrap", "src/a.rs"), day(2026, 11, 27));
+    assert_eq!(hit.map(|e| e.reason.as_str()), Some("startup only"));
+}

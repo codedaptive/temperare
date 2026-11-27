@@ -22,7 +22,7 @@ fn a_tab_is_unfit() {
 
 #[test]
 fn a_plain_path_is_fit() {
-    assert!(!unfit_for_record(Path::new("/h/.local/bin/temperare")));
+    assert!(!unfit_for_record(Path::new("/h/.local/bin/cctao")));
 }
 
 #[test]
@@ -32,7 +32,7 @@ fn a_space_or_other_control_character_is_fit() {
 
 #[test]
 fn a_non_ascii_utf8_path_is_fit() {
-    assert!(!unfit_for_record(Path::new("/h/caf\u{e9}/temperare")));
+    assert!(!unfit_for_record(Path::new("/h/caf\u{e9}/cctao")));
 }
 
 #[cfg(unix)]

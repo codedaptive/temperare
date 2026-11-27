@@ -15,7 +15,7 @@ use std::path::Path;
 /// (`lock_listed`). Each step can stop the rule:
 /// 1. the advisory database is cargo-audit's default (`advisory_db`, from CARGO_HOME, else HOME, which are only
 ///    read); neither set is `NotAvailable`;
-/// 2. a database with no `crates` folder is `NotAvailable`, naming the command that fetches it: tm never fetches it;
+/// 2. a database with no `crates` folder is `NotAvailable`, naming the command that fetches it: cctao never fetches it;
 /// 3. an advisory id the database does not hold (`known_advisory`) is `UnknownCheck`: cargo-audit would report
 ///    nothing for it, which is not clean. A check that is a kind needs no lookup;
 /// 4. the check run of `cargo_audit_cmd` in `folder`, through `check_run` so it is counted;
@@ -27,7 +27,7 @@ pub(crate) fn run_cargo_audit(entry: &Entry, rule: &Rule, folder: &Path, host: &
     if !db.join("crates").is_dir() {
         return Err(Stop::NotAvailable {
             why: format!(
-                "no advisory database at {}: fetch it with `cargo audit update-db --db {}` (tm never fetches it)",
+                "no advisory database at {}: fetch it with `cargo audit update-db --db {}` (cctao never fetches it)",
                 db.display(),
                 db.display()
             ),

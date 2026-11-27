@@ -1,0 +1,5 @@
+E100 [.vale.ini not found] Runtime error
+
+no config file found
+
+Execution stopped with code 2.

@@ -1,0 +1,67 @@
+How each fixture in this folder was made: real mypy output (stdout, or stderr where said), saved unedited.
+
+Version (`mypy --version`): mypy 2.4.1 (compiled: yes)
+Program: /opt/homebrew/bin/mypy
+Root: /tmp/mypy-fixtures.CLpJga (made with `mktemp -d /tmp/mypy-fixtures.XXXXXX`, removed afterwards), one folder
+per fixture, each the run's cwd. No mypy config in any folder; `--config-file=` makes mypy read none anyway.
+stderr was empty for the three runs in this root.
+
+Command, in each folder (MYPY's command as `mypy_cmd` builds it with no config):
+  mypy --output=json --cache-dir=/dev/null --enable-error-code=arg-type --config-file= -- <files>
+
+arg_type.jsonl: exit 1.
+  cwd: <root>/argtype
+  files: a.py
+  a.py:
+    import nosuchmodule
+
+
+    def f(x: int) -> int:
+        return x
+
+
+    f("s")
+
+notes.jsonl: exit 1.
+  cwd: <root>/notes
+  files: a.py
+  a.py:
+    def f(x: int) -> int:
+        return x
+
+
+    reveal_type(f)
+    f("s")
+
+syntax.jsonl: exit 2.
+  cwd: <root>/syntax
+  files: a.py b.py
+  a.py:
+    def f(x: int) -> int:
+        return x
+
+
+    f("s")
+  b.py:
+    def g(:
+  Run again with --enable-error-code=syntax in a second root (below): stdout byte-identical, exit 2.
+
+Second root: /tmp/mypy-fixtures.otc2aN (made with `mktemp -d /tmp/mypy-fixtures.XXXXXX`, removed afterwards), same
+version and program, no mypy config. Each run was made with --enable-error-code=arg-type and again with
+--enable-error-code=syntax; the two gave byte-identical stdout and stderr and the same exit code.
+
+duplicate_module.jsonl: stdout, exit 2 (stderr empty).
+  cwd: <root>/dup
+  files: x/m.py y/m.py (no __init__.py in x or y)
+  x/m.py:
+    X = 1
+  y/m.py:
+    Y = 2
+  command: mypy --output=json --cache-dir=/dev/null --enable-error-code=arg-type --config-file= -- x/m.py y/m.py
+
+no_python.txt: STDERR, exit 2 (stdout empty). mypy prints this line on stderr, not stdout.
+  cwd: <root>/nopy
+  files: README.txt ("no python here"), no .py or .pyi file
+  command: mypy --output=json --cache-dir=/dev/null --enable-error-code=arg-type --config-file= -- .
+  cctao itself never passes a folder (it lists the files), so this run is not one cctao's command makes; it is mypy's
+  blocking error with no JSON line.

@@ -37,7 +37,7 @@ fn a_file_reach_writes_the_setting_and_removes_it_when_dropped() {
     assert_eq!(std::fs::read_to_string(&path).unwrap(), "nesting:\n  max: 4\n");
     assert_eq!(path.parent(), Some(std::env::temp_dir().as_path()));
     let name = path.file_name().unwrap().to_str().unwrap().to_string();
-    assert!(name.starts_with(&format!("tm-lint-{}-", std::process::id())) && name.ends_with(".yml"), "{name}");
+    assert!(name.starts_with(&format!("cctao-lint-{}-", std::process::id())) && name.ends_with(".yml"), "{name}");
     assert!(run.env.is_empty(), "{:?}", run.env);
     drop(run);
     assert!(!path.exists());

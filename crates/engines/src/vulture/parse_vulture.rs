@@ -29,7 +29,7 @@ pub fn parse_vulture(out: &Output, check: &str, cwd: &Path, folder: &Path) -> Re
     for line in String::from_utf8_lossy(&out.stdout).lines().filter(|line| !line.is_empty()) {
         let (path, number, what) =
             finding_of(line).ok_or_else(|| failed(format!("vulture printed a line that is not a finding: {line}")))?;
-        let code = code_of(what).ok_or_else(|| failed(format!("vulture printed a message of no kind tm knows: {line}")))?;
+        let code = code_of(what).ok_or_else(|| failed(format!("vulture printed a message of no kind cctao knows: {line}")))?;
         if code != check {
             continue;
         }

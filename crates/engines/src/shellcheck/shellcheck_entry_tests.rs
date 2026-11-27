@@ -40,7 +40,7 @@ fn the_version_is_read_from_shellcheck_dash_dash_version() {
 fn a_lowercase_code_is_refused_and_a_shellcheck_code_is_not() {
     assert_eq!(
         (SHELLCHECK.refuse)("sc2086"),
-        Some("shellcheck check `sc2086` is not one ShellCheck code such as `SC2086`, so tm cannot tell which findings it selects".to_string())
+        Some("shellcheck check `sc2086` is not one ShellCheck code such as `SC2086`, so cctao cannot tell which findings it selects".to_string())
     );
     assert_eq!((SHELLCHECK.refuse)("SC2086"), None);
 }

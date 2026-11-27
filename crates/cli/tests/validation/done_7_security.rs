@@ -4,7 +4,7 @@
 
 use crate::check::Check;
 use crate::repo::Repo;
-use crate::tm::tm;
+use crate::cctao::cctao;
 
 const RULES: &str = r#"version = 1
 owner = "payments"
@@ -26,13 +26,13 @@ fn a_security_finding_is_reported_with_severity_place_and_owner_and_never_refuse
          a hard-coded password; run over the tree, then with --kind security",
     );
     let repo = Repo::new();
-    repo.write("temperare.toml", RULES);
+    repo.write("tao.toml", RULES);
     repo.write("settings.py", "password = \"hunter2\"\n");
     repo.commit("settings");
 
     let args = ["check", "--json"];
-    let a = tm(&repo, &args);
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao(&repo, &args);
+    check.saw_cctao(&args, a.code, &a.json);
     assert_eq!(a.code, 4, "security alone never refuses: {:#}\n{}", a.json, a.stderr);
     let f = a.findings();
     assert_eq!(f.len(), 1, "one finding: {:#}", a.json);
@@ -44,8 +44,8 @@ fn a_security_finding_is_reported_with_severity_place_and_owner_and_never_refuse
     assert_eq!(f[0]["line"], 1);
 
     let alone_args = ["check", "--json", "--kind", "security"];
-    let alone = tm(&repo, &alone_args);
-    check.saw_tm(&alone_args, alone.code, &alone.json);
+    let alone = cctao(&repo, &alone_args);
+    check.saw_cctao(&alone_args, alone.code, &alone.json);
     assert_eq!(alone.code, 4, "the same exit alone: {:#}", alone.json);
     assert_eq!(alone.findings(), a.findings(), "the security rules alone report the same finding");
 }

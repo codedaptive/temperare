@@ -3,11 +3,12 @@
 use super::Severity;
 
 impl Severity {
-    /// The severity named `name` in a rule file ("error" or "warning"), or None for any other text.
+    /// The severity named `name` in a rule file ("error", "warning" or "watch"), or None for any other text.
     pub fn from_name(name: &str) -> Option<Severity> {
         match name {
             "error" => Some(Severity::Error),
             "warning" => Some(Severity::Warning),
+            "watch" => Some(Severity::Watch),
             _ => None,
         }
     }

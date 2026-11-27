@@ -1,9 +1,14 @@
-# Temperare workspace: one crate per lane, one binary crate (cli) on top.
+# Code Chi Tao workspace: one crate per lane, one binary crate (cli) on top (mission, Layout).
 [workspace]
 members = ["crates/*"]
 resolver = "2"
 
 [workspace.package]
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 publish = false
+
+# The Code Chi VCS library, pinned by tag: every git question goes through it. A crate that asks one names it with
+# `ccvcslib.workspace = true`; moving the pin is a new tag here.
+[workspace.dependencies]
+ccvcslib = { git = "https://github.com/codedaptive/ccvcslib", tag = "v0.2.1" }

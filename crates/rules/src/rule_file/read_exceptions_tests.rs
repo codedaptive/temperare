@@ -12,7 +12,7 @@ fn ids() -> BTreeSet<String> {
 #[test]
 fn an_exception_is_read_with_its_path_made_relative() {
     let text = "[[exception]]\nrule = \"no-bool\"\npath = \"./src\\\\a.rs\"\nwhat = \"isOn\"\n\
-                reason = \"legacy\"\napproved = \"bob 2026-11-17\"\n";
+                reason = \"legacy\"\napproved = \"bob 2026-11-17\"\nexpires = \"2026-12-31\"\n";
     let doc = DeTable::parse(text).unwrap();
     let mut out = Vec::new();
     let read = read_exceptions(text, doc.get_ref(), &ids(), &mut out);
@@ -21,7 +21,7 @@ fn an_exception_is_read_with_its_path_made_relative() {
         rule: "no-bool".to_string(),
         path: RelPath::new("src/a.rs"),
         what: Some("isOn".to_string()),
-        expires: None,
+        expires: Date::new(2026, 12, 31),
         reason: "legacy".to_string(),
         approved: "bob 2026-11-17".to_string(),
     };
@@ -30,7 +30,8 @@ fn an_exception_is_read_with_its_path_made_relative() {
 
 #[test]
 fn an_exception_for_an_unknown_rule_is_a_problem_at_the_value_and_left_out() {
-    let text = "[[exception]]\nrule = \"ghost\"\npath = \"a.rs\"\nreason = \"r\"\napproved = \"a\"\n";
+    let text = "[[exception]]\nrule = \"ghost\"\npath = \"a.rs\"\nreason = \"r\"\napproved = \"a\"\n\
+                expires = \"2026-12-31\"\n";
     let doc = DeTable::parse(text).unwrap();
     let mut out = Vec::new();
     assert_eq!(read_exceptions(text, doc.get_ref(), &ids(), &mut out), vec![]);
@@ -39,6 +40,21 @@ fn an_exception_for_an_unknown_rule_is_a_problem_at_the_value_and_left_out() {
         col: 8,
         what: "exception for unknown rule \"ghost\": no rule of this file or of its baseline sets has that id".to_string(),
         fix: "Name the id of a rule in this file or in a set it takes in baseline, or remove the exception.".to_string(),
+    };
+    assert_eq!(out, vec![expected]);
+}
+
+#[test]
+fn an_exception_missing_expires_is_one_problem_at_its_header_and_left_out() {
+    let text = "[[exception]]\nrule = \"no-bool\"\npath = \"a.rs\"\nreason = \"r\"\napproved = \"a\"\n";
+    let doc = DeTable::parse(text).unwrap();
+    let mut out = Vec::new();
+    assert_eq!(read_exceptions(text, doc.get_ref(), &ids(), &mut out), vec![]);
+    let expected = Problem {
+        line: 1,
+        col: 1,
+        what: "[[exception]] is missing `expires`".to_string(),
+        fix: "Add `expires = \"YYYY-MM-DD\"`, the exception's last day (UTC), to this [[exception]].".to_string(),
     };
     assert_eq!(out, vec![expected]);
 }
@@ -56,7 +72,8 @@ const EMPTY_WHAT_FIX: &str = "empty what; omit the key to match every finding of
 
 #[test]
 fn an_empty_what_is_a_problem_at_the_value_and_the_exception_is_left_out() {
-    let text = "[[exception]]\nrule = \"no-bool\"\npath = \"a.rs\"\nwhat = \"\"\nreason = \"r\"\napproved = \"a\"\n";
+    let text = "[[exception]]\nrule = \"no-bool\"\npath = \"a.rs\"\nwhat = \"\"\nreason = \"r\"\napproved = \"a\"\n\
+                expires = \"2026-12-31\"\n";
     let doc = DeTable::parse(text).unwrap();
     let mut out = Vec::new();
     assert_eq!(read_exceptions(text, doc.get_ref(), &ids(), &mut out), vec![]);
@@ -67,7 +84,8 @@ fn an_empty_what_is_a_problem_at_the_value_and_the_exception_is_left_out() {
 
 #[test]
 fn a_whitespace_only_what_is_a_problem_and_the_exception_is_left_out() {
-    let text = "[[exception]]\nrule = \"no-bool\"\npath = \"a.rs\"\nwhat = \"   \"\nreason = \"r\"\napproved = \"a\"\n";
+    let text = "[[exception]]\nrule = \"no-bool\"\npath = \"a.rs\"\nwhat = \"   \"\nreason = \"r\"\napproved = \"a\"\n\
+                expires = \"2026-12-31\"\n";
     let doc = DeTable::parse(text).unwrap();
     let mut out = Vec::new();
     assert_eq!(read_exceptions(text, doc.get_ref(), &ids(), &mut out), vec![]);
@@ -78,7 +96,8 @@ fn a_whitespace_only_what_is_a_problem_and_the_exception_is_left_out() {
 
 #[test]
 fn an_absent_what_is_read_as_none_without_a_problem() {
-    let text = "[[exception]]\nrule = \"no-bool\"\npath = \"a.rs\"\nreason = \"r\"\napproved = \"a\"\n";
+    let text = "[[exception]]\nrule = \"no-bool\"\npath = \"a.rs\"\nreason = \"r\"\napproved = \"a\"\n\
+                expires = \"2026-12-31\"\n";
     let doc = DeTable::parse(text).unwrap();
     let mut out = Vec::new();
     let read = read_exceptions(text, doc.get_ref(), &ids(), &mut out);
@@ -87,7 +106,7 @@ fn an_absent_what_is_read_as_none_without_a_problem() {
         rule: "no-bool".to_string(),
         path: RelPath::new("a.rs"),
         what: None,
-        expires: None,
+        expires: Date::new(2026, 12, 31),
         reason: "r".to_string(),
         approved: "a".to_string(),
     };
@@ -96,7 +115,8 @@ fn an_absent_what_is_read_as_none_without_a_problem() {
 
 #[test]
 fn an_empty_what_and_an_unknown_rule_are_both_reported() {
-    let text = "[[exception]]\nrule = \"ghost\"\npath = \"a.rs\"\nwhat = \"\"\nreason = \"r\"\napproved = \"a\"\n";
+    let text = "[[exception]]\nrule = \"ghost\"\npath = \"a.rs\"\nwhat = \"\"\nreason = \"r\"\napproved = \"a\"\n\
+                expires = \"2026-12-31\"\n";
     let doc = DeTable::parse(text).unwrap();
     let mut out = Vec::new();
     assert_eq!(read_exceptions(text, doc.get_ref(), &ids(), &mut out), vec![]);
@@ -108,16 +128,6 @@ fn an_empty_what_and_an_unknown_rule_are_both_reported() {
 /// An exception for "no-bool" at "a.rs" whose sixth line is `expires = <value>`.
 fn with_expires(value: &str) -> String {
     format!("[[exception]]\nrule = \"no-bool\"\npath = \"a.rs\"\nreason = \"r\"\napproved = \"a\"\nexpires = {value}\n")
-}
-
-#[test]
-fn an_exception_with_a_real_expires_date_is_read() {
-    let text = with_expires("\"2026-12-31\"");
-    let doc = DeTable::parse(&text).unwrap();
-    let mut out = Vec::new();
-    let read = read_exceptions(&text, doc.get_ref(), &ids(), &mut out);
-    assert_eq!(out, vec![]);
-    assert_eq!(read, vec![Exception { expires: Date::new(2026, 12, 31), ..Exception::new("no-bool", "a.rs", "r", "a") }]);
 }
 
 #[test]

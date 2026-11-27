@@ -1,0 +1,38 @@
+# A citation left in a Python comment, docstring or test string: a comment, a docstring wherever it is, or a string
+# literal inside a function named test_* or a method of a class named Test*, whose text holds an R- or S-number, a
+# D-number with or without its hyphen, a fact id after the word fact, or a label of Bob's name and a date in
+# parentheses. A citation points at a record the reader may not have; the code should say the reason itself. A bare
+# eight-hex id is not matched, since a short commit id looks the same. A string outside test code that is no
+# docstring passes.
+id: tm-house-no-register-citation-python
+language: python
+message: this comment or test string cites a register number, a fact id or a (Bob, date) label
+severity: warning
+utils:
+  # The first statement of a module, class or function body (comments before it aside), holding only a string.
+  docstring:
+    kind: string
+    inside:
+      kind: expression_statement
+      nthChild: { position: 1, ofRule: { not: { kind: comment } } }
+      has: { kind: string, nthChild: { position: 1, reverse: true } }
+      any:
+        - inside: { kind: module }
+        - inside:
+            kind: block
+            inside:
+              any: [{ kind: function_definition }, { kind: class_definition }]
+  test-code:
+    kind: function_definition
+    any:
+      - has: { field: name, regex: ^test_ }
+      - inside: { kind: class_definition, stopBy: end, has: { field: name, regex: ^Test } }
+rule:
+  regex: '\b[RS]-[0-9]+\b|\bD-?[0-9]+\b|\bfacts? [0-9a-f]{8}\b|\(Bob,? ([0-9]{4}-)?[0-9]{2}-[0-9]{2}'
+  any:
+    - kind: comment
+    - matches: docstring
+    # A string nested in an f-string's braces is reported once, as the outer string.
+    - kind: string
+      inside: { matches: test-code, stopBy: end }
+      not: { inside: { kind: string, stopBy: end } }

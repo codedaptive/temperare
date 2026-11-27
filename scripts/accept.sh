@@ -3,21 +3,23 @@
 # crates/cli/tests/validation through test_one.sh, as before, so the tests print on the terminal as they did; one line
 # naming the report follows. Each acceptance case writes its part into a temporary folder this script names in
 # ACCEPT_PARTS (crates/cli/tests/validation: check_new.rs names the part, check_drop.rs writes it). Then it writes
-# the markdown report to REPORT: a head (commit, date, the test run's exit code, then the temperare and engine versions the
+# the markdown report to REPORT: a head (commit, date, the test run's exit code, then the cctao and engine versions the
 # cases saw), one section per check, and a last line of totals. Every case that crates/cli/tests/validation/checks.txt
 # lists is in the report, in its order: with its part, or NOT RUN when it wrote none (a filtered run, a test target
 # that did not build, a part that could not be written) or when its part was cut short before a whole Result line.
-# The script exits with the test run's exit code when it failed; else 3 when any check is NOT RUN, said on stderr,
-# since a check not run has not passed; else 0. When the report cannot be written it exits non-zero with the
-# reason on stderr.
+# Then it runs the suite on Windows at the commit with windows_run.sh ("Windows run green at
+# the commit"), and the head says how that went. The script exits with the test run's exit code when it failed; else 1
+# when the Windows run found failing tests; else 3 when any check is NOT RUN, or when the Windows run was not made (no
+# machine, no push, or a commit that is not a plain HEAD the machine could clone), said on stderr, since a check not
+# run has not passed; else 0. When the report cannot be written it exits non-zero with the reason on stderr.
 # The commit is HEAD when the current folder is the top of a git checkout, noted when a file there differs from it,
 # a deleted one included. In a jj folder jj answers, comparing only the files the folder holds, so a file a sparse
-# request folder never held is not a change; elsewhere git diff does. ACCEPT_COMMIT, when set, names it instead.
+# folder never held is not a change; elsewhere git diff does. ACCEPT_COMMIT, when set, names it instead.
 set -u
 report=$1
 here=$(dirname "$0")
 list=crates/cli/tests/validation/checks.txt
-parts=$(mktemp -d "${TMPDIR:-/tmp}/tm-accept-parts.XXXXXX") || exit 1
+parts=$(mktemp -d "${TMPDIR:-/tmp}/cctao-accept-parts.XXXXXX") || exit 1
 trap 'rm -r "$parts"' EXIT
 
 ACCEPT_PARTS=$parts sh "$here/test_one.sh" crates/cli/tests/validation validation
@@ -44,6 +46,25 @@ if [ -z "$commit" ]; then
         commit="not known: not run at the top of a git checkout, and ACCEPT_COMMIT is not set"
     fi
 fi
+
+# The Windows run at the commit (windows_run.sh: exit 0 green, 1 tests fail there, 2 run not made). The machine clones
+# the commit from origin, so a commit with uncommitted changes, or one not known, is not run there.
+case "$commit" in
+    "" | *[!0-9a-f]*)
+        windows_rc=2
+        windows="NOT RUN (not a plain commit the machine can clone: $commit)"
+        ;;
+    *)
+        sh "$here/windows_run.sh" "$commit"
+        windows_rc=$?
+        out="target/windows-run/$(printf '%s' "$commit" | cut -c1-12)/out"
+        case "$windows_rc" in
+            0) windows="green at $commit ($out)" ;;
+            1) windows="FAIL at $commit: tests failed there ($out/cargo-test.txt)" ;;
+            *) windows="NOT RUN (the run could not be made; windows_run.sh said why on the terminal)" ;;
+        esac
+        ;;
+esac
 
 # The sections: every case checks.txt lists (order|case|section), each with its part or a NOT RUN entry.
 no_result="no result was recorded: the case did not run (a filtered run, or a test target that did not build),"
@@ -83,15 +104,16 @@ count() {
 }
 
 {
-    echo "# Temperare acceptance report (make accept)"
+    echo "# Code Chi Tao acceptance report (make accept)"
     echo
     echo "- Commit: $commit"
     echo "- Date: $(date '+%Y-%m-%d %H:%M:%S %z')"
-    echo "- Test run: crates/cli/tests/validation (these checks and cli's own tests of the built temperare), exit $rc"
+    echo "- Test run: crates/cli/tests/validation (these checks and cli's own tests of the built cctao), exit $rc"
+    echo "- Windows run (scripts/windows_run.sh, unit and integration groups): $windows"
     if [ -f "$parts/00-head.md" ]; then
         cat "$parts/00-head.md"
     else
-        echo "- temperare and engines: not recorded (no case ran)"
+        echo "- cctao and engines: not recorded (no case ran)"
     fi
     cat "$parts/sections.md"
     echo
@@ -102,8 +124,15 @@ mkdir -p "$(dirname "$report")" || not_written "could not make its folder"
 cp "$parts/report.md" "$report" || not_written "could not copy it there"
 echo "accept: report written to $report"
 not_run=$(count 'NOT RUN')
-if [ "$rc" -eq 0 ] && [ "$not_run" -ne 0 ]; then
-    echo "accept: $not_run checks did not run (the report says why); make accept passes only when all ran" >&2
+[ "$rc" -eq 0 ] || exit "$rc"
+if [ "$windows_rc" -eq 1 ]; then
+    echo "accept: the Windows run failed: $windows" >&2
+    exit 1
+fi
+if [ "$not_run" -ne 0 ] || [ "$windows_rc" -ne 0 ]; then
+    [ "$not_run" -eq 0 ] || echo "accept: $not_run checks did not run (the report says why)" >&2
+    [ "$windows_rc" -eq 0 ] || echo "accept: the Windows run was $windows" >&2
+    echo "accept: make accept passes only when all ran" >&2
     exit 3
 fi
-exit "$rc"
+exit 0

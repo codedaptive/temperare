@@ -1,8 +1,8 @@
-//! Integration tests: rule-file reading and parsing work with the rest of the rules crate. Disk-backed tests use a
-//! `temperare.toml` in a throwaway folder; expiry tests parse strings directly. The tests cover check-file resolution,
+//! ZIT (rule 11): rule-file reading and parsing work with the rest of the rules crate. Disk-backed tests use a
+//! `tao.toml` in a throwaway folder; expiry tests parse strings directly. The tests cover check-file resolution,
 //! rule scopes, exception matching and expiry, and problems with their locations.
 
-use rules::{Engine, Finding, Kind, RelPath, RuleFile, Severity};
+use rules::{Date, Engine, Finding, Kind, RelPath, RuleFile, Severity};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -34,6 +34,7 @@ path = "crates/core/src/a.rs"
 what = "isArchived"
 reason = "Legacy schema."
 approved = "bob 2026-11-17"
+expires = "2099-12-31"
 "#;
 
 const CHECK_FILE: &str = "id: no-bool\nlanguage: rust\nrule:\n  pattern: bool\n";
@@ -47,7 +48,7 @@ struct TempFolder(PathBuf);
 impl TempFolder {
     fn new(tag: &str) -> TempFolder {
         let nanos = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
-        let path = std::env::temp_dir().join(format!("tm-rules-zit-{}-{}-{}", std::process::id(), nanos, tag));
+        let path = std::env::temp_dir().join(format!("cctao-rules-zit-{}-{}-{}", std::process::id(), nanos, tag));
         fs::create_dir_all(&path).unwrap();
         TempFolder(path)
     }
@@ -63,7 +64,7 @@ impl Drop for TempFolder {
 fn write_and_read(dir: &Path) -> RuleFile {
     fs::create_dir_all(dir.join("rules")).unwrap();
     fs::write(dir.join("rules/no-bool.yml"), CHECK_FILE).unwrap();
-    let path = dir.join("temperare.toml");
+    let path = dir.join("tao.toml");
     fs::write(&path, RULE_FILE).unwrap();
     RuleFile::read(&path).unwrap()
 }
@@ -119,22 +120,34 @@ fn rule_without_paths_applies_to_every_file() {
 }
 
 #[test]
-fn exception_for_matches_rule_path_and_what() {
+fn exception_on_matches_rule_path_and_what() {
     let tmp = TempFolder::new("exception");
     let file = write_and_read(&tmp.0);
-    let hit = file.exception_for(&finding("crates/core/src/a.rs", "stored Bool isArchived on Order"));
+    let day = Date::new(2026, 11, 27).unwrap();
+    let hit = file.exception_on(&finding("crates/core/src/a.rs", "stored Bool isArchived on Order"), day);
     let exception = hit.expect("same rule, same path, `what` contains isArchived");
     assert_eq!(exception.rule, "no-bool");
     assert_eq!(exception.path, RelPath::new("crates/core/src/a.rs"));
     assert_eq!(exception.what.as_deref(), Some("isArchived"));
     assert_eq!(exception.reason, "Legacy schema.");
     assert_eq!(exception.approved, "bob 2026-11-17");
-    assert!(file.exception_for(&finding("crates/core/src/a.rs", "stored Bool isPaid on Order")).is_none());
-    assert!(file.exception_for(&finding("crates/core/src/b.rs", "stored Bool isArchived on Order")).is_none());
+    assert!(file.exception_on(&finding("crates/core/src/a.rs", "stored Bool isPaid on Order"), day).is_none());
+    assert!(file.exception_on(&finding("crates/core/src/b.rs", "stored Bool isArchived on Order"), day).is_none());
     assert_eq!(file.exceptions.len(), 1);
 }
 
 const EXCEPTION_FILE: &str = "version = 1\n[[rule]]\nid = \"r\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"f\"\n[[exception]]\nrule = \"r\"\npath = \"a.rs\"\nreason = \"legacy\"\napproved = \"reviewer\"\n";
+
+#[test]
+fn exception_without_expiry_is_one_problem_at_the_header() {
+    let parsed = RuleFile::parse(EXCEPTION_FILE, Path::new("."));
+    assert!(parsed.is_err(), "an exception without expiry must not produce a rule file");
+    let problems = parsed.unwrap_err();
+    assert_eq!(problems.len(), 1, "{problems:?}");
+    assert_eq!((problems[0].line, problems[0].col), (7, 1), "{problems:?}");
+    assert_eq!(problems[0].what, "[[exception]] is missing `expires`");
+    assert_eq!(problems[0].fix, "Add `expires = \"YYYY-MM-DD\"`, the exception's last day (UTC), to this [[exception]].");
+}
 
 #[test]
 fn exception_with_valid_expiry_is_read() {
@@ -175,7 +188,7 @@ fn broken_file_reports_every_problem_with_its_line() {
     let tmp = TempFolder::new("broken");
     let dir = tmp.0.join("broken");
     fs::create_dir_all(&dir).unwrap();
-    let path = dir.join("temperare.toml");
+    let path = dir.join("tao.toml");
     fs::write(&path, BROKEN_FILE).unwrap();
     let problems = RuleFile::read(&path).expect_err("version 2 and an unknown key");
     let mut lines: Vec<usize> = problems.iter().map(|p| p.line).collect();
@@ -186,8 +199,8 @@ fn broken_file_reports_every_problem_with_its_line() {
 #[test]
 fn baseline_sets_keep_own_rule_and_exception() {
     let tmp = TempFolder::new("baseline-own");
-    let path = tmp.0.join("temperare.toml");
-    fs::write(&path, "version = 1\nbaseline = [\"standard@1\"]\n\n[[rule]]\nid = \"own-rule\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"Fix it.\"\n\n[[exception]]\nrule = \"own-rule\"\npath = \"a.rs\"\nreason = \"legacy\"\napproved = \"reviewer\"\n").unwrap();
+    let path = tmp.0.join("tao.toml");
+    fs::write(&path, "version = 1\nbaseline = [\"standard@1\"]\n\n[[rule]]\nid = \"own-rule\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"Fix it.\"\n\n[[exception]]\nrule = \"own-rule\"\npath = \"a.rs\"\nreason = \"legacy\"\napproved = \"reviewer\"\nexpires = \"2099-12-31\"\n").unwrap();
     let file = RuleFile::read(&path).expect("standard@1 and an own rule should read");
     let ids: Vec<&str> = file.rules.iter().map(|rule| rule.id.as_str()).collect();
     assert_eq!((ids.len(), ids.first(), ids.last()), (54, Some(&"tm-rust-dead-code"), Some(&"own-rule")));
@@ -197,19 +210,19 @@ fn baseline_sets_keep_own_rule_and_exception() {
 #[test]
 fn baseline_sets_unknown_set_reports_entry_location_and_fix() {
     let tmp = TempFolder::new("baseline-unknown");
-    let path = tmp.0.join("temperare.toml");
+    let path = tmp.0.join("tao.toml");
     fs::write(&path, "version = 1\nbaseline = [\"nosuch@1\"]\n").unwrap();
     let problems = RuleFile::read(&path).expect_err("unknown baseline set must be rejected");
     assert_eq!(
         problems.iter().map(|p| (p.line, p.col, p.what.as_str(), p.fix.as_str())).collect::<Vec<_>>(),
-        vec![(2, 13, "unknown baseline set \"nosuch\"", "Use one of: house@1, standard@1.")],
+        vec![(2, 13, "unknown baseline set \"nosuch\"", "Use one of: house@1, house@2, standard@1.")],
     );
 }
 
 #[test]
 fn baseline_sets_unknown_override_reports_rule_location_and_fix() {
     let tmp = TempFolder::new("baseline-override");
-    let path = tmp.0.join("temperare.toml");
+    let path = tmp.0.join("tao.toml");
     fs::write(&path, "version = 1\nbaseline = [\"standard@1\"]\n[[override]]\nrule = \"tm-none\"\noff = true\n").unwrap();
     let problems = RuleFile::read(&path).expect_err("override of an unknown baseline rule must be rejected");
     assert_eq!(
@@ -221,7 +234,7 @@ fn baseline_sets_unknown_override_reports_rule_location_and_fix() {
 #[test]
 fn baseline_sets_reserved_own_id_reports_id_location_and_fix() {
     let tmp = TempFolder::new("baseline-reserved");
-    let path = tmp.0.join("temperare.toml");
+    let path = tmp.0.join("tao.toml");
     fs::write(&path, "version = 1\n[[rule]]\nid = \"tm-mine\"\nengine = \"clippy\"\ncheck = \"clippy::all\"\nfix = \"Fix it.\"\n").unwrap();
     let problems = RuleFile::read(&path).expect_err("own rule ids must not use the baseline prefix");
     assert_eq!(

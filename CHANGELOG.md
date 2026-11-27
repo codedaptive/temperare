@@ -1,6 +1,30 @@
 # Changelog
 
-All notable changes to Temperare are recorded here, newest first.
+All notable changes to Code Chi Tao (called Temperare in versions up to 0.4.0) are recorded here, newest first.
+
+## 0.5.0
+
+Built from source; there are no release downloads yet. MIT licensed.
+
+### Changed
+
+- The program is now Code Chi Tao ("Tao"). The binary is `cctao` (it was `tm`, with `temperare` as its long name), and
+  the rule file is `tao.toml` (it was `temperare.toml`). `cctao` does not fall back to `temperare.toml`: rename the
+  file. State lives under `~/.local/state/cctao` and `~/.config/cctao`, and `cctao install` and `cctao uninstall` place
+  and remove the `cctao` binary and skill. Programs that read `--json` output or run `tm` must be changed to run `cctao`.
+- Every git question goes through the ccvcslib library (v0.2.1); the crate that ran programs no longer holds a git
+  module.
+- `expires` is required on every exception in the rule file, as `reason` and `approved` already were; it was optional.
+
+### Added
+
+- A telemetry file: each `cctao check` that ends in a report appends one line to
+  `~/.local/state/cctao/telemetry/<root>.jsonl`, where `<root>` is the id of the commit HEAD's first-parent line starts from. cctao never reads it back, no output names it, and `cctao uninstall` leaves it. The line
+  and its fields are in `docs/reference/OUTPUT.md`.
+- The `watch` severity: a `watch` rule runs, but nothing it finds is reported (the telemetry file alone holds it) and it
+  never sets an exit code. The savings estimate leaves `watch` rules out.
+- `house@2`, a second version of the house baseline set, with a rule that refuses a citation of a register number, a
+  fact id or a "(name, date)" label in code comments. A rule file takes `house@1` or `house@2`, not both.
 
 ## 0.4.0
 

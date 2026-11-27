@@ -2,8 +2,8 @@
 //! the test made, with its rule, its place and its fix text, and the report lists the engine's version; with the
 //! engine off the PATH, the same rule reports "not available" (exit 3). One rule, `engine = "golangci-lint"`,
 //! `check = "staticcheck"`, over a Go module the test makes with no dependencies, so nothing is fetched. golangci-lint
-//! loads packages with `go`, so tm needs both. Only when either is not on the PATH `temperare` gets (`on_tm_path`,
-//! which runs nothing) is the reported case NOT RUN, with `temperare`'s reason, never PASS; `temperare` must then
+//! loads packages with `go`, so cctao needs both. Only when either is not on the PATH `cctao` gets (`on_cctao_path`,
+//! which runs nothing) is the reported case NOT RUN, with `cctao`'s reason, never PASS; `cctao` must then
 //! report the rule not available.
 
 use serde_json::json;
@@ -12,7 +12,7 @@ use crate::absent_engine_reason::absent_engine_reason;
 use crate::check::Check;
 use crate::probed_version::probed_version;
 use crate::repo::Repo;
-use crate::tm::{tm, tm_with_path};
+use crate::cctao::{cctao, cctao_with_path};
 
 const FIX: &str = "Compare two different values; `x == x` is always true.";
 
@@ -39,7 +39,7 @@ const PATH_WITHOUT_ENGINES: &str = "/usr/bin:/bin";
 /// A repository holding the rule file and the Go module, committed.
 fn module_repo() -> Repo {
     let repo = Repo::new();
-    repo.write("temperare.toml", RULES);
+    repo.write("tao.toml", RULES);
     repo.write("go.mod", GO_MOD);
     repo.write("same.go", SAME);
     repo.write("clean.go", CLEAN);
@@ -56,8 +56,8 @@ fn a_golangci_lint_finding_is_reported_with_its_rule_place_fix_and_version() {
     );
     let repo = module_repo();
     let args = ["check", "--json"];
-    let a = tm(&repo, &args);
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao(&repo, &args);
+    check.saw_cctao(&args, a.code, &a.json);
     if let Some(why) = absent_engine_reason(&a, &["golangci-lint", "go"], "go-staticcheck") {
         check.not_run(why);
         return;
@@ -78,13 +78,13 @@ fn a_golangci_lint_finding_is_reported_with_its_rule_place_fix_and_version() {
 fn golangci_lint_off_path_is_not_available() {
     let mut check = Check::new(
         "golangci_lint_off_path_is_not_available",
-        "rule go-staticcheck (golangci-lint, staticcheck) over the same module; tm runs with PATH /usr/bin:/bin, \
+        "rule go-staticcheck (golangci-lint, staticcheck) over the same module; cctao runs with PATH /usr/bin:/bin, \
          which holds neither golangci-lint nor go",
     );
     let repo = module_repo();
     let args = ["check", "--json"];
-    let a = tm_with_path(&repo, &args, Some(PATH_WITHOUT_ENGINES));
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao_with_path(&repo, &args, Some(PATH_WITHOUT_ENGINES));
+    check.saw_cctao(&args, a.code, &a.json);
     assert_eq!(a.code, 3, "not available has its own code: {:#}\n{}", a.json, a.stderr);
     assert!(a.findings().is_empty(), "nothing is reported as found: {:#}", a.json);
     let missing: Vec<(&str, &str)> = a.json["not_available"]

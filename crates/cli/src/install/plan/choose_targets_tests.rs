@@ -52,7 +52,7 @@ fn no_terminal_and_no_yes_wires_nothing_and_says_how() {
     assert!(chosen.is_empty());
     assert_eq!(
         notes,
-        vec!["no terminal to ask which harnesses to wire, so none was; to wire them, run temperare install \
+        vec!["no terminal to ask which harnesses to wire, so none was; to wire them, run cctao install \
               --target claude,cursor -y"
             .to_string()]
     );

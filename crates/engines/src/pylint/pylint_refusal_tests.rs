@@ -5,7 +5,7 @@ use super::pylint_refusal;
 
 fn not_an_id(check: &str) -> Option<String> {
     Some(format!(
-        "pylint check `{check}` is not a message id (a letter C, R, W, E, F or I and four digits, as C0121), so tm cannot tell which findings it selects"
+        "pylint check `{check}` is not a message id (a letter C, R, W, E, F or I and four digits, as C0121), so cctao cannot tell which findings it selects"
     ))
 }
 

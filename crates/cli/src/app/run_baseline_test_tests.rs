@@ -1,7 +1,7 @@
 //! Unit tests for run_baseline_test.rs, with closure worlds: no disk, no engine. The test sets list their rules out of sort
 //! order (tm-zeta before tm-alpha) and the table's default sets name standard@1 before house@1, so a sort would show
 //! in the output. Each row measures the whole printed `out` and `err` as literal strings, the sets read, and counts
-//! the case folders made and the rule runs. Which sets tm itself carries and marks ready is rules' data: the RITs in
+//! the case folders made and the rule runs. Which sets cctao itself carries and marks ready is rules' data: the RITs in
 //! tests/world/baseline_world_real.rs read it.
 
 use super::run_baseline_test::run_baseline_test;
@@ -41,7 +41,7 @@ fn table(text: &str) -> toml::Table {
 /// each case is not applicable and not run), params@1 (tm-p, requiring kit: its params kit = "set-default" and
 /// other = "kept", its failing case's kit = "failing-kit", its passing case's kit = "passing-kit"); empty@1 cannot be
 /// read and carries no problem; any other set is unknown, its first problem at line 2, column 12 of rules' own text,
-/// which tm must not print, then a second one.
+/// which cctao must not print, then a second one.
 fn test_set(set: &str) -> Result<Vec<Rule>, Vec<Problem>> {
     match set {
         "standard@1" => Ok(vec![with_cases("tm-zeta", Engine::Ruff), with_cases("tm-alpha", Engine::AstGrep)]),
@@ -141,7 +141,7 @@ fn by_case_params(rule: &Rule, text: &str) -> RuleOutcome {
     RuleOutcome::Findings(vec![Finding::new(&rule.id, place, path, 1, None, "w", "f")])
 }
 
-/// Runs `tm baseline test` with `args` on the test sets, `default_sets` the world's (name@version, ready), each case
+/// Runs `cctao baseline test` with `args` on the test sets, `default_sets` the world's (name@version, ready), each case
 /// run giving what `outcome` says for the rule it runs and its file's text; (exit, out, err, the sets read, (the case
 /// folders made, the rules run)).
 fn run(
@@ -207,11 +207,11 @@ fn run_baseline_test_rows() {
     let text = BaselineArgs::default();
     let json = BaselineArgs { json: true, ..BaselineArgs::default() };
     let set = |set: &str| BaselineArgs { set: Some(set.to_string()), json: false };
-    // A test world's default_sets, not tm's: tm's own are rules' data, read by the RITs in
+    // A test world's default_sets, not cctao's: cctao's own are rules' data, read by the RITs in
     // tests/world/baseline_world_real.rs.
     let defaults: Defaults = &[("standard@1", true), ("house@1", true)];
     let house_not_ready: Defaults = &[("standard@1", true), ("house@1", false)];
-    let unknown = "tm: unknown baseline set \"nosuch\"\nnext: the test world's fix for nosuch\n";
+    let unknown = "cctao: unknown baseline set \"nosuch\"\nnext: the test world's fix for nosuch\n";
     let rows: [Row; 17] = [
         (
             "all hold",
@@ -281,7 +281,7 @@ fn run_baseline_test_rows() {
              failing: not available: swiftlint not found on PATH\n  \
              passing: not available: swiftlint not found on PATH\n\
              3 rules: 2 hold, 0 broken, 1 not available, 0 not applicable\n\
-             next: install swiftlint, then run tm baseline test again\n",
+             next: install swiftlint, then run cctao baseline test again\n",
             "",
             &["standard@1", "house@1"],
             (6, 6),
@@ -316,7 +316,7 @@ fn run_baseline_test_rows() {
             all_hold,
             2,
             "",
-            "tm: cannot read baseline set \"empty@1\"\nnext: Run tm help to see the commands.\n",
+            "cctao: cannot read baseline set \"empty@1\"\nnext: Run cctao help to see the commands.\n",
             &["empty@1"],
             (0, 0),
         ),
@@ -458,7 +458,7 @@ fn run_baseline_test_rows() {
              failing: not applicable: the case gives no value for required params: entity_types\n  \
              passing: not applicable: the case gives no value for required params: entity_types\n\
              3 rules: 1 hold, 0 broken, 1 not available, 1 not applicable\n\
-             next: install swiftlint, then run tm baseline test again; \
+             next: install swiftlint, then run cctao baseline test again; \
              each not-applicable rule above says why it was not run\n",
             "",
             &["house@1", "aside@1"],

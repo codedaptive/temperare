@@ -1,8 +1,9 @@
-# Temperare documentation map
+# Code Chi Tao documentation map
 
-Temperare checks code against the rules a repository has chosen to enforce, and reports what it finds. It is a
-command-line program, `temperare`, short name `tm`. It runs clippy, SwiftLint, ruff, ast-grep, ShellCheck, pylint,
-clang-tidy, golangci-lint, gitleaks, cargo-audit, vulture and Periphery as programs, reads
+Code Chi Tao checks code against the rules a repository has chosen to enforce, and reports what it finds. It is a
+command-line program, `cctao`. It runs clippy, SwiftLint, ruff, ast-grep, ShellCheck, pylint,
+clang-tidy, golangci-lint, gitleaks, cargo-audit, vulture, Periphery, ESLint, mypy, PMD, detekt, RuboCop, PHPStan,
+dart, actionlint, sqlfluff, hadolint, yamllint, Vale, stylelint and markdownlint-cli2 as programs, reads
 their output into one report, and never edits code. This file routes people and AI agents to the maintained
 sources.
 
@@ -15,83 +16,99 @@ sources.
 
 ## Reference
 
-- The rule file, temperare.toml, every key, the baseline sets and [[override]]: docs/reference/RULE_FILE.md
+- The rule file, tao.toml, every key, the baseline sets and [[override]]: docs/reference/RULE_FILE.md
 - Text output, JSON output, exit codes, the next line: docs/reference/OUTPUT.md
 - Each engine: the exact command line, what check means, not available and failed: docs/reference/ENGINES.md
 
 ## Policy
 
-- What Temperare runs, what the rule file can make it do, how to report a vulnerability: SECURITY.md
+- What Tao runs, what the rule file can make it do, how to report a vulnerability: SECURITY.md
 - Layout of the code, build and test commands, what a change must keep: CONTRIBUTING.md
 - License: MIT, in LICENSE.
 
 ## Facts an agent needs before running it
 
-- Commands: tm check, tm rules, tm baseline test, tm install, tm uninstall, tm help, tm --version.
-- tm check [--rules <path>] [--base <rev>] [--kind quality|security] [--json] [<path>...]
-- tm rules [--rules <path>] [--json]
-- tm rules --loosened --base <rev> [--rules <path>] [--json]: compares the rule file as committed at <rev> with the
+- Commands: cctao check, cctao rules, cctao baseline test, cctao install, cctao uninstall, cctao help, cctao --version.
+- cctao check [--rules <path>] [--base <rev>] [--kind quality|security] [--json] [<path>...]
+- cctao rules [--rules <path>] [--json]
+- cctao rules --loosened --base <rev> [--rules <path>] [--json]: compares the rule file as committed at <rev> with the
   working file, baseline sets included, and lists each loosening as {kind, about, before, after}: rule_gone,
   rule_not_applicable, severity_lowered, path_removed, paths_limited, exclude_added, kit_removed, kits_limited,
-  outside_kit_added, exception_added, expiry_later, expiry_dropped, set_dropped, set_older. Runs no engine. Exits 0
+  outside_kit_added, exception_added, expiry_later, set_dropped, set_older. Runs no engine. Exits 0
   nothing loosened; 1 something did; 2 a usage error, a --base that names no commit or has no such rule file, or a
   problem in either file. --loosened and --base come together.
-- tm baseline test [--set <name@version>] [--json]: tests each rule of the baseline sets built into tm (with no
-  --set the ready ones, house@1 then standard@1; --set names one set, such as standard@1) on its failing case
+- cctao baseline test [--set <name@version>] [--json]: tests each rule of the baseline sets built into cctao (with no
+  --set the ready ones, house@1, house@2, then standard@1; --set names one set, such as standard@1) on its failing case
   (exactly the expected finding) and its passing case (no finding), each in a throwaway git repository. A rule
   holds, is broken, not available or not applicable (a rule that requires a param its case does not give). Each
   case runs with the params it gives over the rule's own. Exits 0
   all hold; 1 a rule is broken; 2 used wrongly or an unknown set or version; 3 nothing broke but a rule was not available or
   not applicable.
-- The rule file is --rules <path>, else temperare.toml at the top of the git repository.
-- Baseline sets are rules built into tm. A rule file takes one with the top-level key
+- The rule file is --rules <path>, else tao.toml at the top of the git repository.
+- Baseline sets are rules built into cctao. A rule file takes one with the top-level key
   baseline = ["name@version", ...], each set once. standard@1 is ready: 53 rules, all kind quality and severity
   warning, in this order: dead code (5), deprecated calls (1), suppressions written in the code (11), then
   complexity, nesting, dbg! and print, bare and blind except and commented-out code (8), then what a change adds
   (28, each only_with_base: under not_applicable without --base). house@1 is ready too: 36 rules, all kind quality,
   30 at warning and 6 at error. Five of them require params (entity_types, own_package) that the rule file gives in
-  an [[override]]; until it does they are not applicable. A file may take both sets.
-- A set's rules come first, in baseline order and each set's own order, then the file's own. tm rules lists them
+  an [[override]]; until it does they are not applicable. house@2 is ready: house@1's 36 rules, then three ast-grep
+  warnings, tm-house-no-register-citation-rust, -swift and -python, each only_with_base, for a comment (or a string
+  in test code) that cites an R-, S- or D-number, a fact id after the word fact, or a (Bob, date) label; fix "Say the
+  reason, or delete the comment." A file may take standard@1 and one version of house; house@1 and house@2 together
+  is the problem baseline set "house" is taken twice.
+- A set's rules come first, in baseline order and each set's own order, then the file's own. cctao rules lists them
   that way; nothing names a rule's set. A set rule's id starts with tm-, and an own rule's id may not.
 - [[override]] changes one set rule: rule (its id, required) and any of severity, off = true (the rule is left out:
   not run, not listed), paths, exclude (each in place of the set's) and params (laid over the set's, key by key). One
   [[override]] per rule; one that names no rule of a taken set is a problem. An [[exception]] may name a set rule.
 - A set rule can require params (none of standard@1 does). Until an [[override]] gives each one in its params the
-  rule is not run, and tm rules and tm check --json list it under not_applicable, not among the rules
+  rule is not run, and cctao rules and cctao check --json list it under not_applicable, not among the rules
   ("required params not given: <names>; give them in the params of an [[override]] for "<rule id>""). A set may
   type a required param as a string or a list of strings; an [[override]] that gives it as another type is a
   problem, exit 2.
-- A set's ast-grep rules carry their YAML inside tm: their check is not a path in the repository and no file is
+- A set's ast-grep rules carry their YAML inside cctao: their check is not a path in the repository and no file is
   read for it.
-- The rules of a set: tm rules on a rule file that takes it, or crates/rules/baseline/<name>/<version>/set.toml.
+- The rules of a set: cctao rules on a rule file that takes it, or crates/rules/baseline/<name>/<version>/set.toml.
 - --json prints one JSON object on one line on stdout, with exit and next beside the result.
-- tm install [--no-place] [--short-name] [--target claude,codex,cursor] [--mode skill] [--location local] [-y]
-- tm install copies the binary to ~/.local/bin/temperare, links tm beside it, writes a skill file for the harnesses
-  chosen, and records what it placed in ~/.local/state/temperare/installed. tm uninstall removes what that record
+- cctao install [--no-place] [--target claude,codex,cursor] [--mode skill] [--location local] [-y]
+- cctao install copies the binary to ~/.local/bin/cctao, writes a skill file for the harnesses chosen, and records what it placed in ~/.local/state/cctao/installed. cctao uninstall removes what that record
   names. Both exit 0 when done, 1 when a step failed, 2 when used wrongly.
-- Exit codes of tm check: 0 nothing to refuse; 1 a quality error was found; 2 used wrongly or the rule file has a
+- Exit codes of cctao check: 0 nothing to refuse; 1 a quality error was found; 2 used wrongly or the rule file has a
   problem, nothing checked; 3 a rule was not available; 4 the only errors are security findings, which never
   refuse; 5 a rule failed; 6 a rule of the repository's own covers nothing. The first of 2, 1, 5, 3, 4, 6 that
   applies wins.
-- Exit 0 means every rule ran or is listed under not_applicable. Exit 4 means the same, except that a rule may cover
-  nothing (4 ranks above 6). Exit 1 does not: read counts.not_available, counts.failed and counts.covers_nothing.
+- A rule's severity is error (the default), warning or watch. A watch rule runs, and nothing it gives is reported:
+  its findings (kept or silenced), its not-available or failed outcome, and its covers-nothing or not-applicable
+  entry are in no list and no count, text or --json, so it sets no exit code. Its engine stays on the engines line
+  when it ran. Its exceptions still count in force and expired. cctao rules lists it with severity watch. What it
+  found goes to the telemetry file alone.
+- Exit 0 means every rule that is not at severity watch ran or is listed under not_applicable; a watch rule's engine
+  may still have been absent or failed. Exit 4 means the same, except that a rule may cover nothing (4 ranks above
+  6). Exit 1 does not: read counts.not_available, counts.failed and counts.covers_nothing.
 - A rule that covers none of the files git lists in the rule file's folder (tracked files in the work tree, and
   untracked files git does not ignore), or a ShellCheck rule that covers none of the scripts there, or a
   cargo-audit rule whose folder has no Cargo.lock it covers, or a clang-tidy rule that covers none of the C-family
-  sources there, runs nothing,
+  sources there, or a mypy, pmd, detekt, dart, phpstan, actionlint, sqlfluff, hadolint, yamllint, vale, stylelint
+  or markdownlint rule that covers none of the files of that engine's kind there (docs/reference/ENGINES.md lists
+  each kind), runs nothing,
   and whether its engine is installed does not change its result (the engine is still asked its version for the
   engines list). One of the repository's own rules is then listed as covers nothing: a "covers nothing: <rule>
   (<engine>)" line, covers_nothing in JSON ({rule, engine}), counts.covers_nothing, and exit 6, with next "fix the
   paths of each rule that covers nothing above, or remove it from <rule file>" (under --json, "fix the paths of
   each rule in covers_nothing, or remove it from <rule file>"). A baseline set's rule is listed under
-  not_applicable instead, with why "its paths match no file in the rule file's folder" (ShellCheck, cargo-audit and
-  clang-tidy: "no file its engine checks"). When git cannot list the files, no rule is settled this way except a
-  cargo-audit rule, whose Cargo.lock tm looks for on disk once the rule file's folder is found.
+  not_applicable instead, with why "its paths match no file in the rule file's folder" (ShellCheck, cargo-audit,
+  clang-tidy and the twelve engines just named: "no file its engine checks"). When git cannot list the files, no
+  rule is settled this way except a cargo-audit rule, whose Cargo.lock cctao looks for on disk once the rule file's
+  folder is found.
+- eslint and rubocop decide their own files from their config, so a rule of theirs that covers some file git lists
+  is run (its engine must be on PATH) and covers nothing when the engine read none of the rule's files: why "ESLint
+  linted no file in the rule's paths that git lists (its config decides which files it lints)" or "no file rubocop
+  inspects is in the rule's paths".
 - --base <rev> keeps only findings on lines added since that commit. A rule with only_with_base = true reports only
   what a change adds: without --base it reports nothing and is listed under not_applicable ("reports only what a
-  change adds; run with --base"). not_applicable is never a finding and never "not available". In text, tm check
+  change adds; run with --base"). not_applicable is never a finding and never "not available". In text, cctao check
   gives not-applicable rules only as a count ("P not applicable" on the counts line), with no line per rule; --json
-  lists each with its rule, engine and why. tm rules lists them too, without running an engine: "not applicable
+  lists each with its rule, engine and why. cctao rules lists them too, without running an engine: "not applicable
   (P):", one "<rule>  <engine>  <why>" line each (JSON not_applicable and rules_not_applicable). It lists baseline
   rules only (a repository's own no-file rule covers nothing instead), never a rule an [[override]] turned off,
   and an only_with_base rule only when it covers no file.
@@ -102,7 +119,9 @@ sources.
   a pylint check that is not one message id or is an old id pylint renamed, a clang-tidy check that is not one
   check name, a golangci-lint check with a part that is not a linter name or is typecheck, a gitleaks check with an
   empty or ALL part, a cargo-audit check that is not an advisory id or a kind, or is yanked, a vulture check that is
-  not one vulture code, a periphery check that is not a Periphery result hint or all. A cargo-audit rule also
+  not one vulture code, a periphery check that is not a Periphery result hint or all, and a check of eslint, mypy,
+  pmd, detekt, rubocop, phpstan, dart, actionlint, sqlfluff, hadolint, yamllint, vale, stylelint or markdownlint
+  that is not shaped as the "check, by engine" line below says. A cargo-audit rule also
   fails when cargo-audit applied an audit.toml (its report's settings differ from the defaults), and a gitleaks rule
   before gitleaks runs when the config gitleaks reads (or a file it extends) declares an allowlist or does not parse,
   or the folder's .gitleaksignore lists anything: exceptions live in the rule file only.
@@ -111,18 +130,20 @@ sources.
   (1-1000) with check cyclomatic_complexity, or max_lines (1-100000) with check file_length; ruff takes
   max_complexity (1-1000) with check C901; ast-grep takes the names its YAML has as {{name}}, and count
   ("setup-vs-tests") with shared_setup (a list of globs); git takes max_ratio (0.1-100), floor (0-100000) and
-  test_paths (a list of globs), all three required; shellcheck, pylint, clang-tidy, golangci-lint, gitleaks,
-  cargo-audit, vulture, periphery and tessera take none. A threshold wins
+  test_paths (a list of globs), all three required; every other engine takes none. A threshold wins
   over the rule's config, and no config file of the repository is changed. The reason is in failed[].stderr_tail.
-- A rule tm can refuse from the rule file alone fails whether or not its engine is installed: every check and param
+- A rule cctao can refuse from the rule file alone fails whether or not its engine is installed: every check and param
   above, except the clippy lint group, an ast-grep rule file that is missing, cannot be read, or leads out of the
   folder through a symlink, and ast-grep's {{name}} params, which are refused only in the run. An ast-grep check that
   is absolute or whose .. climbs above the rule file's folder is refused from the text alone. The order a rule
   settles in: refused, then covers no file, then needs a base, then not available, then the run (docs/reference/ENGINES.md).
-- A check the installed clippy, swiftlint, ruff, pylint, clang-tidy, golangci-lint or gitleaks does not know (a
+- A check the installed clippy, swiftlint, ruff, pylint, clang-tidy, golangci-lint, gitleaks, eslint, mypy, pmd,
+  detekt, rubocop, phpstan, dart, actionlint, sqlfluff, yamllint, vale or stylelint does not know (a
   misspelt name, or one newer than the engine), or an advisory id cargo-audit's local advisory database does not
-  hold, is not available (exit 3), with a why naming the engine, its version and the check. ShellCheck is not asked: a shellcheck code not on tm's built-in list of ShellCheck 0.11.0's 510 codes is
-  not available ("<check> is not in temperare's list of shellcheck codes (taken from shellcheck 0.11.0)").
+  hold, is not available (exit 3), with a why naming the engine, its version and the check. ShellCheck is not asked: a shellcheck code not on cctao's built-in list of ShellCheck 0.11.0's 510 codes is
+  not available ("<check> is not in cctao's list of shellcheck codes (taken from shellcheck 0.11.0)"). The same
+  holds for a detekt name not among detekt 1.23.8's 214 rules and 9 rule sets, a hadolint code not among hadolint
+  2.15.1's 71 DL codes (an SC code never is), and a markdownlint rule not among markdownlint 0.42.2's 53 rules.
 - check, by engine: clippy, one lint or warnings; swiftlint, one rule identifier; ruff, a rule code, a code prefix,
   ALL, or several joined by commas; ast-grep, the path of a rule file inside the rule file's folder; shellcheck, one
   code such as SC2086; git, test_ratio; pylint, one message id such as C0121; clang-tidy, one check name such as
@@ -130,17 +151,68 @@ sources.
   such as aws-access-token, one or several joined by commas; cargo-audit, an advisory id such as RUSTSEC-2023-0071
   or a kind: vulnerability, unmaintained, unsound, notice or all; vulture, one code V101 to V107 or V201; periphery,
   one result hint (unused, assignOnlyProperty, redundantProtocol, redundantConformance,
-  redundantPublicAccessibility, superfluousIgnoreCommand) or all.
+  redundantPublicAccessibility, superfluousIgnoreCommand) or all; eslint, one rule id such as no-var; mypy, one
+  error code such as arg-type; pmd, Java rule or category references such as
+  category/java/bestpractices.xml/UnusedPrivateField, one or several joined by commas, never a ruleset file or URL;
+  detekt, rule or rule-set names such as MagicNumber, one or several joined by commas; rubocop, full cop names such
+  as Lint/UselessAssignment, one or several joined by commas, never a department; phpstan, a level, 0 to 10 or max;
+  dart, one lower-case diagnostic code or lint name such as unused_local_variable; actionlint, one kind such as
+  expression; sqlfluff, one rule code, name, group or alias such as LT01; hadolint, one DL code such as DL3006;
+  yamllint, one rule id such as line-length; vale, one rule as Style.Rule such as Vale.Spelling; stylelint, one rule
+  name such as color-no-invalid-hex; markdownlint, one rule id or alias such as MD013, never a tag.
 - A clippy rule needs cargo-clippy and clippy-driver on PATH; a golangci-lint rule needs golangci-lint and go; a
   shellcheck or clang-tidy rule needs git too, which lists the files; a periphery rule needs periphery and swift,
   and a Package.swift at or above the rule file's folder (an Xcode project is not available: "no Package.swift at or
-  above the rule file's folder: Periphery builds the project, and tm runs it only on a Swift package").
+  above the rule file's folder: Periphery builds the project, and cctao runs it only on a Swift package").
+- Programs for the other engines: eslint (the one on PATH, never node_modules/.bin), mypy, pmd, detekt, rubocop,
+  phpstan and php, dart, actionlint (and shellcheck or pyflakes for a rule whose check is that kind), sqlfluff,
+  hadolint, yamllint, vale, stylelint, and markdownlint-cli2 for engine markdownlint. All of these but eslint and
+  rubocop need git too and a rule file inside a git repository. cctao sets no NODE_PATH.
+- What else those engines need, each not available without it and never clean: phpstan, a config in the rule file's
+  folder (phpstan.neon, phpstan.neon.dist, phpstan.dist.neon or a dot-prefixed form) or the rule's config; dart, a
+  pubspec.yaml at or above the rule file's folder, no higher than the git top, and for a lint, every
+  analysis_options.yaml that governs the folder enabling it; sqlfluff, a dialect set in the repository's config (cctao
+  passes no --dialect); vale, a Vale config inside the repository (or the rule's config) whose BasedOnStyles names
+  the check's style; stylelint, a config that turns the check on for the rule's files; markdownlint, a config that
+  does not turn the rule off.
+- detekt gets no classpath from cctao, so a check that picks any of the 67 rules that need type resolution, by name or
+  through its rule set, is not available ("detekt needs type resolution for <rules>, which needs a classpath that
+  cctao does not give detekt, so they would report nothing"). Of the rule sets only comments and empty-blocks can be
+  named; Deprecation is one of the 67, so deprecated Kotlin calls are not covered.
+- Exceptions outside the rule file, for these engines. Turned off: eslint-disable comments, the ESLint config's
+  ignores and eslint-suppressions.json; // NOPMD; rubocop:disable and rubocop:todo comments; a PHPStan config's
+  ignoreErrors (baselines included) and excludePaths; -- noqa, .sqlfluffignore and a sqlfluff config's
+  exclude_rules and ignore; # hadolint ignore= pragmas; a yamllint config's ignore and ignore-from-file; Vale's skip
+  keys and Style.Rule = NO lines; stylelint-disable comments, .stylelintignore and stylelint-suppressions.json;
+  markdownlint-disable and markdownlint-configure-file comments; a detekt config's active: false, excludes,
+  includes and ignoreAnnotated for the picked rules, and any detekt baseline.
+- The rule fails (exit 5), naming the file, where the engine has no switch: a mypy config with ignore_errors, a
+  per-module disable_error_code naming the check, or ignore_missing_imports for an import check; a .rubocop file, a
+  .rubocop_todo.yml naming a cop of the check, a cop Exclude beyond RuboCop's stock one, or an AllCops Exclude or
+  Include that leaves out a file of the rule; a Dart analysis_options.yaml with an exclude key or an ignore value, one
+  read from outside the repository, or one in a YAML form cctao does not read (a second document, a repeated key, a
+  merge key <<, a non-scalar key, a !! tag it does not read); an actionlint config with an ignore key; a hadolint
+  config with anything under ignored; a stylelint config that turns the check off for some files, turns on fix or
+  quiet, or ignores a file through ignoreFiles; a .markdownlint-cli2.{jsonc,yaml,cjs,mjs} options file, a
+  .markdownlint.jsonc, .cjs or .mjs config, a markdownlint config with extends, or a markdownlint rule that names a
+  config.
+- Still honoured, since nothing turns them off: # type: ignore and # mypy: comments, and @typing.no_type_check
+  (mypy); @SuppressWarnings naming PMD (pmd); @Suppress (detekt); @phpstan-ignore comments, a config's stubFiles
+  naming a checked file, and phpstan.ignoreErrorExtension services (phpstan); // ignore: and // ignore_for_file:
+  comments (dart); # shellcheck disable= inside a run: script (actionlint) or a RUN script (hadolint); -- sqlfluff:
+  file directives (sqlfluff); # yamllint disable comments (yamllint); <!-- vale off --> comments and the
+  repository's Vocab (vale).
+- vale runs with a wrapper .vale.ini cctao writes in a temporary folder, never in the repository, built from the
+  repository's StylesPath and Vocab; only git-listed files in a format Vale reads are passed; a rule's config stands
+  in for the repository's .vale.ini; nothing is fetched (never vale sync). phpstan runs through a wrapper config in a
+  temporary folder too. markdownlint-cli2 gets an options module cctao writes in a temporary folder. All are removed
+  after the run.
 - A clang-tidy rule needs a compile_commands.json or compile_flags.txt at or above each source; without one it is
   not available. Without a config, clang-tidy reads no .clang-tidy and ShellCheck no .shellcheckrc.
 - golangci-lint runs with GOTOOLCHAIN=local, GOPROXY=off and GOSUMDB=off and GOFLAGS removed: go downloads
   nothing and writes nothing to go.mod or go.sum.
-- gitleaks runs as gitleaks dir with --redact; every finding's what is tm's fixed text "gitleaks found a secret
-  here; tm does not print it", and only gitleaks' error lines of stderr are kept, so the secret never reaches the
+- gitleaks runs as gitleaks dir with --redact; every finding's what is cctao's fixed text "gitleaks found a secret
+  here; cctao does not print it", and only gitleaks' error lines of stderr are kept, so the secret never reaches the
   report. GITLEAKS_CONFIG and GITLEAKS_CONFIG_TOML are removed for the run, and --ignore-gitleaks-allow makes a
   gitleaks:allow comment silence nothing. gitleaks' default skipped paths (such as .svg files and package-lock.json)
   are its stock check, not an exception.
@@ -151,7 +223,7 @@ sources.
   runs. It still honours a # noqa on an item's line (standard@1's tm-python-suppression reports every noqa) and a
   whitelist module in the repository. Its findings have a line and no column.
 - periphery builds the Swift package (the nearest Package.swift at or above the rule file's folder, no higher than
-  the git top) with swift in a temporary folder tm removes after (nothing built in the repository). Before building
+  the git top) with swift in a temporary folder cctao removes after (nothing built in the repository). Before building
   it reads the manifest of the package and of each local package it reaches: a source-control or registry
   dependency or a binary target with a url anywhere, or a local package that does not resolve or lies outside the
   repository, makes the rule not available. It passes an empty --config so .periphery.yml is not read. It still
@@ -160,18 +232,19 @@ sources.
   declaration is unused the function it calls reads unused too; put top-level code first, or declarations in other
   files. A clippy or periphery rule builds the code.
 - cargo-audit reads only the Cargo.lock in the rule file's folder, with --no-fetch and --no-yanked against the
-  advisory database already at $CARGO_HOME/advisory-db (else $HOME/.cargo/advisory-db); tm never fetches it. With
+  advisory database already at $CARGO_HOME/advisory-db (else $HOME/.cargo/advisory-db); cctao never fetches it. With
   no database there the rule is not available, and the why names `cargo audit update-db --db <db>`. Every finding
   is on Cargo.lock with no line.
 - Every finding's path is relative to the rule file's folder.
 - A finding has: rule, engine, kind, severity, owner (when the rule file names one), path, line (always present;
   null when the finding has no line, as cargo-audit's on Cargo.lock), col (when the engine gives one), what (the
   engine's message), fix (the rule's fix text).
-- An exception is an [[exception]] table in the rule file with rule, path, reason and approved. It records a
-  person's approval. An agent does not add one on its own. An optional expires = "YYYY-MM-DD" is its last day (UTC):
-  from the day after, it silences nothing and tm check lists it as expired: an "expired: <rule> <path> (expired
+- An exception is an [[exception]] table in the rule file with rule, path, reason, approved and expires. It records
+  a person's approval. An agent does not add one on its own. expires = "YYYY-MM-DD" is required, its last day (UTC);
+  an exception without it is a rule-file problem (exit 2: "[[exception]] is missing `expires`"). From the day after
+  its expires, it silences nothing and cctao check lists it as expired: an "expired: <rule> <path> (expired
   <YYYY-MM-DD>)" line, expired in JSON ({rule, path, what|null, expires, reason, approved}) and counts.expired.
-  Exceptions in force counts only the exceptions not expired, in tm check and tm rules alike; tm rules lists the
+  Exceptions in force counts only the exceptions not expired, in cctao check and cctao rules alike; cctao rules lists the
   expired ones apart (expired and exceptions_expired in JSON, each with expires).
 
 ## What it does not do
@@ -180,17 +253,25 @@ sources.
 - It does not decide what a finding blocks.
 - It does not install the engines.
 - A check reads nothing back between runs; it only appends a line to its savings log
-  (~/.local/state/temperare/savings.jsonl). Temperare has no network code of its own. The engines it runs are
-  separate programs.
-- When an engine ran, tm check's text output opens with an estimate of the tokens saved against the engines' raw
-  output, ending in an ask to the agent to tell the user the turn's total; --json carries it as "saved", and
-  savings_line = false in ~/.config/temperare/config.toml turns the line off.
+  (~/.local/state/cctao/savings.jsonl) and one to its repository's telemetry file. Tao has no network code
+  of its own. The engines it runs are separate programs.
+- The telemetry file is ~/.local/state/cctao/telemetry/<root>.jsonl, <root> the id of HEAD's first-parent root
+  commit, so every clone and worktree of a repository writes the same file. Each cctao check that ends in a report
+  (every exit but 2) appends one JSON line after printing: format, time, version, folder, head, base, kind, paths,
+  exit, engines, and rules (each selected rule, watch rules included: rule, engine, severity, state, why, its kept
+  findings as {path, line, what}, and its silenced count). cctao never reads it, no output names it, and cctao uninstall
+  leaves it. No HOME, no commit yet, or a write that fails: no line and nothing said. A shallow clone writes a file of
+  its own; repositories that share a root commit share one. docs/reference/OUTPUT.md has the fields.
+- When an engine ran for a rule other than a watch rule, cctao check's text output opens with an estimate of the tokens
+  saved against the engines' raw output, ending in an ask to the agent to tell the user the turn's total; --json
+  carries it as "saved", and savings_line = false in ~/.config/cctao/config.toml turns the line off. A watch
+  rule's run is not counted, and a watch rule is not in saved.counted.
 - Rules with engine = "tessera" are accepted and, when they cover a file and have no params, are reported "not
   available" today, whether or not Tessera is installed. A Tessera rule with a param fails (exit 5).
-- Rules with engine = "eslint", "mypy", "pmd", "detekt", "rubocop", "phpstan", "dart", "markdownlint", "yamllint",
-  "actionlint", "hadolint", "vale", "stylelint" or "sqlfluff" are accepted and, when they cover a file, reported "not available" (no adapter for <engine> in this build) until each adapter lands, whether
-  or not the engine is installed.
-- Rules with engine = "git" (check test_ratio) count the lines a change adds against the commit tm check --base
+- The acceptance checks for 0.1.0 did not run eslint, mypy, pmd, detekt, rubocop, phpstan, dart, actionlint,
+  sqlfluff, hadolint, yamllint, vale, stylelint or markdownlint. cctao runs each of them; docs/reference/ENGINES.md
+  names the engine version each is tested against.
+- Rules with engine = "git" (check test_ratio) count the lines a change adds against the commit cctao check --base
   names; ast-grep rules with params.count count each file's setup and test lines whole, reporting the files the
   change adds lines to. Without --base such a rule is "not available" ("reports only what a change adds; run with
   --base") when its engine is on PATH.
@@ -199,5 +280,5 @@ sources.
 
 ## Version note
 
-This is version 0.4.0, built from source. There are no release downloads. It is built and accepted on macOS; Linux
+This is version 0.5.0, built from source. There are no release downloads. It is built and accepted on macOS; Linux
 and Windows are untested.

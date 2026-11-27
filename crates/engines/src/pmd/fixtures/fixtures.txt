@@ -1,0 +1,52 @@
+Real pmd output, captured once with PMD 7.29.0 (/opt/homebrew/bin/pmd, which starts its own openjdk 27.0.1.1) in a
+throwaway folder, /private/tmp/tm-pmd-capture, removed afterwards. Each run was PMD's argv with its check, in the
+folder holding the file, with CLASSPATH removed from the environment:
+    pmd check --no-cache --no-progress --format=sarif --suppress-marker=TM-NOPMD-OFF --rulesets=<check> --file-list=<list>
+where <list> held one line, the absolute path of that folder's Foo.java. stdout or stderr went to the fixture named.
+
+The input files, each Foo.java:
+    viol/:   class Foo {\n    private int unused;\n}\n
+    clean/:  class Foo {\n    int value;\n}\n
+    broken/: class Foo {\n    int x = ;\n}\n
+
+violation.sarif (stdout, exit 4), in viol/, check category/java/bestpractices.xml/UnusedPrivateField.
+clean.sarif (stdout, exit 0), in clean/, the same check.
+unknown_rule.stderr (stderr, exit 0, stdout an empty log), in clean/, check category/java/bestpractices.xml/NoSuchRule.
+unknown_category.stderr (stderr, exit 1, stdout empty), in clean/, check category/java/nosuch.xml/Foo.
+parse_error.sarif and parse_error.stderr (stdout and stderr, exit 5), in broken/, check
+category/java/bestpractices.xml/UnusedPrivateField: pmd could not parse the file, reported it as a processing error
+and no result.
+version.txt (stdout, exit 0, stderr empty): pmd --version.
+
+Two more runs, recorded here only (no fixture file; no test reads them), with PMD 7.29.0 in a second throwaway folder,
+/private/tmp/tm-pmd-rework, removed afterwards, the same argv and CLASSPATH removed, <list> holding relative paths.
+
+A comma in the file list. Input a,b/Foo.java: class Foo {\n    private int unused;\n}\n. In the folder above a,b/,
+<list> one line "a,b/Foo.java", check category/java/bestpractices.xml/UnusedPrivateField. Exit 1, stdout empty,
+stderr:
+    [ERROR] No such file a
+    [ERROR] No such file b/Foo.java
+    [WARN] No files to analyze. Check input paths and exclude parameters, use --debug to see file collection traces.
+    [INFO] Found no violations.
+PMD split the line at the comma and checked nothing.
+
+@SuppressWarnings. Input Supp.java, six methods each holding one unused local `int x = 1;`, the first five annotated:
+    line 2  @SuppressWarnings("PMD")                     local on line 4
+    line 6  @SuppressWarnings("PMD.UnusedLocalVariable") local on line 8
+    line 10 @SuppressWarnings("all")                     local on line 12
+    line 14 @SuppressWarnings("unused")                  local on line 16
+    line 18 @SuppressWarnings("PMD.OtherRule")           local on line 20
+    line 22 no annotation                                local on line 23
+<list> one line "Supp.java", check category/java/bestpractices.xml/UnusedLocalVariable. Exit 4, stderr
+"[INFO] Found 2 violations."; the SARIF results were UnusedLocalVariable at lines 20 and 23 only. "PMD",
+"PMD.UnusedLocalVariable", "all" and "unused" suppressed the finding; "PMD.OtherRule" did not.
+
+Suppression options, from `pmd check --help` (PMD 7.29.0). These are the only two that name suppression:
+      --show-suppressed      Report should show suppressed rule violations if
+                               supported by the report format.
+      --suppress-marker=<suppressMarker>
+                             Specifies the string that marks a line which PMD
+                               should ignore.
+                               Default: NOPMD
+No option turns the marker off or makes PMD ignore @SuppressWarnings. With --format=sarif, --show-suppressed added
+nothing: a run with the default marker over a field marked `// NOPMD` gave the same single result as without it.

@@ -1,8 +1,8 @@
-//! `resolve_base`: `tm check --base <rev>` turned into the repository top and the commit it names.
+//! `resolve_base`: `cctao check --base <rev>` turned into the repository top and the commit it names.
 
 use super::CheckWorld;
 use crate::UsageError;
-use procio::Oid;
+use report::Oid;
 use std::path::{Path, PathBuf};
 
 /// With no base, `Ok(None)` and nothing is called. Otherwise the top of the repository holding `folder` and the
@@ -18,7 +18,7 @@ pub(crate) fn resolve_base(
     };
     let top = (world.toplevel)(folder).map_err(|g| UsageError {
         what: format!("git could not find the repository top for --base: {g}"),
-        fix: "Run tm check inside a git repository to use --base, or leave --base out.".to_string(),
+        fix: "Run cctao check inside a git repository to use --base, or leave --base out.".to_string(),
     })?;
     match (world.rev_parse)(&top, rev) {
         Ok(Some(oid)) => Ok(Some((top, oid))),

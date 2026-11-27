@@ -1,0 +1,1 @@
+[{"source":"/private/tmp/tm-stylelint-fixtures/clean/a.css","deprecations":[],"invalidOptionWarnings":[],"parseErrors":[],"errored":false,"warnings":[]}]

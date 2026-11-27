@@ -60,7 +60,7 @@ expires = "2099-12-31"
 
 #[test]
 fn rules_and_exceptions_in_file_order_with_scope_and_optional_what() {
-    let expected = "rule file: repo/temperare.toml\n\
+    let expected = "rule file: repo/tao.toml\n\
                     rules (2):\n  \
                     lint-all  clippy  quality  error  paths: all files  available\n  \
                     no-unwrap  clippy  security  warning  paths: src/**, lib/**  exclude: **/tests/**, **/gen/**  kits: core  available\n\
@@ -69,7 +69,7 @@ fn rules_and_exceptions_in_file_order_with_scope_and_optional_what() {
                     no-unwrap  src/a.rs  what: unwrap  approved: bob 2026-11-17  reason: Legacy.\n  \
                     lint-all  src/b.rs  approved: bob 2026-11-16  reason: Generated.\n\
                     exceptions expired (0):\n";
-    assert_eq!(rules_text(Path::new("repo/temperare.toml"), &parse(FULL), &all_available, day(), &[]), expected);
+    assert_eq!(rules_text(Path::new("repo/tao.toml"), &parse(FULL), &all_available, day(), &[]), expected);
 }
 
 #[test]

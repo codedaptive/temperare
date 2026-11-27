@@ -54,7 +54,7 @@ const SETS: &[BaselineSet] = &[
 ];
 
 const TAKES_KIT: &str = "version = 1\nbaseline = [\"kit@1\"]\n";
-const SET_FAULT_FIX: &str = "This is a fault in tm's embedded set; report it with this message.";
+const SET_FAULT_FIX: &str = "This is a fault in cctao's embedded set; report it with this message.";
 
 fn valid(text: &str) -> RuleFile {
     parse_with_sets(text, Path::new("."), SETS).unwrap_or_else(|p| panic!("valid, but: {p:?}"))

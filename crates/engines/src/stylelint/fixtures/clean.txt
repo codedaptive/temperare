@@ -1,0 +1,4 @@
+(node:349) [stylelint:101] ExperimentalWarning: The suppressions feature is experimental.
+See https://stylelint.io/user-guide/suppressions for more information.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[{"source":"/private/tmp/tm-stylelint-fixtures/clean/a.css","deprecations":[],"invalidOptionWarnings":[],"parseErrors":[],"errored":false,"warnings":[]}]

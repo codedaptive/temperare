@@ -70,6 +70,12 @@ fn only_rule_given_leaves_every_other_field_none_or_false() {
 }
 
 #[test]
+fn a_watch_severity_is_read() {
+    let expected = OverrideEntry { severity: Some(Severity::Watch), ..only_rule("tm-x", 20) };
+    assert_eq!(read("[[override]]\nrule = \"tm-x\"\nseverity = \"watch\"\n"), (vec![expected], vec![]));
+}
+
+#[test]
 fn two_overrides_come_back_in_file_order() {
     // The second rule string: 13 + 14 ("rule = \"tm-b\"\n") + 11 ("off = true\n") + 13 + 7 = byte 58.
     let text = "[[override]]\nrule = \"tm-b\"\noff = true\n[[override]]\nrule = \"tm-a\"\n";
@@ -100,7 +106,7 @@ fn a_rule_that_is_not_a_string_is_a_problem_at_the_value() {
 
 #[test]
 fn an_unknown_severity_is_a_problem_at_its_string() {
-    let fix = "Use \"error\" or \"warning\".";
+    let fix = "Use \"error\", \"warning\" or \"watch\".";
     assert_kept_with("severity = \"fatal\"", only_rule("tm-x", 20), problem(3, 12, "unknown severity \"fatal\"", fix));
 }
 
@@ -166,7 +172,7 @@ fn an_element_that_is_not_a_table_is_a_problem_and_the_rest_are_read() {
 fn a_bad_severity_keeps_the_override_with_severity_not_given() {
     // The override is kept so that resolve_baseline can still check its rule id; the severity is read as not given.
     let text = "[[override]]\nrule = \"tm-x\"\nseverity = \"loud\"\n";
-    let expected = problem(3, 12, "unknown severity \"loud\"", "Use \"error\" or \"warning\".");
+    let expected = problem(3, 12, "unknown severity \"loud\"", "Use \"error\", \"warning\" or \"watch\".");
     assert_eq!(read(text), (vec![only_rule("tm-x", 20)], vec![expected]));
 }
 

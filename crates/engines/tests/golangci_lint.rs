@@ -1,12 +1,16 @@
 #![cfg(unix)]
 
-use std::ffi::OsString;
 use std::fs;
 use std::os::unix::fs::{symlink, PermissionsExt};
 use std::path::PathBuf;
 
-use engines::{availability, run_rules_versioned_at, Availability};
+use engines::{availability_in, run_rules_versioned_at, Availability};
 use rules::{Engine, RelPath, RuleFile, RuleOutcome};
+
+#[path = "support/env_guard.rs"]
+mod env_guard;
+
+use env_guard::EnvGuard;
 
 struct TempFolder(PathBuf);
 
@@ -24,25 +28,6 @@ impl Drop for TempFolder {
     }
 }
 
-struct EnvGuard(&'static str, Option<OsString>);
-
-impl EnvGuard {
-    fn set(name: &'static str, value: impl AsRef<std::ffi::OsStr>) -> Self {
-        let previous = std::env::var_os(name);
-        std::env::set_var(name, value);
-        Self(name, previous)
-    }
-}
-
-impl Drop for EnvGuard {
-    fn drop(&mut self) {
-        match &self.1 {
-            Some(value) => std::env::set_var(self.0, value),
-            None => std::env::remove_var(self.0),
-        }
-    }
-}
-
 struct SymlinkGuard(PathBuf);
 
 impl Drop for SymlinkGuard {
@@ -53,7 +38,6 @@ impl Drop for SymlinkGuard {
 
 #[test]
 fn golangci_lint_reports_findings_and_unavailable_or_failed_runs() {
-    assert_eq!(availability(Engine::GolangciLint), Availability::Available);
     let _environment = [
         EnvGuard::set("GOTOOLCHAIN", "auto"),
         EnvGuard::set("GOPROXY", "http://127.0.0.1:9"),
@@ -73,12 +57,13 @@ fn golangci_lint_reports_findings_and_unavailable_or_failed_runs() {
         ("absent", deprecated, "staticcheck", "module example.com/absent\n\ngo 1.27\n"),
     ] {
         let folder = TempFolder::new(case);
+        assert_eq!(availability_in(Engine::GolangciLint, &folder.0), Availability::Available);
         fs::write(folder.0.join("go.mod"), module).unwrap();
         if case == "proxy" {
             fs::write(folder.0.join("go.sum"), "example.invalid/none v1.0.0 h1:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\nexample.invalid/none v1.0.0/go.mod h1:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\n").unwrap();
         }
         fs::write(folder.0.join("a.go"), source).unwrap();
-        fs::write(folder.0.join("temperare.toml"), format!(r#"version = 1
+        fs::write(folder.0.join("tao.toml"), format!(r#"version = 1
 [[rule]]
 id = "go-static"
 engine = "golangci-lint"
@@ -87,7 +72,7 @@ kind = "quality"
 severity = "warning"
 fix = "Use a replacement for the deprecated function."
 "#)).unwrap();
-        let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
+        let file = RuleFile::read(&folder.0.join("tao.toml")).unwrap();
         let link = (case == "finding").then(|| {
             let path = std::env::temp_dir().join(format!("engines-zit-{}-golangci-finding-link", std::process::id()));
             symlink(&folder.0, &path).unwrap();

@@ -1,0 +1,4 @@
+(node:2233) [stylelint:101] ExperimentalWarning: The suppressions feature is experimental.
+See https://stylelint.io/user-guide/suppressions for more information.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[{"source":"/private/tmp/tm-stylelint-fixtures/unk/a.css","deprecations":[],"invalidOptionWarnings":[],"parseErrors":[],"errored":true,"warnings":[{"line":1,"column":1,"endLine":1,"endColumn":2,"rule":"color-no-invalid-hexx","severity":"error","text":"Unknown rule color-no-invalid-hexx. Did you mean color-no-invalid-hex?"},{"line":1,"column":12,"endLine":1,"endColumn":19,"rule":"color-no-invalid-hex","severity":"error","text":"Invalid hex color \"#fff1az\" (color-no-invalid-hex)"}]}]

@@ -60,8 +60,29 @@ enum Case {
     UnknownAdvisory,
 }
 
+/// Set on the child process that runs one PATH-narrowed case: the name of that case's test.
+const GIT_ONLY_CASE: &str = "ENGINES_CARGO_AUDIT_GIT_ONLY_CASE";
+
+/// Runs the named case's test alone in a child of this test binary, with GIT_ONLY_CASE naming it.
+fn run_in_child(name: &str) {
+    let out = procio::run(&procio::Cmd {
+        args: vec!["--exact".into(), name.into(), "--test-threads=1".into()],
+        env: vec![(GIT_ONLY_CASE.into(), name.into())],
+        ..procio::Cmd::new(std::env::current_exe().unwrap())
+    }).unwrap();
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert_eq!(out.code, Some(0), "{name}: {stdout}{}", String::from_utf8_lossy(&out.stderr));
+    assert!(stdout.contains("1 passed"), "{name}: {stdout}");
+}
+
 fn check_case(name: &str, case: Case) {
     let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let narrows_path = matches!(case, Case::MissingEngine | Case::MissingLock);
+    if narrows_path && std::env::var(GIT_ONLY_CASE).as_deref() != Ok(name) {
+        // ccvcslib finds git once per process and keeps it, and this case's git lives in a temp folder that is
+        // removed, so it runs in its own process.
+        return run_in_child(name);
+    }
     let env = EnvGuard { cargo_home: std::env::var_os("CARGO_HOME"), path: std::env::var_os("PATH") };
     let repo = TempFolder::new(name, "repo");
     let home = TempFolder::new(name, "home");
@@ -84,10 +105,10 @@ fn check_case(name: &str, case: Case) {
         Case::UnknownAdvisory => "RUSTSEC-2099-9999",
         _ => "all",
     };
-    fs::write(repo.0.join("temperare.toml"), format!(
+    fs::write(repo.0.join("tao.toml"), format!(
         "version = 1\nowner = \"probe\"\n[[rule]]\nid = \"audit\"\nengine = \"cargo-audit\"\ncheck = \"{check}\"\npaths = [\"**\"]\nkind = \"security\"\nseverity = \"warning\"\nfix = \"Upgrade the dependency.\"\n"
     )).unwrap();
-    if matches!(case, Case::MissingEngine | Case::MissingLock) {
+    if narrows_path {
         let git = std::env::split_paths(env.path.as_ref().unwrap()).map(|dir| dir.join("git"))
             .find(|p| p.metadata().is_ok_and(|m| m.is_file() && m.permissions().mode() & 0o111 != 0)).unwrap();
         let bin = repo.0.join("bin");
@@ -95,11 +116,11 @@ fn check_case(name: &str, case: Case) {
         symlink(fs::canonicalize(git).unwrap(), bin.join("git")).unwrap();
         std::env::set_var("PATH", bin);
     }
-    let file = RuleFile::read(&repo.0.join("temperare.toml")).unwrap();
+    let file = RuleFile::read(&repo.0.join("tao.toml")).unwrap();
     let runs = run_rules_versioned_at(&file, &repo.0, &[], None).runs;
     let no_files = if matches!(case, Case::MissingLock) { no_file_rules(&file, &repo.0) } else { vec![] };
     let db = home.0.join("advisory-db");
-    let missing_db_why = format!("no advisory database at {}: fetch it with `cargo audit update-db --db {}` (tm never fetches it)", db.display(), db.display());
+    let missing_db_why = format!("no advisory database at {}: fetch it with `cargo audit update-db --db {}` (cctao never fetches it)", db.display(), db.display());
     drop(env);
     drop(repo);
     drop(home);

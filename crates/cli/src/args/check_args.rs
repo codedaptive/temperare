@@ -1,8 +1,8 @@
-//! `CheckArgs`: the flags and paths of `tm check`.
+//! `CheckArgs`: the flags and paths of `cctao check`.
 
 use std::path::PathBuf;
 
-/// `tm check [--rules <path>] [--base <rev>] [--kind quality|security] [--json] [<path>...]`; `paths` keeps the
+/// `cctao check [--rules <path>] [--base <rev>] [--kind quality|security] [--json] [<path>...]`; `paths` keeps the
 /// order they were given in.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct CheckArgs {

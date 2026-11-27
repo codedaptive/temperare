@@ -11,7 +11,7 @@ fn parse(args: &[&str]) -> Result<RulesArgs, UsageError> {
 }
 
 fn rules_error(what: &str) -> UsageError {
-    UsageError { what: what.to_string(), fix: "Run tm help to see the flags of tm rules.".to_string() }
+    UsageError { what: what.to_string(), fix: "Run cctao help to see the flags of cctao rules.".to_string() }
 }
 
 #[test]
@@ -36,22 +36,22 @@ fn rules_without_a_value() {
 
 #[test]
 fn a_positional_argument_is_refused() {
-    assert_eq!(parse(&["src"]), Err(rules_error("unexpected argument 'src' for tm rules")));
+    assert_eq!(parse(&["src"]), Err(rules_error("unexpected argument 'src' for cctao rules")));
 }
 
 #[test]
 fn check_flags_are_unknown_here() {
-    assert_eq!(parse(&["--kind", "security"]), Err(rules_error("unknown flag '--kind' for tm rules")));
+    assert_eq!(parse(&["--kind", "security"]), Err(rules_error("unknown flag '--kind' for cctao rules")));
 }
 
 #[test]
 fn an_unknown_flag_is_refused() {
-    assert_eq!(parse(&["--frob"]), Err(rules_error("unknown flag '--frob' for tm rules")));
+    assert_eq!(parse(&["--frob"]), Err(rules_error("unknown flag '--frob' for cctao rules")));
 }
 
 #[test]
 fn flag_equals_value_is_an_unknown_flag() {
-    assert_eq!(parse(&["--rules=t.toml"]), Err(rules_error("unknown flag '--rules=t.toml' for tm rules")));
+    assert_eq!(parse(&["--rules=t.toml"]), Err(rules_error("unknown flag '--rules=t.toml' for cctao rules")));
 }
 
 #[test]
@@ -71,11 +71,11 @@ fn loosened_with_base_in_either_order() {
 #[test]
 fn loosened_and_base_each_need_the_other() {
     let no_base = UsageError {
-        what: "tm rules --loosened needs --base <rev>".to_string(),
+        what: "cctao rules --loosened needs --base <rev>".to_string(),
         fix: "Pass --base <rev>, the commit to compare with.".to_string(),
     };
     let no_loosened = UsageError {
-        what: "--base is only for tm rules --loosened".to_string(),
+        what: "--base is only for cctao rules --loosened".to_string(),
         fix: "Add --loosened, or leave --base out.".to_string(),
     };
     let base_needs_a_value =

@@ -1,11 +1,11 @@
-# Contributing to Temperare
+# Contributing to Code Chi Tao
 
-Thank you for your interest in Temperare. This document explains how to contribute.
+Thank you for your interest in Tao. This document explains how to contribute.
 
 The short version: open an issue to report a problem or propose an idea, or open a pull request with a change and
 its tests.
 
-> **License:** Temperare is MIT licensed ([`LICENSE`](LICENSE)).
+> **License:** Tao is MIT licensed ([`LICENSE`](LICENSE)).
 
 ---
 
@@ -16,9 +16,9 @@ engine did not run, open an issue and tell us. You do not need a fix in hand.
 
 A good issue has:
 
-- the output of `tm --version`, and the version of the engine involved;
-- the smallest `temperare.toml` and input file that show it;
-- what `tm check --json` printed, and its exit code;
+- the output of `cctao --version`, and the version of the engine involved;
+- the smallest `tao.toml` and input file that show it;
+- what `cctao check --json` printed, and its exit code;
 - what you expected.
 
 A document that disagrees with the program is a bug too. Say which page and which command.
@@ -48,14 +48,28 @@ make accept                            # the acceptance checks, with a report
 
 `GROUP` is `unit` (the default), `integration` or `validation`, and works with `test-one` as well.
 `CARGO_TEST_ARGS=<name>` passes a test name filter. `make accept` needs clippy, SwiftLint, ruff, ast-grep,
-golangci-lint (with go), pylint, clang-tidy, vulture, Periphery, gitleaks and cargo-audit installed; for Periphery,
+ShellCheck, golangci-lint (with go), pylint, clang-tidy, vulture, Periphery, gitleaks, cargo-audit, ESLint, mypy,
+PMD, detekt, RuboCop, PHPStan (with php), dart, actionlint, sqlfluff, hadolint, yamllint, Vale, stylelint and
+markdownlint-cli2 installed, and `node` for ESLint, stylelint and markdownlint-cli2; for Periphery,
 Apple's `swift` at `/usr/bin/swift`; and for cargo-audit, its advisory database already fetched at
 `~/.cargo/advisory-db` (`cargo audit update-db`, run yourself beforehand: the check runs cargo-audit with
-`--no-fetch` and never fetches it). `tm` itself reads `$CARGO_HOME/advisory-db` first when `CARGO_HOME` is set, but
-the check runs `tm` with a home of its own linked to `~/.cargo/advisory-db` and no `CARGO_HOME`, so that is the
+`--no-fetch` and never fetches it). `cctao` itself reads `$CARGO_HOME/advisory-db` first when `CARGO_HOME` is set, but
+the check runs `cctao` with a home of its own linked to `~/.cargo/advisory-db` and no `CARGO_HOME`, so that is the
 path it needs even when `CARGO_HOME` is set. A check whose engine or database is missing does not run, and the
-report says so. The integration tests of the `engines` crate run those engines for real, and ShellCheck too.
-`make accept` writes its report to `target/accept-report.md` and fails when a check fails or does not run.
+report says so. The integration tests of the `engines` crate run those engines for real.
+
+After those checks, `make accept` runs the unit and integration tests on Windows at the same commit, with
+`scripts/windows_run.sh`. That needs a Windows machine you reach with `ssh` and no password prompt (`WINDOWS_HOST`;
+the default, `gammaAI`, is the maintainers'), with PowerShell, Rust's MSVC toolchain and clippy under its user's
+`.rustup`, git that can fetch from your `origin` and from GitHub, and ruff, ast-grep and dart, which the `engines`
+integration tests run there. It also pushes to `origin`: the commit goes up as a throwaway branch `ci/<short>`
+(`<short>` is the commit's first 12 hex digits), deleted after the run. The run's output comes back to
+`target/windows-run/<short>/out/`.
+
+`make accept` writes its report to `target/accept-report.md`, its head saying how the Windows run went. It fails
+when a check fails or does not run, exits 1 when the Windows run finds a failing test, and exits 3 when the Windows
+run cannot be made, as for a check that does not run: no machine, no push, or a checkout with uncommitted changes,
+which the machine cannot clone.
 
 Start with the smallest test that proves your change, then widen.
 
@@ -68,20 +82,23 @@ cli       the binary: the commands, the output, the exit codes
  ├── report   the report and its counts; new findings only, against a base commit
  ├── engines  one adapter per engine: run it, read its output into findings
  ├── rules    the rule file: read it, check it, scope, exceptions; the rule and finding types
- └── procio   the one place that runs another program, git included
+ └── procio   starts the programs Tao runs; git questions go through ccvcslib
 ```
 
-`procio` and `rules` depend on no other crate here. `engines` depends on both. `report` depends on `rules` and
-`procio`. `cli` depends on all four.
+`procio` and `rules` depend on no other crate here. `engines` depends on both. `report` depends on `rules`, and on
+`procio` only in its tests. `cli` depends on all four. `engines`, `report` and `cli` also depend on `ccvcslib`, the
+Code Chi version-control library, from outside the workspace and pinned at its tag v0.2.1: every question
+Tao asks git about a repository goes through it, `cctao baseline test`'s case repositories included.
 
 ### What a change must keep
 
 These hold today, and a pull request that breaks one will be asked to change.
 
-1. **Rules, not parsers.** Temperare parses no source code. A new check is a rule on an engine. A new language is a
+1. **Rules, not parsers.** Tao parses no source code. A new check is a rule on an engine. A new language is a
    new engine adapter.
-2. **Engines are programs.** No engine is linked. Every program, git included, is started by `procio` and nowhere
-   else. The repository's own `temperare.toml` checks this: run `tm check` in your checkout.
+2. **Engines are programs.** No engine is linked. In this repository every program is started by `procio` and
+   nowhere else; the git questions go through `ccvcslib`, which starts git itself. The repository's own
+   `tao.toml` checks this repository's part: run `cctao check` in your checkout.
 3. **"Not available" is never "clean".** A rule that could not be run says so. So does an engine that ran and gave
    no answer that can be read, and so does a rule whose `check` cannot be matched back to the engine's findings: it
    fails, it does not report nothing.
@@ -116,19 +133,20 @@ No test reaches the network.
 
 ### Adding an engine
 
-An engine adapter is a folder in `crates/engines/src/` with three parts: a function that builds the command line, a
-function that reads the engine's output into hits, and a function that joins the two. To add one:
+An engine adapter is a folder in `crates/engines/src/` that holds its entry: one `static` `Entry` describing the
+engine as data (its program, how a rule's check reaches it, how its version is read, its reader and its flow;
+`crates/engines/src/entry/entry.rs` says what each field holds). To add one:
 
 1. Add the engine to `Engine` in `crates/rules/src/types/engine.rs` and to `Engine::from_name` beside it
    (`engine_from_name.rs`), and its name to the "unknown engine" fix text in
    `crates/rules/src/rule_file/read_rule.rs` and to `engine_name` in `crates/report/src/render_text.rs`.
-2. Add its program name in `crates/engines/src/program.rs`. An engine that needs more than one program on `PATH`,
-   as clippy does, says so in `crates/engines/src/availability.rs`.
-3. Write the adapter folder, with captured output of the real engine as fixtures and unit tests for the builder and
-   the reader.
-4. Dispatch to it in `crates/engines/src/engine_hits.rs`.
-5. Add an integration test that runs the real engine on a file the test makes.
-6. Document it in [`docs/reference/ENGINES.md`](docs/reference/ENGINES.md) and in the README's tables.
+2. Write the adapter folder: the entry, its reader of the engine's output, captured output of the real engine as
+   fixtures, and unit tests for the entry and the reader. The entry's `program` is what the check runs, and its
+   `needs` lists every program it must find to be available, checked in order (clippy needs `cargo-clippy` and
+   `clippy-driver`).
+3. Add its arm to `entry_of`'s match in `crates/engines/src/internal/entry_of.rs`.
+4. Add an integration test that runs the real engine on a file the test makes.
+5. Document it in [`docs/reference/ENGINES.md`](docs/reference/ENGINES.md) and in the README's tables.
 
 ### Documents
 
@@ -141,7 +159,7 @@ pull request. Every statement in `README.md` and `docs/reference/` is meant to b
 
 **Do not report security-sensitive issues in public.**
 
-Temperare runs other programs with the privileges of the person who starts it. A security problem disclosed in a
+Tao runs other programs with the privileges of the person who starts it. A security problem disclosed in a
 public issue is disclosed to everyone before it can be fixed.
 
 > **Security contact:** report privately through GitHub's
