@@ -11,7 +11,7 @@ use std::path::Path;
 /// One check of a rule file. `runs` is each rule's run, in rule-file order. The rule file's folder is `file.folder`,
 /// relative to `repo` unless absolute; every finding's path is relative to it. `only` empty checks the whole folder;
 /// otherwise findings are cut to the files and folders it lists, a folder keeping what lies under it (engines still
-/// run over the folder). A rule tm refuses (its check or params, ast-grep's `{{name}}` params apart) is `Failed`
+/// run over the folder). A rule cctao refuses (its check or params, ast-grep's `{{name}}` params apart) is `Failed`
 /// first, whatever its engine; a ShellCheck rule with no script in its paths, a cargo-audit rule with no Cargo.lock in
 /// its folder or paths, a clang-tidy rule with no C-family source in its paths, a PMD rule with no Java file in them,
 /// a mypy rule with no Python file in them, a detekt rule with no Kotlin source in them, a dart rule with no .dart

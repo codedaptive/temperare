@@ -6,15 +6,15 @@ use rules::Engine;
 
 /// hadolint run by its own flow, `run_hadolint`, with the command `hadolint_cmd` builds:
 /// `hadolint --no-color -f sarif --disable-ignore-pragma --error=<check> --config=<config> -- <files>`, run in the rule
-/// file's folder and read by `parse_hadolint`, with every variable in tm's environment whose name starts with
+/// file's folder and read by `parse_hadolint`, with every variable in cctao's environment whose name starts with
 /// `HADOLINT_` removed from its environment.
 ///
-/// The check is one DL code from temperare's list. It reaches hadolint as `--error=<check>`, which also turns on a rule
+/// The check is one DL code from cctao's list. It reaches hadolint as `--error=<check>`, which also turns on a rule
 /// that is off by default (DL1001); the reader keeps only that code's findings. A check not shaped `DL` or `SC` then
 /// digits is `Failed` before anything runs (`hadolint_refusal`). hadolint takes any text as a code and never says it
-/// does not know one, so tm carries the list of DL codes in hadolint 2.15.1 (`hadolint_codes.txt`, S-51) and a code
+/// does not know one, so cctao carries the list of DL codes in hadolint 2.15.1 (`hadolint_codes.txt`, S-51) and a code
 /// not on it is not available (`not_listed`), never run and never clean. An SC code is not available too: hadolint
-/// runs ShellCheck without its optional checks and leaves out codes standalone ShellCheck reports, so tm cannot list
+/// runs ShellCheck without its optional checks and leaves out codes standalone ShellCheck reports, so cctao cannot list
 /// the SC codes it emits.
 ///
 /// The files are the rule's in-scope `Dockerfile`, `Containerfile` and `*.Dockerfile` files (`source_files` with
@@ -27,7 +27,7 @@ use rules::Engine;
 ///
 /// Suppressions, settled S-67: (1) inline `# hadolint ignore=` and `# hadolint global ignore=` pragmas are turned off
 /// (`--disable-ignore-pragma`); a pinned config whose `ignored` lists anything makes the rule `Failed`
-/// (`ignored_listed`), since `--ignore` cannot take it back; every variable in tm's environment whose name starts with
+/// (`ignored_listed`), since `--ignore` cannot take it back; every variable in cctao's environment whose name starts with
 /// `HADOLINT_`, `HADOLINT_IGNORE` among them, is removed. (2) Left honoured: `# shellcheck disable=` inside a `RUN`
 /// heredoc, which hadolint's ShellCheck obeys even with the pragmas off.
 ///
@@ -35,7 +35,7 @@ use rules::Engine;
 /// A config hadolint cannot read (it says so and runs on its defaults) and a Dockerfile it cannot parse (a DL1000
 /// result, with that file's other findings missing) are `Failed`. Under a sandbox that denies all network, hadolint
 /// 2.15.1 gave the same stdout, stderr and exit code as without it: in that probe run (one Dockerfile, one config),
-/// its output did not depend on the network (measured). tm sets nothing in the run's environment beyond removing every
+/// its output did not depend on the network (measured). cctao sets nothing in the run's environment beyond removing every
 /// variable whose name starts with `HADOLINT_`. A hadolint rule takes no params and shares no run with another rule:
 /// `shares_with` has no arm for it.
 pub static HADOLINT: Entry = Entry {

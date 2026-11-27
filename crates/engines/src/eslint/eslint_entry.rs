@@ -28,7 +28,7 @@ use rules::Engine;
 /// engine (`run_rules_listed`); a run that lints no listed file in the rule's paths is settled in the flow, after
 /// availability (`run_eslint_with`): ESLint's config decides which files it lints, so no list of extensions can be
 /// made before the run. A fatal message (a file ESLint could not parse) is `Failed`, even in a file git does not
-/// list, whose hits would be dropped (an accepted limit: the rule is never silently clean). tm sets nothing in the
+/// list, whose hits would be dropped (an accepted limit: the rule is never silently clean). cctao sets nothing in the
 /// environment (no NODE_PATH); eslint makes no network call. ESLint takes no params: any param makes the rule
 /// `Failed` before running. ESLint rules never share a run: `shares_with` has no arm for it.
 pub static ESLINT: Entry = Entry {

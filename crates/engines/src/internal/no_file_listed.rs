@@ -1,4 +1,4 @@
-//! `no_file_listed`: a rule's no-file why from its engine's listing of its folder, the one ladder tm check and the
+//! `no_file_listed`: a rule's no-file why from its engine's listing of its folder, the one ladder cctao check and the
 //! no-file listing share.
 
 use crate::actionlint::is_workflow;

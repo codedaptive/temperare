@@ -46,7 +46,7 @@ impl Repo {
         fs::create_dir(&path).unwrap();
         let repo = Self { path: fs::canonicalize(path).unwrap(), _path_guard: path_guard, _lock: lock };
         git_support::git(&repo.path, &["init", "-q"], b"");
-        repo.write("temperare.toml", &format!(
+        repo.write("tao.toml", &format!(
             "version = 1\n[[rule]]\nid = \"magic-number\"\nengine = \"detekt\"\ncheck = \"{check}\"\npaths = [\"**\"]\nfix = \"{FIX}\"\n"
         ));
         repo
@@ -67,7 +67,7 @@ impl Repo {
     }
 
     fn run(&self) -> RuleRun {
-        let file = RuleFile::read(&self.path.join("temperare.toml")).unwrap();
+        let file = RuleFile::read(&self.path.join("tao.toml")).unwrap();
         let mut runs = run_rules_versioned_at(&file, &self.path, &[], None).runs;
         assert_eq!(runs.len(), 1, "{runs:?}");
         runs.remove(0)
@@ -181,7 +181,7 @@ fn unlisted_check_is_not_available() {
     let RuleOutcome::NotAvailable { why, .. } = &run.outcome else { unreachable!() };
     let (prefix, _) = why.split_once(": ").unwrap();
     assert_eq!(prefix, "detekt 1.23.8", "{why}");
-    assert!(why.contains("NoSuchRule is not in temperare's list of detekt codes (taken from detekt 1.23.8)"), "{why}");
+    assert!(why.contains("NoSuchRule is not in cctao's list of detekt codes (taken from detekt 1.23.8)"), "{why}");
 }
 
 #[test]
@@ -226,7 +226,7 @@ fn old_detekt_no_file_before_floor() {
             std::env::set_var("PATH", std::env::join_paths(std::iter::once(repo.path.join("bin"))
                 .chain(std::env::split_paths(&path))).unwrap());
             repo.write(file, "package demo\n");
-            let rules = RuleFile::read(&repo.path.join("temperare.toml")).unwrap();
+            let rules = RuleFile::read(&repo.path.join("tao.toml")).unwrap();
             let checked = run_rules_versioned_at(&rules, &repo.path, &[], None);
             assert_eq!(checked.engines.len(), 1, "{name}: {:?}", checked.engines);
             assert_eq!(checked.engines[0].engine, Engine::Detekt, "{name}");
@@ -237,7 +237,7 @@ fn old_detekt_no_file_before_floor() {
                 assert_eq!(run.no_files, None, "{name}: {run:?}");
                 assert_eq!(run.not_available_cause, Some(NotAvailableCause::Other), "{name}: {run:?}");
                 let RuleOutcome::NotAvailable { why, .. } = &run.outcome else { panic!("{name}: {run:?}") };
-                assert_eq!(why, "detekt 1.23.7 is older than detekt 1.23.8, the release temperare's list of detekt codes was taken from", "{name}");
+                assert_eq!(why, "detekt 1.23.7 is older than detekt 1.23.8, the release cctao's list of detekt codes was taken from", "{name}");
             } else {
                 assert_eq!(run.outcome, RuleOutcome::Findings(vec![]), "{name}: {run:?}");
                 assert_eq!(run.no_files.as_deref(), Some("no file its engine checks"), "{name}");

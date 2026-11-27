@@ -116,7 +116,7 @@ each file holding `plainsentense here`, a blank line and a fenced block holding 
 reported only plainsentense (Markdown skips the fence); README.MD, Notes.Md and DOC.RST reported both, read as plain
 text. In a second run SCRIPT.PY (`plainsentense here` / `# hashsentense here`) reported both lines and lower.py only
 hashsentense. So Vale 3.28.1 knows a format only by its extension as written; an upper- or mixed-case extension is
-the plain-text fallback, which tm does not give Vale.
+the plain-text fallback, which cctao does not give Vale.
 
 Config names (the source of `NO_CONFIG_WHY`; no fixture kept, the runs are recorded here). In a throwaway git
 repository /tmp/tm-vale-b9qDjC (removed afterwards), an empty styles/ and one config holding `StylesPath = styles` /

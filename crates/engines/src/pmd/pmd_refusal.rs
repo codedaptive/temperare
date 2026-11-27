@@ -1,4 +1,4 @@
-//! `pmd_refusal`: why tm will not run a PMD check, if it will not.
+//! `pmd_refusal`: why cctao will not run a PMD check, if it will not.
 
 /// The reason `check` is refused, naming the first comma part refused; None when every part is
 /// `category/java/<category>.xml`, the category ASCII lowercase letters, or that plus `/<Rule>`, the rule ASCII letters
@@ -11,7 +11,7 @@ pub(crate) fn pmd_refusal(check: &str) -> Option<String> {
     let why = if part.is_empty() {
         "an empty part is not a PMD rule reference".to_string()
     } else if part.starts_with("category/") && !part.starts_with("category/java/") {
-        format!("`{part}` is not Java, the only language tm runs PMD on")
+        format!("`{part}` is not Java, the only language cctao runs PMD on")
     } else {
         format!(
             "`{part}` is not a PMD Java category or rule reference (category/java/<category>.xml[/<Rule>]); a ruleset \

@@ -1,4 +1,4 @@
-# temperare's list of shellcheck codes: the codes a rule may name. A code not listed is not available.
+# cctao's list of shellcheck codes: the codes a rule may name. A code not listed is not available.
 # source: ShellCheck 0.11.0 source tree (src/ShellCheck/**/*.hs): every SC code its checks and parser emit
 # version: 0.11.0
 # Format: one code per line as shellcheck prints it (SC2086); lines starting with # and blank lines are ignored.

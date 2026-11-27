@@ -6,7 +6,7 @@ use std::path::Path;
 
 #[test]
 fn phpstan_config_cases() {
-    let refused = |shown: &str| Err(format!("the phpstan config path {shown} holds ', % or a line break, so tm cannot write it into a config"));
+    let refused = |shown: &str| Err(format!("the phpstan config path {shown} holds ', % or a line break, so cctao cannot write it into a config"));
     let rows: [(&str, &Path, Result<String, String>); 5] = [
         ("plain", Path::new("/w/php app/phpstan.neon"),
             Ok("includes:\n    - '/w/php app/phpstan.neon'\nparameters:\n    tmpDir: cache\n    ignoreErrors!: []\n    excludePaths!: {analyse: [], analyseAndScan: []}\n".to_string())),
@@ -26,6 +26,6 @@ fn phpstan_config_cases() {
 fn phpstan_config_refuses_a_path_not_utf8() {
     use std::ffi::OsStr;
     use std::os::unix::ffi::OsStrExt;
-    let expected = Err("the phpstan config path /w/\u{fffd}/phpstan.neon is not UTF-8, so tm cannot write it into a config".to_string());
+    let expected = Err("the phpstan config path /w/\u{fffd}/phpstan.neon is not UTF-8, so cctao cannot write it into a config".to_string());
     assert_eq!(phpstan_config(Path::new(OsStr::from_bytes(b"/w/\xff/phpstan.neon"))), expected, "not UTF-8");
 }

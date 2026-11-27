@@ -13,7 +13,7 @@ fn codes_prefixes_and_all_are_not_refused() {
 fn an_empty_check_is_refused() {
     assert_eq!(
         ruff_refusal(""),
-        Some("ruff check ``: `` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects".to_string())
+        Some("ruff check ``: `` is not a rule code, a code prefix or ALL, so cctao cannot tell which findings it selects".to_string())
     );
 }
 
@@ -21,7 +21,7 @@ fn an_empty_check_is_refused() {
 fn lowercase_is_refused() {
     assert_eq!(
         ruff_refusal("e7"),
-        Some("ruff check `e7`: `e7` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects".to_string())
+        Some("ruff check `e7`: `e7` is not a rule code, a code prefix or ALL, so cctao cannot tell which findings it selects".to_string())
     );
 }
 
@@ -29,7 +29,7 @@ fn lowercase_is_refused() {
 fn a_leading_space_is_refused() {
     assert_eq!(
         ruff_refusal(" E7"),
-        Some("ruff check ` E7`: ` E7` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects".to_string())
+        Some("ruff check ` E7`: ` E7` is not a rule code, a code prefix or ALL, so cctao cannot tell which findings it selects".to_string())
     );
 }
 
@@ -37,7 +37,7 @@ fn a_leading_space_is_refused() {
 fn a_dash_is_refused() {
     assert_eq!(
         ruff_refusal("E-7"),
-        Some("ruff check `E-7`: `E-7` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects".to_string())
+        Some("ruff check `E-7`: `E-7` is not a rule code, a code prefix or ALL, so cctao cannot tell which findings it selects".to_string())
     );
 }
 
@@ -45,7 +45,7 @@ fn a_dash_is_refused() {
 fn a_linter_name_is_refused() {
     assert_eq!(
         ruff_refusal("flake8-bugbear"),
-        Some("ruff check `flake8-bugbear`: `flake8-bugbear` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects".to_string())
+        Some("ruff check `flake8-bugbear`: `flake8-bugbear` is not a rule code, a code prefix or ALL, so cctao cannot tell which findings it selects".to_string())
     );
 }
 
@@ -53,7 +53,7 @@ fn a_linter_name_is_refused() {
 fn a_category_is_refused() {
     assert_eq!(
         ruff_refusal("correctness"),
-        Some("ruff check `correctness`: `correctness` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects".to_string())
+        Some("ruff check `correctness`: `correctness` is not a rule code, a code prefix or ALL, so cctao cannot tell which findings it selects".to_string())
     );
 }
 
@@ -61,7 +61,7 @@ fn a_category_is_refused() {
 fn the_first_bad_part_of_a_list_is_named() {
     assert_eq!(
         ruff_refusal("E7,correctness"),
-        Some("ruff check `E7,correctness`: `correctness` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects".to_string())
+        Some("ruff check `E7,correctness`: `correctness` is not a rule code, a code prefix or ALL, so cctao cannot tell which findings it selects".to_string())
     );
 }
 
@@ -69,6 +69,6 @@ fn the_first_bad_part_of_a_list_is_named() {
 fn digits_before_letters_are_refused() {
     assert_eq!(
         ruff_refusal("7E"),
-        Some("ruff check `7E`: `7E` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects".to_string())
+        Some("ruff check `7E`: `7E` is not a rule code, a code prefix or ALL, so cctao cannot tell which findings it selects".to_string())
     );
 }

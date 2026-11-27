@@ -14,7 +14,7 @@ const CANDIDATES: [(&str, fn(&str) -> bool); 4] =
 /// - `pyproject.toml`: counts only when it parses as TOML and has a `tool.mypy` table;
 /// - `setup.cfg`: counts only when some line, trimmed, is exactly `[mypy]`.
 ///
-/// The first that counts, as its full path; None when none does. The user's home config is never looked at: tm pins
+/// The first that counts, as its full path; None when none does. The user's home config is never looked at: cctao pins
 /// the config it finds, so mypy never reads one outside the repository.
 pub(crate) fn mypy_config(folder: &Path, top: &Path, read: &dyn Fn(&Path) -> Option<String>) -> Option<PathBuf> {
     let dirs: Vec<&Path> = if folder.starts_with(top) {

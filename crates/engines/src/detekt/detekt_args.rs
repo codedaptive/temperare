@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 const MAX_ARG_BYTES: usize = 98304;
 
 /// `--input <f1,f2,…>` (each file as listed, relative to the folder detekt runs in), then `--config <config>,<layer>`
-/// (or `<layer>` alone when there is no config; detekt lets the last layer win, so tm's layer goes last), then
+/// (or `<layer>` alone when there is no config; detekt lets the last layer win, so cctao's layer goes last), then
 /// `--report sarif:<report>`. Each option and its value are two arguments: detekt refuses `--config=<path>`. It works
 /// on the paths' bytes, so a non-UTF-8 path survives. Err, naming the path, when a file, the config or the layer holds
 /// `,` or `;`, since detekt splits those values on either; Err when the `--input` value would pass `MAX_ARG_BYTES`.

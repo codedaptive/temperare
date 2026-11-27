@@ -26,7 +26,7 @@ use std::path::{Path, PathBuf};
 ///    on an options file read outside the repository top that no `package:` include reached, an include it cannot
 ///    resolve or read, a folder it cannot list, or options text the YAML parser cannot read (`yaml_entries`);
 /// 3. each chain's `options_suppression`: a key `exclude` or a value `ignore` in the options is `Failed` naming the
-///    file and the line, since dart would hide findings tm cannot get back (S-67 (1));
+///    file and the line, since dart would hide findings cctao cannot get back (S-67 (1));
 /// 4. the probe: `entry_cmd` (no params, no config) run through `host.run` in a new `ProbeDir` holding `probe_files`,
 ///    not counted, a run error read as `ran` reads it; `kind_of` reads it as a lint, a diagnostic, or an
 ///    `UnknownCheck`;
@@ -40,7 +40,7 @@ use std::path::{Path, PathBuf};
 pub(crate) fn run_dart(entry: &Entry, rule: &Rule, folder: &Path, host: &Host) -> Result<Vec<Hit>, Stop> {
     let top = repo_top(folder)?;
     let root = pubspec_root(folder, &top).ok_or_else(|| Stop::NotAvailable {
-        why: "no pubspec.yaml at or above the rule file's folder: dart analyze checks a Dart package, and tm runs it only in one".into(),
+        why: "no pubspec.yaml at or above the rule file's folder: dart analyze checks a Dart package, and cctao runs it only in one".into(),
     })?;
     let chains = options_files(folder, &top, &root)?;
     if let Some(stop) = chains.iter().find_map(|chain| options_suppression(chain)) {

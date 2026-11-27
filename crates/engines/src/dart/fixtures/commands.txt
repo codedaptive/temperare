@@ -55,6 +55,7 @@ pubspec.yaml:
     name: tm_probe
     environment:
       sdk: ^3.0.0
+The program now names the probe package cctao_probe; these captures used tm_probe.
 analysis_options.yaml, with <check> no_such_code_xyz, then prefer_single_quotes, then unused_local_variable:
     analyzer:
       errors:
@@ -110,49 +111,49 @@ Also measured by the same investigation:
 YAML forms (no fixture kept; measured with dart 3.14.1 by the request lead on 2026-11-23 in throwaway packages,
 lib/a.dart holding an unused local and a double-quoted print). Each run, from the package:
 dart --suppress-analytics analyze --format machine .
-1. `linter:\n  rules: [prefer_single_quotes]\n`: dart ran the lint, exit 2. tm reads the lint as enabled.
-2. `linter:\n  rules:\n    - "\x70refer_single_quotes"\n`: dart ran the lint, exit 2. tm reads the lint as enabled.
+1. `linter:\n  rules: [prefer_single_quotes]\n`: dart ran the lint, exit 2. cctao reads the lint as enabled.
+2. `linter:\n  rules:\n    - "\x70refer_single_quotes"\n`: dart ran the lint, exit 2. cctao reads the lint as enabled.
 3. `base: &b\n  errors:\n    unused_local_variable: ignore\nanalyzer:\n  <<: *b\n` printed
    `UNSUPPORTED_OPTION ... The option '<<' isn't supported by 'analyzer'.` and still reported UNUSED_LOCAL_VARIABLE,
-   exit 2: no merge. tm: Failed (a merge key).
+   exit 2: no merge. cctao: Failed (a merge key).
 4. `base: &b\n  prefer_single_quotes: true\nlinter:\n  rules:\n    <<: *b\n` printed
    `UNDEFINED_LINT ... '<<' isn't a recognized lint rule.` and reported PREFER_SINGLE_QUOTES, exit 2: the merged lint
-   ran. tm: Failed (a merge key), and the lint not enabled.
+   ran. cctao: Failed (a merge key), and the lint not enabled.
 5. `linter:` twice in one file, or `prefer_single_quotes: true` then `prefer_single_quotes: false` in one mapping,
    printed `ERROR|COMPILE_TIME_ERROR|PARSE_ERROR|...|Duplicate mapping key.`, exit 3, and dart dropped every option in
-   the file (neither lint reported). tm: Failed (a duplicate mapping key), and no lint enabled by the file.
+   the file (neither lint reported). cctao: Failed (a duplicate mapping key), and no lint enabled by the file.
 6. A second document (`---`) printed `PARSE_ERROR ... Only expected one document.`, exit 3, and the options file was
-   dropped. tm: Failed (a second YAML document), and no lint enabled by the file.
+   dropped. cctao: Failed (a second YAML document), and no lint enabled by the file.
 7. `linter:\n  rules:\n    &k prefer_single_quotes: true\n    avoid_print: *k\n` printed
-   `The value 'prefer_single_quotes' isn't supported by 'avoid_print'`, and both lints ran, exit 2. tm reads the alias
+   `The value 'prefer_single_quotes' isn't supported by 'avoid_print'`, and both lints ran, exit 2. cctao reads the alias
    as the anchored key's text: prefer_single_quotes enabled, avoid_print not.
 8. `analyzer:\n  errors:\n    ? [a, b]\n    : warning\n    unused_local_variable: ignore\n` printed
    `INVALID_SECTION_FORMAT ... Invalid format for the 'errors' section.`, and UNUSED_LOCAL_VARIABLE was not reported,
-   exit 2: the ignore still applied. tm: Failed (a key that is not a scalar).
+   exit 2: the ignore still applied. cctao: Failed (a key that is not a scalar).
 9. `linter:\n  rules:\n    - prefer_single_quotes\nx:\n  ~: 1\n  null: 2\n`, and the same with `true: 1` then `True: 2`,
    each printed `PARSE_ERROR ... Duplicate mapping key.`, exit 3, and the lint was not reported: YAML's null forms are
-   one key, as are a boolean's. tm: Failed (a duplicate mapping key), and no lint enabled by the file.
+   one key, as are a boolean's. cctao: Failed (a duplicate mapping key), and no lint enabled by the file.
 10. The same file with each of these pairs of keys under `x:`: `!!bool true: 1` then `true: 2`; `!!null ~: 1` then
    `null: 2`; `1: a` then `0x1: b`; `1: a` then `1.0: b`; `"a": 1` then `a: 2`. Each printed
    `PARSE_ERROR ... Duplicate mapping key.`, exit 3, and the lint was not reported: dart compares keys by their core
-   schema value. tm: Failed (a duplicate mapping key), and no lint enabled by the file. With `"1": a` then `1: b`
-   dart printed no error and ran the lint, exit 2: a string and an int are two keys. tm reads two keys, and the lint
+   schema value. cctao: Failed (a duplicate mapping key), and no lint enabled by the file. With `"1": a` then `1: b`
+   dart printed no error and ran the lint, exit 2: a string and an int are two keys. cctao reads two keys, and the lint
    as enabled.
 11. The same file with these under `x:`. The pairs `! 1: a` then `"1": b`, `!foo a: 1` then `a: 2`, `!foo a: 1` then
    `!foo a: 2`, and `.nan: 1` then `.nan: 2` each printed `PARSE_ERROR ... Duplicate mapping key.`, exit 3, and the
    lint was not reported. The pairs `! 1: a` then `1: b`, and `!foo 1: a` then `1: b`, printed no error and ran the
    lint, exit 2: dart reads a key under a tag outside the core schema, the non-specific `!` included, as the string
-   of its text, and two `.nan` keys as one. tm reads the keys the same way: Failed (a duplicate mapping key) for the
+   of its text, and two `.nan` keys as one. cctao reads the keys the same way: Failed (a duplicate mapping key) for the
    first four, two keys and the lint enabled for the last two. `a: !!int abc` printed
    `PARSE_ERROR ... Invalid int scalar.`, exit 3, and the lint was not reported (the file dropped); so did
    `a: !!bool maybe` (`Invalid bool scalar.`), `!!int abc: 1` as a key (`Invalid int scalar.`) and `a: !!null abc`
-   (`Invalid null scalar.`). tm: Failed (a core tag on text that does not read as its type), and no lint enabled by
+   (`Invalid null scalar.`). cctao: Failed (a core tag on text that does not read as its type), and no lint enabled by
    the file.
 12. Tags on collections. With the lint listed, `x: !foo {a: 1}`, `x: !foo [a]`, `x: !!map {a: 1}` and `x: !!seq [a]`
    each printed no error and ran the lint, exit 2; `linter:\n  rules: !foo\n    - prefer_single_quotes\n` and the same
    with `!!seq` ran the lint, exit 2; `analyzer:\n  errors: !foo\n    unused_local_variable: ignore\n` printed
    nothing, exit 0 (the ignore applied). dart reads a collection under a tag outside the core schema, or under its
-   own core tag, as the collection. tm reads them the same way: the lint enabled, and the ignore Failed as a
+   own core tag, as the collection. cctao reads them the same way: the lint enabled, and the ignore Failed as a
    suppression.
 
 Where dart reads `include` (no fixture kept; measured with dart 3.14.1 by the request lead on 2026-11-23 in a

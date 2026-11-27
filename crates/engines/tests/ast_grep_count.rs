@@ -50,7 +50,7 @@ impl Repo {
         let repo = Self(fs::canonicalize(path).unwrap());
         git_support::git(&repo.0, &["init", "-q"], b"");
         fs::create_dir_all(repo.0.join("tests/common")).unwrap();
-        fs::write(repo.0.join("temperare.toml"), RULE).unwrap();
+        fs::write(repo.0.join("tao.toml"), RULE).unwrap();
         fs::write(repo.0.join("setup.yml"), YAML).unwrap();
         fs::write(repo.0.join("tests/a_tests.rs"), BALANCED).unwrap();
         fs::write(repo.0.join("tests/b_tests.rs"), HEAVY).unwrap();
@@ -62,7 +62,7 @@ impl Repo {
     }
 
     fn run(&self, base: Option<&str>) -> Vec<RuleOutcome> {
-        let file = RuleFile::read(&self.0.join("temperare.toml")).unwrap();
+        let file = RuleFile::read(&self.0.join("tao.toml")).unwrap();
         run_rules_versioned_at(&file, &self.0, &[], base).runs.into_iter().map(|run| run.outcome).collect()
     }
 }

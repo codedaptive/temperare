@@ -28,7 +28,7 @@ fn configs_stop_settles_on_every_files_config() {
             Some(Stop::Failed { code: None, stderr: "stylelint's config turns color-no-invalid-hex off for a.css; exceptions go in the rule file".into() }),
             &["a.css", "b.css"]),
         ("fix stops the probing", "color-hex-length", &[("a.css", Ok(RULES)), ("sub/c.css", Ok(FIX)), ("d.css", Ok(RULES))],
-            Some(Stop::Failed { code: None, stderr: "stylelint's config for sub/c.css turns on fix, which rewrites the checked files; tm never edits the code it checks".into() }),
+            Some(Stop::Failed { code: None, stderr: "stylelint's config for sub/c.css turns on fix, which rewrites the checked files; cctao never edits the code it checks".into() }),
             &["a.css", "sub/c.css"]),
         ("probe could not run", "color-no-invalid-hex", &[("a.css", Err(not_on_path())), ("b.css", Ok(RULES))], Some(not_on_path()), &["a.css"]),
     ];

@@ -1,6 +1,6 @@
 //! ZUT for yaml_entries.rs: each mapping value and sequence item with its key path, item flag, line and value, block
 //! and flow style alike, escapes decoded, tagged scalars quoted, aliases (of nodes and of keys) replayed; the forms it
-//! does not read, a repeated key, a core tag its text does not fit, a `!!` tag tm does not read, entries multiplied
+//! does not read, a repeated key, a core tag its text does not fit, a `!!` tag cctao does not read, entries multiplied
 //! by aliases past the bound and nesting past the bound, an error naming the line.
 
 use super::YamlValue::{self, Nested, Null};

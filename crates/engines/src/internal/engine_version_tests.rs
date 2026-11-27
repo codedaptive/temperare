@@ -39,7 +39,7 @@ fn the_probe_command_is_wrapped_when_the_probe_has_a_wrap() {
     let entry = Entry {
         version: Some(crate::entry::VersionProbe {
             wrap: Some(|mut cmd| {
-                cmd.env.push(("TM_PROBE_WRAPPED".into(), "1".into()));
+                cmd.env.push(("CCTAO_PROBE_WRAPPED".into(), "1".into()));
                 cmd
             }),
             ..probe
@@ -55,7 +55,7 @@ fn the_probe_command_is_wrapped_when_the_probe_has_a_wrap() {
     assert_eq!(engine_version(&entry, Path::new(FOLDER), &host), Some("0.17.4".to_string()));
     let seen = seen.into_inner();
     assert_eq!(seen.len(), 1);
-    assert_eq!(seen[0].env, vec![("TM_PROBE_WRAPPED".into(), "1".into())]);
+    assert_eq!(seen[0].env, vec![("CCTAO_PROBE_WRAPPED".into(), "1".into())]);
 }
 
 #[test]

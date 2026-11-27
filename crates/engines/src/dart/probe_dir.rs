@@ -9,7 +9,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 /// folder, and `run_group`, which replays a command it has already run, never replays one probe for another.
 static NEXT: AtomicU64 = AtomicU64::new(0);
 
-/// A new folder `tm-dart-probe-<pid>-<n>` under the system's temporary folder holding the probe package's files
+/// A new folder `cctao-dart-probe-<pid>-<n>` under the system's temporary folder holding the probe package's files
 /// (`files`, the paths to write in it, each added before its write so a failed write is removed too); dropping it
 /// removes those files, then the folder (`probe_dir_drop.rs`).
 #[derive(Debug)]
@@ -24,7 +24,7 @@ impl ProbeDir {
     /// removed as the value drops.
     pub(crate) fn new(files: &[(&str, String)]) -> io::Result<ProbeDir> {
         let n = NEXT.fetch_add(1, Ordering::Relaxed);
-        let path = std::env::temp_dir().join(format!("tm-dart-probe-{}-{n}", std::process::id()));
+        let path = std::env::temp_dir().join(format!("cctao-dart-probe-{}-{n}", std::process::id()));
         std::fs::create_dir(&path)?;
         let mut dir = ProbeDir { path, files: Vec::new() };
         for (name, text) in files {

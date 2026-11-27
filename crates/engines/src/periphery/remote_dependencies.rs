@@ -5,7 +5,7 @@ use crate::types::ParseError;
 use procio::Output;
 use serde::Deserialize;
 
-/// The part of `swift package dump-package`'s JSON tm reads.
+/// The part of `swift package dump-package`'s JSON cctao reads.
 #[derive(Deserialize)]
 struct Manifest {
     dependencies: Vec<Dependency>,

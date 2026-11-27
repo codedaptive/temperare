@@ -18,9 +18,9 @@ fn the_entry_is_ast_grep_needing_ast_grep() {
 
 #[test]
 fn the_command_scans_with_the_rule_file_in_stream_json_from_the_folder() {
-    let cmd = entry_cmd(&AST_GREP, OsStr::new("/tmp/tm-ast-grep-1-0.yml"), &[], None, Path::new("/w/repo"));
+    let cmd = entry_cmd(&AST_GREP, OsStr::new("/tmp/cctao-ast-grep-1-0.yml"), &[], None, Path::new("/w/repo"));
     assert_eq!(cmd.program, "ast-grep");
-    assert_eq!(cmd.args, ["scan", "--rule", "/tmp/tm-ast-grep-1-0.yml", "--json=stream"]);
+    assert_eq!(cmd.args, ["scan", "--rule", "/tmp/cctao-ast-grep-1-0.yml", "--json=stream"]);
     assert_eq!(cmd.cwd, Some(PathBuf::from("/w/repo")));
 }
 

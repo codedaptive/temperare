@@ -51,7 +51,7 @@ fn hard_link_to_file_outside_folder_is_refused() {
     fs::hard_link(tree.root.join("outside.yml"), tree.folder.join("link.yml")).unwrap();
     assert_eq!(
         read_rule_yaml(&tree.folder, "link.yml"),
-        Err("ast-grep rule link.yml has more than one hard link: tm reads a rule YAML only when its folder holds the only link".to_string())
+        Err("ast-grep rule link.yml has more than one hard link: cctao reads a rule YAML only when its folder holds the only link".to_string())
     );
 }
 

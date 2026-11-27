@@ -148,7 +148,7 @@ fix = "f"
         runs: vec![RuleRun::new("quote".into(), Engine::ShellCheck, RuleOutcome::NotAvailable {
             rule: "quote".into(),
             engine: Engine::ShellCheck,
-            why: "shellcheck 0.11.0: SC9999 is not in temperare's list of shellcheck codes (taken from shellcheck 0.11.0)".into(),
+            why: "shellcheck 0.11.0: SC9999 is not in cctao's list of shellcheck codes (taken from shellcheck 0.11.0)".into(),
         }, None).with_cause(NotAvailableCause::Other)],
         engines: vec![EngineVersion { engine: Engine::ShellCheck, version: Some("0.11.0".into()) }],
     });

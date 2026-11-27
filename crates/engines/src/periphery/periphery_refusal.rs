@@ -1,4 +1,4 @@
-//! `periphery_refusal`: why tm cannot run a Periphery check, if it cannot.
+//! `periphery_refusal`: why cctao cannot run a Periphery check, if it cannot.
 
 /// The result hints Periphery 3.8.0 prints, and `all`, which keeps every result.
 const HINTS: [&str; 7] = [

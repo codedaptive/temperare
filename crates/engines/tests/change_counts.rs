@@ -53,7 +53,7 @@ fn check_change(code_lines: usize, tracked_test_lines: usize, untracked_test_lin
     if untracked_test_lines > 0 {
         fs::write(repo.0.join("tests/new_tests.rs"), "new test\n".repeat(untracked_test_lines)).unwrap();
     }
-    fs::write(repo.0.join("temperare.toml"), format!(r#"version = 1
+    fs::write(repo.0.join("tao.toml"), format!(r#"version = 1
 owner = "team"
 [kits.project]
 paths = ["src/**", "tests/**"]
@@ -67,7 +67,7 @@ fix = "Balance the change."
 [rule.params]
 {params}
 "#)).unwrap();
-    let file = RuleFile::read(&repo.0.join("temperare.toml")).unwrap();
+    let file = RuleFile::read(&repo.0.join("tao.toml")).unwrap();
     let restore = setup(&repo.0);
     let mut runs = run_rules_versioned_at(&file, &repo.0, &[], if with_base { Some(&base) } else { None }).runs;
     if let Some((path, permissions)) = restore {

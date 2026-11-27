@@ -89,11 +89,11 @@ fn stylelint_rule_reports_findings_suppressions_errors_and_absence() {
                 assert_eq!(output.code, Some(0), "{name}: {}", String::from_utf8_lossy(&output.stderr));
                 assert!(folder.0.join("stylelint-suppressions.json").is_file(), "{name}");
             }
-            fs::write(folder.0.join("temperare.toml"), format!(
+            fs::write(folder.0.join("tao.toml"), format!(
                 "version = 1\n[[rule]]\nid = \"stylelint-test\"\nengine = \"stylelint\"\ncheck = \"{check}\"\nfix = \"Use a valid value.\"\n{}",
                 if name == "param" { "params = { option = 1 }\n" } else { "" }
             )).unwrap();
-            let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
+            let file = RuleFile::read(&folder.0.join("tao.toml")).unwrap();
             let _path_guard = if name == "absent" || name == "absent-no-files" {
                 let guard = PathGuard(std::env::var_os("PATH"));
                 let without_stylelint = std::env::join_paths(std::env::split_paths(guard.0.as_ref().unwrap()).filter(|dir| {

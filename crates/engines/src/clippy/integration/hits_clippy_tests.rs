@@ -113,7 +113,7 @@ fn counted_clippy_group_refusal_excludes_help() {
     let root = tree("counted-group", &["."]);
     let (got, chars, seen) = counted_clippy("clippy::style", &root, &finished);
     fs::remove_dir_all(&root).unwrap();
-    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "clippy check `clippy::style` is a lint group: tm cannot tell its lints from other warnings, so it cannot report it; name each lint, or use `warnings`".into() }));
+    assert_eq!(got, Err(Stop::Failed { code: None, stderr: "clippy check `clippy::style` is a lint group: cctao cannot tell its lints from other warnings, so it cannot report it; name each lint, or use `warnings`".into() }));
     assert_eq!(chars, None);
     assert_eq!(seen.len(), 1);
     assert_eq!(seen[0].program, "clippy-driver");

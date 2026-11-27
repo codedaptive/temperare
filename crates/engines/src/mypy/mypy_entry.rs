@@ -14,7 +14,7 @@ use rules::Engine;
 /// reported only when the repository's config sets that flag. mypy saying "Invalid error code(s)" of the check is
 /// `UnknownCheck` (`unknown_code`).
 ///
-/// The config tm pins: the rule's config, else the one mypy itself would find from the folder up to the repository's
+/// The config cctao pins: the rule's config, else the one mypy itself would find from the folder up to the repository's
 /// top (`mypy_config`), else none (`--config-file=`), so the user's home config is never read. Suppressions, settled
 /// S-67: (1) a pinned config whose `ignore_errors`, per-module `disable_error_code` or `ignore_missing_imports`
 /// silences the check makes the rule `Failed` (`config_suppression`); config `exclude` does not apply, since the files

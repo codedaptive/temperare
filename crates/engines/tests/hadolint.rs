@@ -140,10 +140,10 @@ fn check_case(name: &str, case: Case) {
     repo.write(case.file, case.source);
     if let Some((path, source)) = case.config { repo.write(path, source); }
     if let Some((path, source)) = case.extra { repo.write(path, source); }
-    repo.write("temperare.toml", &format!(
+    repo.write("tao.toml", &format!(
         "version = 1\n[[rule]]\nid = \"docker\"\nengine = \"hadolint\"\ncheck = \"{}\"\npaths = [\"**\"]\nfix = \"{FIX}\"\n", case.check
     ));
-    let file = RuleFile::read(&repo.0.join("temperare.toml")).unwrap();
+    let file = RuleFile::read(&repo.0.join("tao.toml")).unwrap();
     let runs = run_rules_versioned_at(&file, &repo.0, &[], None).runs;
     assert_eq!(runs.len(), 1, "{name}: {runs:?}");
     let run = &runs[0];
@@ -241,8 +241,8 @@ fn old_hadolint_row(name: &str, file: &str, old_floor: bool) {
     repo.write("bin/hadolint", "#!/bin/sh\necho 'Haskell Dockerfile Linter 2.14.0'\n");
     fs::set_permissions(repo.0.join("bin/hadolint"), fs::Permissions::from_mode(0o755)).unwrap();
     repo.write(file, "FROM ubuntu\n");
-    repo.write("temperare.toml", "version = 1\n[[rule]]\nid = \"docker\"\nengine = \"hadolint\"\ncheck = \"DL3006\"\npaths = [\"**\"]\nfix = \"Tag the image.\"\n");
-    let rules = RuleFile::read(&repo.0.join("temperare.toml")).unwrap();
+    repo.write("tao.toml", "version = 1\n[[rule]]\nid = \"docker\"\nengine = \"hadolint\"\ncheck = \"DL3006\"\npaths = [\"**\"]\nfix = \"Tag the image.\"\n");
+    let rules = RuleFile::read(&repo.0.join("tao.toml")).unwrap();
     let checked = run_rules_versioned_at(&rules, &repo.0, &[], None);
     assert_eq!(checked.engines.len(), 1, "{name}: {:?}", checked.engines);
     assert_eq!(checked.engines[0].engine, Engine::Hadolint, "{name}");
@@ -253,7 +253,7 @@ fn old_hadolint_row(name: &str, file: &str, old_floor: bool) {
         assert_eq!(run.no_files, None, "{name}: {run:?}");
         assert_eq!(run.not_available_cause, Some(NotAvailableCause::Other), "{name}: {run:?}");
         let RuleOutcome::NotAvailable { why, .. } = &run.outcome else { panic!("{name}: {run:?}") };
-        assert_eq!(why, "hadolint 2.14.0 is older than hadolint 2.15.1, the release temperare's list of hadolint codes was taken from", "{name}");
+        assert_eq!(why, "hadolint 2.14.0 is older than hadolint 2.15.1, the release cctao's list of hadolint codes was taken from", "{name}");
     } else {
         assert_eq!(run.outcome, RuleOutcome::Findings(vec![]), "{name}: {run:?}");
         assert_eq!(run.no_files.as_deref(), Some("no file its engine checks"), "{name}");

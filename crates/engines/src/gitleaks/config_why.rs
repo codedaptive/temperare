@@ -1,4 +1,4 @@
-//! `config_why`: what one gitleaks config file means for the guard: why tm reads no findings under it, or the files it
+//! `config_why`: what one gitleaks config file means for the guard: why cctao reads no findings under it, or the files it
 //! extends.
 
 use super::allowlist_key;
@@ -14,14 +14,14 @@ use toml::{Table, Value};
 pub(crate) fn config_why(name: &str, text: &str) -> Result<Vec<String>, String> {
     let table: Table = text.parse().map_err(|_| {
         format!(
-            "gitleaks config `{name}` does not parse as TOML, so tm cannot tell whether it declares an allowlist and \
+            "gitleaks config `{name}` does not parse as TOML, so cctao cannot tell whether it declares an allowlist and \
              reads no findings under it"
         )
     })?;
     if let Some(path) = allowlist_key(&table) {
         return Err(format!(
             "gitleaks config `{name}` declares an allowlist (`{path}`); the rule file is the only home for an \
-             exception, so tm reads no findings under it"
+             exception, so cctao reads no findings under it"
         ));
     }
     Ok(strings_at(&table, &["extend", "path"]))

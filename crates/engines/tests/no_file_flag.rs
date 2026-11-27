@@ -44,7 +44,7 @@ fn no_file_flag_counts_untracked_but_not_ignored_files() {
     fs::write(repo.0.join("build/c.py"), violation).unwrap();
     git(&repo.0.join("inner"), &["init", "-q"]);
     fs::write(repo.0.join("inner/b.py"), violation).unwrap();
-    fs::write(repo.0.join("temperare.toml"), r#"version = 1
+    fs::write(repo.0.join("tao.toml"), r#"version = 1
 [[rule]]
 id = "untracked"
 engine = "ruff"
@@ -71,7 +71,7 @@ paths = ["inner"]
 fix = "Use is None."
 "#).unwrap();
 
-    let file = RuleFile::read(&repo.0.join("temperare.toml")).unwrap();
+    let file = RuleFile::read(&repo.0.join("tao.toml")).unwrap();
     let runs = run_rules_versioned_at(&file, &repo.0, &[], None).runs;
     assert_eq!(runs.len(), 4);
     assert_eq!(runs[0].rule, "untracked");

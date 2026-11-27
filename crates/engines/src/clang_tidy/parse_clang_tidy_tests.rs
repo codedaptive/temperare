@@ -45,7 +45,7 @@ fn parse_clang_tidy_cases() {
         ("a note line and snippet lines", 0, note.as_bytes(), b"", BRACES, W, Ok(vec![])),
         ("a path outside the folder", 0, outside.as_bytes(), b"", BRACES, W, Ok(vec![])),
         ("a relative path", 0, b"src/a.c:1:22: warning: w [readability-braces-around-statements]\n", b"", BRACES, W, why(
-            "clang-tidy printed `src/a.c` relative to its compile database's directory; tm reads its findings only when the database's `file` entries are absolute paths",
+            "clang-tidy printed `src/a.c` relative to its compile database's directory; cctao reads its findings only when the database's `file` entries are absolute paths",
         )),
         ("a relative path under another check", 0, b"src/a.c:1:22: warning: w [misc-x]\n", b"", BRACES, W, Ok(vec![])),
         ("exit 1 with a compile error quotes its error line", 1, include_bytes!("fixtures/compile_error.txt"), b"[1/2] Processing file /x/a.c.\n", BRACES, FIND, why(

@@ -1,6 +1,6 @@
 //! The hadolint adapter: its entry (`HADOLINT`), the flow it runs for one rule and its command; the refusal of a check
-//! that is not one hadolint code, temperare's list of hadolint codes (`hadolint_codes.txt`) and the stop for a code not
-//! on it, which files are Dockerfiles and the no-file outcome before availability, the config tm pins and whether it
+//! that is not one hadolint code, cctao's list of hadolint codes (`hadolint_codes.txt`) and the stop for a code not
+//! on it, which files are Dockerfiles and the no-file outcome before availability, the config cctao pins and whether it
 //! hides findings through `ignored`, the `HADOLINT_*` variables removed from the run, and the reader of hadolint's
 //! SARIF output.
 

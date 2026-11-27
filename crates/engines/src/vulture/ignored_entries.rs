@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 /// minus any final /), is_folder)`, kept when it sits strictly under `folder` and is a folder (git ends one with `/`)
 /// or ends in `.py`.
 /// An entry whose name holds U+FFFD is left out: ccvcslib decodes git's listing lossily, so a non-UTF-8 name arrives
-/// with U+FFFD in place of its bytes, and that path is not the real file or folder. tm leaves such an entry out of
+/// with U+FFFD in place of its bytes, and that path is not the real file or folder. cctao leaves such an entry out of
 /// --exclude, so vulture scans the ignored file or folder: what it finds there is reported, and a name used there
 /// counts as used.
 pub(crate) fn ignored_entries(entries: &[String], top: &Path, folder: &Path) -> Vec<(PathBuf, bool)> {

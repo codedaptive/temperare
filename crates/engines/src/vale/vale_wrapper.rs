@@ -1,4 +1,4 @@
-//! `vale_wrapper`: the config tm hands Vale in place of the repository's own.
+//! `vale_wrapper`: the config cctao hands Vale in place of the repository's own.
 
 use super::ValeConfig;
 
@@ -9,7 +9,7 @@ use super::ValeConfig;
 ///   what counts;
 /// - `Vocab = <config.vocab, comma-separated>`, the repository's vocabularies, a stated limit (S-81 (2)); left out when
 ///   there are none;
-/// - a blank line, then `[*]` and `BasedOnStyles = <style>`: the check's style for every file tm passes.
+/// - a blank line, then `[*]` and `BasedOnStyles = <style>`: the check's style for every file cctao passes.
 ///
 /// Only `StylesPath` and `Vocab` come from the repository, so its skip keys (`BlockIgnores`, `TokenIgnores`,
 /// `IgnoredScopes`, `SkippedScopes`, `IgnoredClasses`), its sections and their `Style.Rule = NO` lines never reach
@@ -20,7 +20,7 @@ pub(crate) fn vale_wrapper(config: &ValeConfig, style: &str) -> Result<String, S
     let mut text = String::new();
     if let Some(path) = config.paths.first() {
         let shown = path.display();
-        let path = path.to_str().ok_or_else(|| format!("the Vale StylesPath {shown} is not UTF-8, so tm cannot write it into a config"))?;
+        let path = path.to_str().ok_or_else(|| format!("the Vale StylesPath {shown} is not UTF-8, so cctao cannot write it into a config"))?;
         text.push_str(&format!("StylesPath = {}\n", one_line(path)?));
     }
     text.push_str("MinAlertLevel = suggestion\n");
@@ -35,7 +35,7 @@ pub(crate) fn vale_wrapper(config: &ValeConfig, style: &str) -> Result<String, S
 /// `value` when it holds no line break; else Err naming it.
 fn one_line(value: &str) -> Result<&str, String> {
     if value.contains(['\n', '\r']) {
-        return Err(format!("the Vale config value {value:?} holds a line break, so tm cannot write it into a config"));
+        return Err(format!("the Vale config value {value:?} holds a line break, so cctao cannot write it into a config"));
     }
     Ok(value)
 }

@@ -1,4 +1,4 @@
-//! `phpstan_refusal`: why a phpstan check is not a level tm can pass, if it is not.
+//! `phpstan_refusal`: why a phpstan check is not a level cctao can pass, if it is not.
 
 /// The reason `check` is refused when it is neither one or more ASCII digits nor exactly `max`; None when it is one.
 /// A phpstan check is a level passed as `--level` (S-71). A number PHPStan lacks (11, say) is not refused here: the

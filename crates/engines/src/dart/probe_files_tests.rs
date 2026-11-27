@@ -12,7 +12,7 @@ fn probe_files_cases() {
     ];
     for (check, options) in rows {
         let [(pubspec, pubspec_text), (name, text)] = probe_files(check);
-        assert_eq!((pubspec, pubspec_text.as_str()), ("pubspec.yaml", "name: tm_probe\nenvironment:\n  sdk: ^3.0.0\n"), "{check}");
+        assert_eq!((pubspec, pubspec_text.as_str()), ("pubspec.yaml", "name: cctao_probe\nenvironment:\n  sdk: ^3.0.0\n"), "{check}");
         assert_eq!((name, text.as_str()), ("analysis_options.yaml", options), "{check}");
     }
 }

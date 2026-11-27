@@ -7,7 +7,7 @@ fn cargo_audit_refusal_cases() {
     let other = |check: &str| {
         Some(format!("cargo-audit check `{check}` is not an advisory id (RUSTSEC-YYYY-NNNN) or a kind: all, vulnerability, unmaintained, unsound or notice"))
     };
-    let yanked = Some("cargo-audit check `yanked` needs the crates.io index, which tm never fetches; name an advisory id or a kind: all, vulnerability, unmaintained, unsound or notice".to_string());
+    let yanked = Some("cargo-audit check `yanked` needs the crates.io index, which cctao never fetches; name an advisory id or a kind: all, vulnerability, unmaintained, unsound or notice".to_string());
     let rows: [(&str, &str, Option<String>); 13] = [
         ("all", "all", None),
         ("vulnerability", "vulnerability", None),

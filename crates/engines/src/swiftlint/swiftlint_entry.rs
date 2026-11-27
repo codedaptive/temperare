@@ -15,7 +15,7 @@ use rules::Engine;
 /// with check `file_length`. The threshold is written to a temporary `.yml` file setting the check's `warning` and
 /// `error` levels both to `n`, passed as the last `--config=<path>` and removed after the run. Both levels are set: swiftlint
 /// rejects `error: null` and falls back to its default, and an error level below `n` left by an earlier config would
-/// still report; tm does not read swiftlint's severity. Swiftlint merges several `--config=`, a later one winning per
+/// still report; cctao does not read swiftlint's severity. Swiftlint merges several `--config=`, a later one winning per
 /// key, so the threshold comes after the rule's config. An explicit `--config` makes swiftlint skip the folder's own
 /// `.swiftlint.yml`, so when the rule gives no config and that file is there it is passed first. A threshold out of
 /// range or on another check, and any other param, make the rule `Failed` before running (`threshold_run`,

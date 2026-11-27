@@ -1,4 +1,4 @@
-//! `is_vale_source`: whether a file is in a format tm gives Vale.
+//! `is_vale_source`: whether a file is in a format cctao gives Vale.
 
 use std::path::Path;
 

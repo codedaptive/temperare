@@ -5,7 +5,7 @@ use procio::Output;
 /// sqlfluff 4.5.0's words, in its "User Error: No dialect was specified. ..." line (exit 2, no JSON).
 const NO_DIALECT: &str = "No dialect was specified";
 
-/// Why the rule is not available: tm passes no `--dialect`, since which SQL a repository writes is the repository's
+/// Why the rule is not available: cctao passes no `--dialect`, since which SQL a repository writes is the repository's
 /// own setting.
 const WHY: &str =
     "no dialect is set in the repository's sqlfluff config: set `dialect` under `[sqlfluff]` in its .sqlfluff";

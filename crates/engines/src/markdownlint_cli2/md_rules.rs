@@ -1,4 +1,4 @@
-//! `MD_RULES`: temperare's list of markdownlint rules (S-51), taken from markdownlint 0.42.2 (`MD_RULES_FROM`).
+//! `MD_RULES`: cctao's list of markdownlint rules (S-51), taken from markdownlint 0.42.2 (`MD_RULES_FROM`).
 
 use super::MdRule;
 

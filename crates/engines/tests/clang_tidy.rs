@@ -30,7 +30,7 @@ impl Repo {
         let repo = Self(fs::canonicalize(path).unwrap());
         support::git::git(&repo.0, &["init", "-q"], b"");
         fs::write(repo.0.join(filename), source).unwrap();
-        fs::write(repo.0.join("temperare.toml"), format!(
+        fs::write(repo.0.join("tao.toml"), format!(
             "version = 1\n[[rule]]\nid = \"braces\"\nengine = \"clang-tidy\"\ncheck = \"{check}\"\nkind = \"quality\"\nseverity = \"warning\"\nfix = \"{FIX}\"\n"
         )).unwrap();
         repo
@@ -47,7 +47,7 @@ impl Repo {
     }
 
     fn run(&self) -> Vec<RuleRun> {
-        let file = RuleFile::read(&self.0.join("temperare.toml")).unwrap();
+        let file = RuleFile::read(&self.0.join("tao.toml")).unwrap();
         run_rules_versioned_at(&file, &self.0, &[], None).runs
     }
 }
@@ -199,7 +199,7 @@ fn no_c_file_precedes_missing_engine() {
     let _lock = LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let repo = Repo::with_file("no-c-file", "README.txt", "tracked\n", "readability-braces-around-statements");
     support::git::git(&repo.0, &["add", "README.txt"], b"");
-    let rule_path = repo.0.join("temperare.toml");
+    let rule_path = repo.0.join("tao.toml");
     let mut rule_text = fs::read_to_string(&rule_path).unwrap();
     rule_text.push_str("paths = [\"**\"]\n");
     fs::write(&rule_path, rule_text).unwrap();

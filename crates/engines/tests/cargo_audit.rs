@@ -105,7 +105,7 @@ fn check_case(name: &str, case: Case) {
         Case::UnknownAdvisory => "RUSTSEC-2099-9999",
         _ => "all",
     };
-    fs::write(repo.0.join("temperare.toml"), format!(
+    fs::write(repo.0.join("tao.toml"), format!(
         "version = 1\nowner = \"probe\"\n[[rule]]\nid = \"audit\"\nengine = \"cargo-audit\"\ncheck = \"{check}\"\npaths = [\"**\"]\nkind = \"security\"\nseverity = \"warning\"\nfix = \"Upgrade the dependency.\"\n"
     )).unwrap();
     if narrows_path {
@@ -116,11 +116,11 @@ fn check_case(name: &str, case: Case) {
         symlink(fs::canonicalize(git).unwrap(), bin.join("git")).unwrap();
         std::env::set_var("PATH", bin);
     }
-    let file = RuleFile::read(&repo.0.join("temperare.toml")).unwrap();
+    let file = RuleFile::read(&repo.0.join("tao.toml")).unwrap();
     let runs = run_rules_versioned_at(&file, &repo.0, &[], None).runs;
     let no_files = if matches!(case, Case::MissingLock) { no_file_rules(&file, &repo.0) } else { vec![] };
     let db = home.0.join("advisory-db");
-    let missing_db_why = format!("no advisory database at {}: fetch it with `cargo audit update-db --db {}` (tm never fetches it)", db.display(), db.display());
+    let missing_db_why = format!("no advisory database at {}: fetch it with `cargo audit update-db --db {}` (cctao never fetches it)", db.display(), db.display());
     drop(env);
     drop(repo);
     drop(home);

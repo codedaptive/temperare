@@ -1,4 +1,4 @@
-//! `actionlint_config`: the config file tm passes actionlint, if any.
+//! `actionlint_config`: the config file cctao passes actionlint, if any.
 
 use std::path::{Path, PathBuf};
 
@@ -8,8 +8,8 @@ use std::path::{Path, PathBuf};
 const CONFIG_NAMES: [&str; 2] = [".github/actionlint.yaml", ".github/actionlint.yml"];
 
 /// `folder.join(rule_config)` when the rule names a config, whether or not it exists: a missing one is reported when
-/// tm reads it. Otherwise the first of `CONFIG_NAMES` under `top` (the git top) that `exists`; None when none does, and
-/// the flow then passes `/dev/null`, so actionlint never discovers a file tm did not read.
+/// cctao reads it. Otherwise the first of `CONFIG_NAMES` under `top` (the git top) that `exists`; None when none does, and
+/// the flow then passes `/dev/null`, so actionlint never discovers a file cctao did not read.
 pub(crate) fn actionlint_config(
     rule_config: Option<&str>,
     folder: &Path,

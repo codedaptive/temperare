@@ -12,7 +12,7 @@ use super::TempDir;
 static NEXT: AtomicU64 = AtomicU64::new(0);
 
 impl TempDir {
-    /// A new folder `tm-<stem>-<pid>-<n>` under `std::env::temp_dir()` holding the file `file` with `text`.
+    /// A new folder `cctao-<stem>-<pid>-<n>` under `std::env::temp_dir()` holding the file `file` with `text`.
     /// `file` must be a plain file name, one path component (no root, no `.` or `..`, no separator, not empty), so
     /// the file is always inside the new folder; any other name is an `InvalidInput` error and nothing is made. The
     /// folder and the file are both created new, never over existing ones; when creating or writing the file fails
@@ -25,7 +25,7 @@ impl TempDir {
             ));
         }
         let n = NEXT.fetch_add(1, Ordering::Relaxed);
-        let path = std::env::temp_dir().join(format!("tm-{stem}-{}-{n}", std::process::id()));
+        let path = std::env::temp_dir().join(format!("cctao-{stem}-{}-{n}", std::process::id()));
         std::fs::create_dir(&path)?;
         let mut temp = TempDir { file: None, path };
         let file = temp.path.join(file);

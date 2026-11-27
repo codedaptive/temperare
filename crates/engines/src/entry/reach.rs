@@ -5,7 +5,7 @@
 pub enum Reach {
     /// One argument `{flag}{setting}`; the flag carries its own `=` (ruff: `"--config="`).
     Arg(&'static str),
-    /// The setting is written to a temporary file `tm-<entry name>-<pid>-<n>.<ext>`, passed as one argument
+    /// The setting is written to a temporary file `cctao-<entry name>-<pid>-<n>.<ext>`, passed as one argument
     /// `{option}{path}`. `own` is the file name of the engine's own config in the rule file's folder
     /// (".swiftlint.yml"): when the rule gives no config and that file is there, it is passed first as
     /// `{option}{folder/own}`, since an explicit option makes the engine skip it.

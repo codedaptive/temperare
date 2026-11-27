@@ -13,7 +13,7 @@ impl<'a> Walk<'a> {
     /// empty value (an empty span: it has no place of its own) is at `key_line`, the line of its key, if any. `depth`
     /// is how many mappings and sequences hold it; one more level past `DEEPEST` is an `Err` before the walk recurses.
     /// A scalar's core tag is checked by `core_value`: a scalar whose core tag its text does not fit, or with a `!!`
-    /// tag tm does not read, is an `Err`. A `!!` tag on a mapping other than `!!map`, or on a sequence other than
+    /// tag cctao does not read, is an `Err`. A `!!` tag on a mapping other than `!!map`, or on a sequence other than
     /// `!!seq`, is an `Err` naming it (`yaml_entries` says why). Any other tag on a collection is read past, as dart
     /// reads it (measured, dart/fixtures/commands.txt, "YAML forms" 12).
     pub(super) fn node(
@@ -35,7 +35,7 @@ impl<'a> Walk<'a> {
             Event::MappingStart(anchor, tag) | Event::SequenceStart(anchor, tag) => {
                 let (kind, own) = if mapping { ("mapping", "map") } else { ("sequence", "seq") };
                 if let Some(tag) = tag.filter(|tag| tag.is_yaml_core_schema() && tag.suffix != own) {
-                    return Err(format!("line {at}: a `!!{}` tag on a {kind}, which tm does not read", tag.suffix));
+                    return Err(format!("line {at}: a `!!{}` tag on a {kind}, which cctao does not read", tag.suffix));
                 }
                 (anchor, YamlValue::Nested)
             }

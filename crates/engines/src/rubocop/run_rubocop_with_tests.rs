@@ -65,7 +65,7 @@ fn rows() -> Vec<Row> {
     let options = Path::new(FOLDER).join(".rubocop");
     vec![
         Row { name: ".rubocop file", rule: "", dot_rubocop: Some("--except Lint\n"), answers: [OFFENSES, STOCK, STOCK, LIST],
-            want: failed(&format!("{} gives rubocop options of its own; tm runs rubocop with its own options only", options.display())),
+            want: failed(&format!("{} gives rubocop options of its own; cctao runs rubocop with its own options only", options.display())),
             commands: vec![], chars: None },
         Row { name: "hits, with a config, probes after the check", rule: "config = \"ci/rubocop.yml\"\npaths = [\"example.rb\", \"lib/other.rb\"]\n",
             dot_rubocop: None, answers: [OFFENSES, STOCK, STOCK, LIST],

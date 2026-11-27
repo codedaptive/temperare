@@ -120,7 +120,7 @@ fn check_case(name: &str, case: Case) {
         }
         _ => {}
     }
-    fs::write(repo.join("temperare.toml"), "version = 1\n[[rule]]\nid = \"unused-code\"\nengine = \"periphery\"\ncheck = \"unused\"\npaths = [\"**\"]\nkind = \"quality\"\nseverity = \"warning\"\nfix = \"Remove unused code.\"\n").unwrap();
+    fs::write(repo.join("tao.toml"), "version = 1\n[[rule]]\nid = \"unused-code\"\nengine = \"periphery\"\ncheck = \"unused\"\npaths = [\"**\"]\nkind = \"quality\"\nseverity = \"warning\"\nfix = \"Remove unused code.\"\n").unwrap();
     git_support::git(&repo, &["add", "."], b"");
     if matches!(case, Case::NoEngine) {
         let filtered = std::env::join_paths(std::env::split_paths(saved_path.0.as_ref().unwrap()).filter(|dir| {
@@ -128,7 +128,7 @@ fn check_case(name: &str, case: Case) {
         })).unwrap();
         std::env::set_var("PATH", filtered);
     }
-    let file = RuleFile::read(&repo.join("temperare.toml")).unwrap();
+    let file = RuleFile::read(&repo.join("tao.toml")).unwrap();
     let runs = run_rules_versioned_at(&file, &repo, &[], None).runs;
     if matches!(case, Case::NestedRemote | Case::LocalOutsideRepo | Case::LocalCycle) { assert_no_build(&outer.0); }
     assert_eq!(runs.len(), 1, "{name}: {runs:?}");
@@ -146,14 +146,14 @@ fn check_case(name: &str, case: Case) {
             assert_eq!(findings[0].fix, "Remove unused code.");
             let mut names = fs::read_dir(&repo).unwrap().map(|e| e.unwrap().file_name()).collect::<Vec<_>>();
             names.sort();
-            assert_eq!(names, [".git", "Package.swift", "Sources", "temperare.toml"].map(OsString::from));
+            assert_eq!(names, [".git", "Package.swift", "Sources", "tao.toml"].map(OsString::from));
             let sources = fs::read_dir(repo.join("Sources")).unwrap().map(|e| e.unwrap().file_name()).collect::<Vec<_>>();
             assert_eq!(sources, [OsString::from("Probe")]);
             let target = fs::read_dir(repo.join("Sources/Probe")).unwrap().map(|e| e.unwrap().file_name()).collect::<Vec<_>>();
             assert_eq!(target, [OsString::from("main.swift")]);
             assert_eq!(fs::read_to_string(repo.join("Package.swift")).unwrap(), manifest);
             assert_eq!(fs::read_to_string(repo.join("Sources/Probe/main.swift")).unwrap(), source);
-            let prefix = format!("tm-periphery-{}-", std::process::id());
+            let prefix = format!("cctao-periphery-{}-", std::process::id());
             assert!(!fs::read_dir(std::env::temp_dir()).unwrap().any(|e| e.unwrap().file_name().to_string_lossy().starts_with(&prefix)));
         }
         Case::Clean | Case::LocalCycle => assert_eq!(run.outcome, RuleOutcome::Findings(vec![])),
@@ -162,21 +162,21 @@ fn check_case(name: &str, case: Case) {
             match case {
                 Case::NoPackage => {
                     assert_eq!(run.not_available_cause, Some(NotAvailableCause::Other));
-                    assert_eq!(why, "no Package.swift at or above the rule file's folder: Periphery builds the project, and tm runs it only on a Swift package");
+                    assert_eq!(why, "no Package.swift at or above the rule file's folder: Periphery builds the project, and cctao runs it only on a Swift package");
                 }
                 Case::Remote => {
                     assert_eq!(run.not_available_cause, Some(NotAvailableCause::Other));
-                    assert_eq!(why, "the package depends on dep, which tm would have to fetch: tm never fetches packages, so Periphery cannot build it here");
+                    assert_eq!(why, "the package depends on dep, which cctao would have to fetch: cctao never fetches packages, so Periphery cannot build it here");
                     assert!(!repo.join(".build").exists());
                 }
                 Case::RemoteBinary => {
                     assert_eq!(run.not_available_cause, Some(NotAvailableCause::Other));
-                    assert_eq!(why, "the package depends on binary target Bin (https://example.invalid/Bin.xcframework.zip), which tm would have to fetch: tm never fetches packages, so Periphery cannot build it here");
+                    assert_eq!(why, "the package depends on binary target Bin (https://example.invalid/Bin.xcframework.zip), which cctao would have to fetch: cctao never fetches packages, so Periphery cannot build it here");
                     assert!(!repo.join(".build").exists());
                 }
                 Case::PackageAboveRepo => {
                     assert_eq!(run.not_available_cause, Some(NotAvailableCause::Other));
-                    assert_eq!(why, "no Package.swift at or above the rule file's folder: Periphery builds the project, and tm runs it only on a Swift package");
+                    assert_eq!(why, "no Package.swift at or above the rule file's folder: Periphery builds the project, and cctao runs it only on a Swift package");
                     let mut names = fs::read_dir(&outer.0).unwrap().map(|e| e.unwrap().file_name()).collect::<Vec<_>>();
                     names.sort();
                     assert_eq!(names, ["Package.swift", "Sources", "repo"].map(OsString::from));
@@ -186,11 +186,11 @@ fn check_case(name: &str, case: Case) {
                 }
                 Case::NestedRemote => {
                     assert_eq!(run.not_available_cause, Some(NotAvailableCause::Other));
-                    assert_eq!(why, "the local package Inner depends on dep, which tm would have to fetch: tm never fetches packages, so Periphery cannot build it here");
+                    assert_eq!(why, "the local package Inner depends on dep, which cctao would have to fetch: cctao never fetches packages, so Periphery cannot build it here");
                 }
                 Case::LocalOutsideRepo => {
                     assert_eq!(run.not_available_cause, Some(NotAvailableCause::Other));
-                    assert_eq!(why, &format!("the package depends on the local package {}, outside the repository: tm cannot vouch for it, so Periphery cannot build it here", fs::canonicalize(outer.0.join("Outside")).unwrap().display()));
+                    assert_eq!(why, &format!("the package depends on the local package {}, outside the repository: cctao cannot vouch for it, so Periphery cannot build it here", fs::canonicalize(outer.0.join("Outside")).unwrap().display()));
                 }
                 Case::NoEngine => assert_eq!(run.not_available_cause, Some(NotAvailableCause::EngineNotOnPath)),
                 _ => unreachable!(),

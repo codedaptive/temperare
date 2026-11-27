@@ -98,7 +98,7 @@ fn counted_runs_keep_order_outcomes_and_distinguish_empty_from_not_run() {
         RuleRun::new(
             "refused".into(),
             Engine::Ruff,
-            RuleOutcome::Failed { rule: "refused".into(), engine: Engine::Ruff, code: None, stderr: "ruff check `flake8-bugbear`: `flake8-bugbear` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects".into() },
+            RuleOutcome::Failed { rule: "refused".into(), engine: Engine::Ruff, code: None, stderr: "ruff check `flake8-bugbear`: `flake8-bugbear` is not a rule code, a code prefix or ALL, so cctao cannot tell which findings it selects".into() },
             None,
         ),
         RuleRun::new(

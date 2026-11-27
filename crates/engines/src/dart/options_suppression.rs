@@ -1,4 +1,4 @@
-//! `options_suppression`: a suppression in an analysis options chain that tm cannot turn off (S-67 (1)).
+//! `options_suppression`: a suppression in an analysis options chain that cctao cannot turn off (S-67 (1)).
 
 use crate::cannot_turn_off::CANNOT_TURN_OFF;
 use crate::types::Stop;
@@ -6,7 +6,7 @@ use crate::yaml::{yaml_entries, YamlValue};
 use std::path::PathBuf;
 
 /// `Failed` for the first file of `chain` (each file's path and text, as `options_files` gives them) that hides
-/// findings or that tm cannot read, naming the file and the line. Dart reads these from the options and tm cannot
+/// findings or that cctao cannot read, naming the file and the line. Dart reads these from the options and cctao cannot
 /// tell it not to, so the rule gives no answer; exceptions go in the rule file. None when no file has one.
 ///
 /// Each file is read as YAML (`yaml_entries`), every style alike, escapes decoded and aliases replayed; a file it
@@ -27,7 +27,7 @@ fn hiding(text: &str) -> Option<String> {
         Ok(entries) => entries,
         // `why` starts `line N: `; the line stays first, as in every message here.
         Err(why) => {
-            let why = why.replacen(": ", ": tm cannot read it: ", 1);
+            let why = why.replacen(": ", ": cctao cannot read it: ", 1);
             return Some(format!("{why}; put exceptions in the rule file"));
         }
     };

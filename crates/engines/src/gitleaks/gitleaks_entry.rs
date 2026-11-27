@@ -19,7 +19,7 @@ use rules::Engine;
 /// `Failed` before running (`suppression_why`). The config's own rules apply.
 ///
 /// The secret is kept out twice: `--redact` makes gitleaks print "REDACTED" in place of a match, and every hit's text
-/// is one fixed text tm writes, never gitleaks'. `run_gitleaks` removes GITLEAKS_CONFIG and GITLEAKS_CONFIG_TOML from
+/// is one fixed text cctao writes, never gitleaks'. `run_gitleaks` removes GITLEAKS_CONFIG and GITLEAKS_CONFIG_TOML from
 /// the environment, so a caller's cannot replace the rule's config, and keeps only error lines of gitleaks' stderr.
 /// Nothing gitleaks does here reaches the network. Gitleaks rules never share a run: `shares_with` has no arm for it.
 pub static GITLEAKS: Entry = Entry {

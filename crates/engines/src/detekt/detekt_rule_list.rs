@@ -1,4 +1,4 @@
-//! `detekt_rule_list`: detekt's built-in rules as temperare lists them.
+//! `detekt_rule_list`: detekt's built-in rules as cctao lists them.
 
 /// Each `(rule set, rule)` of `detekt_rules.txt`, in file order: detekt 1.23.8's 214 built-in rules, sorted by rule
 /// set and then rule. The file's `#` lines and blank lines are not rules.

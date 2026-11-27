@@ -25,7 +25,7 @@ fn run_gitleaks_keeps_the_config_cuts_stderr_and_counts_raw() {
         path: RelPath::new("config.py"),
         line: Some(1),
         col: Some(12),
-        what: "gitleaks found a secret here; tm does not print it".to_string(),
+        what: "gitleaks found a secret here; cctao does not print it".to_string(),
     };
     let rows: [(&str, &str, Output, Result<Vec<Hit>, Stop>, usize); 3] = [
         (

@@ -1,10 +1,11 @@
 //! The markdownlint adapter (markdownlint-cli2): its entry (`MARKDOWNLINT`) and the flow it runs for one rule, the
 //! refusal of a check that is not a rule name, its no-file outcome before availability, the version from `--help`,
-//! temperare's list of markdownlint rules, the options module tm hands it, the reader of its JSON output, the
+//! cctao's list of markdownlint rules, the options module cctao hands it, the reader of its JSON output, the
 //! options-file refusal and the reading of the repository's configs, and which files are Markdown files
 //! (`is_markdown_source`).
 
 mod applying_configs;
+mod cctao_options;
 mod check_off_why;
 mod config_stop;
 mod is_markdown_source;
@@ -20,11 +21,12 @@ mod options_file_why;
 mod parse_markdownlint;
 mod run_markdownlint;
 mod run_markdownlint_with;
-mod tm_options;
 mod yaml_settings;
 
 #[cfg(test)]
 mod applying_configs_tests;
+#[cfg(test)]
+mod cctao_options_tests;
 #[cfg(test)]
 mod check_off_why_tests;
 #[cfg(test)]
@@ -52,11 +54,10 @@ mod parse_markdownlint_tests;
 #[cfg(test)]
 mod run_markdownlint_with_tests;
 #[cfg(test)]
-mod tm_options_tests;
-#[cfg(test)]
 mod yaml_settings_tests;
 
 pub(crate) use applying_configs::applying_configs;
+pub(crate) use cctao_options::cctao_options;
 pub(crate) use check_off_why::check_off_why;
 pub(crate) use config_stop::config_stop;
 pub(crate) use is_markdown_source::is_markdown_source;
@@ -72,5 +73,4 @@ pub(crate) use options_file_why::options_file_why;
 pub use parse_markdownlint::parse_markdownlint;
 pub(crate) use run_markdownlint::run_markdownlint;
 pub(crate) use run_markdownlint_with::run_markdownlint_with;
-pub(crate) use tm_options::tm_options;
 pub(crate) use yaml_settings::yaml_settings;

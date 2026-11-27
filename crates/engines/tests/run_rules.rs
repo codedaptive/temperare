@@ -122,8 +122,8 @@ fn run_rules_reports_ordered_findings_and_filters_to_one_file() {
     fs::write(folder.0.join("example.py"), "value = None\nif value == None:\n    pass\n").unwrap();
     fs::write(folder.0.join("example.js"), "console.log(foo);\nconsole.log(baz);\n").unwrap();
     fs::write(folder.0.join("names.yml"), "id: selected-names\nlanguage: JavaScript\nmessage: matched name\nseverity: warning\nrule:\n  kind: identifier\n  regex: '^(?:{{names}})$'\n").unwrap();
-    fs::write(folder.0.join("temperare.toml"), rules_text()).unwrap();
-    let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
+    fs::write(folder.0.join("tao.toml"), rules_text()).unwrap();
+    let file = RuleFile::read(&folder.0.join("tao.toml")).unwrap();
     let outcomes = outcomes_of(&file, &folder.0, &[]);
     let filtered = outcomes_of(&file, &folder.0, &[RelPath::new("example.py")]);
     let cache_exists = folder.0.join(".ruff_cache").exists();
@@ -177,8 +177,8 @@ fn clippy_workspace_member_finding_is_relative_to_rule_folder() {
     fs::write(folder.0.join("Cargo.toml"), "[workspace]\nmembers = [\"member\"]\nresolver = \"2\"\n").unwrap();
     fs::write(member.join("Cargo.toml"), "[package]\nname = \"member_zit\"\nversion = \"0.1.0\"\nedition = \"2021\"\n").unwrap();
     fs::write(member.join("src/lib.rs"), "pub fn compare(value: bool) -> bool {\n    value == true\n}\n").unwrap();
-    fs::write(member.join("temperare.toml"), "version = 1\n[[rule]]\nid = \"member-bool\"\nengine = \"clippy\"\ncheck = \"clippy::bool_comparison\"\nfix = \"Simplify.\"\n").unwrap();
-    let file = RuleFile::read(&member.join("temperare.toml")).unwrap();
+    fs::write(member.join("tao.toml"), "version = 1\n[[rule]]\nid = \"member-bool\"\nengine = \"clippy\"\ncheck = \"clippy::bool_comparison\"\nfix = \"Simplify.\"\n").unwrap();
+    let file = RuleFile::read(&member.join("tao.toml")).unwrap();
     let outcomes = outcomes_of(&file, &folder.0, &[]);
     drop(folder);
     assert_eq!(outcomes.len(), 1);
@@ -210,7 +210,7 @@ fn clippy_warnings_cover_all_targets_deduplicate_and_honor_allows() {
         "    }\n",
         "}\n",
     )).unwrap();
-    fs::write(folder.0.join("temperare.toml"), r#"version = 1
+    fs::write(folder.0.join("tao.toml"), r#"version = 1
 [[rule]]
 id = "allowed"
 engine = "clippy"
@@ -225,7 +225,7 @@ check = "warnings"
 severity = "error"
 fix = "Fix warning."
 "#).unwrap();
-    let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
+    let file = RuleFile::read(&folder.0.join("tao.toml")).unwrap();
     let outcomes = outcomes_of(&file, &folder.0, &[]);
     assert_eq!(outcomes.len(), 2);
     assert_eq!(outcomes[0].0, "allowed");

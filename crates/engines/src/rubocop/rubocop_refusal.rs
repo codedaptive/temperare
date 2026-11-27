@@ -1,4 +1,4 @@
-//! `rubocop_refusal`: why tm will not run a rubocop check, if it will not.
+//! `rubocop_refusal`: why cctao will not run a rubocop check, if it will not.
 
 /// The reason `check` is refused, naming its first comma-separated part that is not a full cop name; `None` when
 /// every part is one. A full cop name is two or more `/`-separated segments, each an ASCII uppercase letter followed

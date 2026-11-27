@@ -1,4 +1,4 @@
-//! `MdRule`: one markdownlint rule as temperare's list holds it. Plain data, read by `md_rule_of` and
+//! `MdRule`: one markdownlint rule as cctao's list holds it. Plain data, read by `md_rule_of` and
 //! `check_off_why`.
 
 /// One rule of markdownlint: its names, the `MDnnn` id first and then its aliases (`["MD013", "line-length"]`), and

@@ -1,4 +1,4 @@
-//! `TempDir`: a folder holding one file tm writes for one engine run, living as long as the value.
+//! `TempDir`: a folder holding one file cctao writes for one engine run, living as long as the value.
 
 use std::path::PathBuf;
 

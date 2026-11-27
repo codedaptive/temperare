@@ -1,6 +1,6 @@
 //! ZUT for stopped.rs: a check the engine said it does not know becomes `NotAvailable`
 //! with a why naming the engine, its version from the versions given (`(version unknown)` without one) and the check;
-//! a check not in temperare's list of its engine's codes becomes `NotAvailable` with the engine and its version before
+//! a check not in cctao's list of its engine's codes becomes `NotAvailable` with the engine and its version before
 //! what it said; `NotOnPath`, `NotAvailable` and `NoCargoProject` become `NotAvailable` with their why; `NoFiles` is no
 //! findings and `Failed` keeps its kind. No engine runs in these. The unknown-check path is that of clippy, swiftlint
 //! and ruff, the engines that can say a check is unknown: one test reaches it through `engine_hits` with swiftlint's
@@ -114,7 +114,7 @@ fn no_files_is_no_findings() {
 }
 
 fn not_listed() -> Stop {
-    Stop::NotListed { said: "SC9999 is not in temperare's list of shellcheck codes (taken from shellcheck 9.9.9)".to_string() }
+    Stop::NotListed { said: "SC9999 is not in cctao's list of shellcheck codes (taken from shellcheck 9.9.9)".to_string() }
 }
 
 fn not_available(why: &str) -> RuleOutcome {
@@ -125,7 +125,7 @@ fn not_available(why: &str) -> RuleOutcome {
 fn a_check_not_listed_names_its_engines_version_before_what_it_said() {
     let versions = [EngineVersion { engine: Engine::ShellCheck, version: Some("0.11.0".to_string()) }];
     let got = stopped(&rule("shellcheck", "SC9999"), not_listed(), &versions);
-    let why = "shellcheck 0.11.0: SC9999 is not in temperare's list of shellcheck codes (taken from shellcheck 9.9.9)";
+    let why = "shellcheck 0.11.0: SC9999 is not in cctao's list of shellcheck codes (taken from shellcheck 9.9.9)";
     assert_eq!(got, not_available(why));
 }
 
@@ -133,7 +133,7 @@ fn a_check_not_listed_names_its_engines_version_before_what_it_said() {
 fn a_check_not_listed_with_no_version_read_is_version_unknown() {
     let versions = [EngineVersion { engine: Engine::ShellCheck, version: None }];
     let got = stopped(&rule("shellcheck", "SC9999"), not_listed(), &versions);
-    let why = "shellcheck (version unknown): SC9999 is not in temperare's list of shellcheck codes (taken from shellcheck 9.9.9)";
+    let why = "shellcheck (version unknown): SC9999 is not in cctao's list of shellcheck codes (taken from shellcheck 9.9.9)";
     assert_eq!(got, not_available(why));
 }
 
@@ -141,6 +141,6 @@ fn a_check_not_listed_with_no_version_read_is_version_unknown() {
 fn a_check_not_listed_never_takes_another_engines_version() {
     let versions = [EngineVersion { engine: Engine::Ruff, version: Some("1.2.3".to_string()) }];
     let got = stopped(&rule("shellcheck", "SC9999"), not_listed(), &versions);
-    let why = "shellcheck (version unknown): SC9999 is not in temperare's list of shellcheck codes (taken from shellcheck 9.9.9)";
+    let why = "shellcheck (version unknown): SC9999 is not in cctao's list of shellcheck codes (taken from shellcheck 9.9.9)";
     assert_eq!(got, not_available(why));
 }

@@ -1,4 +1,4 @@
-//! `config_data`: the YAML config tm hands yamllint with `-d` for one rule.
+//! `config_data`: the YAML config cctao hands yamllint with `-d` for one rule.
 
 use std::path::Path;
 
@@ -7,7 +7,7 @@ use std::path::Path;
 ///   `<base>` is the path as a YAML double-quoted scalar, or the plain word `default` (yamllint's stock config) when
 ///   `base` is None.
 /// - `ignore: []` replaces the base's top-level `ignore` or `ignore-from-file`, one inherited through an `extends`
-///   chain included: yamllint applies the `-d` text's own `ignore` after `extends` has copied the base's, so no file tm
+///   chain included: yamllint applies the `-d` text's own `ignore` after `extends` has copied the base's, so no file cctao
 ///   passes is dropped (S-67 (1); this form is the one measured, fixtures/fixtures.txt).
 /// - naming the check under `rules` enables it even where the base disables it: a base `false` or `disable` is
 ///   replaced, so the check runs with its own option defaults at level error; a base table keeps its options and its

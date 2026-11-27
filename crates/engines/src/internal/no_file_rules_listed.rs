@@ -9,12 +9,12 @@ use rules::{RelPath, RuleFile};
 use std::path::{Path, PathBuf};
 
 /// The rules of `file`, in rule-file order, that are settled as no-file, each with its engine and why. Each rule is
-/// settled in tm check's order, the first that applies deciding it: a rule `refused` refuses is left out; with a
+/// settled in cctao check's order, the first that applies deciding it: a rule `refused` refuses is left out; with a
 /// `files` listing, a rule `no_file_match` says matches none of the files, with `NO_FILE_MATCH_WHY`; then a rule
 /// `no_file_listed` gives a why in `folder` (ShellCheck listing through `scripts`; its doc lists each engine's
 /// lister and their order). These are `run_rules_listed`'s step 2 and `engine_hits_with`'s step 1, through the same
 /// functions. With no `files` listing no rule is settled by its paths, and with no `folder`, or a failed listing, none
-/// by its folder's files. `only_with_base` plays no part: tm check settles a rule as no-file before its step 1b looks
+/// by its folder's files. `only_with_base` plays no part: cctao check settles a rule as no-file before its step 1b looks
 /// at the base. Runs no engine and looks nothing up on PATH; the calls out are `scripts` and `no_file_listed`'s
 /// listers, which read the disk or run git.
 pub(crate) fn no_file_rules_listed(

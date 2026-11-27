@@ -22,13 +22,13 @@ use std::path::{Path, PathBuf};
 ///    (`engine_listed`) settles that before availability; this guard decides only when that listing failed and
 ///    this one succeeds;
 /// 2. the repository top (`repo_top`); a `folder` in no repository is `Failed` with ccvcslib's error;
-/// 3. the config tm passes (`actionlint_config`: the rule's, else the top's `.github/actionlint.yaml` or `.yml`);
+/// 3. the config cctao passes (`actionlint_config`: the rule's, else the top's `.github/actionlint.yaml` or `.yml`);
 ///    when there is one, its text, a file it cannot read being `Failed` naming it, and `config_suppression`: an
-///    `ignore` in it, or text tm cannot read, is `Failed` naming the file and line (S-67 (1));
+///    `ignore` in it, or text cctao cannot read, is `Failed` naming the file and line (S-67 (1));
 /// 4. the integration the check turns on (`integration_args`): its program not on PATH (`host.on_path`) is
 ///    `NotOnPath`, since actionlint would skip the kind silently;
 /// 5. the check run, through `check_run` so it is counted: `entry_cmd` (no pick, params or config), then
-///    `-config-file=` with the config or `/dev/null`, so actionlint discovers nothing tm did not read, the two
+///    `-config-file=` with the config or `/dev/null`, so actionlint discovers nothing cctao did not read, the two
 ///    integration arguments, `--` and the workflows the rule applies to, relative to `folder`, where it runs; with
 ///    `SHELLCHECK_OPTS` removed from its environment, since it can silence ShellCheck findings;
 /// 6. the check not among the kinds the run defined (`entry.unknown`) is `UnknownCheck`;

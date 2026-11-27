@@ -27,7 +27,7 @@ impl Repo {
         let repo = Self(fs::canonicalize(path).unwrap());
         git_support::git(&repo.0, &["init", "-q"], b"");
         fs::create_dir_all(repo.0.join("kit/src")).unwrap();
-        fs::write(repo.0.join("kit/temperare.toml"), format!(
+        fs::write(repo.0.join("kit/tao.toml"), format!(
             "version = 1\n[[rule]]\nid = \"unused-field\"\nengine = \"pmd\"\ncheck = \"{check}\"\nfix = \"Remove the field.\"\n"
         )).unwrap();
         if let Some(source) = source {
@@ -118,7 +118,7 @@ fn run_case(case: Case) {
     }
     let repo = Repo::new(case.name, case.check, case.source, case.ignored, case.tracked);
     let _path = PathGuard::set(&repo, case.absent);
-    let file = RuleFile::read(&repo.0.join("kit/temperare.toml")).unwrap();
+    let file = RuleFile::read(&repo.0.join("kit/tao.toml")).unwrap();
     let runs = run_rules_versioned_at(&file, &repo.0, &[], None).runs;
     let no_files = no_file_rules(&file, &repo.0);
     assert_eq!(runs.len(), 1, "{}: {runs:?}", case.name);

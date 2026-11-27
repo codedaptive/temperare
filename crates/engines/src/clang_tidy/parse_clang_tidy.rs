@@ -22,7 +22,7 @@ struct Header<'a> {
 /// line (source snippets, notes, counts) is ignored. `cwd` is where clang-tidy ran and `folder` the rule file's folder,
 /// both canonical; a hit in a file outside `folder` is skipped. A kept line with a relative path is a `ParseError`:
 /// clang-tidy prints a path relative to its compile database's `directory` when the database's `file` entry is
-/// relative, whatever its own working directory, so tm cannot tell where the file is.
+/// relative, whatever its own working directory, so cctao cannot tell where the file is.
 pub fn parse_clang_tidy(out: &Output, check: &str, cwd: &Path, folder: &Path) -> Result<Vec<Hit>, ParseError> {
     let stdout = String::from_utf8_lossy(&out.stdout);
     if out.code != Some(0) {
@@ -39,7 +39,7 @@ pub fn parse_clang_tidy(out: &Output, check: &str, cwd: &Path, folder: &Path) ->
         if !Path::new(header.path).is_absolute() {
             return Err(ParseError {
                 why: format!(
-                    "clang-tidy printed `{}` relative to its compile database's directory; tm reads its findings only when the database's `file` entries are absolute paths",
+                    "clang-tidy printed `{}` relative to its compile database's directory; cctao reads its findings only when the database's `file` entries are absolute paths",
                     header.path
                 ),
             });

@@ -36,7 +36,7 @@ fn a_folder_holding_another_file_keeps_it() {
 
 #[test]
 fn a_file_the_value_did_not_create_is_kept_and_so_is_its_folder() {
-    let folder = std::env::temp_dir().join(format!("tm-zit-unowned-{}", std::process::id()));
+    let folder = std::env::temp_dir().join(format!("cctao-zit-unowned-{}", std::process::id()));
     std::fs::create_dir_all(&folder).unwrap();
     let file = folder.join("clippy.toml");
     std::fs::write(&file, "keep").unwrap();

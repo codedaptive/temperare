@@ -5,7 +5,7 @@ use super::stylelint_refusal;
 #[test]
 fn stylelint_refusal_refuses_what_is_not_a_rule_name() {
     let why = |check: &str| {
-        Some(format!("stylelint check `{check}` is not a stylelint rule name; tm matches findings by it"))
+        Some(format!("stylelint check `{check}` is not a stylelint rule name; cctao matches findings by it"))
     };
     let rows = [
         ("color-no-invalid-hex", None),

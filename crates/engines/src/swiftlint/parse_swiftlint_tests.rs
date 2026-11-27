@@ -136,6 +136,6 @@ fn d1_swiftlint_invalid_identifier_warning_is_an_error() {
     let out = output(0, b"[\n\n]", b"warning: 'force_cast,force_try' is not a valid rule identifier\nValid rule identifiers:\nforce_cast\nforce_try\nline_length\n");
     assert_eq!(
         parse_swiftlint(&out, "force_cast,force_try", Path::new(DIR), Path::new(DIR)),
-        Err(ParseError { why: "swiftlint check `force_cast,force_try` is not a rule this swiftlint knows (warning: 'force_cast,force_try' is not a valid rule identifier): tm cannot report it; name a rule `swiftlint rules` lists, or a custom rule the rule's config defines".to_string() })
+        Err(ParseError { why: "swiftlint check `force_cast,force_try` is not a rule this swiftlint knows (warning: 'force_cast,force_try' is not a valid rule identifier): cctao cannot report it; name a rule `swiftlint rules` lists, or a custom rule the rule's config defines".to_string() })
     );
 }

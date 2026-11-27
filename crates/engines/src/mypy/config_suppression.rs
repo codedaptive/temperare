@@ -6,7 +6,7 @@ use super::{ini_settings, toml_settings, MypySetting};
 /// The file is read with `toml_settings` when `name` ends in `.toml`, else with `ini_settings`. The first setting, in
 /// file order, that silences gives Ok(Some(why)) naming the file, its section and its key:
 /// - `ignore_errors` true, in any section;
-/// - `disable_error_code` listing `check` in a per-module section (a global one is overridden by tm's
+/// - `disable_error_code` listing `check` in a per-module section (a global one is overridden by cctao's
 ///   `--enable-error-code=<check>`, so it silences nothing);
 /// - `ignore_missing_imports` true, when `check` is `import-not-found` or `import-untyped`.
 ///

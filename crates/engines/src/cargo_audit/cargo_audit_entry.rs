@@ -7,7 +7,7 @@ use rules::Engine;
 /// cargo-audit run by its own flow, `run_cargo_audit`, with the command `cargo_audit_cmd` builds:
 /// `cargo-audit audit --no-fetch --no-yanked --json --db <db> --file <folder>/Cargo.lock`, run in the rule file's
 /// folder and read by `parse_cargo_audit`. The database is cargo-audit's default, `$CARGO_HOME/advisory-db`, else
-/// `$HOME/.cargo/advisory-db`, and tm never fetches it: `--no-fetch` reads it as it is and `--no-yanked` skips the
+/// `$HOME/.cargo/advisory-db`, and cctao never fetches it: `--no-fetch` reads it as it is and `--no-yanked` skips the
 /// crates.io index, so nothing reaches the network. No environment is set; CARGO_HOME and HOME are only read to find
 /// the database. A database with no `crates` folder makes the rule not available, naming
 /// `cargo audit update-db --db <db>` to fetch it. A check is an advisory id (`RUSTSEC-YYYY-NNNN`) or a kind: `all`,

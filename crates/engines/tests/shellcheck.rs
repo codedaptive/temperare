@@ -50,7 +50,7 @@ fn shellcheck_entry_reports_sc2086_finding_and_missing_program() {
     assert_eq!(availability_in(Engine::ShellCheck, &repo.0), Availability::Available);
     git(&repo.0, &["init", "-q"]);
     fs::write(repo.0.join("quote.sh"), "#!/bin/sh\nname=$1\necho $name\n").unwrap();
-    fs::write(repo.0.join("temperare.toml"), r#"version = 1
+    fs::write(repo.0.join("tao.toml"), r#"version = 1
 [[rule]]
 id = "quote"
 engine = "shellcheck"
@@ -59,8 +59,8 @@ kind = "quality"
 severity = "warning"
 fix = "Quote the variable."
 "#).unwrap();
-    git(&repo.0, &["add", "quote.sh", "temperare.toml"]);
-    let file = RuleFile::read(&repo.0.join("temperare.toml")).unwrap();
+    git(&repo.0, &["add", "quote.sh", "tao.toml"]);
+    let file = RuleFile::read(&repo.0.join("tao.toml")).unwrap();
     let runs = run_rules_versioned_at(&file, &repo.0, &[], None).runs;
     assert_eq!(runs.len(), 1);
     assert_eq!(runs[0].rule, "quote");

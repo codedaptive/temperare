@@ -86,11 +86,11 @@ fn yamllint_rule_reports_findings_failures_and_availability() {
             if let Some(config) = config { fs::write(folder.0.join(".yamllint"), config).unwrap(); }
             if name == "inherited-ignore" { fs::write(folder.0.join("base.yaml"), "extends: default\nignore: |\n  a.yaml\n").unwrap(); }
             if name == "ignore-from-file" || name == "check-ignore-from-file" { fs::write(folder.0.join("ign.txt"), "a.yaml\n").unwrap(); }
-            fs::write(folder.0.join("temperare.toml"), format!(
+            fs::write(folder.0.join("tao.toml"), format!(
                 "version = 1\n[[rule]]\nid = \"yaml-check\"\nengine = \"yamllint\"\ncheck = \"{check}\"\n{}fix = \"Fix YAML.\"\n",
                 if name == "missing-config" { "config = \"missing.yaml\"\n" } else { "" }
             )).unwrap();
-            let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
+            let file = RuleFile::read(&folder.0.join("tao.toml")).unwrap();
             let _path_guard = if name == "absent" || name == "no-yaml-absent" {
                 let guard = PathGuard(std::env::var_os("PATH"));
                 let without_yamllint = std::env::join_paths(std::env::split_paths(guard.0.as_ref().unwrap()).filter(|dir| {

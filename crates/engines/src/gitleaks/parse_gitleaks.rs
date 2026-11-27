@@ -6,9 +6,9 @@ use procio::Output;
 use std::path::Path;
 
 /// Every gitleaks hit's text. gitleaks' own message holds only the rule id and the file, which the rule and the hit's
-/// path already give; a fixed text means no redaction tm does not control (a repo config, a later gitleaks) can let
+/// path already give; a fixed text means no redaction cctao does not control (a repo config, a later gitleaks) can let
 /// the secret through.
-const WHAT: &str = "gitleaks found a secret here; tm does not print it";
+const WHAT: &str = "gitleaks found a secret here; cctao does not print it";
 
 /// The error when stdout is not a SARIF log, in place of `read_sarif`'s, which quotes stdout when stderr is empty:
 /// stdout is where gitleaks puts findings, so this quotes nothing.

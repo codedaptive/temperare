@@ -1,4 +1,4 @@
-//! `dart_refusal`: why tm cannot match a dart check's findings back to it, if it cannot.
+//! `dart_refusal`: why cctao cannot match a dart check's findings back to it, if it cannot.
 
 /// The reason `check` is refused; None when it is one diagnostic code or lint name as the analyzer's own
 /// `analysis_options.yaml` and `// ignore:` comments spell it: a lower-case ASCII letter, then lower-case ASCII

@@ -38,7 +38,7 @@ pub(crate) fn run_rubocop_with(
     let options = folder.join(".rubocop");
     if read(&options).is_some() {
         return Err(failed(format!(
-            "{} gives rubocop options of its own; tm runs rubocop with its own options only",
+            "{} gives rubocop options of its own; cctao runs rubocop with its own options only",
             options.display()
         )));
     }

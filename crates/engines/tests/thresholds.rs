@@ -34,7 +34,7 @@ fn run(repo: &Path, engine: &str, check: &str, params: Option<&str>) -> RuleOutc
     if let Some(params) = params {
         text.push_str(&format!("[rule.params]\n{params}\n"));
     }
-    let path = repo.join("temperare.toml");
+    let path = repo.join("tao.toml");
     fs::write(&path, text).unwrap();
     let file = RuleFile::read(&path).unwrap();
     let mut runs = run_rules_versioned_at(&file, repo, &[], None).runs;

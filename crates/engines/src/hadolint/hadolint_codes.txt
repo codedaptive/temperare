@@ -1,9 +1,9 @@
-# temperare's list of hadolint codes: the codes a rule may name. A code not listed is not available.
+# cctao's list of hadolint codes: the codes a rule may name. A code not listed is not available.
 # source: hadolint 2.15.1 binary (/opt/homebrew/bin/hadolint): one Hadolint.Rule.DLxxxx module per code, each shipped with its rule message
 # version: 2.15.1
 # Format: one code per line as hadolint prints it (DL3006); lines starting with # and blank lines are ignored.
 # Not listed: DL1000, which is hadolint's report that it could not parse a Dockerfile, not a rule; and every SC code:
-# hadolint runs ShellCheck 0.11.0 without its optional checks and leaves out codes of its own, so tm cannot list which
+# hadolint runs ShellCheck 0.11.0 without its optional checks and leaves out codes of its own, so cctao cannot list which
 # SC codes it reports.
 DL1001
 DL3000

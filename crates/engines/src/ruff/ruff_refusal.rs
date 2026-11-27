@@ -1,4 +1,4 @@
-//! `ruff_refusal`: why tm cannot match a ruff check's findings back to it, if it cannot.
+//! `ruff_refusal`: why cctao cannot match a ruff check's findings back to it, if it cannot.
 
 /// The reason `check` is refused, naming its first comma part that is neither `ALL` nor a rule code or code prefix
 /// (one or more ASCII uppercase letters, then zero or more ASCII digits: `E`, `E7`, `PLC0414`); None when every part
@@ -7,7 +7,7 @@
 pub(crate) fn ruff_refusal(check: &str) -> Option<String> {
     let part = check.split(',').find(|part| *part != "ALL" && !is_code_prefix(part))?;
     Some(format!(
-        "ruff check `{check}`: `{part}` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects"
+        "ruff check `{check}`: `{part}` is not a rule code, a code prefix or ALL, so cctao cannot tell which findings it selects"
     ))
 }
 

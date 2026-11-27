@@ -33,7 +33,7 @@ struct Message {
 }
 
 /// The hits of rule `check` in `out`: per file in output order, its `messages` then its `suppressedMessages` whose
-/// `ruleId` is `check`. Reading the suppressed ones is how tm turns `eslint-suppressions.json` off (S-67 (1)): a
+/// `ruleId` is `check`. Reading the suppressed ones is how cctao turns `eslint-suppressions.json` off (S-67 (1)): a
 /// finding the file hides is still a finding. stdout is one JSON array of files; any exit code with such stdout is an
 /// answer (ESLint exits 1 when it reports an error; warnings alone exit 0). `cwd` is where ESLint ran and `folder` the rule file's folder, both
 /// canonical; a message in a file outside `folder` is not a hit. A `fatal` message in any file, whatever its rule, is

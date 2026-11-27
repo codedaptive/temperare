@@ -52,8 +52,8 @@ fn swiftlint_unknown_rule_is_not_available_naming_the_identifier() {
     let folder = fs::canonicalize(folder).unwrap();
     assert_eq!(availability_in(Engine::SwiftLint, &folder), Availability::Available);
     fs::write(folder.join("Example.swift"), "let value = 1\n").unwrap();
-    fs::write(folder.join("temperare.toml"), "version = 1\n[[rule]]\nid = \"unknown-swift-rule\"\nengine = \"swiftlint\"\ncheck = \"no_such_rule\"\nfix = \"Name a known rule.\"\n").unwrap();
-    let file = RuleFile::read(&folder.join("temperare.toml")).unwrap();
+    fs::write(folder.join("tao.toml"), "version = 1\n[[rule]]\nid = \"unknown-swift-rule\"\nengine = \"swiftlint\"\ncheck = \"no_such_rule\"\nfix = \"Name a known rule.\"\n").unwrap();
+    let file = RuleFile::read(&folder.join("tao.toml")).unwrap();
     // The version is machine-specific, so read the engine for this expected value only.
     let version_output = procio::run(&procio::Cmd {
         args: vec!["version".into()], cwd: Some(folder.clone()), ..procio::Cmd::new("swiftlint")

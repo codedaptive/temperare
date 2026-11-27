@@ -32,7 +32,7 @@ pub(crate) fn run_pmd_with(
     }
     let kept: Vec<_> = listed.iter().map(|file| file.to_string_lossy()).filter(|file| rule.applies(&RelPath::new(file))).collect();
     if let Some(file) = kept.iter().find(|file| file.contains(',')) {
-        let stderr = format!("{file}: pmd reads ',' in --file-list as a separator, so tm cannot hand it this file");
+        let stderr = format!("{file}: pmd reads ',' in --file-list as a separator, so cctao cannot hand it this file");
         return Err(Stop::Failed { code: None, stderr });
     }
     let lines: String = kept.iter().map(|file| format!("{file}\n")).collect();

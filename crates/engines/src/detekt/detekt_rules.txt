@@ -1,4 +1,4 @@
-# temperare's list of detekt's built-in rules: the rules and rule sets a detekt rule's check may name.
+# cctao's list of detekt's built-in rules: the rules and rule sets a detekt rule's check may name.
 # Format: one `<rule set>.<rule>` per line, sorted; lines starting with # and blank lines are ignored.
 # version: detekt 1.23.8 (`detekt --version` prints `1.23.8`)
 # source: the ids in `runs[0].tool.driver.rules[].id` of detekt's own SARIF report, each with its leading `detekt.`

@@ -27,7 +27,7 @@ fn report_why_says_why_a_result_is_no_answer() {
     let rows: [(&str, FileReport, &str, &str, Option<&str>); 8] = [
         ("ignored", first(ignored), "ign", "ign", Some("stylelint ignored a.css through ignoreFiles in its config; exceptions go in the rule file")),
         ("ignored outside the folder", first(ignored), "ign", "ign/sub", Some("stylelint ignored /private/tmp/tm-stylelint-fixtures/ign/a.css through ignoreFiles in its config; exceptions go in the rule file")),
-        ("autofixed", first(include_bytes!("fixtures/autofixed.txt")), "fix", "fix", Some("stylelint rewrote a.css: its config turns on fix, and tm never edits the code it checks")),
+        ("autofixed", first(include_bytes!("fixtures/autofixed.txt")), "fix", "fix", Some("stylelint rewrote a.css: its config turns on fix, and cctao never edits the code it checks")),
         ("a CSS syntax error", first(include_bytes!("fixtures/syntax_error.txt")), "syn", "syn", Some("stylelint could not parse broken.css: Unclosed block (CssSyntaxError)")),
         ("a parseErrors entry", unparsed, "pe", "pe", Some("stylelint could not parse a.css: Unknown word")),
         ("an invalid option", first(include_bytes!("fixtures/invalid_option.txt")), "inv", "inv", Some("stylelint's config is invalid for a.css: Invalid option value \"medium\" for rule \"color-hex-length\"")),

@@ -74,9 +74,9 @@ fn ruff_splits_a_pair(a: &str, b: &str) -> bool {
     })
 }
 
-/// True when tm writes the rule's params into a temporary file or folder for its run: the entry's thresholds reach
+/// True when cctao writes the rule's params into a temporary file or folder for its run: the entry's thresholds reach
 /// it by `Reach::File` or `Reach::Dir` and the rule names one of them. Each call makes a new path
-/// (`tm-<name>-<pid>-<n>`, or clippy's `CLIPPY_CONF_DIR`), so two rules' check commands never match as one shared run.
+/// (`cctao-<name>-<pid>-<n>`, or clippy's `CLIPPY_CONF_DIR`), so two rules' check commands never match as one shared run.
 /// A `Reach::Arg` threshold is the same argument for every rule and still shares.
 fn writes_temp_params(rule: &Rule) -> bool {
     match entry_of(rule.engine).params {

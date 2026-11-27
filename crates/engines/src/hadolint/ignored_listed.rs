@@ -1,4 +1,4 @@
-//! `ignored_listed`: whether a hadolint config hides findings through `ignored`, which tm cannot turn off (S-67 (1)).
+//! `ignored_listed`: whether a hadolint config hides findings through `ignored`, which cctao cannot turn off (S-67 (1)).
 
 use crate::cannot_turn_off::CANNOT_TURN_OFF;
 use crate::yaml::{yaml_entries, YamlValue};
@@ -12,7 +12,7 @@ use crate::yaml::{yaml_entries, YamlValue};
 /// duplicate key, a second document and a scalar `ignored` with an error on stderr, then runs on its defaults, which
 /// the reader of its output stops on.
 ///
-/// `text` is read with `yaml_entries`; what it cannot read is "`name`: line N: tm cannot read it: ..." and stops the
+/// `text` is read with `yaml_entries`; what it cannot read is "`name`: line N: cctao cannot read it: ..." and stops the
 /// rule. It refuses duplicate keys, a second document and `<<`, so those stop the rule here even where hadolint would
 /// have rejected the file: either way the rule gives no answer. An entry hides findings when its first key is
 /// `ignored` in any ASCII case and it is a sequence item or a non-null scalar. The case is matched wider than hadolint
@@ -23,7 +23,7 @@ pub(crate) fn ignored_listed(name: &str, text: &str) -> Option<String> {
         Ok(entries) => entries,
         // `why` starts `line N: `; the line stays first, as in every message here.
         Err(why) => {
-            let why = why.replacen(": ", ": tm cannot read it: ", 1);
+            let why = why.replacen(": ", ": cctao cannot read it: ", 1);
             return Some(format!("{name}: {why}; put exceptions in the rule file"));
         }
     };

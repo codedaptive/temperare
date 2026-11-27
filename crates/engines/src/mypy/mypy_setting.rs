@@ -1,4 +1,4 @@
-//! `MypySetting`: one mypy config setting that can silence findings, as tm reads it from a config file.
+//! `MypySetting`: one mypy config setting that can silence findings, as cctao reads it from a config file.
 
 /// One kept key of a mypy config section: `ignore_errors`, `ignore_missing_imports` or `disable_error_code`.
 /// `section` is the label a why prints (`[mypy]`, `[mypy-pkg.*]`, `[tool.mypy]`, `[[tool.mypy.overrides]] #2`);

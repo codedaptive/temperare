@@ -120,7 +120,7 @@ fn failed(stderr: &str) -> Got {
 #[test]
 fn a_list_that_cannot_be_read_fails() {
     let (got, ran, _, asked) = listed("SC2086\n", scripts(), &rule("SC2086", ""), &answers());
-    assert_eq!(got, failed("temperare's list of shellcheck codes cannot be read: no \"# source:\" line"));
+    assert_eq!(got, failed("cctao's list of shellcheck codes cannot be read: no \"# source:\" line"));
     assert!(ran.is_empty(), "{ran:?}");
     assert!(asked.is_empty(), "{asked:?}");
 }
@@ -129,7 +129,7 @@ fn a_list_that_cannot_be_read_fails() {
 fn a_code_not_in_the_list_is_not_listed_and_nothing_runs() {
     let (got, ran, raw_chars, asked) = listed(LIST, scripts(), &rule("SC9999", ""), &answers());
     assert_eq!(asked, vec![PathBuf::from(FOLDER)]);
-    let said = "SC9999 is not in temperare's list of shellcheck codes (taken from shellcheck 9.9.9)";
+    let said = "SC9999 is not in cctao's list of shellcheck codes (taken from shellcheck 9.9.9)";
     assert_eq!(got, Err(Stop::NotListed { said: said.to_string() }));
     assert!(ran.is_empty(), "{ran:?}");
     assert_eq!(raw_chars, None);
@@ -138,7 +138,7 @@ fn a_code_not_in_the_list_is_not_listed_and_nothing_runs() {
 #[test]
 fn a_leading_zero_code_is_not_in_the_list_so_it_is_not_listed_and_nothing_runs() {
     let (got, ran, raw_chars) = run(with_list, &entry(Params::Args(&[])), &rule("SC02086", ""), &answers());
-    let said = "SC02086 is not in temperare's list of shellcheck codes (taken from shellcheck 9.9.9)";
+    let said = "SC02086 is not in cctao's list of shellcheck codes (taken from shellcheck 9.9.9)";
     assert_eq!(got, Err(Stop::NotListed { said: said.to_string() }));
     assert!(ran.is_empty(), "{ran:?}");
     assert_eq!(raw_chars, None);

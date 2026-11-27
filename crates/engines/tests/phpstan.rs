@@ -98,11 +98,11 @@ fn phpstan_rule_reports_levels_suppressions_and_availability() {
                 };
                 fs::write(folder.0.join("phpstan.neon"), suppressions).unwrap();
             }
-            fs::write(folder.0.join("temperare.toml"), format!(
+            fs::write(folder.0.join("tao.toml"), format!(
                 "version = 1\n[[rule]]\nid = \"argument-type\"\nengine = \"phpstan\"\ncheck = \"{check}\"\n{}fix = \"Pass an integer.\"\n",
                 if no_php { "" } else { "paths = [\"src/**\"]\n" }
             )).unwrap();
-            let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
+            let file = RuleFile::read(&folder.0.join("tao.toml")).unwrap();
             let _path_guard = if name == "absent" || name == "no-php-absent" {
                 let guard = PathGuard(std::env::var_os("PATH"));
                 let without_phpstan = std::env::join_paths(std::env::split_paths(guard.0.as_ref().unwrap()).filter(|dir| {
@@ -171,7 +171,7 @@ fn phpstan_rule_reports_levels_suppressions_and_availability() {
             if name == "violation" {
                 let mut entries: Vec<_> = fs::read_dir(&folder.0).unwrap().map(|e| e.unwrap().file_name()).collect();
                 entries.sort();
-                assert_eq!(entries, [".git", ".gitignore", "outside.php", "phpstan.neon", "src", "temperare.toml"]);
+                assert_eq!(entries, [".git", ".gitignore", "outside.php", "phpstan.neon", "src", "tao.toml"]);
                 let mut src_entries: Vec<_> = fs::read_dir(folder.0.join("src")).unwrap().map(|e| e.unwrap().file_name()).collect();
                 src_entries.sort();
                 assert_eq!(src_entries, ["example.php", "ignored.php"]);

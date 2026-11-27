@@ -20,7 +20,7 @@ use rules::Engine;
 ///
 /// Suppressions, each turned off or refused (S-67 (1)): `stylelint-disable` comments are off (`--ignore-disables`);
 /// `.stylelintignore` is off (`--ignore-path=/dev/null`); a `stylelint-suppressions.json` is never read, since
-/// stylelint is pointed at an empty one tm writes (`--suppress-location`); the config's `ignoreFiles` has no option to
+/// stylelint is pointed at an empty one cctao writes (`--suppress-location`); the config's `ignoreFiles` has no option to
 /// turn it off, so a file it ignores is `Failed` naming the file (`report_why`); a config turning on `quiet`, which
 /// drops warning-severity findings, is `Failed` at the probe. stylelint's default ignores (`node_modules`) are off
 /// (`--disable-default-ignores`), so an ignored file is only ever the config's. A config turning on `fix` would make
@@ -31,14 +31,14 @@ use rules::Engine;
 /// fatal error, 64 a usage error and 78 a config error, each text with no report (`Failed`). A CSS syntax error or an
 /// invalid rule option is in the report, and `Failed` naming the file.
 ///
-/// Files: tm passes the `.css` files git lists under the folder that the rule applies to (`is_css_source`, any ASCII
+/// Files: cctao passes the `.css` files git lists under the folder that the rule applies to (`is_css_source`, any ASCII
 /// case), since `stylelint .` would lint every file there. Other syntaxes (SCSS, Less, CSS in HTML) need a
 /// `customSyntax` the repository installs, so they are not checked: a stated limit. A rule with no such file is settled
 /// as no file before availability (`engine_listed`). The probe costs one Node process per file, the price of never
 /// letting a config rewrite a file or hide an exception for some files silently. The probes are not counted; the check
 /// run is.
 ///
-/// stylelint runs from PATH, and `node`, which it needs, is looked up on PATH too; tm sets nothing in the environment
+/// stylelint runs from PATH, and `node`, which it needs, is looked up on PATH too; cctao sets nothing in the environment
 /// (no NODE_PATH, S-72 (3)), and stylelint makes no network call. stylelint takes no params: any param makes the rule
 /// `Failed` (`refused`, before anything runs; the flow's own check, after its probes, is the same refusal). stylelint
 /// rules never share a run: `shares_with` has no arm for it.

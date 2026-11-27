@@ -23,7 +23,7 @@ use rules::Engine;
 /// ignore_decorators, exclude and min_confidence would hide findings outside the rule file, and whose verbose,
 /// sort_by_size and make_whitelist would change what it prints. A rule's config never reaches vulture.
 ///
-/// Suppressions vulture still honours, none of which tm can turn off: a `# noqa` comment on the item's line (bare, or
+/// Suppressions vulture still honours, none of which cctao can turn off: a `# noqa` comment on the item's line (bare, or
 /// naming its V code, F401 or F841); a whitelist module the repository keeps (one made with `--make-whitelist`, say),
 /// which is a .py file under the folder that git does not ignore, so the `.` scan reads it and the names it uses count
 /// as used, as any code's do; and vulture's own bundled whitelists (`vulture/whitelists/<module>_whitelist.py`, for

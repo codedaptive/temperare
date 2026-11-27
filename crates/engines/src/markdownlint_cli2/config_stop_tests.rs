@@ -1,4 +1,4 @@
-//! ZUT for config_stop.rs with a fake filesystem: the options-file refusal first, then a check not in temperare's
+//! ZUT for config_stop.rs with a fake filesystem: the options-file refusal first, then a check not in cctao's
 //! list, then each applying config read, refused or found turning the rule off. A row gives the stop's kind and the
 //! tokens its text must hold.
 

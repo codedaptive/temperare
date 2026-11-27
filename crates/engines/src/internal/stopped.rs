@@ -1,4 +1,4 @@
-//! `stopped`: the outcome of a rule that stopped without findings, a too-old check and a check not in temperare's
+//! `stopped`: the outcome of a rule that stopped without findings, a too-old check and a check not in cctao's
 //! list of its engine's codes naming the engine's version.
 
 use crate::entry::too_old_why;
@@ -12,7 +12,7 @@ use rules::{Engine, Rule, RuleOutcome};
 /// stop, `not_available_cause_of`). A check the engine said it does not know is
 /// `NotAvailable`, with `too_old_why` naming the engine by its rule-file name (`Engine::name`) and its version, the
 /// first of `versions` for the rule's engine (`(version unknown)` when there is none or it is `None`). A check not in
-/// temperare's list of its engine's codes (`NotListed`) is `NotAvailable` with `<engine> <version>: ` before what it
+/// cctao's list of its engine's codes (`NotListed`) is `NotAvailable` with `<engine> <version>: ` before what it
 /// said, the engine and version found the same way. `NoFiles` is
 /// `Findings` with none: `rule_run_of` settles a `NoFiles` itself, setting the rule's `no_files` flag, before it
 /// would reach here, so this arm only keeps the match whole.

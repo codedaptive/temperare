@@ -7,7 +7,7 @@ use super::sqlfluff_refusal;
 fn sqlfluff_refusal_cases() {
     let refused = |check: &str| {
         Some(format!(
-            "sqlfluff check `{check}` is not one sqlfluff rule code, name or group (as `LT01`, `layout.spacing` or `layout`), so tm cannot pass it as one rule"
+            "sqlfluff check `{check}` is not one sqlfluff rule code, name or group (as `LT01`, `layout.spacing` or `layout`), so cctao cannot pass it as one rule"
         ))
     };
     let rows: [(&str, &str, Option<String>); 11] = [

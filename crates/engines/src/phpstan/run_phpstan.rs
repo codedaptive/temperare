@@ -15,7 +15,7 @@ use std::path::{Path, PathBuf};
 
 /// Why a rule with no PHPStan config to include is not available: it names the six files `repo_config` looks for.
 const NO_CONFIG_WHY: &str = "the rule names no config and its folder holds no phpstan.neon, phpstan.neon.dist or \
-    phpstan.dist.neon, nor their dot-prefixed forms: tm runs phpstan with the repository's own config";
+    phpstan.dist.neon, nor their dot-prefixed forms: cctao runs phpstan with the repository's own config";
 
 /// The hits of `rule` under `folder` (canonical); a `RunFn`, the flow of `PHPSTAN`. The central `refused` has already
 /// settled the rule's refusals (a check that is not a level) and params (PHPStan takes none). Each step can stop it:
@@ -25,7 +25,7 @@ const NO_CONFIG_WHY: &str = "the rule names no config and its folder holds no ph
 /// 2. the config to include (`repo_config`: the rule's, else the first file in `folder` of those PHPStan itself
 ///    discovers, in its order); none is `NotAvailable`;
 /// 3. the wrapper config's text (`phpstan_config`); a path it cannot write is `Failed`;
-/// 4. the wrapper written as `tm.neon` in a new temporary folder; an error writing it is `Failed`;
+/// 4. the wrapper written as `cctao.neon` in a new temporary folder; an error writing it is `Failed`;
 /// 5. the check run, through `check_run` so it is counted: `entry_cmd` with the rule's check as the level, then
 ///    `--configuration=<wrapper>`, `--` and the files the rule applies to, relative to `folder`, where it runs. After
 ///    it, whatever its outcome, the `cache` folder PHPStan made as its `tmpDir` is removed (an error is ignored: a
@@ -43,13 +43,13 @@ pub(crate) fn run_phpstan(entry: &Entry, rule: &Rule, folder: &Path, host: &Host
     let config = repo_config(rule.config.as_deref(), folder, &|path| path.is_file())
         .ok_or_else(|| Stop::NotAvailable { why: NO_CONFIG_WHY.to_string() })?;
     let text = phpstan_config(&config).map_err(|stderr| Stop::Failed { code: None, stderr })?;
-    let temp = TempDir::write("phpstan", "tm.neon", &text).map_err(|err| Stop::Failed {
+    let temp = TempDir::write("phpstan", "cctao.neon", &text).map_err(|err| Stop::Failed {
         code: None,
         stderr: format!("cannot write the phpstan wrapper config: {err}"),
     })?;
     let mut cmd = entry_cmd(entry, OsStr::new(&rule.check), &[], None, folder);
     let mut wrapper = OsString::from("--configuration=");
-    wrapper.push(temp.path.join("tm.neon"));
+    wrapper.push(temp.path.join("cctao.neon"));
     cmd.args.extend([wrapper, OsString::from("--")]);
     cmd.args.extend(
         files

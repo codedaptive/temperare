@@ -8,7 +8,7 @@ use rules::Engine;
 /// `shellcheck_cmd`, which reads none of `args`, `after` or `config`; `entry_cmd` is not used. The check is never passed (`Pick::None`): every check runs (`--enable=all`) and the reader
 /// (`parse_shellcheck`) keeps the rule's code. A malformed code is refused before anything runs
 /// (`shellcheck_refusal`). shellcheck never says it does not know a code, so `unknown` gives `None`; a well-formed
-/// code not on temperare's list (`shellcheck_codes.txt`) is not available through the run instead. A shellcheck rule
+/// code not on cctao's list (`shellcheck_codes.txt`) is not available through the run instead. A shellcheck rule
 /// takes no params.
 pub static SHELLCHECK: Entry = Entry {
     name: "shellcheck",

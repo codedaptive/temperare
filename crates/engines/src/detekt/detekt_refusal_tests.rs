@@ -1,4 +1,4 @@
-//! ZUT for detekt_refusal.rs: well-formed names pass, whether or not temperare's list holds them; the first part that
+//! ZUT for detekt_refusal.rs: well-formed names pass, whether or not cctao's list holds them; the first part that
 //! is malformed is named.
 
 use super::detekt_refusal;

@@ -12,7 +12,7 @@ use std::path::Path;
 /// aside (dart prints codes upper case, rules name them lower case), is a hit: its path, absolute or relative to
 /// `cwd`, made relative to `folder` (a file outside `folder` is not a hit), its line and column, and the message as
 /// its `what`. Exit 0, 2 or 3 is an answer, the worst severity found; the exit codes measured (fixtures/commands.txt)
-/// are 0 for nothing or infos only, 2 for warnings, 3 for errors. Any other exit (1 included: tm passes no
+/// are 0 for nothing or infos only, 2 for warnings, 3 for errors. Any other exit (1 included: cctao passes no
 /// `--fatal-infos`, and it was never measured), or none, is a `ParseError` quoting what dart printed. So is a line
 /// that is not 8 fields, or whose line or column is not a number, whatever the check.
 pub(crate) fn parse_dart(out: &Output, check: &str, cwd: &Path, folder: &Path) -> Result<Vec<Hit>, ParseError> {

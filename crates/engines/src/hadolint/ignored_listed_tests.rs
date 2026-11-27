@@ -1,13 +1,13 @@
 //! ZUT for ignored_listed.rs: an `ignored` key (any ASCII case, any YAML style, through an alias or a `!!seq` tag)
 //! holding an item or a scalar stops the rule naming the file and its line; a null or empty `ignored`, `override` and
-//! other keys hide nothing; text tm cannot read (a duplicate key and a `<<` merge among it) stops the rule naming its
+//! other keys hide nothing; text cctao cannot read (a duplicate key and a `<<` merge among it) stops the rule naming its
 //! line.
 
 use super::ignored_listed;
 
 const NAME: &str = "/r/.hadolint.yaml";
 
-/// What a row expects: nothing hidden, `ignored` hiding findings at a line, or text tm cannot read at a line, with a
+/// What a row expects: nothing hidden, `ignored` hiding findings at a line, or text cctao cannot read at a line, with a
 /// word from yaml_entries' why.
 enum Want {
     Clean,
@@ -45,12 +45,12 @@ fn ignored_listed_cases() {
             (None, Clean) => true,
             (Some(why), Hides(line)) => {
                 why == &format!(
-                    "/r/.hadolint.yaml: line {line}: `ignored` hides hadolint findings and tm cannot turn it off; put \
+                    "/r/.hadolint.yaml: line {line}: `ignored` hides hadolint findings and cctao cannot turn it off; put \
                      exceptions in the rule file"
                 )
             }
             (Some(why), Unreadable(line, what)) => {
-                why.starts_with(&format!("/r/.hadolint.yaml: line {line}: tm cannot read it: "))
+                why.starts_with(&format!("/r/.hadolint.yaml: line {line}: cctao cannot read it: "))
                     && why.contains(what)
                     && why.ends_with("; put exceptions in the rule file")
             }
