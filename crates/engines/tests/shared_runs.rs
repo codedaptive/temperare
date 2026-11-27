@@ -103,6 +103,7 @@ fn ruff_shared_runs_match_separate_rules() {
 }
 
 #[test]
+#[cfg_attr(windows, ignore = "SwiftLint publishes no Windows build")]
 fn swiftlint_shared_runs_match_separate_rules() {
     let repo = TempFolder::new("swiftlint");
     assert_eq!(availability_in(Engine::SwiftLint, &repo.0), Availability::Available);

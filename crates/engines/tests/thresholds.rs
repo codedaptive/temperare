@@ -73,6 +73,7 @@ fn ruff_complexity_threshold_is_per_run_and_preserves_repository_config() {
 }
 
 #[test]
+#[cfg_attr(windows, ignore = "SwiftLint publishes no Windows build")]
 fn swiftlint_complexity_threshold_preserves_exclusions_and_repository_config() {
     let folder = TempFolder::new("swift-complexity");
     assert_eq!(availability_in(Engine::SwiftLint, &folder.0), Availability::Available);
@@ -91,6 +92,7 @@ fn swiftlint_complexity_threshold_preserves_exclusions_and_repository_config() {
 }
 
 #[test]
+#[cfg_attr(windows, ignore = "SwiftLint publishes no Windows build")]
 fn swiftlint_file_length_threshold_changes_findings() {
     let folder = TempFolder::new("swift-length");
     assert_eq!(availability_in(Engine::SwiftLint, &folder.0), Availability::Available);
