@@ -1,14 +1,14 @@
-//! `tm_lines`: what one `temperare` run showed, as lines for the `make accept` report (S-31). Every value comes from `temperare`'s
+//! `cctao_lines`: what one `cctao` run showed, as lines for the `make accept` report (S-31). Every value comes from `cctao`'s
 //! `--json` answer: a finding's place, rule, engine, kind, severity and owner are written bare, every other string
 //! as a JSON string, and `counts` as its JSON object.
 
 use serde_json::Value;
 
-/// `tm <args>`, its exit code and counts; the base, when there is one, and the exceptions in force; then one line for
+/// `cctao <args>`, its exit code and counts; the base, when there is one, and the exceptions in force; then one line for
 /// each kept finding, silenced finding, rule not available and rule that failed. A usage error answers with no
 /// report, only its `error` and `next`, and is shown as those.
-pub fn tm_lines(args: &[&str], code: i32, json: &Value) -> Vec<String> {
-    let run = format!("tm {} -> exit {code}", args.join(" "));
+pub fn cctao_lines(args: &[&str], code: i32, json: &Value) -> Vec<String> {
+    let run = format!("cctao {} -> exit {code}", args.join(" "));
     if json.get("error").is_some() {
         return vec![format!("{run}; error {}; next {}", json["error"], json["next"])];
     }

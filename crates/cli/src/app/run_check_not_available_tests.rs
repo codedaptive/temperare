@@ -24,7 +24,7 @@ fn unavailable(rule: &str, engine: Engine, why: &str, cause: NotAvailableCause) 
     (NotAvailable { rule: rule.to_string(), engine, why: why.to_string() }, cause)
 }
 
-/// `tm check` whose run gives each entry's rule not available with its cause, and whose report lists the entries.
+/// `cctao check` whose run gives each entry's rule not available with its cause, and whose report lists the entries.
 fn check(entries: Vec<(NotAvailable, NotAvailableCause)>, json: bool) -> (u8, String, String) {
     let run_rules = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| {
         let runs = entries
@@ -43,7 +43,7 @@ fn check(entries: Vec<(NotAvailable, NotAvailableCause)>, json: bool) -> (u8, St
         toplevel: &|_| Ok(PathBuf::from("/repo")),
         exists: &|_| true,
         read: &|path| {
-            assert_eq!(path, Path::new("/repo/temperare.toml"));
+            assert_eq!(path, Path::new("/repo/tao.toml"));
             Ok(RuleFile::parse(TEXT, Path::new("/repo")).unwrap())
         },
         rev_parse: &|_, _| unreachable!("rev_parse"),

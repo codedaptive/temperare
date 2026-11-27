@@ -11,14 +11,14 @@ use std::io::Write;
 use std::path::Path;
 
 /// Runs `rule` alone on its failing case (`failing`) or its passing case as a change against the case's base commit,
-/// and judges what it gave against the expected finding (`judge_case`) after the base filter `tm check --base` applies:
-/// only findings on lines added since the base are kept (`report::keep_added`). The failing case's base commits the
-/// passing files, then the failing files are written over them; the passing case's base is the empty folder, then the
-/// passing files are written. Files are written only inside the case folder (`write_case_files`). A file that cannot be
-/// placed or written, a base that cannot be committed or added lines that cannot be read is broken, with its why. Once
-/// the folder is made it is always removed, whatever the case came to; a folder that cannot be removed is a
-/// `tm: cannot remove the case folder <folder>: <e>` line on `err` and leaves the verdict as it is. Write errors on
-/// `err` are ignored.
+/// and judges what it gave against the expected finding (`judge_case`) after the base filter `cctao check --base`
+/// applies: only findings on lines added since the base are kept (`report::keep_added`). The failing case's base
+/// commits the passing files, then the failing files are written over them; the passing case's base is the empty
+/// folder, then the passing files are written. Files are written only inside the case folder (`write_case_files`). A
+/// file that cannot be placed or written, a base that cannot be committed or added lines that cannot be read is broken,
+/// with its why. Once the folder is made it is always removed, whatever the case came to; a folder that cannot be
+/// removed is a `cctao: cannot remove the case folder <folder>: <e>` line on `err` and leaves the verdict as it is.
+/// Write errors on `err` are ignored.
 pub(crate) fn run_change_case(
     rule: &Rule,
     failing: bool,
@@ -35,7 +35,7 @@ pub(crate) fn run_change_case(
         Err(why) => CaseVerdict::Broken { why },
     };
     if let Err(e) = (world.remove_folder)(&folder) {
-        let _ = writeln!(err, "tm: cannot remove the case folder {}: {e}", folder.display());
+        let _ = writeln!(err, "cctao: cannot remove the case folder {}: {e}", folder.display());
     }
     verdict
 }

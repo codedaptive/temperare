@@ -1,4 +1,4 @@
-//! `baseline_exit`: the exit code of `tm baseline test` from its results.
+//! `baseline_exit`: the exit code of `cctao baseline test` from its results.
 
 use super::baseline_rule_result::BaselineRuleResult;
 

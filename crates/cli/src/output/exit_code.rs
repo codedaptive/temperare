@@ -1,4 +1,4 @@
-//! `exit_code`: tm check's exit code, from its report (S-15).
+//! `exit_code`: cctao check's exit code, from its report (S-15).
 
 use report::Report;
 use rules::{Kind, Severity};

@@ -1,4 +1,4 @@
-//! ZUT for parse_install_args.rs: each flag of tm install, the one value --mode and --location take, the --target
+//! ZUT for parse_install_args.rs: each flag of cctao install, the one value --mode and --location take, the --target
 //! list, and the usage errors.
 
 use super::parse_install_args::parse_install_args;
@@ -13,7 +13,7 @@ fn error(what: &str, fix: &str) -> Result<InstallArgs, UsageError> {
     Err(UsageError { what: what.to_string(), fix: fix.to_string() })
 }
 
-const INSTALL_FIX: &str = "Run tm help to see the flags of tm install.";
+const INSTALL_FIX: &str = "Run cctao help to see the flags of cctao install.";
 const TARGET_FIX: &str = "Write --target with claude, codex or cursor, commas between them.";
 
 #[test]
@@ -23,12 +23,11 @@ fn nothing_is_the_default() {
 
 #[test]
 fn every_flag_together() {
-    let args = ["--no-place", "--short-name", "-y", "--target", "cursor,claude"];
+    let args = ["--no-place", "-y", "--target", "cursor,claude"];
     assert_eq!(
         parse(&[&args[..], &["--mode", "skill", "--location", "local"]].concat()),
         Ok(InstallArgs {
             no_place: true,
-            short_name: true,
             targets: Some(vec![Harness::Cursor, Harness::Claude]),
             local: true,
             yes: true,
@@ -66,7 +65,7 @@ fn a_flag_without_its_value() {
 fn a_mode_other_than_skill_is_refused_with_no_mcp() {
     assert_eq!(
         parse(&["--mode", "mcp"]),
-        error("--mode mcp is not supported", "Write --mode skill: Temperare wires a skill only, no MCP.")
+        error("--mode mcp is not supported", "Write --mode skill: cctao wires a skill only, no MCP.")
     );
 }
 
@@ -83,7 +82,8 @@ fn a_location_other_than_local_is_refused() {
 
 #[test]
 fn an_unknown_flag_or_positional_is_refused() {
-    assert_eq!(parse(&["--yes"]), error("unknown flag '--yes' for tm install", INSTALL_FIX));
-    assert_eq!(parse(&["--json"]), error("unknown flag '--json' for tm install", INSTALL_FIX));
-    assert_eq!(parse(&["claude"]), error("unexpected argument 'claude' for tm install", INSTALL_FIX));
+    assert_eq!(parse(&["--yes"]), error("unknown flag '--yes' for cctao install", INSTALL_FIX));
+    assert_eq!(parse(&["--json"]), error("unknown flag '--json' for cctao install", INSTALL_FIX));
+    assert_eq!(parse(&["--short-name"]), error("unknown flag '--short-name' for cctao install", INSTALL_FIX));
+    assert_eq!(parse(&["claude"]), error("unexpected argument 'claude' for cctao install", INSTALL_FIX));
 }

@@ -1,4 +1,4 @@
-//! `baseline_json`: the results of `tm baseline test` as one JSON object.
+//! `baseline_json`: the results of `cctao baseline test` as one JSON object.
 
 use super::baseline_rule_result::BaselineRuleResult;
 use super::case_verdict::CaseVerdict;

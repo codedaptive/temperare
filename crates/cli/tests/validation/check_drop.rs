@@ -16,7 +16,7 @@ impl Drop for Check {
             (false, None) => "PASS".to_string(),
         };
         let saw = if self.saw.is_empty() {
-            "Saw: nothing; the case ended before tm answered.".to_string()
+            "Saw: nothing; the case ended before cctao answered.".to_string()
         } else {
             format!("Saw:\n\n```text\n{}\n```", self.saw.join("\n"))
         };

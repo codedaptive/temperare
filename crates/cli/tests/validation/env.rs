@@ -1,6 +1,6 @@
 //! The environments acceptance runs programs in, built from nothing (Done 6: no tool-specific variable set).
 //! `clean_env` (git and the PATH lookup) passes only HOME, PATH, TMPDIR, LANG and CARGO_NET_OFFLINE; PATH is the
-//! caller's PATH with ~/.cargo/bin moved to the front. `tm_env` (`temperare` and the report head's version lookups)
+//! caller's PATH with ~/.cargo/bin moved to the front. `cctao_env` (`cctao` and the report head's version lookups)
 //! is the same with HOME a folder the test made, plus CARGO_HOME and RUSTUP_HOME.
 
 use std::path::Path;
@@ -25,13 +25,13 @@ pub fn clean_env(path: Option<&str>) -> Vec<(String, String)> {
     env
 }
 
-/// The variables for one run of `temperare`: `clean_env(path)` with HOME replaced by `home`, so the run reads no real
-/// ~/.config/temperare/config.toml and appends to no real ~/.local/state/temperare/savings.jsonl and no real telemetry
-/// file under ~/.local/state/temperare/telemetry. PATH still comes from the real HOME (its ~/.cargo/bin first), and
+/// The variables for one run of `cctao`: `clean_env(path)` with HOME replaced by `home`, so the run reads no real
+/// ~/.config/cctao/config.toml and appends to no real ~/.local/state/cctao/savings.jsonl and no real telemetry
+/// file under ~/.local/state/cctao/telemetry. PATH still comes from the real HOME (its ~/.cargo/bin first), and
 /// CARGO_HOME and RUSTUP_HOME are pinned to the real ones (the variable if set, else ~/.cargo and ~/.rustup of the real
 /// HOME), so rustup's cargo and clippy still find their toolchain. Git run
-/// by `temperare` here reads no real ~/.gitconfig; `clean_env` keeps the real HOME for the fixture's own commits.
-pub fn tm_env(path: Option<&str>, home: &Path) -> Vec<(String, String)> {
+/// by `cctao` here reads no real ~/.gitconfig; `clean_env` keeps the real HOME for the fixture's own commits.
+pub fn cctao_env(path: Option<&str>, home: &Path) -> Vec<(String, String)> {
     let real = std::env::var("HOME").expect("HOME is set");
     let pinned = |var: &str, dir: &str| std::env::var(var).unwrap_or_else(|_| format!("{real}/{dir}"));
     let cargo_home = pinned("CARGO_HOME", ".cargo");

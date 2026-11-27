@@ -16,7 +16,7 @@ struct Home(PathBuf);
 impl Home {
     fn new() -> Self {
         loop {
-            let path = std::env::temp_dir().join(format!("tm-savings-home-{}-{}", std::process::id(), NEXT.fetch_add(1, Ordering::Relaxed)));
+            let path = std::env::temp_dir().join(format!("cctao-savings-home-{}-{}", std::process::id(), NEXT.fetch_add(1, Ordering::Relaxed)));
             match fs::create_dir(&path) {
                 Ok(()) => return Self(path),
                 Err(e) if e.kind() == ErrorKind::AlreadyExists => continue,
@@ -25,11 +25,11 @@ impl Home {
         }
     }
     fn config(&self, text: &str) {
-        let dir = self.0.join(".config/temperare");
+        let dir = self.0.join(".config/cctao");
         fs::create_dir_all(&dir).unwrap();
         fs::write(dir.join("config.toml"), text).unwrap();
     }
-    fn log(&self) -> PathBuf { self.0.join(".local/state/temperare/savings.jsonl") }
+    fn log(&self) -> PathBuf { self.0.join(".local/state/cctao/savings.jsonl") }
 }
 impl Drop for Home {
     fn drop(&mut self) { fs::remove_dir_all(&self.0).unwrap(); }
@@ -100,11 +100,11 @@ fn unknown_config_key_warns_once_and_keeps_the_default_line() {
     let runs = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| checked(vec![run("q", Engine::Ruff, Some(400))]);
     let (code, out, err) = check(&CheckArgs::default(), &CheckWorld { home: &home_path, now: &|| 1795680000, rev_parse: &three_commits, run_rules: &runs, ..world() });
     assert_eq!(code, 0);
-    assert_eq!(err, "tm: ignoring ~/.config/temperare/config.toml: unknown key `extra`\n");
+    assert_eq!(err, "cctao: ignoring ~/.config/cctao/config.toml: unknown key `extra`\n");
     let (line, body) = out.split_once('\n').unwrap();
     assert_clean_body(body);
     let saved = 100 - output_tokens(body.chars().count());
-    assert!(line.starts_with(&format!("[temperare] tokens saved ≈ {saved} ({}%)", percent(saved, 100))), "{out}");
+    assert!(line.starts_with(&format!("[cctao] tokens saved ≈ {saved} ({}%)", percent(saved, 100))), "{out}");
 }
 
 #[test]
@@ -123,7 +123,7 @@ fn json_unknown_config_key_warns_once_without_changing_the_report_or_exit() {
     assert!(value.is_object());
     assert!(value["saved"].is_object());
     assert_eq!(value, serde_json::from_str::<serde_json::Value>(&baseline_out).unwrap());
-    assert_eq!(err, "tm: ignoring ~/.config/temperare/config.toml: unknown key `colour`\n");
+    assert_eq!(err, "cctao: ignoring ~/.config/cctao/config.toml: unknown key `colour`\n");
 }
 
 #[test]
@@ -136,7 +136,7 @@ fn json_invalid_toml_warns_once_when_an_engine_ran() {
     let (code, out, err) = check(&CheckArgs { json: true, ..CheckArgs::default() }, &w);
     assert_eq!(code, 0);
     assert!(serde_json::from_str::<serde_json::Value>(&out).unwrap()["saved"].is_object());
-    let reason = err.strip_prefix("tm: ignoring ~/.config/temperare/config.toml: ").unwrap();
+    let reason = err.strip_prefix("cctao: ignoring ~/.config/cctao/config.toml: ").unwrap();
     assert!(!reason.trim().is_empty(), "{err:?}");
     assert_eq!(err.lines().count(), 1, "{err:?}");
     assert!(err.ends_with('\n'));
@@ -191,7 +191,7 @@ fn savings_log_names_rule_file_folder_not_cwd() {
     let home = Home::new();
     let cwd = Home::new();
     let rules_dir = Home::new();
-    let rules_path = rules_dir.0.join("temperare.toml");
+    let rules_path = rules_dir.0.join("tao.toml");
     fs::write(&rules_path, "version = 1\n[[rule]]\nid = \"q\"\nengine = \"ruff\"\ncheck = \"F401\"\nfix = \"Remove import.\"\n").unwrap();
     let home_path = || Some(home.0.clone());
     let runs = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| checked(vec![run("q", Engine::Ruff, Some(400))]);
@@ -262,7 +262,7 @@ fn watch_finding_reaches_telemetry_but_not_output_or_savings() {
     });
     assert_eq!((code, err.as_str()), (0, ""));
     let telemetry = fs::read_to_string(home.0.join(
-        ".local/state/temperare/telemetry/3333333333333333333333333333333333333333.jsonl"
+        ".local/state/cctao/telemetry/3333333333333333333333333333333333333333.jsonl"
     )).unwrap();
     assert_eq!(telemetry.lines().count(), 1);
     let record: serde_json::Value = serde_json::from_str(&telemetry).unwrap();
@@ -310,7 +310,7 @@ fn shared_watch_runs_are_excluded_from_savings() {
         };
         let (code, out, err) = check(&CheckArgs::default(), &w);
         assert_eq!((code, err.as_str()), (0, ""), "{name}");
-        assert_eq!(out.starts_with("[temperare] tokens saved"), engine_runs == 1, "{name}: {out}");
+        assert_eq!(out.starts_with("[cctao] tokens saved"), engine_runs == 1, "{name}: {out}");
         if engine_runs == 1 {
             assert_eq!(fs::read_to_string(home.log()).unwrap().lines().count(), 1, "{name}");
         } else {
@@ -356,10 +356,10 @@ fn a_check_appends_one_telemetry_line_named_after_the_root_and_prints_the_same()
     let without_home = check(&args, &w);
     let with_home = check(&args, &CheckWorld { home: &home_path, ..w });
     assert_eq!(with_home, without_home);
-    let dir = home.0.join(".local/state/temperare/telemetry");
+    let dir = home.0.join(".local/state/cctao/telemetry");
     let names: Vec<_> = fs::read_dir(&dir).unwrap().map(|e| e.unwrap().file_name()).collect();
     assert_eq!(names, ["d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4d4.jsonl"]);
-    let version = crate::output::version_after_name(env!("CARGO_PKG_VERSION"), env!("TEMPERARE_COMMIT"));
+    let version = crate::output::version_after_name(env!("CARGO_PKG_VERSION"), env!("CCTAO_COMMIT"));
     assert_eq!(fs::read_to_string(dir.join(&names[0])).unwrap(), format!(concat!(
         "{{\"format\":1,\"time\":\"2026-11-26T08:00:00Z\",\"version\":\"{}\",\"folder\":\"/repo\",",
         "\"head\":\"a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1\",\"base\":\"e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5\",",

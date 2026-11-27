@@ -12,7 +12,7 @@ use std::io::Write;
 /// (`write_case_files`): a name that is not a relative path inside it is broken and nothing is written for it. The
 /// first file that cannot be placed or written stops the case before the rule runs. Once the folder is made it is
 /// always removed, whatever the case came to; a folder that cannot be removed is a
-/// `tm: cannot remove the case folder <folder>: <e>` line on `err` and leaves the verdict as it is. Write errors on
+/// `cctao: cannot remove the case folder <folder>: <e>` line on `err` and leaves the verdict as it is. Write errors on
 /// `err` are ignored.
 pub(crate) fn run_case(
     rule: &Rule,
@@ -38,7 +38,7 @@ pub(crate) fn run_case(
         }
     };
     if let Err(e) = (world.remove_folder)(&folder) {
-        let _ = writeln!(err, "tm: cannot remove the case folder {}: {e}", folder.display());
+        let _ = writeln!(err, "cctao: cannot remove the case folder {}: {e}", folder.display());
     }
     verdict
 }

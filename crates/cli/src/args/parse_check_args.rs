@@ -1,4 +1,4 @@
-//! `parse_check_args`: the arguments after `tm check`.
+//! `parse_check_args`: the arguments after `cctao check`.
 
 use std::path::PathBuf;
 
@@ -19,8 +19,8 @@ pub(super) fn parse_check_args(args: &[String]) -> Result<CheckArgs, UsageError>
             "--json" => parsed.json = true,
             flag if flag.starts_with('-') => {
                 return Err(UsageError {
-                    what: format!("unknown flag '{flag}' for tm check"),
-                    fix: "Run tm help to see the flags of tm check.".to_string(),
+                    what: format!("unknown flag '{flag}' for cctao check"),
+                    fix: "Run cctao help to see the flags of cctao check.".to_string(),
                 })
             }
             path => parsed.paths.push(PathBuf::from(path)),

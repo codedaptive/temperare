@@ -59,7 +59,7 @@ fn each_value_flag_needs_its_value() {
 fn an_unknown_flag_is_refused() {
     assert_eq!(
         parse(&["src", "-v"]),
-        Err(error("unknown flag '-v' for tm check", "Run tm help to see the flags of tm check."))
+        Err(error("unknown flag '-v' for cctao check", "Run cctao help to see the flags of cctao check."))
     );
 }
 
@@ -67,6 +67,6 @@ fn an_unknown_flag_is_refused() {
 fn flag_equals_value_is_an_unknown_flag() {
     assert_eq!(
         parse(&["--base=main"]),
-        Err(error("unknown flag '--base=main' for tm check", "Run tm help to see the flags of tm check."))
+        Err(error("unknown flag '--base=main' for cctao check", "Run cctao help to see the flags of cctao check."))
     );
 }

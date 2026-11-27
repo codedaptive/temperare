@@ -34,10 +34,10 @@ pub(super) fn every_kind() -> Vec<Loosening> {
 
 #[test]
 fn every_kind_one_line_each_in_order() {
-    let text = loosened_text(Path::new("/repo/temperare.toml"), "main", &every_kind());
+    let text = loosened_text(Path::new("/repo/tao.toml"), "main", &every_kind());
     assert_eq!(
         text,
-        "rule file: /repo/temperare.toml\n\
+        "rule file: /repo/tao.toml\n\
          base: main\n\
          loosened (13):\n  \
          rule_gone  r1\n  \

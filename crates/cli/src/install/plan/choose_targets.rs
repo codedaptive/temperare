@@ -28,7 +28,7 @@ pub(crate) fn choose_targets(
     }
     let names: Vec<&str> = detected.iter().map(|harness| harness.name()).collect();
     let note = format!(
-        "no terminal to ask which harnesses to wire, so none was; to wire them, run temperare install --target {} -y",
+        "no terminal to ask which harnesses to wire, so none was; to wire them, run cctao install --target {} -y",
         names.join(",")
     );
     (Vec::new(), vec![note])

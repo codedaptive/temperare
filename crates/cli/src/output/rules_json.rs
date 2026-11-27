@@ -1,4 +1,4 @@
-//! `rules_json`: the `tm rules` listing as one JSON object.
+//! `rules_json`: the `cctao rules` listing as one JSON object.
 
 use super::split_exceptions::split_exceptions;
 use serde_json::{json, Map, Value};

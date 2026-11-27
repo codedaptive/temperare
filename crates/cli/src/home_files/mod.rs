@@ -1,4 +1,4 @@
-//! The module that reads or writes tm's files under HOME: the savings switch and log, and the telemetry file.
+//! The module that reads or writes cctao's files under HOME: the savings switch and log, and the telemetry file.
 
 mod append_savings_log;
 mod append_telemetry_line;

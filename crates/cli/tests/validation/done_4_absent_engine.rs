@@ -2,11 +2,11 @@
 //! report 'not available'." Not available is never clean (mission 5): its own exit code, 3 (S-15).
 
 use crate::check::Check;
-use crate::env::tm_env;
+use crate::env::cctao_env;
 use crate::repo::Repo;
 use crate::run_clean::run_clean;
 use crate::temp_home::TempHome;
-use crate::tm::tm_with_path;
+use crate::cctao::cctao_with_path;
 
 const RULES: &str = r#"version = 1
 
@@ -32,16 +32,16 @@ const PATH_WITHOUT_ENGINES: &str = "/usr/bin:/bin";
 fn an_absent_linter_and_absent_tessera_each_report_not_available() {
     let mut check = Check::new(
         "an_absent_linter_and_absent_tessera_each_report_not_available",
-        "rules tessera-erosion (tessera) then swift-force-cast (swiftlint); tm runs with PATH /usr/bin:/bin, which \
+        "rules tessera-erosion (tessera) then swift-force-cast (swiftlint); cctao runs with PATH /usr/bin:/bin, which \
          holds neither swiftlint nor ts",
     );
     let repo = Repo::new();
-    repo.write("temperare.toml", RULES);
+    repo.write("tao.toml", RULES);
     repo.write("Sources/App.swift", "let x = y as! Int\n");
     repo.commit("a swift file");
     let args = ["check", "--json"];
-    let a = tm_with_path(&repo, &args, Some(PATH_WITHOUT_ENGINES));
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao_with_path(&repo, &args, Some(PATH_WITHOUT_ENGINES));
+    check.saw_cctao(&args, a.code, &a.json);
     assert_eq!(a.code, 3, "not available has its own code: {:#}\n{}", a.json, a.stderr);
     assert!(a.findings().is_empty(), "nothing is reported as found: {:#}", a.json);
     let mut missing: Vec<(String, String)> = a.json["not_available"]
@@ -60,11 +60,11 @@ fn an_absent_linter_and_absent_tessera_each_report_not_available() {
         "both rules, each with its engine: {:#}",
         a.json
     );
-    // `tm_with_path` keeps only the parsed JSON, so the printed bytes come from a second run in the same environment.
+    // `cctao_with_path` keeps only the parsed JSON, so the printed bytes come from a second run in the same environment.
     let home = TempHome::new();
-    let out = run_clean(env!("CARGO_BIN_EXE_temperare"), &args, repo.path(), tm_env(Some(PATH_WITHOUT_ENGINES), home.path()));
+    let out = run_clean(env!("CARGO_BIN_EXE_cctao"), &args, repo.path(), cctao_env(Some(PATH_WITHOUT_ENGINES), home.path()));
     let printed = String::from_utf8(out.stdout).unwrap();
-    // `engines` lists only an engine tm found, so neither absent swiftlint nor Tessera is in it.
+    // `engines` lists only an engine cctao found, so neither absent swiftlint nor Tessera is in it.
     assert!(printed.contains(r#""engines":[]"#), "no engine was found, so none is listed: {printed}");
     let value: serde_json::Value = serde_json::from_str(&printed).unwrap_or_else(|e| panic!("stdout is not JSON ({e}): {printed}"));
     assert_eq!(value["engines"], serde_json::json!([]), "{printed}");

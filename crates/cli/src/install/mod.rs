@@ -1,4 +1,4 @@
-//! `temperare install` and `uninstall` (S-32): the harnesses, the machine as input (`InstallHost`), the install
+//! `cctao install` and `uninstall` (S-32): the harnesses, the machine as input (`InstallHost`), the install
 //! paths, the plan and its record, the skill text; the pure plan in plan/, the disk steps in disk/.
 
 mod disk;
@@ -28,7 +28,7 @@ mod harness_from_name_tests;
 mod harness_name_tests;
 #[cfg(test)]
 mod harness_skill_file_tests;
-// Unix only: install is unix-only for now (tm is a symlink, S-32), and these fixtures are unix absolute paths.
+// Unix only: these fixtures are unix absolute paths.
 #[cfg(all(test, unix))]
 mod install_host_real_tests;
 #[cfg(test)]
@@ -45,7 +45,7 @@ pub use record_entry::RecordEntry;
 pub use skill_text::SKILL_TEXT;
 
 pub(crate) use disk::{
-    apply_install, apply_uninstall, detect_harnesses, make_dirs, read_record_text, tm_owner, write_through_temp,
+    apply_install, apply_uninstall, detect_harnesses, make_dirs, read_record_text, write_through_temp,
 };
 pub(crate) use plan::{
     choose_targets, parse_record, pick_harnesses, plan_install, record_text, uninstall_order, unrecordable_path,

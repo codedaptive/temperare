@@ -1,5 +1,5 @@
-//! ZUT for usage.rs: command, rule-file, short-name, savings and exit-code help as whole lines; the loosened exits
-//! by their tokens.
+//! ZUT for usage.rs: command, rule-file, no-short-name, no-link, savings and exit-code help as whole lines; the
+//! loosened exits by their tokens.
 
 use super::USAGE;
 
@@ -9,21 +9,21 @@ fn has_line(line: &str) -> bool {
 
 #[test]
 fn has_the_check_line() {
-    assert!(has_line("tm check [--rules <path>] [--base <rev>] [--kind quality|security] [--json] [<path>...]"));
+    assert!(has_line("cctao check [--rules <path>] [--base <rev>] [--kind quality|security] [--json] [<path>...]"));
 }
 
 #[test]
 fn has_the_rules_line() {
-    assert!(has_line("tm rules [--rules <path>] [--json]"));
+    assert!(has_line("cctao rules [--rules <path>] [--json]"));
 }
 
 #[test]
 fn has_the_loosened_line_right_after_the_rules_line() {
     let lines: Vec<&str> = USAGE.lines().collect();
-    let rules = lines.iter().position(|l| *l == "tm rules [--rules <path>] [--json]");
+    let rules = lines.iter().position(|l| *l == "cctao rules [--rules <path>] [--json]");
     assert_eq!(
         rules.and_then(|i| lines.get(i + 1)).copied(),
-        Some("tm rules --loosened --base <rev> [--rules <path>] [--json]")
+        Some("cctao rules --loosened --base <rev> [--rules <path>] [--json]")
     );
 }
 
@@ -32,7 +32,7 @@ fn gives_the_loosened_exit_codes_after_the_check_exits() {
     let lines: Vec<&str> = USAGE.lines().collect();
     let precedence = lines.iter().position(|l| l.starts_with("The first that applies wins"));
     let line = precedence.and_then(|i| lines.get(i + 1)).copied().unwrap_or("");
-    assert!(line.starts_with("tm rules --loosened exits "), "{line}");
+    assert!(line.starts_with("cctao rules --loosened exits "), "{line}");
     for token in ["0 when nothing loosened", "1 when something did", "2 for a bad --base or rule file"] {
         assert!(line.contains(token), "{token}: {line}");
     }
@@ -40,57 +40,55 @@ fn gives_the_loosened_exit_codes_after_the_check_exits() {
 
 #[test]
 fn has_the_baseline_line() {
-    assert!(has_line("tm baseline test [--set <name@version>] [--json]"));
+    assert!(has_line("cctao baseline test [--set <name@version>] [--json]"));
 }
 
 #[test]
 fn has_the_help_and_version_lines() {
-    assert!(has_line("tm help"));
-    assert!(has_line("tm --version"));
+    assert!(has_line("cctao help"));
+    assert!(has_line("cctao --version"));
 }
 
 #[test]
 fn has_the_install_line() {
     assert!(has_line(
-        "tm install [--no-place] [--short-name] [--target claude,codex,cursor] [--mode skill] [--location local] [-y]"
+        "cctao install [--no-place] [--target claude,codex,cursor] [--mode skill] [--location local] [-y]"
     ));
+    assert!(!USAGE.contains("--short-name"));
 }
 
 #[test]
 fn has_the_uninstall_line() {
-    assert!(has_line("tm uninstall"));
+    assert!(has_line("cctao uninstall"));
 }
 
 #[test]
-fn says_tm_answers_only_where_install_made_the_link() {
-    assert!(has_line(
-        "temperare is the program; tm answers the same commands only where temperare install made the tm link."
-    ));
-    assert!(!USAGE.contains("both answer every command"));
+fn no_link_is_described() {
+    assert!(!USAGE.contains("link"));
 }
 
 #[test]
 fn says_where_the_rule_file_comes_from() {
-    assert!(has_line("The rule file is --rules <path>, else temperare.toml at the top of the git repository."));
+    assert!(USAGE.lines().any(|line| line.contains("--rules <path>") && line.contains("tao.toml")));
 }
 
 #[test]
 fn savings_contract_explains_the_savings_estimate() {
-    assert!(has_line("When an engine ran for a rule other than a watch rule, tm check's text output opens with an estimate of the tokens"));
+    assert!(has_line("When an engine ran for a rule other than a watch rule, cctao check's text output opens with an estimate of the tokens"));
     assert!(has_line("saved against the raw output of the engines it ran (characters / 4)."));
-    assert!(!USAGE.lines().any(|line| line.starts_with("tm check opens with")));
+    assert!(!USAGE.lines().any(|line| line.starts_with("cctao check opens with")));
     assert!(has_line("It is an upper bound: the saving against reading that output whole."));
 }
 
 #[test]
 fn savings_contract_explains_the_switch_and_json() {
-    assert!(has_line("savings_line = false in ~/.config/temperare/config.toml turns the line and its ask off; the JSON saved object stays."));
+    assert!(has_line("savings_line = false in ~/.config/cctao/config.toml turns the line and its ask off; the JSON saved object stays."));
 }
 
 #[test]
 fn savings_contract_names_the_savings_log() {
     assert!(has_line("Each check that ran an engine for a rule other than a watch rule appends a line to"));
-    assert!(has_line("~/.local/state/temperare/savings.jsonl."));
+    assert!(has_line("~/.local/state/cctao/savings.jsonl."));
 }
 
 #[test]

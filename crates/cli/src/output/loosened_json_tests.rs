@@ -10,11 +10,11 @@ use std::path::Path;
 
 #[test]
 fn every_kind_with_only_the_values_it_has() {
-    let value = loosened_json(Path::new("/repo/temperare.toml"), "main", &every_kind());
+    let value = loosened_json(Path::new("/repo/tao.toml"), "main", &every_kind());
     assert_eq!(
         value,
         json!({
-            "rule_file": "/repo/temperare.toml",
+            "rule_file": "/repo/tao.toml",
             "base": "main",
             "count": 13,
             "loosened": [

@@ -1,4 +1,4 @@
-//! `saved_json`: the savings estimate as the `saved` value of tm check's `--json` object.
+//! `saved_json`: the savings estimate as the `saved` value of cctao check's `--json` object.
 
 use super::{RuleCount, Savings};
 use serde_json::json;

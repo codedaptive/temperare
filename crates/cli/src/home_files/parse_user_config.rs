@@ -1,4 +1,4 @@
-//! `parse_user_config`: the savings switch read from the text of `~/.config/temperare/config.toml`.
+//! `parse_user_config`: the savings switch read from the text of `~/.config/cctao/config.toml`.
 
 /// `Ok` with the value of `savings_line` when it is a bool, `Ok(true)` when the text has no keys; `Err(why)` when the
 /// text is not TOML (the first line of the parser's message), when a key other than `savings_line` is present

@@ -1,6 +1,6 @@
-//! `not_available_pairs`: the rules `temperare` reports not available in a `--json` answer, as (rule, engine) pairs.
+//! `not_available_pairs`: the rules `cctao` reports not available in a `--json` answer, as (rule, engine) pairs.
 
-use crate::tm::Answer;
+use crate::cctao::Answer;
 
 /// The (rule, engine) of each entry of `a`'s `not_available` list, in the order the answer gives them; an entry
 /// missing a field gives "" for it. Panics, printing the JSON, when the answer holds no `not_available` list.

@@ -1,4 +1,4 @@
-//! `BaselineWorld::real`: the world wired to the sets built into tm, case folders under the system temp folder, the
+//! `BaselineWorld::real`: the world wired to the sets built into cctao, case folders under the system temp folder, the
 //! real disk, the case's git repository made, staged, committed and diffed through ccvcslib, and the real engines.
 
 use super::BaselineWorld;
@@ -11,8 +11,8 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::LazyLock;
 
-/// Every set built into tm with its ready mark, from `rules::baseline_sets`: read once, as `default_sets` borrows it for
-/// the whole process.
+/// Every set built into cctao with its ready mark, from `rules::baseline_sets`: read once, as `default_sets` borrows it
+/// for the whole process.
 static SETS: LazyLock<Vec<(String, bool)>> = LazyLock::new(rules::baseline_sets);
 
 /// The next case folder number: shared by the whole process, so no two cases of one run get the same folder name,
@@ -40,13 +40,13 @@ impl BaselineWorld<'static> {
 
 /// A new empty folder `tm-baseline-<pid>-<n>` under the system temp folder, `n` the process's next number (the one
 /// after when that name is already there), made a git repository with `git init -q` through ccvcslib's
-/// `make_repository`, no hook run (it passes `core.hooksPath=/dev/null`, `NUL` on Windows): an engine that tm hands
+/// `make_repository`, no hook run (it passes `core.hooksPath=/dev/null`, `NUL` on Windows): an engine that cctao hands
 /// its files (ShellCheck) lists them with git. A git that cannot run or fails is an error naming the step
 /// ("git init: ..."), the folder removed first.
 fn make_folder() -> io::Result<PathBuf> {
     let folder = loop {
         let n = NEXT.fetch_add(1, Ordering::Relaxed);
-        let folder = std::env::temp_dir().join(format!("tm-baseline-{}-{n}", std::process::id()));
+        let folder = std::env::temp_dir().join(format!("cctao-baseline-{}-{n}", std::process::id()));
         match fs::create_dir(&folder) {
             Ok(()) => break folder,
             Err(e) if e.kind() == ErrorKind::AlreadyExists => continue,
@@ -61,11 +61,11 @@ fn make_folder() -> io::Result<PathBuf> {
 
 /// Stages every file in `folder` through ccvcslib's `stage_all` (no hook runs; `core.autocrlf=false`, so line
 /// endings are staged as written; `VCS`'s Lifecycle policy, so no inherited variable such as `GIT_DIR` points it at
-/// another repository) and commits it as `base` through its `commit_index`: tm's own name, no signing so no user
+/// another repository) and commits it as `base` through its `commit_index`: cctao's own name, no signing so no user
 /// setting is needed, no hook, and an empty commit when there is nothing to commit. The new commit's id.
 fn commit_all(folder: &Path) -> io::Result<String> {
     VCS.stage_all(folder).map_err(|e| io::Error::other(format!("git add: {e}")))?;
-    VCS.commit_index(folder, "tm", "tm@localhost", "base")
+    VCS.commit_index(folder, "cctao", "cctao@localhost", "base")
         .map(|revision| revision.0)
         .map_err(|e| io::Error::other(format!("git commit: {e}")))
 }
@@ -80,7 +80,7 @@ fn added_since(folder: &Path, base: &str) -> io::Result<BTreeMap<PathBuf, Vec<Ra
     Ok(added.into_iter().map(|file| (file.path, file.lines.iter().map(|l| l.start..l.end).collect())).collect())
 }
 
-/// The git every case folder is made, staged, committed and diffed with, under the environment policy the rest of tm
+/// The git every case folder is made, staged, committed and diffed with, under the environment policy the rest of cctao
 /// uses.
 const VCS: GitVcs = GitVcs { policy: GitEnvPolicy::Lifecycle };
 

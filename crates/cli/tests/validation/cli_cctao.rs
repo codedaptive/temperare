@@ -1,4 +1,4 @@
-//! Validation (S-28): tm's pieces work together on a throwaway repository, from discovery via git and
+//! Validation (S-28): cctao's pieces work together on a throwaway repository, from discovery via git and
 //! RuleFile::read to the rules listing and exit codes; and the listing's engine availability, with stub engines on a
 //! PATH set for the child only. Every program starts through procio::run with a cleared environment.
 
@@ -66,7 +66,7 @@ impl TempFolder {
         let parent = fs::canonicalize(std::env::temp_dir()).unwrap();
         loop {
             let n = NEXT.fetch_add(1, Ordering::Relaxed);
-            let path = parent.join(format!("tm-cli-zit-{}-{n}-{tag}", std::process::id()));
+            let path = parent.join(format!("cctao-cli-zit-{}-{n}-{tag}", std::process::id()));
             match fs::create_dir(&path) {
                 Ok(()) => return Self(path),
                 Err(e) if e.kind() == io::ErrorKind::AlreadyExists => continue,
@@ -81,11 +81,11 @@ impl TempFolder {
     }
 
     fn write_rules(&self, text: &str) {
-        fs::write(self.0.join("temperare.toml"), text).unwrap();
+        fs::write(self.0.join("tao.toml"), text).unwrap();
     }
 
-    fn tm(&self, cwd: &Path, args: &[&str]) -> Output {
-        procio::run(&clean_cmd(env!("CARGO_BIN_EXE_temperare").as_ref(), args, cwd, &self.0, None)).unwrap()
+    fn cctao(&self, cwd: &Path, args: &[&str]) -> Output {
+        procio::run(&clean_cmd(env!("CARGO_BIN_EXE_cctao").as_ref(), args, cwd, &self.0, None)).unwrap()
     }
 }
 
@@ -135,11 +135,11 @@ fn availability_listing(json: bool) -> Output {
     #[cfg(windows)]
     fs::write(stub_dir.join("ruff.cmd"), "@exit /b 0\n").unwrap();
     let args: &[&str] = if json {
-        &["rules", "--rules", "temperare.toml", "--json"]
+        &["rules", "--rules", "tao.toml", "--json"]
     } else {
-        &["rules", "--rules", "temperare.toml"]
+        &["rules", "--rules", "tao.toml"]
     };
-    let cmd = clean_cmd(env!("CARGO_BIN_EXE_temperare").as_ref(), args, &tmp.0, &tmp.0, Some(stub_dir.as_os_str()));
+    let cmd = clean_cmd(env!("CARGO_BIN_EXE_cctao").as_ref(), args, &tmp.0, &tmp.0, Some(stub_dir.as_os_str()));
     let output = procio::run(&cmd).unwrap();
     assert_eq!(output.code, Some(0), "{}", String::from_utf8_lossy(&output.stderr));
     output
@@ -195,7 +195,7 @@ fn rules_lists_rule_ids_exceptions_and_next_step() {
     let tmp = TempFolder::new("text");
     tmp.init_git();
     tmp.write_rules(GOOD_RULES);
-    let output = tmp.tm(&tmp.0, &["rules"]);
+    let output = tmp.cctao(&tmp.0, &["rules"]);
     assert_eq!(output.code, Some(0));
     let stdout = String::from_utf8(output.stdout).unwrap();
     assert!(stdout.contains("lint-all"), "{stdout}");
@@ -209,7 +209,7 @@ fn rules_json_is_one_object_with_counts_and_next_step() {
     let tmp = TempFolder::new("json");
     tmp.init_git();
     tmp.write_rules(GOOD_RULES);
-    let output = tmp.tm(&tmp.0, &["rules", "--json"]);
+    let output = tmp.cctao(&tmp.0, &["rules", "--json"]);
     assert_eq!(output.code, Some(0));
     let value: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
     assert!(value.is_object());
@@ -224,12 +224,12 @@ fn bad_rule_file_reports_location_and_next_step() {
     let tmp = TempFolder::new("bad");
     tmp.init_git();
     tmp.write_rules(BAD_RULES);
-    let output = tmp.tm(&tmp.0, &["rules"]);
+    let output = tmp.cctao(&tmp.0, &["rules"]);
     assert_eq!(output.code, Some(2));
     let stdout = String::from_utf8(output.stdout).unwrap();
-    let line = stdout.lines().find(|line| line.contains("temperare.toml:1:"))
+    let line = stdout.lines().find(|line| line.contains("tao.toml:1:"))
         .expect("version problem must name line 1");
-    let col_and_message = line.split_once("temperare.toml:1:").unwrap().1;
+    let col_and_message = line.split_once("tao.toml:1:").unwrap().1;
     let (col, message) = col_and_message.split_once("  ").unwrap();
     assert!(col.parse::<usize>().is_ok(), "{line}");
     assert!(!message.is_empty(), "{line}");
@@ -243,7 +243,7 @@ fn rules_discovers_repository_file_from_subfolder() {
     tmp.write_rules(GOOD_RULES);
     let subfolder = tmp.0.join("nested");
     fs::create_dir(&subfolder).unwrap();
-    let output = tmp.tm(&subfolder, &["rules"]);
+    let output = tmp.cctao(&subfolder, &["rules"]);
     assert_eq!(output.code, Some(0));
     assert!(String::from_utf8(output.stdout).unwrap().contains("lint-all"));
 }
@@ -252,7 +252,7 @@ fn rules_discovers_repository_file_from_subfolder() {
 fn rules_flag_works_outside_a_repository() {
     let tmp = TempFolder::new("explicit");
     tmp.write_rules(GOOD_RULES);
-    let output = tmp.tm(&tmp.0, &["rules", "--rules", "temperare.toml"]);
+    let output = tmp.cctao(&tmp.0, &["rules", "--rules", "tao.toml"]);
     assert_eq!(output.code, Some(0));
     assert!(String::from_utf8(output.stdout).unwrap().contains("lint-all"));
 }
@@ -260,7 +260,7 @@ fn rules_flag_works_outside_a_repository() {
 #[test]
 fn rules_outside_repository_reports_error_on_stderr() {
     let tmp = TempFolder::new("outside");
-    let output = tmp.tm(&tmp.0, &["rules"]);
+    let output = tmp.cctao(&tmp.0, &["rules"]);
     assert_eq!(output.code, Some(2));
     assert!(String::from_utf8(output.stderr).unwrap().contains("not in a git repository"));
     assert!(output.stdout.is_empty());
@@ -270,20 +270,20 @@ fn rules_outside_repository_reports_error_on_stderr() {
 fn rules_without_rule_file_reports_error() {
     let tmp = TempFolder::new("missing");
     tmp.init_git();
-    let output = tmp.tm(&tmp.0, &["rules"]);
+    let output = tmp.cctao(&tmp.0, &["rules"]);
     assert_eq!(output.code, Some(2));
     assert!(String::from_utf8(output.stderr).unwrap().contains("no rule file at"));
 }
 
 #[test]
-fn version_prints_temperare_workspace_version_and_commit() {
+fn version_prints_cctao_workspace_version_and_commit() {
     let tmp = TempFolder::new("version");
-    let output = tmp.tm(&tmp.0, &["--version"]);
+    let output = tmp.cctao(&tmp.0, &["--version"]);
     assert_eq!(output.code, Some(0));
     let stdout = String::from_utf8(output.stdout).unwrap();
-    let commit = env!("TEMPERARE_COMMIT");
-    assert_eq!(stdout, format!("temperare 0.1.0 ({commit})\n"));
-    if env!("TEMPERARE_CHECKOUT") == "yes" {
+    let commit = env!("CCTAO_COMMIT");
+    assert_eq!(stdout, format!("cctao 0.1.0 ({commit})\n"));
+    if env!("CCTAO_CHECKOUT") == "yes" {
         assert_eq!(commit.len(), 12, "{commit}");
         assert!(commit.chars().all(|ch| matches!(ch, '0'..='9' | 'a'..='f')), "{commit}");
     }
@@ -292,15 +292,15 @@ fn version_prints_temperare_workspace_version_and_commit() {
 #[test]
 fn help_prints_rules_usage() {
     let tmp = TempFolder::new("help");
-    let output = tmp.tm(&tmp.0, &["help"]);
+    let output = tmp.cctao(&tmp.0, &["help"]);
     assert_eq!(output.code, Some(0));
-    assert!(String::from_utf8(output.stdout).unwrap().contains("tm rules [--rules <path>] [--json]"));
+    assert!(String::from_utf8(output.stdout).unwrap().contains("cctao rules [--rules <path>] [--json]"));
 }
 
 #[test]
 fn unknown_command_reports_usage_error() {
     let tmp = TempFolder::new("unknown");
-    let output = tmp.tm(&tmp.0, &["frobnicate"]);
+    let output = tmp.cctao(&tmp.0, &["frobnicate"]);
     assert_eq!(output.code, Some(2));
     assert!(String::from_utf8(output.stderr).unwrap().contains("unknown command 'frobnicate'"));
 }

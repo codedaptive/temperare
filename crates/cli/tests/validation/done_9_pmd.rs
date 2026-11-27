@@ -2,10 +2,10 @@
 //! made, with its rule, its place and its fix text, and the report lists the engine's version; with the engine off the
 //! PATH, the same rule reports "not available" (exit 3). One rule, `engine = "pmd"`,
 //! `check = "category/java/bestpractices.xml/UnusedPrivateField"`; Foo.java declares a private field it never reads
-//! on line 2, Bar.java a package-private one. tm runs with PATH the folder that gives it pmd (`tm_path_for`) then
+//! on line 2, Bar.java a package-private one. cctao runs with PATH the folder that gives it pmd (`cctao_path_for`) then
 //! /usr/bin:/bin; pmd's launcher finds its own Java (JAVA_HOME, an absolute path), so no java need be on the PATH. The
-//! JVM starts slowly: nothing here is timed. Only when pmd is not on the PATH `temperare` gets (`on_tm_path`, which
-//! runs nothing) is the reported case NOT RUN, with `temperare`'s reason, never PASS; `temperare` must then report the
+//! JVM starts slowly: nothing here is timed. Only when pmd is not on the PATH `cctao` gets (`on_cctao_path`, which
+//! runs nothing) is the reported case NOT RUN, with `cctao`'s reason, never PASS; `cctao` must then report the
 //! rule not available.
 
 use serde_json::json;
@@ -15,8 +15,8 @@ use crate::check::Check;
 use crate::not_available_pairs::not_available_pairs;
 use crate::probed_version::probed_version;
 use crate::repo::Repo;
-use crate::tm::tm_with_path;
-use crate::tm_path_for::tm_path_for;
+use crate::cctao::cctao_with_path;
+use crate::cctao_path_for::cctao_path_for;
 
 const RULE: &str = "java-unused-field";
 const FIX: &str = "Remove the field or read it.";
@@ -41,7 +41,7 @@ const PATH_WITHOUT_ENGINES: &str = "/usr/bin:/bin";
 /// A repository holding the rule file, Foo.java and Bar.java, committed.
 fn java_repo() -> Repo {
     let repo = Repo::new();
-    repo.write("temperare.toml", RULES);
+    repo.write("tao.toml", RULES);
     repo.write("Foo.java", EXAMPLE);
     repo.write("Bar.java", CLEAN);
     repo.commit("java files");
@@ -58,9 +58,9 @@ fn a_pmd_violation_is_reported_with_its_rule_place_fix_and_version() {
     );
     let repo = java_repo();
     let args = ["check", "--json"];
-    let path = tm_path_for(&["pmd"]);
-    let a = tm_with_path(&repo, &args, Some(&path));
-    check.saw_tm(&args, a.code, &a.json);
+    let path = cctao_path_for(&["pmd"]);
+    let a = cctao_with_path(&repo, &args, Some(&path));
+    check.saw_cctao(&args, a.code, &a.json);
     if let Some(why) = absent_engine_reason(&a, &["pmd"], RULE) {
         check.not_run(why);
         return;
@@ -81,13 +81,13 @@ fn a_pmd_violation_is_reported_with_its_rule_place_fix_and_version() {
 fn pmd_off_path_is_not_available() {
     let mut check = Check::new(
         "pmd_off_path_is_not_available",
-        "rule java-unused-field (pmd, category/java/bestpractices.xml/UnusedPrivateField) over the same files; tm runs \
+        "rule java-unused-field (pmd, category/java/bestpractices.xml/UnusedPrivateField) over the same files; cctao runs \
          with PATH /usr/bin:/bin, which holds no pmd",
     );
     let repo = java_repo();
     let args = ["check", "--json"];
-    let a = tm_with_path(&repo, &args, Some(PATH_WITHOUT_ENGINES));
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao_with_path(&repo, &args, Some(PATH_WITHOUT_ENGINES));
+    check.saw_cctao(&args, a.code, &a.json);
     assert_eq!(a.code, 3, "not available has its own code: {:#}\n{}", a.json, a.stderr);
     assert!(a.findings().is_empty(), "nothing is reported as found: {:#}", a.json);
     assert_eq!(not_available_pairs(&a), vec![(RULE.to_string(), "pmd".to_string())], "{:#}", a.json);

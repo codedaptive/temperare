@@ -4,13 +4,13 @@
 //! with `max_ratio = 2`, `floor = 50` and `test_paths = ["tests/**"]`. The base commit holds only the rule file; the
 //! next adds src/lib.rs (10 lines of code) and tests/lib_test.rs (60 lines of test): 60 is past the floor and 6 to 1 is
 //! over 2, so the change gets one finding, at the first added line of the test file with the most added lines, which
-//! has no column. The reported case runs `tm check --base <base>` with PATH the folder that gives it git
-//! (`tm_path_for`) then /usr/bin:/bin, so tm runs the first git on the PATH `probed_version` uses. The off-PATH case
+//! has no column. The reported case runs `cctao check --base <base>` with PATH the folder that gives it git
+//! (`cctao_path_for`) then /usr/bin:/bin, so cctao runs the first git on the PATH `probed_version` uses. The off-PATH case
 //! gives PATH an empty folder the test made (/usr/bin holds git) and names the rule file with `--rules`, since without
-//! it tm finds the rule file through git, a usage error with no git (exit 2). It gives no `--base`, so with git present
+//! it cctao finds the rule file through git, a usage error with no git (exit 2). It gives no `--base`, so with git present
 //! the rule would be not available too (ONLY_WITH_BASE_WHY); the case therefore asserts the reason, `git not found on
-//! PATH`, which tells an absent git apart. Only when git is not on the PATH `temperare` gets (`on_tm_path`, which runs
-//! nothing) is the reported case NOT RUN, with `temperare`'s reason, never PASS.
+//! PATH`, which tells an absent git apart. Only when git is not on the PATH `cctao` gets (`on_cctao_path`, which runs
+//! nothing) is the reported case NOT RUN, with `cctao`'s reason, never PASS.
 
 use serde_json::json;
 
@@ -20,8 +20,8 @@ use crate::not_available_pairs::not_available_pairs;
 use crate::probed_version::probed_version;
 use crate::repo::Repo;
 use crate::temp_home::TempHome;
-use crate::tm::tm_with_path;
-use crate::tm_path_for::tm_path_for;
+use crate::cctao::cctao_with_path;
+use crate::cctao_path_for::cctao_path_for;
 
 const RULE: &str = "test-ratio";
 const FIX: &str = "Balance the change.";
@@ -50,7 +50,7 @@ fn lines(n: usize, word: &str) -> String {
 /// base commit's id.
 fn ratio_repo() -> (Repo, String) {
     let repo = Repo::new();
-    repo.write("temperare.toml", RULES);
+    repo.write("tao.toml", RULES);
     let base = repo.commit("rules");
     repo.write("src/lib.rs", &lines(10, "code"));
     repo.write("tests/lib_test.rs", &lines(60, "test"));
@@ -67,8 +67,8 @@ fn a_git_ratio_finding_is_reported_with_its_rule_place_fix_and_version() {
     );
     let (repo, base) = ratio_repo();
     let args = ["check", "--base", base.as_str(), "--json"];
-    let a = tm_with_path(&repo, &args, Some(&tm_path_for(&["git"])));
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao_with_path(&repo, &args, Some(&cctao_path_for(&["git"])));
+    check.saw_cctao(&args, a.code, &a.json);
     if let Some(why) = absent_engine_reason(&a, &["git"], RULE) {
         check.not_run(why);
         return;
@@ -90,15 +90,15 @@ fn a_git_ratio_finding_is_reported_with_its_rule_place_fix_and_version() {
 fn git_off_path_is_not_available() {
     let mut check = Check::new(
         "git_off_path_is_not_available",
-        "rule test-ratio (git, test_ratio) over the same change; `--rules <the rule file>`, no base; tm runs with \
+        "rule test-ratio (git, test_ratio) over the same change; `--rules <the rule file>`, no base; cctao runs with \
          PATH an empty folder, which holds no git",
     );
     let (repo, _) = ratio_repo();
     let empty = TempHome::new();
-    let rules = repo.path().join("temperare.toml").display().to_string();
+    let rules = repo.path().join("tao.toml").display().to_string();
     let args = ["check", "--rules", rules.as_str(), "--json"];
-    let a = tm_with_path(&repo, &args, Some(&empty.path().display().to_string()));
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao_with_path(&repo, &args, Some(&empty.path().display().to_string()));
+    check.saw_cctao(&args, a.code, &a.json);
     assert_eq!(a.code, 3, "not available has its own code: {:#}\n{}", a.json, a.stderr);
     assert!(a.findings().is_empty(), "nothing is reported as found: {:#}", a.json);
     assert_eq!(not_available_pairs(&a), vec![(RULE.to_string(), "git".to_string())], "{:#}", a.json);

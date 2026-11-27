@@ -56,9 +56,9 @@ fn temp_mode_is_private_until_the_full_executable_is_installed() {
     let seen = writer.join().unwrap();
     assert_eq!(status, 0, "install failed: {out} {err}");
     let (name, mode) = seen.expect("the binary temporary file was never observed");
-    assert!(name.starts_with(".temperare.") && name.ends_with(".installing"), "unexpected entry {name}");
+    assert!(name.starts_with(".cctao.") && name.ends_with(".installing"), "unexpected entry {name}");
     assert_eq!(mode, 0o600, "temporary binary mode was {mode:#05o}, expected 0o600");
-    let binary = bin.join("temperare");
+    let binary = bin.join("cctao");
     assert!(fs::read(&binary).unwrap() == payload, "the installed binary is not the whole payload");
     assert_eq!(fs::symlink_metadata(binary).unwrap().permissions().mode() & 0o7777, 0o755);
 }

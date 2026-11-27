@@ -1,4 +1,4 @@
-//! `only_paths`: the paths given to `tm check`, as paths relative to the rule file's folder.
+//! `only_paths`: the paths given to `cctao check`, as paths relative to the rule file's folder.
 
 use crate::UsageError;
 use rules::RelPath;

@@ -1,4 +1,4 @@
-//! `availability_at`: whether tm finds an engine for a rule file in a folder, asked of the folder's canonical path.
+//! `availability_at`: whether cctao finds an engine for a rule file in a folder, asked of the folder's canonical path.
 //! It uses the real disk and PATH, and a ZUT uses only pure code (rules/global.md rule 11), so its tests are not
 //! ZUTs: integration/availability_at_tests.rs on the real disk, and tests/world/local_eslint_real.rs through the
 //! binary.

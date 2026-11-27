@@ -1,5 +1,5 @@
 //! `Check`: one acceptance case's part of the `make accept` report (S-31, SPEC-accept WO-orc-accept-1). A check
-//! records what it set up and what `temperare` showed it, before it asserts (`Check::new`, `saw_tm`, `not_run`). When it is
+//! records what it set up and what `cctao` showed it, before it asserts (`Check::new`, `saw_cctao`, `not_run`). When it is
 //! dropped it writes its part into the folder `scripts/accept.sh` names in ACCEPT_PARTS, ending `Result: PASS`,
 //! `Result: FAIL` when the test panicked (its output on the terminal says why), or `Result: NOT RUN (<why>)`.
 //! Without ACCEPT_PARTS (the validation run after a publish) it writes nothing and starts nothing.

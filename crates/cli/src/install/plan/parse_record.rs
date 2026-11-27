@@ -4,9 +4,9 @@ use std::path::PathBuf;
 
 use crate::RecordEntry;
 
-/// The entries in `text`, the form `record_text` writes, in order and each once. A line that is not `file <path>`,
-/// `dir <path>` or `link <link>\t<target>` (split at the first tab) with absolute paths is skipped: uninstall
-/// removes what the record names, so it never acts on a path it cannot place.
+/// The entries in `text`, the form `record_text` writes, in order and each once. A line that is not `file <path>` or
+/// `dir <path>` with an absolute path is skipped, a `link` line among them: uninstall removes what the record names,
+/// so it never acts on a path it cannot place.
 pub(crate) fn parse_record(text: &str) -> Vec<RecordEntry> {
     let mut entries = Vec::new();
     for entry in text.lines().filter_map(entry) {
@@ -23,10 +23,6 @@ fn entry(line: &str) -> Option<RecordEntry> {
     match word {
         "file" => absolute(rest).map(RecordEntry::File),
         "dir" => absolute(rest).map(RecordEntry::Dir),
-        "link" => {
-            let (link, target) = rest.split_once('\t')?;
-            Some(RecordEntry::Link(absolute(link)?, absolute(target)?))
-        }
         _ => None,
     }
 }

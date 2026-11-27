@@ -58,7 +58,7 @@ fn no_repository_is_a_usage_error() {
         got,
         Err(UsageError {
             what: "git could not find the repository top for --base: not a working copy".to_string(),
-            fix: "Run tm check inside a git repository to use --base, or leave --base out.".to_string(),
+            fix: "Run cctao check inside a git repository to use --base, or leave --base out.".to_string(),
         })
     );
 }

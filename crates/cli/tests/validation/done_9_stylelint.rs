@@ -3,10 +3,10 @@
 //! off the PATH, the same rule reports "not available" (exit 3). One rule, `engine = "stylelint"`, `check =
 //! "color-no-invalid-hex"`, whose `config` is stylelint.json turning that rule on, with no `extends`, so nothing is
 //! loaded from outside the repository; a.css has an invalid hex colour on line 2, clean.css a valid one. stylelint is
-//! a `#!/usr/bin/env node` script, so tm runs with PATH the folders that give it stylelint and node (`tm_path_for`)
-//! then /usr/bin:/bin; tm itself checks for stylelint only (its entry's `needs`), not for node. Only when stylelint is
-//! not on the PATH `temperare` gets (`on_tm_path`, which runs nothing) is the reported case NOT RUN, with
-//! `temperare`'s reason, never PASS; `temperare` must then report the rule not available.
+//! a `#!/usr/bin/env node` script, so cctao runs with PATH the folders that give it stylelint and node (`cctao_path_for`)
+//! then /usr/bin:/bin; cctao itself checks for stylelint only (its entry's `needs`), not for node. Only when stylelint is
+//! not on the PATH `cctao` gets (`on_cctao_path`, which runs nothing) is the reported case NOT RUN, with
+//! `cctao`'s reason, never PASS; `cctao` must then report the rule not available.
 
 use serde_json::json;
 
@@ -15,8 +15,8 @@ use crate::check::Check;
 use crate::not_available_pairs::not_available_pairs;
 use crate::probed_version::probed_version;
 use crate::repo::Repo;
-use crate::tm::tm_with_path;
-use crate::tm_path_for::tm_path_for;
+use crate::cctao::cctao_with_path;
+use crate::cctao_path_for::cctao_path_for;
 
 const RULE: &str = "css-invalid-hex";
 const FIX: &str = "Write a valid hex colour.";
@@ -40,7 +40,7 @@ const CLEAN: &str = "a { color: #fff; }\n";
 /// A repository holding the rule file, stylelint.json, a.css and clean.css, committed.
 fn css_repo() -> Repo {
     let repo = Repo::new();
-    repo.write("temperare.toml", RULES);
+    repo.write("tao.toml", RULES);
     repo.write("stylelint.json", CONFIG);
     repo.write("a.css", INVALID);
     repo.write("clean.css", CLEAN);
@@ -57,8 +57,8 @@ fn a_stylelint_warning_is_reported_with_its_rule_place_fix_and_version() {
     );
     let repo = css_repo();
     let args = ["check", "--json"];
-    let a = tm_with_path(&repo, &args, Some(&tm_path_for(&["stylelint", "node"])));
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao_with_path(&repo, &args, Some(&cctao_path_for(&["stylelint", "node"])));
+    check.saw_cctao(&args, a.code, &a.json);
     if let Some(why) = absent_engine_reason(&a, &["stylelint"], RULE) {
         check.not_run(why);
         return;
@@ -79,13 +79,13 @@ fn a_stylelint_warning_is_reported_with_its_rule_place_fix_and_version() {
 fn stylelint_off_path_is_not_available() {
     let mut check = Check::new(
         "stylelint_off_path_is_not_available",
-        "rule css-invalid-hex (stylelint, color-no-invalid-hex) over the same files; tm runs with PATH /usr/bin:/bin, \
+        "rule css-invalid-hex (stylelint, color-no-invalid-hex) over the same files; cctao runs with PATH /usr/bin:/bin, \
          which holds no stylelint",
     );
     let repo = css_repo();
     let args = ["check", "--json"];
-    let a = tm_with_path(&repo, &args, Some("/usr/bin:/bin"));
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao_with_path(&repo, &args, Some("/usr/bin:/bin"));
+    check.saw_cctao(&args, a.code, &a.json);
     assert_eq!(a.code, 3, "not available has its own code: {:#}\n{}", a.json, a.stderr);
     assert!(a.findings().is_empty(), "nothing is reported as found: {:#}", a.json);
     assert_eq!(not_available_pairs(&a), vec![(RULE.to_string(), "stylelint".to_string())], "{:#}", a.json);

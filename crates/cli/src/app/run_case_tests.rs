@@ -174,5 +174,5 @@ fn a_folder_that_cannot_be_removed_is_a_line_on_err_and_keeps_the_verdict() {
     let (verdict, steps, err) = run(Setup { remove_fails: true, findings: vec![finding(1)], ..OK }, &files(&["a.py"]));
     assert_eq!(verdict, CaseVerdict::Holds);
     assert_eq!(steps.last().map(String::as_str), Some("remove /case"));
-    assert_eq!(err, "tm: cannot remove the case folder /case: busy\n");
+    assert_eq!(err, "cctao: cannot remove the case folder /case: busy\n");
 }

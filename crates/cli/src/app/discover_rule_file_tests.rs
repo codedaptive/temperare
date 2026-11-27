@@ -31,19 +31,21 @@ fn an_absolute_flag_is_taken_as_given() {
 
 #[test]
 fn the_file_at_the_repository_top_when_it_exists() {
-    let exists = |p: &Path| p == Path::new("/repo/temperare.toml");
+    let exists = |p: &Path| p == Path::new("/repo/tao.toml");
     let found = discover_rule_file(None, Path::new("/repo/src"), &repo_top, &exists);
-    assert_eq!(found, Ok(PathBuf::from("/repo/temperare.toml")));
+    assert_eq!(found, Ok(PathBuf::from("/repo/tao.toml")));
 }
 
 #[test]
-fn no_file_at_the_repository_top() {
-    let found = discover_rule_file(None, Path::new("/repo/src"), &repo_top, &|_: &Path| false);
+fn no_tao_file_at_the_repository_top_though_temperare_toml_is_there() {
+    let found = discover_rule_file(None, Path::new("/repo/src"), &repo_top, &|p: &Path| {
+        p == Path::new("/repo/temperare.toml")
+    });
     assert_eq!(
         found,
         Err(UsageError {
-            what: format!("no rule file at {}", Path::new("/repo").join("temperare.toml").display()),
-            fix: "Write temperare.toml at the top of the repository, or pass --rules <path>.".to_string(),
+            what: format!("no rule file at {}", Path::new("/repo").join("tao.toml").display()),
+            fix: "Write tao.toml at the top of the repository, or pass --rules <path>.".to_string(),
         })
     );
 }
@@ -56,7 +58,7 @@ fn outside_a_repository_names_cwd() {
         found,
         Err(UsageError {
             what: "not in a git repository: /work".to_string(),
-            fix: "Run tm inside a git repository, or pass --rules <path>.".to_string(),
+            fix: "Run cctao inside a git repository, or pass --rules <path>.".to_string(),
         })
     );
 }

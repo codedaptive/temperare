@@ -1,5 +1,5 @@
-//! `run_rules`: `tm rules`, from finding the rule file to the listing and its exit code, or with `--loosened` what the
-//! rule file loosened since `--base`.
+//! `run_rules`: `cctao rules`, from finding the rule file to the listing and its exit code, or with `--loosened` what
+//! the rule file loosened since `--base`.
 
 use super::discover_rule_file::discover_rule_file;
 use super::rules_not_applicable::rules_not_applicable;
@@ -15,12 +15,12 @@ use std::path::Path;
 /// With `--base`, runs `run_loosened` instead: what the rule file loosened since that base, exit 0, 1 or 2
 /// (`parse_rules_args` gives `--base` only together with `--loosened`).
 /// Otherwise finds the rule file, reads it and prints its rules with each engine's availability for the rule file's
-/// folder, the rules not applicable here with the whys `tm check` run in `cwd` gives them (`world.no_file_rules`; no
+/// folder, the rules not applicable here with the whys `cctao check` run in `cwd` gives them (`world.no_file_rules`; no
 /// engine runs), and its exceptions in force and expired on the UTC day holding `world.now` (exit 0, whatever the
 /// availability or the dates: listing is not checking) or its problems (exit 2), as text ending in a `next:` line or
 /// as one JSON object carrying `exit` and `next`. A rule file that cannot be found is a usage error on `err` (and,
 /// under `--json`, an `{"error", "exit", "next"}` object on `out`), exit 2. Write errors are ignored: a closed pipe is
-/// not tm's failure.
+/// not cctao's failure.
 pub fn run_rules(
     args: &RulesArgs,
     cwd: &Path,
@@ -40,7 +40,7 @@ pub fn run_rules(
         Ok(rf) => rf,
         Err(problems) => return write_problems(&path, &problems, args.json, out),
     };
-    // `cwd` is the folder `tm check` hands the engines as `repo`, so both judge the same folder.
+    // `cwd` is the folder `cctao check` hands the engines as `repo`, so both judge the same folder.
     let not_applicable = rules_not_applicable(&rf, &(world.no_file_rules)(&rf, cwd));
     let folder = cwd.join(&rf.folder);
     let availability = |engine| (world.availability)(engine, &folder);

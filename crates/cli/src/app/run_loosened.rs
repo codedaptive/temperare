@@ -1,4 +1,4 @@
-//! `run_loosened`: `tm rules --loosened --base <rev>`, from finding the rule file to what it loosened since `<rev>`.
+//! `run_loosened`: `cctao rules --loosened --base <rev>`, from finding the rule file to what it loosened since `<rev>`.
 
 use super::base_error::BaseError;
 use super::discover_rule_file::discover_rule_file;
@@ -16,7 +16,7 @@ use std::path::Path;
 /// carrying `exit` and `next`. Exit 0 when nothing loosened, 1 when something did. A rule file that cannot be found and
 /// a base that cannot be read are usage errors (exit 2, see `write_failure`); the base's problems, labelled
 /// `<path> (at <rev>)`, and then now's, are exit 2 (see `write_problems`). Write errors are ignored: a closed pipe is
-/// not tm's failure.
+/// not cctao's failure.
 pub(crate) fn run_loosened(
     args: &RulesArgs,
     rev: &str,

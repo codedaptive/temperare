@@ -1,8 +1,8 @@
-//! `Command`: what a tm command line asks for.
+//! `Command`: what a cctao command line asks for.
 
 use super::{BaselineArgs, CheckArgs, InstallArgs, RulesArgs};
 
-/// The command parsed from tm's arguments.
+/// The command parsed from cctao's arguments.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Command {
     Check(CheckArgs),

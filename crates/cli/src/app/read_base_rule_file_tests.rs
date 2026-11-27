@@ -77,7 +77,7 @@ fn a_rule_file_name_starting_with_a_dash_is_refused_before_git_is_asked() {
     assert_eq!(
         error,
         UsageError {
-            what: "rule file name -x.toml starts with '-', which tm cannot read at a --base revision".to_string(),
+            what: "rule file name -x.toml starts with '-', which cctao cannot read at a --base revision".to_string(),
             fix: "Rename the rule file, or leave --loosened out.".to_string(),
         }
     );

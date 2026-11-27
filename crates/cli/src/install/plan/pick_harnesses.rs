@@ -7,9 +7,9 @@ use crate::Harness;
 /// Writes the detected harnesses to `out`, numbered from 1, and reads one answer line from `input`. Empty (or end
 /// of input, or a read error) is none; `all` is every detected harness; else commas between numbers or names of
 /// detected harnesses, each kept once in the order given. Any token that is neither is none, with a line on `out`
-/// naming it: a wrong answer wires nothing rather than a guess. Write errors are ignored, as everywhere in tm.
+/// naming it: a wrong answer wires nothing rather than a guess. Write errors are ignored, as everywhere in cctao.
 pub(crate) fn pick_harnesses(detected: &[Harness], input: &mut dyn BufRead, out: &mut dyn Write) -> Vec<Harness> {
-    let _ = writeln!(out, "Wire the temperare skill into which harnesses?");
+    let _ = writeln!(out, "Wire the cctao skill into which harnesses?");
     for (number, harness) in detected.iter().enumerate() {
         let _ = writeln!(out, "  {}. {}", number + 1, harness.name());
     }

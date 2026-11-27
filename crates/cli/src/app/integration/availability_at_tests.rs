@@ -8,7 +8,7 @@ use std::path::Path;
 
 #[test]
 fn availability_at_answers_without_a_path_lookup() {
-    let missing = std::env::temp_dir().join(format!("tm-availability-at-missing-{}", std::process::id()));
+    let missing = std::env::temp_dir().join(format!("cctao-availability-at-missing-{}", std::process::id()));
     assert_eq!(
         availability_at(Engine::Tessera, Path::new(env!("CARGO_MANIFEST_DIR"))),
         Availability::NotAvailable { why: "Tessera's slop records are not defined yet".to_string() },

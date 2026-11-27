@@ -11,9 +11,9 @@ fn problems_in_order_with_their_fields() {
         rules::Problem { line: 3, col: 1, what: "unknown key".to_string(), fix: "Remove the key.".to_string() },
     ];
     assert_eq!(
-        problems_json(Path::new("repo/temperare.toml"), &problems),
+        problems_json(Path::new("repo/tao.toml"), &problems),
         json!({
-            "rule_file": "repo/temperare.toml",
+            "rule_file": "repo/tao.toml",
             "problems": [
                 {"line": 1, "col": 11, "what": "version must be 1", "fix": "Write version = 1."},
                 {"line": 3, "col": 1, "what": "unknown key", "fix": "Remove the key."},

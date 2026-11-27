@@ -1,6 +1,6 @@
-//! ZUT for app/run_rules.rs: the listing (with its not-applicable rules), the problems and the discovery errors, as text
-//! and as JSON, with git, the disk, engine availability, the no-file rules and the clock as closures and rule files
-//! parsed from literal TOML (one test builds its rule file in code: `baseline_and_own`).
+//! ZUT for app/run_rules.rs: the listing (with its not-applicable rules), the problems and the discovery errors, as
+//! text and as JSON, with git, the disk, engine availability, the no-file rules and the clock as closures and rule
+//! files parsed from literal TOML (one test builds its rule file in code: `baseline_and_own`).
 
 use super::{run_rules, RulesWorld};
 use crate::RulesArgs;
@@ -28,7 +28,7 @@ expires = "2099-12-31"
 "#;
 
 fn good(path: &Path) -> Result<RuleFile, Vec<Problem>> {
-    assert_eq!(path, Path::new("/repo/temperare.toml"));
+    assert_eq!(path, Path::new("/repo/tao.toml"));
     Ok(RuleFile::parse(GOOD, Path::new(".")).unwrap())
 }
 
@@ -44,10 +44,10 @@ fn repo_top(cwd: &Path) -> Result<PathBuf, VcsError> {
     Ok(PathBuf::from("/repo"))
 }
 
-/// The rule file found at repo_top's top, as tm prints it: `/repo` joined with `temperare.toml` in the platform's
-/// separator, `/repo/temperare.toml` on unix.
+/// The rule file found at repo_top's top, as cctao prints it: `/repo` joined with `tao.toml` in the platform's
+/// separator, `/repo/tao.toml` on unix.
 fn rule_file() -> String {
-    Path::new("/repo").join("temperare.toml").display().to_string()
+    Path::new("/repo").join("tao.toml").display().to_string()
 }
 
 fn not_a_repository(_: &Path) -> Result<PathBuf, VcsError> {
@@ -68,7 +68,7 @@ fn pinned_now() -> u64 {
     1_795_262_400
 }
 
-/// Runs `tm rules` in /repo/src with the given seams, every engine available; (exit, out, err).
+/// Runs `cctao rules` in /repo/src with the given seams, every engine available; (exit, out, err).
 fn rules_in_repo(
     args: RulesArgs,
     toplevel: &dyn Fn(&Path) -> Result<PathBuf, VcsError>,
@@ -79,14 +79,14 @@ fn rules_in_repo(
 }
 
 /// No rule settled as no-file. It must be asked about the rule file read (every good one here holds only `lint-all`)
-/// in the folder tm runs in, /repo/src, not the top of the repository.
+/// in the folder cctao runs in, /repo/src, not the top of the repository.
 fn none_no_file(rf: &RuleFile, folder: &Path) -> Vec<NoFileRule> {
     assert_eq!(rf.rules.iter().map(|r| r.id.as_str()).collect::<Vec<_>>(), ["lint-all"]);
     assert_eq!(folder, Path::new("/repo/src"));
     Vec::new()
 }
 
-/// Runs `tm rules` in /repo/src with the given seams, engine availability and clock, and no rule settled as no-file;
+/// Runs `cctao rules` in /repo/src with the given seams, engine availability and clock, and no rule settled as no-file;
 /// (exit, out, err).
 fn rules_with(
     args: RulesArgs,
@@ -99,7 +99,7 @@ fn rules_with(
     rules_in_world(args, toplevel, exists, read, availability, now, &none_no_file)
 }
 
-/// `rules_with` with the no-file seam given too. `rev_parse` and `blob_at` panic: `tm rules` without `--loosened`
+/// `rules_with` with the no-file seam given too. `rev_parse` and `blob_at` panic: `cctao rules` without `--loosened`
 /// never asks git for a base.
 fn rules_in_world(
     args: RulesArgs,
@@ -218,7 +218,7 @@ fn outside_a_repository_is_an_error_on_stderr_and_nothing_on_stdout() {
     assert_eq!(out, "");
     assert_eq!(
         err,
-        "tm: not in a git repository: /repo/src\nnext: Run tm inside a git repository, or pass --rules <path>.\n"
+        "cctao: not in a git repository: /repo/src\nnext: Run cctao inside a git repository, or pass --rules <path>.\n"
     );
 }
 
@@ -232,14 +232,14 @@ fn a_missing_rule_file_under_json_is_also_an_object_on_stdout() {
         json!({
             "error": format!("no rule file at {}", rule_file()),
             "exit": 2,
-            "next": "Write temperare.toml at the top of the repository, or pass --rules <path>.",
+            "next": "Write tao.toml at the top of the repository, or pass --rules <path>.",
         })
     );
     assert_eq!(
         err,
         format!(
-            "tm: no rule file at {}\n\
-             next: Write temperare.toml at the top of the repository, or pass --rules <path>.\n",
+            "cctao: no rule file at {}\n\
+             next: Write tao.toml at the top of the repository, or pass --rules <path>.\n",
             rule_file()
         )
     );

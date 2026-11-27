@@ -27,7 +27,7 @@ pub(crate) fn read_base_rule_file(path: &Path, rev: &str, world: &RulesWorld) ->
     };
     if name.starts_with('-') {
         return Err(usage(
-            format!("rule file name {shown} starts with '-', which tm cannot read at a --base revision"),
+            format!("rule file name {shown} starts with '-', which cctao cannot read at a --base revision"),
             "Rename the rule file, or leave --loosened out.".to_string(),
         ));
     }
@@ -42,7 +42,7 @@ pub(crate) fn read_base_rule_file(path: &Path, rev: &str, world: &RulesWorld) ->
         Err(g) => {
             return Err(usage(
                 format!("git could not resolve base '{rev}': {g}"),
-                "Run tm rules inside a git repository to use --base.".to_string(),
+                "Run cctao rules inside a git repository to use --base.".to_string(),
             ))
         }
     };
@@ -57,7 +57,7 @@ pub(crate) fn read_base_rule_file(path: &Path, rev: &str, world: &RulesWorld) ->
         Err(g) => {
             return Err(usage(
                 format!("git could not read {shown} at base '{rev}': {g}"),
-                "Run tm rules inside a git repository to use --base.".to_string(),
+                "Run cctao rules inside a git repository to use --base.".to_string(),
             ))
         }
     };

@@ -27,7 +27,7 @@ static NEXT: AtomicU64 = AtomicU64::new(0);
 /// The next counter-numbered path under the system temp folder.
 fn next_path(tag: &str) -> PathBuf {
     let n = NEXT.fetch_add(1, Ordering::Relaxed);
-    std::env::temp_dir().join(format!("tm-cli-rw-{}-{n}-{tag}", std::process::id()))
+    std::env::temp_dir().join(format!("cctao-cli-rw-{}-{n}-{tag}", std::process::id()))
 }
 
 /// A path under the system temp folder that does not exist; nothing is created there.
@@ -68,7 +68,7 @@ impl Drop for TempFolder {
 fn exists_is_true_for_a_file_only() {
     let world = RulesWorld::real();
     let dir = TempFolder::new("exists");
-    let file = dir.0.join("temperare.toml");
+    let file = dir.0.join("tao.toml");
     fs::write(&file, RULE_FILE).unwrap();
     assert!((world.exists)(&file));
     assert!(!(world.exists)(&dir.0), "a folder is not a rule file");
@@ -80,7 +80,7 @@ fn exists_is_true_for_a_file_only() {
 fn read_reads_a_rule_file_from_disk() {
     let world = RulesWorld::real();
     let dir = TempFolder::new("read");
-    let file = dir.0.join("temperare.toml");
+    let file = dir.0.join("tao.toml");
     fs::write(&file, RULE_FILE).unwrap();
     let rule_file = (world.read)(&file).unwrap();
     let ids: Vec<&str> = rule_file.rules.iter().map(|r| r.id.as_str()).collect();
@@ -125,12 +125,12 @@ fn toplevel_of_a_repository_is_native() {
     assert_eq!(result, PathBuf::from(git_top));
     #[cfg(unix)]
     {
-        // Git's Unix form is already native, so tm's output is unchanged.
+        // Git's Unix form is already native, so cctao's output is unchanged.
         assert_eq!(result.as_os_str(), std::ffi::OsStr::new(git_top));
     }
     #[cfg(windows)]
     {
-        // Git prints C:/..., while tm prints native C:\... paths.
+        // Git prints C:/..., while cctao prints native C:\... paths.
         let native = result.to_str().unwrap();
         assert!(!native.contains('/'), "{native}");
         assert!(!native.starts_with(r"\\?\"), "{native}");

@@ -1,4 +1,4 @@
-//! `CheckWorld`: what `tm check` needs from git, the disk, the engines, the report, HOME and the clock, as nine
+//! `CheckWorld`: what `cctao check` needs from git, the disk, the engines, the report, HOME and the clock, as nine
 //! seams.
 
 use ccvcslib::VcsError;
@@ -10,7 +10,8 @@ use std::path::{Path, PathBuf};
 /// `CheckWorld::real()` wires `git_toplevel`, `Path::is_file`, `RuleFile::read`, `git_rev_parse` (git through
 /// ccvcslib), `engines::run_rules_versioned_at` (given the base commit, `None` without one), `availability_at`,
 /// `report::build_report_with_no_files`, HOME from the environment and the system clock; a unit test passes closures,
-/// so `tm check` is tested without running git or an engine, reading the disk or the environment, or looking at PATH.
+/// so `cctao check` is tested without running git or an engine, reading the disk or the environment, or looking at
+/// PATH.
 pub struct CheckWorld<'a> {
     /// The top of the repository holding a folder.
     pub toplevel: &'a dyn Fn(&Path) -> Result<PathBuf, VcsError>,
@@ -25,7 +26,7 @@ pub struct CheckWorld<'a> {
     /// characters its counted run printed; and each distinct engine the rules name, once, with its version (None when
     /// it could not be read).
     pub run_rules: &'a dyn Fn(&RuleFile, &Path, &[RelPath], Option<&str>) -> CheckedRules,
-    /// Whether tm finds an engine for a rule file in the folder given (its program, from the folder's
+    /// Whether cctao finds an engine for a rule file in the folder given (its program, from the folder's
     /// node_modules/.bin for ESLint, else PATH); nothing is run.
     pub availability: &'a dyn Fn(Engine, &Path) -> Availability,
     /// The report of the outcomes, new findings only when given `(repository, base commit)`; the last argument is the

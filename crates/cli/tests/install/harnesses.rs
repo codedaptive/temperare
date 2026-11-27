@@ -27,7 +27,7 @@ fn reinstall_replaces_what_install_placed() {
     fs::write(&f.host.exe, b"updated executable").unwrap();
     let (status, _, _) = f.install(&args);
     assert_eq!(status, 0);
-    let binary = f.host.home.join(".local/bin/temperare");
+    let binary = f.host.home.join(".local/bin/cctao");
     let file = skill(&f.host.home, ".claude");
     assert_eq!(fs::read(&binary).unwrap(), b"updated executable");
     assert_eq!(fs::read_to_string(&file).unwrap(), SKILL_TEXT);

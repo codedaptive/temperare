@@ -1,4 +1,4 @@
-//! `savings_from`: the savings estimate from the rules' counts and the characters of tm's own output.
+//! `savings_from`: the savings estimate from the rules' counts and the characters of cctao's own output.
 
 use super::{RuleCount, Savings};
 

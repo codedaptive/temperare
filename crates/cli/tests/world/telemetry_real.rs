@@ -14,7 +14,7 @@ impl TempFolder {
     fn new() -> Self {
         loop {
             let n = NEXT.fetch_add(1, Ordering::Relaxed);
-            let path = std::env::temp_dir().join(format!("tm-telemetry-{}-{n}", std::process::id()));
+            let path = std::env::temp_dir().join(format!("cctao-telemetry-{}-{n}", std::process::id()));
             match fs::create_dir(&path) {
                 Ok(()) => return Self(native(fs::canonicalize(path).unwrap())),
                 Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
@@ -24,7 +24,7 @@ impl TempFolder {
     }
 }
 
-/// tm writes git's top in the native form, not the canonical temp path (`\\?\C:\...` on Windows), and git also
+/// cctao writes git's top in the native form, not the canonical temp path (`\\?\C:\...` on Windows), and git also
 /// refuses the verbatim form as a worktree path, so a verbatim disk prefix is dropped to give `C:\...`.
 #[cfg(windows)]
 fn native(path: PathBuf) -> PathBuf {
@@ -62,7 +62,7 @@ impl World {
         fs::create_dir(&home).unwrap();
         let world = Self { temp, repo, home };
         world.git(&world.repo, &["init", "-q"]);
-        fs::write(world.repo.join("temperare.toml"), r#"version = 1
+        fs::write(world.repo.join("tao.toml"), r#"version = 1
 owner = "team"
 [kits.project]
 paths = ["src/**", "tests/**"]
@@ -110,13 +110,13 @@ test_paths = ["tests/**"]
     }
 
     fn check(&self, repo: &Path, args: &[&str], code: i32) -> procio::Output {
-        let output = self.command(env!("CARGO_BIN_EXE_temperare"), repo, args);
+        let output = self.command(env!("CARGO_BIN_EXE_cctao"), repo, args);
         assert_eq!(output.code, Some(code), "stdout: {}\nstderr: {}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
         output
     }
 
     fn telemetry(&self) -> PathBuf {
-        self.home.join(".local/state/temperare/telemetry")
+        self.home.join(".local/state/cctao/telemetry")
     }
 }
 
@@ -136,7 +136,7 @@ fn merged_history_records_first_parent_root_and_fields() {
     world.git(&world.repo, &["-c", "user.name=Test", "-c", "user.email=test@example.invalid", "-c", "commit.gpgsign=false", "merge", "-q", "--no-ff", "--no-edit", "side"]);
     world.git(&world.repo, &["checkout", "-q", "--orphan", "unrelated"]);
     world.git(&world.repo, &["rm", "-q", "-r", "--cached", "."]);
-    fs::remove_file(world.repo.join("temperare.toml")).unwrap();
+    fs::remove_file(world.repo.join("tao.toml")).unwrap();
     fs::write(world.repo.join("unrelated.txt"), "unrelated history\n").unwrap();
     world.commit("unrelated root");
     world.git(&world.repo, &["checkout", "-q", "main"]);
@@ -167,7 +167,7 @@ fn merged_history_records_first_parent_root_and_fields() {
     assert!(record["engines"].is_array());
     assert!(record["rules"].is_array());
     let version = world.check(&world.repo, &["--version"], 0);
-    let version = std::str::from_utf8(&version.stdout).unwrap().strip_prefix("temperare ").unwrap().trim_end_matches('\n');
+    let version = std::str::from_utf8(&version.stdout).unwrap().strip_prefix("cctao ").unwrap().trim_end_matches('\n');
     assert_eq!(record["version"], version);
     let time = record["time"].as_str().unwrap().as_bytes();
     assert_eq!(time.len(), 20);

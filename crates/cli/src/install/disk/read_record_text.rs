@@ -9,7 +9,7 @@ use std::path::Path;
 
 /// The text of the install record at `record`, or `None` when nothing is there. The path is looked at with
 /// `symlink_metadata`, so a link is never followed: a symbolic link at `record` is refused as one ("is a symbolic
-/// link, not the install record temperare install writes"), and anything else that is not a regular file is
+/// link, not the install record cctao install writes"), and anything else that is not a regular file is
 /// refused as "is not a file". A regular file is opened and, on unix, read only when the opened handle's device and
 /// inode equal the ones looked at first, so a link or another file swapped in between the look and the open is
 /// refused rather than read. Off unix the file is read after the look alone. Each refusal is an `io::Error` of kind
@@ -35,11 +35,11 @@ pub(crate) fn read_record_text(record: &Path) -> io::Result<Option<String>> {
     Ok(Some(text))
 }
 
-/// `<record> <what>, not the install record temperare install writes`.
+/// `<record> <what>, not the install record cctao install writes`.
 fn refusal(record: &Path, what: &str) -> io::Error {
     io::Error::new(
         io::ErrorKind::Other,
-        format!("{} {what}, not the install record temperare install writes", record.display()),
+        format!("{} {what}, not the install record cctao install writes", record.display()),
     )
 }
 

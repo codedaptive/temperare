@@ -1,13 +1,13 @@
 //! house@2's citation rule reports only what a change adds: a Rust file committed with a comment citing a register
 //! number, then changed to add unrelated code and a second citing comment, is checked against the base with the real
 //! ast-grep. The new comment's line alone is reported; the old one, in the same touched file, is not. Without a base
-//! the rule is not applicable. Only when ast-grep is not on the PATH `temperare` gets is the case NOT RUN, with
-//! `temperare`'s own reason.
+//! the rule is not applicable. Only when ast-grep is not on the PATH `cctao` gets is the case NOT RUN, with
+//! `cctao`'s own reason.
 
 use crate::check::Check;
-use crate::on_tm_path::on_tm_path;
+use crate::on_cctao_path::on_cctao_path;
 use crate::repo::Repo;
-use crate::tm::tm;
+use crate::cctao::cctao;
 
 const RULE: &str = "tm-house-no-register-citation-rust";
 
@@ -89,24 +89,24 @@ fn an_old_citation_in_a_touched_file_is_not_reported() {
          changed to add a function holding a new citing comment at line 9",
     );
     let repo = Repo::new();
-    repo.write("temperare.toml", &rules());
+    repo.write("tao.toml", &rules());
     repo.write("src/meter.rs", BASE);
     let base = repo.commit("base: one old citation");
     repo.write("src/meter.rs", CHANGED);
     repo.commit("adds a function and a new citation");
 
     let args = ["check", "--json", "--base", base.as_str()];
-    let a = tm(&repo, &args);
-    check.saw_tm(&args, a.code, &a.json);
-    if !on_tm_path("ast-grep") {
+    let a = cctao(&repo, &args);
+    check.saw_cctao(&args, a.code, &a.json);
+    if !on_cctao_path("ast-grep") {
         let why = a.json["not_available"]
             .as_array()
             .and_then(|list| list.iter().find(|n| n["rule"] == RULE))
             .and_then(|n| n["why"].as_str())
             .unwrap_or_else(|| {
-                panic!("ast-grep is not on the PATH tm gets, yet tm did not report {RULE}: {:#}", a.json)
+                panic!("ast-grep is not on the PATH cctao gets, yet cctao did not report {RULE}: {:#}", a.json)
             });
-        check.not_run(format!("tm: {why}"));
+        check.not_run(format!("cctao: {why}"));
         return;
     }
     let f = a.findings();
@@ -117,8 +117,8 @@ fn an_old_citation_in_a_touched_file_is_not_reported() {
     assert_eq!(f[0]["severity"], "warning");
 
     let all_args = ["check", "--json"];
-    let all = tm(&repo, &all_args);
-    check.saw_tm(&all_args, all.code, &all.json);
+    let all = cctao(&repo, &all_args);
+    check.saw_cctao(&all_args, all.code, &all.json);
     let not_applicable = all.json["not_applicable"]
         .as_array()
         .unwrap_or_else(|| panic!("no not_applicable list: {:#}", all.json));

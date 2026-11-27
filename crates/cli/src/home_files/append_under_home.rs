@@ -1,4 +1,4 @@
-//! `append_under_home`: adds one line to a file in a folder under HOME, as every file tm writes there is written.
+//! `append_under_home`: adds one line to a file in a folder under HOME, as every file cctao writes there is written.
 //! Tested through append_savings_log in integration/append_savings_log_tests.rs, its same-file check in
 //! integration/same_file_tests.rs, and through the telemetry file in tests/world/telemetry_real.rs.
 
@@ -75,7 +75,7 @@ fn append_options() -> OpenOptions {
     options
 }
 
-/// `<path> is not where tm writes under HOME`: a link or the wrong kind of entry on the file's path.
+/// `<path> is not where cctao writes under HOME`: a link or the wrong kind of entry on the file's path.
 fn refusal(path: &Path) -> io::Error {
-    io::Error::new(io::ErrorKind::Other, format!("{} is not where tm writes under HOME", path.display()))
+    io::Error::new(io::ErrorKind::Other, format!("{} is not where cctao writes under HOME", path.display()))
 }

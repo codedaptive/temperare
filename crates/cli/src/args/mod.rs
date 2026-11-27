@@ -1,5 +1,5 @@
-//! tm's command line: the parsed command, its arguments (tm install's and tm baseline test's among them), the usage
-//! text and the usage error.
+//! cctao's command line: the parsed command, its arguments (cctao install's and cctao baseline test's among them), the
+//! usage text and the usage error.
 
 mod baseline_args;
 mod check_args;

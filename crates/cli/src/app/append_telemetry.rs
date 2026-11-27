@@ -1,4 +1,4 @@
-//! `append_telemetry`: one `tm check`'s line in the telemetry file of its repository, under HOME.
+//! `append_telemetry`: one `cctao check`'s line in the telemetry file of its repository, under HOME.
 //! Tested in integration/run_check_home_tests.rs
 //! (a_check_appends_one_telemetry_line_named_after_the_root_and_prints_the_same) and tests/world/telemetry_real.rs.
 
@@ -27,7 +27,7 @@ pub(crate) fn append_telemetry(run: &TelemetryRun, report: &Report, home: Option
     let line = telemetry_line(
         run,
         (world.now)(),
-        &version_after_name(env!("CARGO_PKG_VERSION"), env!("TEMPERARE_COMMIT")),
+        &version_after_name(env!("CARGO_PKG_VERSION"), env!("CCTAO_COMMIT")),
         head.as_str(),
         report,
     );

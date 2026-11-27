@@ -1,10 +1,10 @@
 //! `run_baseline_test` with the real world and real ruff on a const set `test@1`, in a child of this test binary:
 //! `engines::run_rules_versioned_at` inherits the process environment, so the child is started through `run_clean`
-//! with only `tm_env`'s variables (HOME a folder the test made) and a marker; the parent reads the exit, the printed
+//! with only `cctao_env`'s variables (HOME a folder the test made) and a marker; the parent reads the exit, the printed
 //! text and the case folders the child made from the child's stdout, between markers.
 
-use crate::env::tm_env;
-use crate::on_tm_path::on_tm_path;
+use crate::env::cctao_env;
+use crate::on_cctao_path::on_cctao_path;
 use crate::run_clean::run_clean;
 use crate::temp_home::TempHome;
 use cli::{run_baseline_test, BaselineArgs, BaselineWorld};
@@ -12,7 +12,7 @@ use rules::{CaseFile, Engine, ExpectedFinding, Problem, Rule, RuleCases};
 use std::cell::RefCell;
 use std::path::Path;
 
-const CHILD: &str = "TEMPERARE_BASELINE_REAL_RUFF_CHILD";
+const CHILD: &str = "CCTAO_BASELINE_REAL_RUFF_CHILD";
 const OUT_BEGIN: &str = "<<baseline-out>>\n";
 const OUT_END: &str = "<<baseline-end>>\n";
 
@@ -28,7 +28,7 @@ fn f401(id: &str, line: usize) -> Rule {
     rule
 }
 
-/// The child: runs `tm baseline test --set test@1` on tm-zeta (holds: ruff reports line 1) and tm-alpha (expects
+/// The child: runs `cctao baseline test --set test@1` on tm-zeta (holds: ruff reports line 1) and tm-alpha (expects
 /// line 2, so its failing case is broken), out of sort order, and prints the exit, the text and each case folder.
 fn child() {
     let rules_of = |set: &str| match set {
@@ -66,7 +66,7 @@ fn baseline_test_real_ruff_on_a_const_set() {
     }
     let home = TempHome::new();
     let exe = std::env::current_exe().expect("the test binary's path");
-    let mut vars = tm_env(None, home.path());
+    let mut vars = cctao_env(None, home.path());
     vars.push((CHILD.to_string(), "1".to_string()));
     let args = ["--exact", "baseline_test_real_ruff::baseline_test_real_ruff_on_a_const_set", "--nocapture"];
     let child = run_clean(exe, &args, home.path(), vars);
@@ -78,7 +78,7 @@ fn baseline_test_real_ruff_on_a_const_set() {
     let exit = tagged(&stdout, "baseline-exit");
     let start = stdout.find(OUT_BEGIN).expect("the printed-text marker") + OUT_BEGIN.len();
     let printed = &stdout[start..start + stdout[start..].find(OUT_END).expect("the end marker")];
-    let (want_exit, want_text) = if on_tm_path("ruff") {
+    let (want_exit, want_text) = if on_cctao_path("ruff") {
         (
             "1",
             "test@1 tm-zeta (ruff): holds\n\
@@ -97,19 +97,19 @@ fn baseline_test_real_ruff_on_a_const_set() {
              failing: not available: ruff not found on PATH\n  \
              passing: not available: ruff not found on PATH\n\
              2 rules: 0 hold, 0 broken, 2 not available, 0 not applicable\n\
-             next: install ruff, then run tm baseline test again\n",
+             next: install ruff, then run cctao baseline test again\n",
         )
     };
     assert_eq!(exit, [want_exit], "stdout: {stdout}");
     assert_eq!(printed, want_text, "stdout: {stdout}");
 
-    // Two rules, two cases each: four case folders, each named tm-baseline-*, none left behind.
+    // Two rules, two cases each: four case folders, each named cctao-baseline-*, none left behind.
     let folders = tagged(&stdout, "baseline-folder");
     assert_eq!(folders.len(), 4, "stdout: {stdout}");
     for folder in folders {
         let path = Path::new(folder);
         let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        assert!(name.starts_with("tm-baseline-"), "{folder}");
+        assert!(name.starts_with("cctao-baseline-"), "{folder}");
         assert!(!path.exists(), "case folder remains: {folder}");
     }
 }

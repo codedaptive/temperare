@@ -1,4 +1,4 @@
-//! `run_check`: `tm check`, from finding the rule file to the report and its exit code.
+//! `run_check`: `cctao check`, from finding the rule file to the report and its exit code.
 
 use super::append_telemetry::append_telemetry;
 use super::discover_rule_file::discover_rule_file;
@@ -39,7 +39,7 @@ use std::path::Path;
 /// first-parent root. A rule file that cannot be found, a path outside its folder, a base that does not resolve or a
 /// report that cannot be built is a usage error on `err` (and, under `--json`, an `{"error", "exit", "next"}` object
 /// on `out`); a rule file with problems lists them on `out`. Both exit 2, with no savings line, no log line and no
-/// telemetry line. Write errors are ignored: a closed pipe is not tm's failure.
+/// telemetry line. Write errors are ignored: a closed pipe is not cctao's failure.
 pub fn run_check(args: &CheckArgs, cwd: &Path, world: &CheckWorld, out: &mut dyn Write, err: &mut dyn Write) -> u8 {
     let path = match discover_rule_file(args.rules.as_deref(), cwd, &|| (world.toplevel)(cwd), world.exists) {
         Ok(path) => path,

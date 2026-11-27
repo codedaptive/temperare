@@ -3,9 +3,9 @@
 //! the PATH, the same rule reports "not available" (exit 3). One rule, `engine = "vale"`, `check = "Local.Simply"`, a
 //! style the test writes: styles/Local/Simply.yml, an existence rule for the word "simply", under the StylesPath the
 //! repository's .vale.ini names, whose BasedOnStyles names Local. Nothing is fetched (never `vale sync`). doc.md has
-//! "simply" on line 3, clean.md does not. tm runs with PATH the folder that gives it vale (`tm_path_for`) then
-//! /usr/bin:/bin. Only when vale is not on the PATH `temperare` gets (`on_tm_path`, which runs nothing) is the
-//! reported case NOT RUN, with `temperare`'s reason, never PASS; `temperare` must then report the rule not available.
+//! "simply" on line 3, clean.md does not. cctao runs with PATH the folder that gives it vale (`cctao_path_for`) then
+//! /usr/bin:/bin. Only when vale is not on the PATH `cctao` gets (`on_cctao_path`, which runs nothing) is the
+//! reported case NOT RUN, with `cctao`'s reason, never PASS; `cctao` must then report the rule not available.
 
 use serde_json::json;
 
@@ -14,8 +14,8 @@ use crate::check::Check;
 use crate::not_available_pairs::not_available_pairs;
 use crate::probed_version::probed_version;
 use crate::repo::Repo;
-use crate::tm::tm_with_path;
-use crate::tm_path_for::tm_path_for;
+use crate::cctao::cctao_with_path;
+use crate::cctao_path_for::cctao_path_for;
 
 const RULE: &str = "prose-no-simply";
 const FIX: &str = "Drop the word simply.";
@@ -39,7 +39,7 @@ const CLEAN: &str = "# Notes\n\nThis is plainly right.\n";
 /// A repository holding the rule file, .vale.ini, the Local style, doc.md and clean.md, committed.
 fn prose_repo() -> Repo {
     let repo = Repo::new();
-    repo.write("temperare.toml", RULES);
+    repo.write("tao.toml", RULES);
     repo.write(".vale.ini", VALE_INI);
     repo.write("styles/Local/Simply.yml", SIMPLY);
     repo.write("doc.md", DOC);
@@ -57,8 +57,8 @@ fn a_vale_alert_is_reported_with_its_rule_place_fix_and_version() {
     );
     let repo = prose_repo();
     let args = ["check", "--json"];
-    let a = tm_with_path(&repo, &args, Some(&tm_path_for(&["vale"])));
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao_with_path(&repo, &args, Some(&cctao_path_for(&["vale"])));
+    check.saw_cctao(&args, a.code, &a.json);
     if let Some(why) = absent_engine_reason(&a, &["vale"], RULE) {
         check.not_run(why);
         return;
@@ -79,13 +79,13 @@ fn a_vale_alert_is_reported_with_its_rule_place_fix_and_version() {
 fn vale_off_path_is_not_available() {
     let mut check = Check::new(
         "vale_off_path_is_not_available",
-        "rule prose-no-simply (vale, Local.Simply) over the same files; tm runs with PATH /usr/bin:/bin, which holds \
+        "rule prose-no-simply (vale, Local.Simply) over the same files; cctao runs with PATH /usr/bin:/bin, which holds \
          no vale",
     );
     let repo = prose_repo();
     let args = ["check", "--json"];
-    let a = tm_with_path(&repo, &args, Some("/usr/bin:/bin"));
-    check.saw_tm(&args, a.code, &a.json);
+    let a = cctao_with_path(&repo, &args, Some("/usr/bin:/bin"));
+    check.saw_cctao(&args, a.code, &a.json);
     assert_eq!(a.code, 3, "not available has its own code: {:#}\n{}", a.json, a.stderr);
     assert!(a.findings().is_empty(), "nothing is reported as found: {:#}", a.json);
     assert_eq!(not_available_pairs(&a), vec![(RULE.to_string(), "vale".to_string())], "{:#}", a.json);
