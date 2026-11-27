@@ -137,9 +137,9 @@ fn the_base_reaches_each_rules_run_alone_and_both_passes_of_a_shared_group() {
 fn the_central_settle_runs_before_every_flow() {
     let abs_refused = format!("ast-grep rule {ABS} is an absolute path: a check names a file inside the rule file's folder");
     let cases = [
-        ("ruff", Engine::Ruff, "flake8-bugbear", "ruff check `flake8-bugbear`: `flake8-bugbear` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects"),
-        ("shellcheck", Engine::ShellCheck, "sc2086", "shellcheck check `sc2086` is not one ShellCheck code such as `SC2086`, so tm cannot tell which findings it selects"),
-        ("clippy", Engine::Clippy, "rustdoc::broken_intra_doc_links", "clippy check `rustdoc::broken_intra_doc_links` is a rustdoc lint: clippy never runs rustdoc lints, so tm cannot report it"),
+        ("ruff", Engine::Ruff, "flake8-bugbear", "ruff check `flake8-bugbear`: `flake8-bugbear` is not a rule code, a code prefix or ALL, so cctao cannot tell which findings it selects"),
+        ("shellcheck", Engine::ShellCheck, "sc2086", "shellcheck check `sc2086` is not one ShellCheck code such as `SC2086`, so cctao cannot tell which findings it selects"),
+        ("clippy", Engine::Clippy, "rustdoc::broken_intra_doc_links", "clippy check `rustdoc::broken_intra_doc_links` is a rustdoc lint: clippy never runs rustdoc lints, so cctao cannot report it"),
         ("ast-grep", Engine::AstGrep, ABS, abs_refused.as_str()),
         ("git", Engine::Git, "other", "git check `other` is not one git counts: the git entry checks only `test_ratio`"),
     ];
@@ -206,7 +206,7 @@ fn a_flagged_rule_between_two_sharing_rules_stays_out_of_their_shared_run() {
     assert_eq!(ran.into_inner(), vec!["--select=E711,E501"]);
 }
 
-/// Two ruff rules tm refuses, each with paths matching no file of `files()`: a check that is not a code, and a param
+/// Two ruff rules cctao refuses, each with paths matching no file of `files()`: a check that is not a code, and a param
 /// ruff does not take.
 const REFUSED: &str = r#"[[rule]]
 id = "malformed"
@@ -226,7 +226,7 @@ fix = "p"
 #[test]
 fn a_refused_rule_is_failed_before_the_no_file_flag_with_nothing_run_or_looked_up() {
     let files = files();
-    let malformed = "ruff check `flake8-bugbear`: `flake8-bugbear` is not a rule code, a code prefix or ALL, so tm cannot tell which findings it selects";
+    let malformed = "ruff check `flake8-bugbear`: `flake8-bugbear` is not a rule code, a code prefix or ALL, so cctao cannot tell which findings it selects";
     let param = "ruff param nope: a ruff rule reads only the `max_complexity` param";
     let cases: [(&str, Option<&[RelPath]>, &str); 3] = [
         ("malformed", Some(&files), malformed),

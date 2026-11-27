@@ -63,7 +63,7 @@ fn golangci_lint_reports_findings_and_unavailable_or_failed_runs() {
             fs::write(folder.0.join("go.sum"), "example.invalid/none v1.0.0 h1:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\nexample.invalid/none v1.0.0/go.mod h1:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\n").unwrap();
         }
         fs::write(folder.0.join("a.go"), source).unwrap();
-        fs::write(folder.0.join("temperare.toml"), format!(r#"version = 1
+        fs::write(folder.0.join("tao.toml"), format!(r#"version = 1
 [[rule]]
 id = "go-static"
 engine = "golangci-lint"
@@ -72,7 +72,7 @@ kind = "quality"
 severity = "warning"
 fix = "Use a replacement for the deprecated function."
 "#)).unwrap();
-        let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
+        let file = RuleFile::read(&folder.0.join("tao.toml")).unwrap();
         let link = (case == "finding").then(|| {
             let path = std::env::temp_dir().join(format!("engines-zit-{}-golangci-finding-link", std::process::id()));
             symlink(&folder.0, &path).unwrap();

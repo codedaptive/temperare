@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 /// `shellcheck -f json1 --enable=all <config> -- <files>` run in `cwd`. `<config>` is `--rcfile=<config>` as one
 /// argument when the rule gives one, else `--norc`: the rule file is the only home for a rule and its exceptions, so a
-/// `disable=` in a `.shellcheckrc` tm was not given must not silence a rule. `SHELLCHECK_OPTS` is removed from the
+/// `disable=` in a `.shellcheckrc` cctao was not given must not silence a rule. `SHELLCHECK_OPTS` is removed from the
 /// environment, since shellcheck prepends it to its arguments and an `--exclude` or `--include` there could silence
 /// the rule too. The rule's check is not passed: on shellcheck 0.11.0 `--include` hides the optional checks (they
 /// need `--enable`) and the SC1xxx parse failures of a script it could not parse, so every check runs and

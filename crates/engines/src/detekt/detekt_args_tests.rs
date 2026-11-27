@@ -5,8 +5,8 @@ use super::detekt_args;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
-const LAYER: &str = "/tmp/tm-detekt-1-0.yml";
-const REPORT: &str = "/tmp/tm-detekt-report-1-1.sarif";
+const LAYER: &str = "/tmp/cctao-detekt-1-0.yml";
+const REPORT: &str = "/tmp/cctao-detekt-report-1-1.sarif";
 
 /// What a row expects: the whole argument list, only the `--input` value's length in bytes, or the why.
 enum Want {

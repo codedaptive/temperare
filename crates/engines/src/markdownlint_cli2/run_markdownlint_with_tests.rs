@@ -1,5 +1,5 @@
 //! ZUT for run_markdownlint_with.rs with a fake listing, filesystem and host: each stop before the run, with nothing
-//! run, nothing counted and nothing written. The steps that write tm's options module and run markdownlint-cli2 touch
+//! run, nothing counted and nothing written. The steps that write cctao's options module and run markdownlint-cli2 touch
 //! the real temporary folder, so the zone integration test tests/markdownlint_cli2.rs proves them.
 
 use super::{run_markdownlint_with, MARKDOWNLINT};

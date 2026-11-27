@@ -6,7 +6,7 @@ use super::config_suppression;
 use crate::types::Stop;
 use std::path::Path;
 
-const DROPS: &str = "actionlint drops findings matching it and tm cannot turn it off; put exceptions in the rule file";
+const DROPS: &str = "actionlint drops findings matching it and cctao cannot turn it off; put exceptions in the rule file";
 
 #[test]
 fn config_suppression_cases() {
@@ -23,11 +23,11 @@ fn config_suppression_cases() {
         ("self-hosted-runner only", "self-hosted-runner:\n  labels: [my-runner]\nconfig-variables: [FOO]\n", None),
         ("empty", "", None),
         ("duplicate key", "paths:\n  a: {}\npaths:\n  b: {}\n",
-            unread("line 3: tm cannot read it: duplicate mapping key `paths`")),
+            unread("line 3: cctao cannot read it: duplicate mapping key `paths`")),
         ("second document", "self-hosted-runner:\n  labels: [a]\n---\npaths:\n  \"**\":\n    ignore: [x]\n",
-            unread("line 3: tm cannot read it: a second YAML document")),
+            unread("line 3: cctao cannot read it: a second YAML document")),
         ("merge key", "base: &b {ignore: [x]}\npaths:\n  \"**\": {<<: *b}\n",
-            unread("line 3: tm cannot read it: a merge key `<<`")),
+            unread("line 3: cctao cannot read it: a merge key `<<`")),
     ];
     for (label, text, expected) in rows {
         let expected = expected.map(|stderr| Stop::Failed { code: None, stderr });

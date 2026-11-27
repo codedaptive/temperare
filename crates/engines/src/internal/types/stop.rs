@@ -6,8 +6,8 @@
 /// gave no answer: the engine ran and gave none, or the rule was refused before running; `code` is the exit code when
 /// the engine exited, `stderr` what explains the failure.
 /// `UnknownCheck` means the engine does not know the rule's check (an engine too old for it); `said` is the engine's
-/// own words, or for clippy tm's words for a name its help does not list. The rule is then not available, never clean.
-/// `NotListed` means the engine's check is well formed but not in temperare's list of that engine's codes; `said` is
+/// own words, or for clippy cctao's words for a name its help does not list. The rule is then not available, never clean.
+/// `NotListed` means the engine's check is well formed but not in cctao's list of that engine's codes; `said` is
 /// the why after `<engine> <version>: `. The rule is then not available, never clean.
 /// `NoFiles` means the rule ran nothing because no file it checks exists; `why` says which case. It is neither clean
 /// nor not available: the runner gives it no findings and sets the run's `no_files` flag to `why`.

@@ -9,7 +9,7 @@ use serde_json::{json, Map, Value};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
-/// The parts of `cargo-audit audit --json`'s one report object tm reads; `database` and `lockfile` are not read.
+/// The parts of `cargo-audit audit --json`'s one report object cctao reads; `database` and `lockfile` are not read.
 #[derive(Deserialize)]
 struct Report {
     settings: Map<String, Value>,
@@ -53,7 +53,7 @@ struct Package {
 /// when `check` is `all`, its kind or its advisory id. Every hit is on `Cargo.lock` with no line, its `what` reading
 /// `<id>: <crate> <version>: <title>; upgrade to <patched, joined with " or ">` or `...; no patched version`. stdout
 /// that is not the report is a `ParseError` quoting `printed_start`. A report whose `settings` differ from
-/// cargo-audit's defaults is a `ParseError` naming the differing fields: an audit.toml tm was not given applied, and
+/// cargo-audit's defaults is a `ParseError` naming the differing fields: an audit.toml cctao was not given applied, and
 /// it can silence findings. `cwd` and `folder` are not read: the one file cargo-audit checks is the folder's
 /// Cargo.lock.
 pub fn parse_cargo_audit(out: &Output, check: &str, _cwd: &Path, _folder: &Path) -> Result<Vec<Hit>, ParseError> {
@@ -63,7 +63,7 @@ pub fn parse_cargo_audit(out: &Output, check: &str, _cwd: &Path, _folder: &Path)
     if !changed.is_empty() {
         return Err(ParseError {
             why: format!(
-                "cargo-audit applied an audit.toml tm was not given ({changed}); the rule file is the only home for an exception, so tm reads no findings under it"
+                "cargo-audit applied an audit.toml cctao was not given ({changed}); the rule file is the only home for an exception, so cctao reads no findings under it"
             ),
         });
     }

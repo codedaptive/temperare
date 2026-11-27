@@ -27,7 +27,7 @@ pub(crate) fn printed_config(out: &Output, check: &str, file: &str) -> Result<bo
         return Err(Stop::Failed {
             code: None,
             stderr: format!(
-                "stylelint's config for {file} turns on fix, which rewrites the checked files; tm never edits the code it checks"
+                "stylelint's config for {file} turns on fix, which rewrites the checked files; cctao never edits the code it checks"
             ),
         });
     }

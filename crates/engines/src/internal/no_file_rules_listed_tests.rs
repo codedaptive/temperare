@@ -1,4 +1,4 @@
-//! ZUT for no_file_rules_listed: refused rules left out; paths-match-no-file and no-script rules settled in tm check's
+//! ZUT for no_file_rules_listed: refused rules left out; paths-match-no-file and no-script rules settled in cctao check's
 //! order over given listings; `only_with_base` plays no part.
 
 use crate::no_file_rules_listed::no_file_rules_listed;

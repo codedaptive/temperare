@@ -60,7 +60,7 @@ fn path_bytes(path: &Path) -> Result<&[u8], String> {
 fn path_bytes(path: &Path) -> Result<&[u8], String> {
     path.to_str().map(str::as_bytes).ok_or_else(|| {
         format!(
-            "cannot leave the git-ignored path {} out of vulture's scan: off unix, tm builds vulture's --exclude only \
+            "cannot leave the git-ignored path {} out of vulture's scan: off unix, cctao builds vulture's --exclude only \
              from UTF-8 paths",
             path.display()
         )

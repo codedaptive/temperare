@@ -1,8 +1,8 @@
-//! `detekt_layer`: tm's own detekt config layer for a check.
+//! `detekt_layer`: cctao's own detekt config layer for a check.
 
 use super::picked_rules;
 
-/// The YAML of the config layer tm passes as the last `--config` file, after the repository's own. Measured with
+/// The YAML of the config layer cctao passes as the last `--config` file, after the repository's own. Measured with
 /// detekt 1.23.8 and this layer for MagicNumber, the repository config alone and then `--config repo.yml,layer.yml`
 /// (`fixtures/commands.txt`, "Layer probes"):
 /// - `config: validation: true` with an empty `excludes`: a repository with `validation: false`, or with `excludes:

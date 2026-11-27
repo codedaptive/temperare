@@ -5,9 +5,9 @@ use super::config_why;
 #[test]
 fn config_why_says_why_or_gives_the_extend_paths() {
     let rows: [(&str, &str, Result<Vec<&str>, &str>); 12] = [
-        ("not TOML", "[allowlist\n", Err("gitleaks config `cfg.toml` does not parse as TOML, so tm cannot tell whether it declares an allowlist and reads no findings under it")),
-        ("a plain allowlist", "[allowlist]\npaths = [\"x\"]\n", Err("gitleaks config `cfg.toml` declares an allowlist (`allowlist`); the rule file is the only home for an exception, so tm reads no findings under it")),
-        ("a mixed-case rule allowlist", "[[rules]]\nid = \"r\"\n[[rules.AllowLists]]\n", Err("gitleaks config `cfg.toml` declares an allowlist (`rules[0].AllowLists`); the rule file is the only home for an exception, so tm reads no findings under it")),
+        ("not TOML", "[allowlist\n", Err("gitleaks config `cfg.toml` does not parse as TOML, so cctao cannot tell whether it declares an allowlist and reads no findings under it")),
+        ("a plain allowlist", "[allowlist]\npaths = [\"x\"]\n", Err("gitleaks config `cfg.toml` declares an allowlist (`allowlist`); the rule file is the only home for an exception, so cctao reads no findings under it")),
+        ("a mixed-case rule allowlist", "[[rules]]\nid = \"r\"\n[[rules.AllowLists]]\n", Err("gitleaks config `cfg.toml` declares an allowlist (`rules[0].AllowLists`); the rule file is the only home for an exception, so cctao reads no findings under it")),
         ("an extend path", "[extend]\npath = \"cfg/base.toml\"\n", Ok(vec!["cfg/base.toml"])),
         ("a mixed-case extend path", "[Extend]\nPath = \"x\"\n", Ok(vec!["x"])),
         ("an inline extend", "extend = { path = \"x\" }\n", Ok(vec!["x"])),

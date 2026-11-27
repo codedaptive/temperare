@@ -1,17 +1,17 @@
-//! `cargo_audit_refusal`: why tm cannot run a cargo-audit check, if it cannot.
+//! `cargo_audit_refusal`: why cctao cannot run a cargo-audit check, if it cannot.
 
 /// The advisory kinds a check may name; `all` keeps every advisory.
 const KINDS: [&str; 5] = ["all", "vulnerability", "unmaintained", "unsound", "notice"];
 
 /// None when `check` is one of `KINDS` or an advisory id `RUSTSEC-<4 digits>-<4 digits>`. `yanked` is refused because
-/// cargo-audit learns of a yanked crate only from the crates.io index, which tm never fetches; anything else is
+/// cargo-audit learns of a yanked crate only from the crates.io index, which cctao never fetches; anything else is
 /// refused as neither an id nor a kind.
 pub(crate) fn cargo_audit_refusal(check: &str) -> Option<String> {
     if KINDS.contains(&check) || is_advisory_id(check) {
         return None;
     }
     if check == "yanked" {
-        return Some("cargo-audit check `yanked` needs the crates.io index, which tm never fetches; name an advisory id or a kind: all, vulnerability, unmaintained, unsound or notice".to_string());
+        return Some("cargo-audit check `yanked` needs the crates.io index, which cctao never fetches; name an advisory id or a kind: all, vulnerability, unmaintained, unsound or notice".to_string());
     }
     Some(format!(
         "cargo-audit check `{check}` is not an advisory id (RUSTSEC-YYYY-NNNN) or a kind: all, vulnerability, unmaintained, unsound or notice"

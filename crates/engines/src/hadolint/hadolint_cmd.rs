@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 /// `entry_cmd`'s command for `check` in `cwd` (the program, `entry.args`, `--error=<check>`), then
 /// `--config=<config>` as one argument, then `--`, then each of `files` as given, relative to `cwd`, with each of
 /// `removed` removed from its environment. The caller names the variables (`run_hadolint` passes every `HADOLINT_*`
-/// in tm's environment); this reads no environment. The `--` keeps a file named `-x.Dockerfile` from being read as an
+/// in cctao's environment); this reads no environment. The `--` keeps a file named `-x.Dockerfile` from being read as an
 /// option.
 pub(crate) fn hadolint_cmd(
     entry: &Entry,

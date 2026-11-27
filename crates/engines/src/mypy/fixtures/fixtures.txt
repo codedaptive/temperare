@@ -63,5 +63,5 @@ no_python.txt: STDERR, exit 2 (stdout empty). mypy prints this line on stderr, n
   cwd: <root>/nopy
   files: README.txt ("no python here"), no .py or .pyi file
   command: mypy --output=json --cache-dir=/dev/null --enable-error-code=arg-type --config-file= -- .
-  tm itself never passes a folder (it lists the files), so this run is not one tm's command makes; it is mypy's
+  cctao itself never passes a folder (it lists the files), so this run is not one cctao's command makes; it is mypy's
   blocking error with no JSON line.

@@ -89,11 +89,11 @@ fn vale_rule_reports_findings_config_and_availability() {
                     "StylesPath = styles\n{vocab}[*.md]\nBasedOnStyles = {styles}\n{ignores}"
                 )).unwrap();
             }
-            fs::write(folder.0.join("temperare.toml"), format!(
+            fs::write(folder.0.join("tao.toml"), format!(
                 "version = 1\n[[rule]]\nid = \"prose-spelling\"\nengine = \"vale\"\ncheck = \"{check}\"\npaths = [\"**\"]\nfix = \"Correct the prose.\"\n{}",
                 if name == "rule-config" { "config = \"docs.ini\"\n" } else { "" }
             )).unwrap();
-            let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
+            let file = RuleFile::read(&folder.0.join("tao.toml")).unwrap();
             let _path_guard = if name == "absent" || name == "no-prose-file-absent" {
                 let guard = PathGuard(std::env::var_os("PATH"));
                 let without_vale = std::env::join_paths(std::env::split_paths(guard.0.as_ref().unwrap()).filter(|dir| {

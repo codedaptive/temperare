@@ -92,7 +92,7 @@ fn an_engine_older_than_its_list_settles_after_no_file_and_base_before_lookup() 
     // `old_hadolint_no_file_before_floor` (tests/hadolint.rs), `old_detekt_no_file_before_floor` (tests/detekt.rs) and
     // `old_markdownlint_no_file_before_floor` (tests/markdownlint_cli2.rs) prove an old engine with no files there.
     let cases = [
-        ("older", "0.10.0", vec!["src/a.sh"], "", Some("abc123"), Stop::NotAvailable { why: "shellcheck 0.10.0 is older than shellcheck 0.11.0, the release temperare's list of shellcheck codes was taken from".into() }, vec![]),
+        ("older", "0.10.0", vec!["src/a.sh"], "", Some("abc123"), Stop::NotAvailable { why: "shellcheck 0.10.0 is older than shellcheck 0.11.0, the release cctao's list of shellcheck codes was taken from".into() }, vec![]),
         ("no files", "0.10.0", vec![], "", Some("abc123"), Stop::NoFiles { why: "no file its engine checks".into() }, vec![]),
         ("missing base", "0.10.0", vec!["src/a.sh"], "only_with_base = true", None, Stop::NotAvailable { why: "reports only what a change adds; run with --base".into() }, vec![]),
         ("at floor", "0.11.0", vec!["src/a.sh"], "", Some("abc123"), Stop::NotOnPath { program: "shellcheck".into() }, vec!["shellcheck"]),

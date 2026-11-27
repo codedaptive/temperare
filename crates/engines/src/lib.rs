@@ -1,4 +1,4 @@
-//! engines: one adapter per engine: run it, read its output into findings; "not available" when it is absent. See the Temperare mission (Layout).
+//! engines: one adapter per engine: run it, read its output into findings; "not available" when it is absent. See the Code Chi Tao mission (Layout).
 
 pub mod actionlint;
 pub mod ast_grep;

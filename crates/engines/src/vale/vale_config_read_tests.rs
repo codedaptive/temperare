@@ -18,7 +18,7 @@ fn vale_config_read_cases() {
         })
     };
     let no_config = "Vale finds no config (.vale.ini, _vale.ini, vale.ini, .vale or _vale) at or above the rule file's \
-        folder: tm runs Vale only with the repository's own config";
+        folder: cctao runs Vale only with the repository's own config";
     let load_error = "E201 Invalid value [/private/tmp/tm-vale-capture/bad/.vale.ini:1:14]:\n\n   1* StylesPath = styles\n   2  BasedOnStyles = Vale\n\nThe StylesPath '/private/tmp/tm-vale-capture/bad/styles' doesn't exist.\n\nExecution stopped with code 2.";
     let rows: [(&str, i32, &[u8], &[u8], Result<ValeConfig, Stop>); 5] = [
         (

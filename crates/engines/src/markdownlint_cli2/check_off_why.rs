@@ -14,7 +14,7 @@ pub(crate) fn check_off_why(rule: &MdRule, config: &str, settings: &[(String, bo
     let (key, on) = settings.iter().rev().find(|(key, _)| sets(key)).or(baseline)?;
     (!on).then(|| {
         format!(
-            "{config} turns {} off with its `{key}` setting: tm runs markdownlint with the repository's own config, so \
+            "{config} turns {} off with its `{key}` setting: cctao runs markdownlint with the repository's own config, so \
              the rule would report nothing",
             rule.names[0]
         )

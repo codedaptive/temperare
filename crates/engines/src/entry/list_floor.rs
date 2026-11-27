@@ -1,4 +1,4 @@
-//! `list_floor`: the why of a rule whose engine is older than the release temperare's list of its codes was taken from.
+//! `list_floor`: the why of a rule whose engine is older than the release cctao's list of its codes was taken from.
 
 use super::list_version;
 use crate::markdownlint_cli2::MD_RULES_FROM;
@@ -19,11 +19,11 @@ pub(crate) fn list_floor(engine: Engine, versions: &[EngineVersion]) -> Option<S
     Some(match engine {
         Engine::Markdownlint => format!(
             "markdownlint-cli2 {installed} is older than markdownlint-cli2 {floor}, the release bundling \
-             {MD_RULES_FROM}, which temperare's list of markdownlint codes was taken from"
+             {MD_RULES_FROM}, which cctao's list of markdownlint codes was taken from"
         ),
         _ => {
             let name = engine.name();
-            format!("{name} {installed} is older than {name} {floor}, the release temperare's list of {name} codes was taken from")
+            format!("{name} {installed} is older than {name} {floor}, the release cctao's list of {name} codes was taken from")
         }
     })
 }

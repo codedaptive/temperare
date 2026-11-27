@@ -35,8 +35,8 @@ fn a_listed_code_with_a_script_under_the_rules_paths_reaches_the_check_run() {
 #[test]
 fn a_well_formed_code_off_the_list_is_not_listed_and_nothing_runs() {
     let cases = [
-        ("SC9999", "SC9999 is not in temperare's list of shellcheck codes (taken from shellcheck 0.11.0)"),
-        ("SC02086", "SC02086 is not in temperare's list of shellcheck codes (taken from shellcheck 0.11.0)"),
+        ("SC9999", "SC9999 is not in cctao's list of shellcheck codes (taken from shellcheck 0.11.0)"),
+        ("SC02086", "SC02086 is not in cctao's list of shellcheck codes (taken from shellcheck 0.11.0)"),
     ];
     for (check, said) in cases {
         let (got, ran, raw_chars, _) = listed(CODES, Ok(vec![PathBuf::from("a.sh")]), &rule(check, ""), &answers());

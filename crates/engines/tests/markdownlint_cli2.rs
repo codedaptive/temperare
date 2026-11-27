@@ -60,8 +60,8 @@ fn old_markdownlint_no_file_before_floor() {
             std::env::set_var("PATH", std::env::join_paths(std::iter::once(bin)
                 .chain(std::env::split_paths(guard.0.as_ref().unwrap()))).unwrap());
             fs::write(folder.0.join(file), "example\n").unwrap();
-            fs::write(folder.0.join("temperare.toml"), "version = 1\n[[rule]]\nid = \"markdown-test\"\nengine = \"markdownlint\"\ncheck = \"MD013\"\npaths = [\"**\"]\nfix = \"Shorten the line.\"\n").unwrap();
-            let rules = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
+            fs::write(folder.0.join("tao.toml"), "version = 1\n[[rule]]\nid = \"markdown-test\"\nengine = \"markdownlint\"\ncheck = \"MD013\"\npaths = [\"**\"]\nfix = \"Shorten the line.\"\n").unwrap();
+            let rules = RuleFile::read(&folder.0.join("tao.toml")).unwrap();
             let checked = run_rules_versioned_at(&rules, &folder.0, &[], None);
             assert_eq!(checked.engines.len(), 1, "{name}: {:?}", checked.engines);
             assert_eq!(checked.engines[0].engine, Engine::Markdownlint, "{name}");
@@ -72,7 +72,7 @@ fn old_markdownlint_no_file_before_floor() {
                 assert_eq!(run.no_files, None, "{name}: {run:?}");
                 assert_eq!(run.not_available_cause, Some(NotAvailableCause::Other), "{name}: {run:?}");
                 let RuleOutcome::NotAvailable { why, .. } = &run.outcome else { panic!("{name}: {run:?}") };
-                assert_eq!(why, "markdownlint-cli2 0.24.1 is older than markdownlint-cli2 0.24.2, the release bundling markdownlint 0.42.2, which temperare's list of markdownlint codes was taken from", "{name}");
+                assert_eq!(why, "markdownlint-cli2 0.24.1 is older than markdownlint-cli2 0.24.2, the release bundling markdownlint 0.42.2, which cctao's list of markdownlint codes was taken from", "{name}");
             } else {
                 assert_eq!(run.outcome, RuleOutcome::Findings(vec![]), "{name}: {run:?}");
                 assert_eq!(run.no_files.as_deref(), Some("no file its engine checks"), "{name}");
@@ -148,10 +148,10 @@ fn markdownlint_rule_reports_findings_configs_and_availability() {
             if let Some((config_path, contents)) = config {
                 fs::write(folder.0.join(config_path), contents).unwrap();
             }
-            fs::write(folder.0.join("temperare.toml"), format!(
+            fs::write(folder.0.join("tao.toml"), format!(
                 "version = 1\n[[rule]]\nid = \"markdown-test\"\nengine = \"markdownlint\"\ncheck = \"{check}\"\nfix = \"Shorten the line.\"\n"
             )).unwrap();
-            let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
+            let file = RuleFile::read(&folder.0.join("tao.toml")).unwrap();
             let _path_guard = if name == "absent" || name == "no-markdown-absent" {
                 let guard = PathGuard(std::env::var_os("PATH"));
                 let without_engine = std::env::join_paths(std::env::split_paths(guard.0.as_ref().unwrap()).filter(|dir| {

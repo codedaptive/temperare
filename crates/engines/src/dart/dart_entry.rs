@@ -27,9 +27,9 @@ use rules::Engine;
 /// `!!null`; `!!float` not measured) on text that does not read as its type, for which dart drops the whole
 /// file (any other `!!` tag, on a scalar or on a collection of another kind, is also `Failed`, unmeasured);
 /// a merge key `<<`, which dart reads differently by section; and a key that is not a scalar, which has no text to
-/// match while dart still applies an `ignore` beside it. A form tm does not read is never clean. An options
+/// match while dart still applies an `ignore` beside it. A form cctao does not read is never clean. An options
 /// file read outside the repository top (the nearest one above it, a symlink's target, a symlinked folder's, an
-/// include) is `Failed`, since tm cannot turn it off; a `package:` include, the repository's declared dependency, is
+/// include) is `Failed`, since cctao cannot turn it off; a `package:` include, the repository's declared dependency, is
 /// read wherever its package lies.
 ///
 /// Suppressions (S-67): a key path under `analyzer: exclude:` and `analyzer: errors: <code>: ignore` in the options,
@@ -52,7 +52,7 @@ use rules::Engine;
 /// is `NoFiles` through `engine_listed`, before availability (as clang-tidy); no `pubspec.yaml` at or above the folder,
 /// up to the repository top, is `NotAvailable` (`run_dart`). A package whose dependencies were never fetched (no
 /// `.dart_tool/package_config.json`) and whose run names a `package:` URI dart cannot find is `NotAvailable`, saying to
-/// run `dart pub get` (`missing_packages`), since tm never fetches packages.
+/// run `dart pub get` (`missing_packages`), since cctao never fetches packages.
 ///
 /// Dart takes no params: any param makes the rule `Failed` before running. Dart rules never share a run:
 /// `shares_with` has no arm for it.

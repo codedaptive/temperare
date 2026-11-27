@@ -14,7 +14,7 @@ fn pmd_refusal_refuses_all_but_java_category_and_rule_references() {
         ("a rule name with digits", "category/java/codestyle.xml/Rule2", None),
         ("empty", "", Some("pmd check ``: an empty part is not a PMD rule reference".into())),
         ("a trailing comma", "category/java/design.xml,", Some("pmd check `category/java/design.xml,`: an empty part is not a PMD rule reference".into())),
-        ("another language", "category/apex/design.xml", Some("pmd check `category/apex/design.xml`: `category/apex/design.xml` is not Java, the only language tm runs PMD on".into())),
+        ("another language", "category/apex/design.xml", Some("pmd check `category/apex/design.xml`: `category/apex/design.xml` is not Java, the only language cctao runs PMD on".into())),
         ("a ruleset file", "ruleset.xml", Some(format!("pmd check `ruleset.xml`: `ruleset.xml` {NOT_A_REFERENCE}"))),
         ("a URL", "https://example.com/r.xml", Some(format!("pmd check `https://example.com/r.xml`: `https://example.com/r.xml` {NOT_A_REFERENCE}"))),
         ("a lowercase rule", "category/java/design.xml/godClass", Some(format!("pmd check `category/java/design.xml/godClass`: `category/java/design.xml/godClass` {NOT_A_REFERENCE}"))),

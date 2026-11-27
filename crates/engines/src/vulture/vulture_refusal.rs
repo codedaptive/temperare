@@ -1,4 +1,4 @@
-//! `vulture_refusal`: why tm cannot match a vulture check's findings back to it, if it cannot.
+//! `vulture_refusal`: why cctao cannot match a vulture check's findings back to it, if it cannot.
 
 use super::VULTURE_KINDS;
 
@@ -19,7 +19,7 @@ pub(crate) fn vulture_refusal(check: &str) -> Option<String> {
         _ => {
             let codes: Vec<&str> = VULTURE_KINDS.iter().map(|(code, _)| *code).collect();
             format!(
-                "vulture check `{check}` is not a vulture code (one of {}), so tm cannot tell which findings it selects",
+                "vulture check `{check}` is not a vulture code (one of {}), so cctao cannot tell which findings it selects",
                 codes.join(", ")
             )
         }

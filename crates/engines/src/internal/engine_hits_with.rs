@@ -22,7 +22,7 @@ use std::path::{Path, PathBuf};
 ///    is looked up and the flow never runs;
 /// 1b. a rule with `only_with_base` and no `host.base` is `NotAvailable` with `rules::ONLY_WITH_BASE_WHY`, whatever its
 ///    engine and whatever `folder` is: nothing is looked up on PATH and the flow never runs;
-/// 1c. an engine whose version in `versions` (probed once, `engine_versions`) is older than the release temperare's
+/// 1c. an engine whose version in `versions` (probed once, `engine_versions`) is older than the release cctao's
 ///    list of its codes was taken from (`list_floor`) is `NotAvailable` with the floor's why (cause `Other`): nothing
 ///    is looked up and the flow never runs. It comes after the no-file steps and the base step, so an old engine with
 ///    no file of its kind is still `NoFiles`;

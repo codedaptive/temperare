@@ -6,7 +6,7 @@ use procio::Output;
 use std::path::Path;
 
 /// What hadolint 2.15.1 prints to stderr when it cannot read its config (measured). It then runs on its defaults and
-/// still prints a SARIF log, so that log answers a config tm did not pin.
+/// still prints a SARIF log, so that log answers a config cctao did not pin.
 const CONFIG_ERROR: &str = "Error parsing your config file";
 
 /// The code hadolint gives a Dockerfile it cannot parse. That file's other findings are then missing (measured), so a

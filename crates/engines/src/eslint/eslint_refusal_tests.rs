@@ -5,7 +5,7 @@ use super::eslint_refusal;
 #[test]
 fn eslint_refusal_refuses_what_is_not_a_rule_id() {
     let why = |check: &str| {
-        Some(format!("eslint check `{check}` is not an ESLint rule id; tm passes it to `--rule` and matches findings by it"))
+        Some(format!("eslint check `{check}` is not an ESLint rule id; cctao passes it to `--rule` and matches findings by it"))
     };
     let rows = [
         ("no-var", None),

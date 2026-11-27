@@ -18,7 +18,7 @@ use std::path::Path;
 ///    ccvcslib's error;
 /// 2. a new scratch folder (`ScratchDir`) holds everything the run writes, `<scratch>/build` the build;
 /// 3. `manifest_walk` reads the manifest of the package and of each local package it reaches, before anything is
-///    built; any of them naming a dependency or a binary target with a url to fetch is `NotAvailable`, since tm never
+///    built; any of them naming a dependency or a binary target with a url to fetch is `NotAvailable`, since cctao never
 ///    fetches packages, and so is a local package that does not resolve or resolves outside the repository top;
 /// 4. `describe_package_cmd`'s description is written to `<scratch>/describe.json`;
 /// 5. `build_index_cmd` builds the package; a build that fails is `Failed`, since a package that does not compile
@@ -32,7 +32,7 @@ use std::path::Path;
 pub(crate) fn run_periphery(entry: &Entry, rule: &Rule, folder: &Path, host: &Host) -> Result<Vec<Hit>, Stop> {
     let top = repo_top(folder)?;
     let root = package_root(folder, &top).ok_or_else(|| Stop::NotAvailable {
-        why: "no Package.swift at or above the rule file's folder: Periphery builds the project, and tm runs it only on a Swift package".into(),
+        why: "no Package.swift at or above the rule file's folder: Periphery builds the project, and cctao runs it only on a Swift package".into(),
     })?;
     let scratch = ScratchDir::new().map_err(|err| Stop::Failed {
         code: None,

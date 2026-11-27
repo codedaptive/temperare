@@ -1,4 +1,4 @@
-//! `pylint_refusal`: why tm cannot match a pylint check's findings back to it, if it cannot.
+//! `pylint_refusal`: why cctao cannot match a pylint check's findings back to it, if it cannot.
 
 /// Each old message id pylint 4.1.4 still accepts, with the current id(s) its findings carry. Listed from pylint
 /// 4.1.4's message store (every message's `old_names`, ids only); none of these is a current id in 4.1.4.
@@ -39,13 +39,13 @@ const OLD_IDS: &[(&str, &[&str])] = &[
 ];
 
 /// The reason `check` is refused; None for a message id that is not an old id. A check that is not a message id (a
-/// symbol, a category, a checker name or a comma list) enables messages reported under other ids, so tm could not
+/// symbol, a category, a checker name or a comma list) enables messages reported under other ids, so cctao could not
 /// match their findings to it. An old id is accepted by pylint, which reports its findings under the current id, so
 /// the rule would read clean; the reason names the current id(s), joined by " or ".
 pub(crate) fn pylint_refusal(check: &str) -> Option<String> {
     if !is_message_id(check) {
         return Some(format!(
-            "pylint check `{check}` is not a message id (a letter C, R, W, E, F or I and four digits, as C0121), so tm cannot tell which findings it selects"
+            "pylint check `{check}` is not a message id (a letter C, R, W, E, F or I and four digits, as C0121), so cctao cannot tell which findings it selects"
         ));
     }
     let (_, new) = OLD_IDS.iter().find(|(old, _)| *old == check)?;

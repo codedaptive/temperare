@@ -4,7 +4,7 @@ use crate::types::Stop;
 use rules::{RelPath, Rule};
 use std::path::PathBuf;
 
-/// Why a rule ran nothing when tm hands its engine the files and none is one the engine checks.
+/// Why a rule ran nothing when cctao hands its engine the files and none is one the engine checks.
 const NO_ENGINE_FILE_WHY: &str = "no file its engine checks";
 
 /// `NoFiles` with `NO_ENGINE_FILE_WHY` when none of the files in `scripts` (relative to the rule's folder) is one

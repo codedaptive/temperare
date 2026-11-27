@@ -20,7 +20,7 @@ const NO_LINTED_FILE_WHY: &str =
 /// `.` ESLint lints) and runs the command with `host.run`. The severity-only `--rule` turns the check on and keeps
 /// the options the config gives it. `on_path`, `raw_chars` and `base` are `host`'s.
 ///
-/// The run's stdout names every file ESLint linted. ESLint's config, not tm, decides which files those are, so the
+/// The run's stdout names every file ESLint linted. ESLint's config, not cctao, decides which files those are, so the
 /// no-file case is settled here, after the run: when stdout is a JSON array and none of its files is both in what
 /// `listed` gives for `folder` (any file counts when it gives `None`) and one `rule` applies to, the rule is
 /// `NoFiles`, keeping the count `run_plain` set, since ESLint ran. Else its hits are those in a listed file (all of them

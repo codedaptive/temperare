@@ -22,10 +22,10 @@ const TEMPLATE: &str = r#"{"kinds":{{json allKinds}},"errors":{{json .}}}"#;
 /// them would make the run depend on PATH. `SHELLCHECK_OPTS` is removed from the run's environment, since it can
 /// silence ShellCheck findings (S-67 (1)).
 ///
-/// The config is the one tm decides, and tm always passes it as `-config-file=`: the rule's config (folder-relative),
+/// The config is the one cctao decides, and cctao always passes it as `-config-file=`: the rule's config (folder-relative),
 /// else the first of `<top>/.github/actionlint.yaml` and `<top>/.github/actionlint.yml` that is a file (`<top>` the
 /// git top, as actionlint discovers it), else `/dev/null` (`actionlint_config`). So actionlint reads exactly the file
-/// tm read. tm reads it through `crate::yaml`: an `ignore` key in it drops findings and tm cannot turn it off, so it is
+/// cctao read. cctao reads it through `crate::yaml`: an `ignore` key in it drops findings and cctao cannot turn it off, so it is
 /// `Failed` naming the file and line (S-67 (1), `config_suppression`). actionlint 1.7.12 reads YAML with
 /// `go.yaml.in/yaml/v4` (v4.0.0-rc.3), measured (fixtures/fixtures.txt, "Config reading"): a duplicate key is fatal
 /// (exit 3); only the first document applies; a merge key `<<` applies, so an `ignore` merged from an anchor drops
@@ -38,7 +38,7 @@ const TEMPLATE: &str = r#"{"kinds":{{json allKinds}},"errors":{{json .}}}"#;
 ///
 /// Only the workflows directly in `<folder>/.github/workflows` (`is_workflow`) the rule applies to are passed; with
 /// none the rule is `NoFiles`, settled before availability (`engine_listed`, in `engine_hits_with`'s step 1).
-/// actionlint exits 0 clean, 1 with errors, 2 for a bad flag and 3 when fatal; tm reads the JSON, not the exit code.
+/// actionlint exits 0 clean, 1 with errors, 2 for a bad flag and 3 when fatal; cctao reads the JSON, not the exit code.
 /// Nothing reaches the network: popular-action data is built in and local actions are read from disk. actionlint
 /// takes no params, and its rules never share a run: `shares_with` has no arm for it.
 pub static ACTIONLINT: Entry = Entry {

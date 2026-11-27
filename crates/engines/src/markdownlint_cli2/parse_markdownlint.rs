@@ -1,4 +1,4 @@
-//! `parse_markdownlint`: markdownlint-cli2's JSON output, as tm's options module prints it, read into the hits of one
+//! `parse_markdownlint`: markdownlint-cli2's JSON output, as cctao's options module prints it, read into the hits of one
 //! rule.
 
 use crate::printed_start::printed_start;

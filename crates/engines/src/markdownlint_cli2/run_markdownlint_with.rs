@@ -1,6 +1,6 @@
 //! `run_markdownlint_with`: markdownlint-cli2's flow for one rule, with the listing and the filesystem given.
 
-use super::{config_stop, tm_options};
+use super::{cctao_options, config_stop};
 use crate::check_run::check_run;
 use crate::entry::{entry_cmd, Entry, TempDir};
 use crate::host::Host;
@@ -23,9 +23,9 @@ const CONFIG_WHY: &str = "a markdownlint rule takes no config: markdownlint read
 /// 2. the files `list` gives, or its `Stop`; when `no_script` finds none the rule applies to, nothing runs and the
 ///    rule is its `NoFiles`. `engine_hits_with`'s step 1 (`engine_listed`) settles that before availability; this guard
 ///    decides only when that listing failed and this one succeeds;
-/// 3. `config_stop` on the files the rule applies to, sorted: an options file, a check not in temperare's list, a
-///    config tm cannot read or that turns the rule off;
-/// 4. tm's options module (`tm_options`) written in a new temporary folder; an error writing it is `Failed`;
+/// 3. `config_stop` on the files the rule applies to, sorted: an options file, a check not in cctao's list, a
+///    config cctao cannot read or that turns the rule off;
+/// 4. cctao's options module (`cctao_options`) written in a new temporary folder; an error writing it is `Failed`;
 /// 5. the check run, through `check_run` so it is counted: `entry_cmd` (`markdownlint-cli2 --no-globs`), then
 ///    `--config <module>` and each file as `:<file>` (a literal path, never a glob), in `folder`. The module and its
 ///    folder are removed after it, whatever its outcome, so nothing is left behind and nothing is written in `folder`;
@@ -53,10 +53,10 @@ pub(crate) fn run_markdownlint_with(
     if let Some(stop) = config_stop(&rule.check, folder, &files, is_file, read) {
         return Err(stop);
     }
-    let (name, text) = tm_options();
+    let (name, text) = cctao_options();
     let temp = TempDir::write("markdownlint", name, text).map_err(|err| Stop::Failed {
         code: None,
-        stderr: format!("cannot write tm's markdownlint-cli2 options module: {err}"),
+        stderr: format!("cannot write cctao's markdownlint-cli2 options module: {err}"),
     })?;
     let mut cmd = entry_cmd(entry, OsStr::new(&rule.check), &[], None, folder);
     cmd.args.extend([OsString::from("--config"), temp.path.join(name).into_os_string()]);

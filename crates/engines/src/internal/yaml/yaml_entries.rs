@@ -6,7 +6,7 @@ use saphyr_parser::{Event, Parser};
 use std::collections::HashMap;
 
 /// The most entries `yaml_entries` gives. Real options files hold far fewer; nested aliases can multiply entries
-/// without bound and hang tm, so past this the text fails closed.
+/// without bound and hang cctao, so past this the text fails closed.
 pub(super) const MOST_ENTRIES: usize = 100_000;
 
 /// The most levels of mappings and sequences one inside another. Real config nests a handful; the walk recurses once
@@ -33,12 +33,12 @@ pub(super) const DEEPEST: usize = 64;
 ///   `!!float`);
 /// - any other `!!` tag on a scalar (`!!seq`, `!!binary`, `!!timestamp`, ...), and a `!!` tag on a mapping other than
 ///   `!!map` or on a sequence other than `!!seq`: dart rejects a file whose node does not fit its core tag (measured
-///   for `!!int`, `!!bool` and `!!null` scalars) and drops its options; these tags are unmeasured, so tm refuses them
+///   for `!!int`, `!!bool` and `!!null` scalars) and drops its options; these tags are unmeasured, so cctao refuses them
 ///   rather than guess, and a refusal is never a clean read;
 /// - a key that is not a scalar (a collection, after `?` or in flow, or an alias): an entry's path is text and such
 ///   a key has none; dart reads the section as an invalid format yet still applies an `ignore` beside it;
 /// - a plain merge key `<<`: dart's reading differs by section (under `analyzer` it merges nothing; under `linter:
-///   rules` the merged lint runs), so tm cannot say what it does;
+///   rules` the merged lint runs), so cctao cannot say what it does;
 /// - an alias inside the node its anchor names, whose entries are not complete when the alias is read;
 /// - more than `MOST_ENTRIES` entries or `DEEPEST` levels, at the line where the walk finds the bound passed.
 pub(crate) fn yaml_entries(text: &str) -> Result<Vec<YamlEntry>, String> {

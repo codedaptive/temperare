@@ -1,5 +1,5 @@
 //! ZUT for parse_gitleaks.rs: real gitleaks 8.30.1 SARIF logs (fixtures/, see fixtures.txt) and logs holding a fake
-//! key built at runtime, read into hits that carry tm's fixed text. `DIR` is the folder gitleaks ran in; a narrower
+//! key built at runtime, read into hits that carry cctao's fixed text. `DIR` is the folder gitleaks ran in; a narrower
 //! rule folder tests an unplaced result.
 
 use super::parse_gitleaks;
@@ -9,7 +9,7 @@ use rules::RelPath;
 use std::path::Path;
 
 const DIR: &str = "/w/leak";
-const WHAT: &str = "gitleaks found a secret here; tm does not print it";
+const WHAT: &str = "gitleaks found a secret here; cctao does not print it";
 const LEAKY_LOG: &str = r#"{"runs":[{"results":[{"ruleId":"aws-access-token","message":{"text":"found KEY"},"locations":[{"physicalLocation":{"artifactLocation":{"uri":"config.py"},"region":{"startLine":2,"startColumn":5,"snippet":{"text":"KEY"}}}}]}]}]}"#;
 
 fn hit(line: u32, col: u32) -> Hit {

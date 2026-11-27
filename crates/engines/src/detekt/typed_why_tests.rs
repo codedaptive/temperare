@@ -10,14 +10,14 @@ fn typed_why_cases() {
         (
             "Deprecation",
             Some(
-                "detekt needs type resolution for Deprecation, which needs a classpath that tm does not give detekt, so \
+                "detekt needs type resolution for Deprecation, which needs a classpath that cctao does not give detekt, so \
                  they would report nothing",
             ),
         ),
         (
             "MagicNumber,UnsafeCast,Deprecation",
             Some(
-                "detekt needs type resolution for Deprecation, UnsafeCast, which needs a classpath that tm does not \
+                "detekt needs type resolution for Deprecation, UnsafeCast, which needs a classpath that cctao does not \
                  give detekt, so they would report nothing",
             ),
         ),
@@ -31,7 +31,7 @@ fn typed_why_cases() {
                  UnnecessaryBracesAroundTrailingLambda, UnnecessaryFilter, UnnecessaryInnerClass, UnnecessaryLet, \
                  UseAnyOrNoneInsteadOfFind, UseCheckNotNull, UseEmptyCounterpart, UseIfEmptyOrIfBlank, \
                  UseIsNullOrEmpty, UseOrEmpty, UseRequireNotNull, UseSumOfInsteadOfFlatMapSize, UselessCallOnNotNull, \
-                 VarCouldBeVal, which needs a classpath that tm does not give detekt, so they would report nothing",
+                 VarCouldBeVal, which needs a classpath that cctao does not give detekt, so they would report nothing",
             ),
         ),
         ("empty-blocks", None),

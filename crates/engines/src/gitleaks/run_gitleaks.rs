@@ -19,7 +19,7 @@ use std::path::Path;
 ///
 /// Then `run_plain` over a host whose `run` removes GITLEAKS_CONFIG and GITLEAKS_CONFIG_TOML from every command, so a
 /// caller's environment cannot replace the rule's config, and replaces the stderr of the Output `host.run` returns
-/// with its `error_lines`, so every stderr tm can print for the rule (a Failed rule's, an unknown id's words) holds
+/// with its `error_lines`, so every stderr cctao can print for the rule (a Failed rule's, an unknown id's words) holds
 /// error lines only. The run is counted raw: `check_run` counts the cleaned Output, so once `run_plain` returns, whatever
 /// its result, `host.raw_chars` is set to the raw stdout's plus raw stderr's characters (lossy UTF-8, as `check_run`
 /// counts) when the command ran. `on_path` and `base` are `host`'s.

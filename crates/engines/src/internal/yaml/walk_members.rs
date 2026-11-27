@@ -12,7 +12,7 @@ impl Walk<'_> {
     /// Reads the members of the mapping (`mapping`) or sequence just started at `path`, `depth` levels down, up to its
     /// end. A key is its decoded scalar text; an anchored key is kept as its scalar value, so an alias to it replays
     /// that. A merge key `<<`, a key that repeats, a key that is not a scalar, a key whose core tag its text does not
-    /// fit or with a `!!` tag tm does not read, and entries past `MOST_ENTRIES` are each an `Err` naming the line
+    /// fit or with a `!!` tag cctao does not read, and entries past `MOST_ENTRIES` are each an `Err` naming the line
     /// (`yaml_entries` says why). A repeat is found by the key's core-schema value (`core_value`: `1` and `0x1` are
     /// one key, `"1"` and `1` two), as dart's reader finds one when it rejects the
     /// file and drops its options (measured, dart/fixtures/commands.txt); the message names the repeat's decoded text.

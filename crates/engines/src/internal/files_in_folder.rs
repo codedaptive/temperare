@@ -14,7 +14,7 @@ use std::path::Path;
 
 /// The files under `folder` (canonical), relative to it: ccvcslib's `tracked_entries` as `checked_out` keeps them (a
 /// file deleted from the work tree and every skip-worktree entry left out), then its `untracked_entries`, the
-/// untracked files git does not ignore. The untracked ones count because an agent runs tm check before `git add`, and
+/// untracked files git does not ignore. The untracked ones count because an agent runs cctao check before `git add`, and
 /// a violation in a new untracked file counts as new (Done 2), so a rule whose paths match only such a file still has
 /// a file to check. An ignored file is in neither listing, and an untracked nested repository's files are not listed:
 /// git gives it as one folder entry, which `folder_files` drops. A symlink, or a path under a symlinked folder, is not

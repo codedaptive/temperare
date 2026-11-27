@@ -50,7 +50,7 @@ pub(crate) fn hits_clippy(entry: &Entry, rule: &Rule, folder: &Path, host: &Host
     let groups = parse_lint_groups(&help).map_err(|err| parse_failed(&help, err))?;
     if lint_group(&rule.check, &groups) {
         let stderr = format!(
-            "clippy check `{}` is a lint group: tm cannot tell its lints from other warnings, so it cannot report it; name each lint, or use `warnings`",
+            "clippy check `{}` is a lint group: cctao cannot tell its lints from other warnings, so it cannot report it; name each lint, or use `warnings`",
             rule.check
         );
         return Err(Stop::Failed { code: None, stderr });

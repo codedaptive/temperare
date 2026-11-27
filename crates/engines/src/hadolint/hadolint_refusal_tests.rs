@@ -7,7 +7,7 @@ use super::hadolint_refusal;
 fn hadolint_refusal_cases() {
     let refused = |check: &str| {
         Some(format!(
-            "hadolint check `{check}` is not one hadolint code such as `DL3006`, so tm cannot tell which findings it selects"
+            "hadolint check `{check}` is not one hadolint code such as `DL3006`, so cctao cannot tell which findings it selects"
         ))
     };
     let rows = [

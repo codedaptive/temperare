@@ -1,4 +1,4 @@
-//! `yamllint_config`: the repository's own yamllint config, which the config tm hands yamllint extends.
+//! `yamllint_config`: the repository's own yamllint config, which the config cctao hands yamllint extends.
 
 use std::path::{Path, PathBuf};
 

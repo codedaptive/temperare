@@ -100,7 +100,7 @@ fn run_stylelint_with_probes_runs_and_settles() {
               want: Err(Stop::NotAvailable { why: "stylelint's config does not turn on color-named for any file the rule covers".into() }),
               runs: vec![probe("./a.css")], counted: false },
         Row { name: "fix", check: "color-hex-length", extra: "", folder: "fix", listed: &["a.css"], probe: FIX, answer: (0, b""),
-              want: Err(Stop::Failed { code: None, stderr: "stylelint's config for a.css turns on fix, which rewrites the checked files; tm never edits the code it checks".into() }),
+              want: Err(Stop::Failed { code: None, stderr: "stylelint's config for a.css turns on fix, which rewrites the checked files; cctao never edits the code it checks".into() }),
               runs: vec![probe("./a.css")], counted: false },
         Row { name: "findings", check: hex, extra: "paths = [\"a.css\", \"b.css\"]\nconfig = \"cfg.json\"\n", folder: "two",
               listed: &["a.css", "b.css", "lib/c.css"], probe: RULES, answer: (2, include_bytes!("../../stylelint/fixtures/findings.txt")),

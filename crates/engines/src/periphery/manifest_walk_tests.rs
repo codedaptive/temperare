@@ -42,7 +42,7 @@ cases! {
     periphery_tidy_self_dependency => ("", Ok(()), &[""]),
     periphery_tidy_top_local_remote => (
         "x",
-        Err(Stop::NotAvailable { why: "the local package . depends on dep, which tm would have to fetch: tm never fetches packages, so Periphery cannot build it here".into() }),
+        Err(Stop::NotAvailable { why: "the local package . depends on dep, which cctao would have to fetch: cctao never fetches packages, so Periphery cannot build it here".into() }),
         &["x", ""]
     ),
 }

@@ -1,4 +1,4 @@
-//! `Entry`: everything tm knows about one engine, as data.
+//! `Entry`: everything cctao knows about one engine, as data.
 
 use super::{Params, Pick, ReadFn, RunFn, VersionProbe};
 use procio::Output;
@@ -23,7 +23,7 @@ pub struct Entry {
     /// `program_for` gives an executable local one; every other name (node) is looked up on PATH.
     pub needs: &'static [&'static str],
     /// `Some(why)` when the engine is never available: nothing is looked up or run, and every rule naming it is not
-    /// available with this why (tessera). `None` for an engine tm can run.
+    /// available with this why (tessera). `None` for an engine cctao can run.
     pub never: Option<&'static str>,
     /// The fixed arguments that come first, before the check.
     pub args: &'static [&'static str],
@@ -39,7 +39,7 @@ pub struct Entry {
     pub after: &'static [&'static str],
     /// How the engine's version is read; `None` when it is never read (an engine that never runs).
     pub version: Option<VersionProbe>,
-    /// Why tm refuses a check before anything runs (a check whose findings tm could not match back to it); `None`
+    /// Why cctao refuses a check before anything runs (a check whose findings cctao could not match back to it); `None`
     /// to run it. An engine that refuses nothing gives a function returning `None`.
     pub refuse: fn(&str) -> Option<String>,
     /// `(out, check)`: the engine's own words, from the check run's output, saying it does not know `check`, the

@@ -1,4 +1,4 @@
-//! `md_rule_of`: the markdownlint rule a check names, from temperare's list.
+//! `md_rule_of`: the markdownlint rule a check names, from cctao's list.
 
 use super::{MdRule, MD_RULES};
 

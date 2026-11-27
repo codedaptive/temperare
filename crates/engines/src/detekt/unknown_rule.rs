@@ -5,8 +5,8 @@ use procio::Output;
 
 /// The first line of `out`'s stderr, trimmed, that begins `Property '`, says `misspelled or does not exist`, and whose
 /// quoted property path is exactly `<set>><Rule>` for a `(set, rule)` that `check` picks (`picked_rules`); None when
-/// there is none. tm's layer names only the picked pairs, each rule under its set, so detekt fails its config
-/// validation (exit 3) with exactly such a path only when the running detekt lacks a rule from tm's list. Any other
+/// there is none. cctao's layer names only the picked pairs, each rule under its set, so detekt fails its config
+/// validation (exit 3) with exactly such a path only when the running detekt lacks a rule from cctao's list. Any other
 /// path (a pair the check does not pick, a bare set, or a rule with a further part such as an option name) comes from
 /// a repository config's own typo: it is left to the reader, which makes the rule `Failed`, so the rule's check is
 /// never blamed for it.

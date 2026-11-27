@@ -36,8 +36,8 @@ fn run_rules_rejects_ast_grep_yaml_outside_the_rule_folder() {
     let folder = root.join("rules");
     fs::create_dir(&folder).unwrap();
     fs::write(root.join("outside.yml"), "id: names\nlanguage: JavaScript\nmessage: matched name\nseverity: warning\nrule:\n  kind: identifier\n").unwrap();
-    fs::write(folder.join("temperare.toml"), "version = 1\n[[rule]]\nid = \"outside\"\nengine = \"ast-grep\"\ncheck = \"../outside.yml\"\nfix = \"f\"\n").unwrap();
-    let file = RuleFile::read(&folder.join("temperare.toml")).unwrap();
+    fs::write(folder.join("tao.toml"), "version = 1\n[[rule]]\nid = \"outside\"\nengine = \"ast-grep\"\ncheck = \"../outside.yml\"\nfix = \"f\"\n").unwrap();
+    let file = RuleFile::read(&folder.join("tao.toml")).unwrap();
     let outcomes = run_rules_versioned_at(&file, &root, &[], None).runs.into_iter().map(|run| (run.rule, run.outcome)).collect::<Vec<_>>();
     fs::remove_dir_all(&root).unwrap();
     assert_eq!(outcomes, vec![("outside".to_string(), RuleOutcome::Failed {

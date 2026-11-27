@@ -1,4 +1,4 @@
-# The detekt 1.23.8 rules (of detekt_rules.txt) that need type resolution: run without --classpath, which tm never
+# The detekt 1.23.8 rules (of detekt_rules.txt) that need type resolution: run without --classpath, which cctao never
 # passes, detekt says of each, only under --debug, that it ran it without type resolution ("The rule 'Deprecation'
 # requires type resolution but it was run without it."). Run without --debug, Deprecation alone gave exit 0 and no
 # results on code that calls a deprecated function.

@@ -7,7 +7,7 @@
 /// ShellCheck's scripts). `UnknownCheck`: the installed engine said it does not know the rule's check.
 /// `NoCargoProject`: a clippy rule whose rule file has no `Cargo.toml` at or above its folder.
 /// `Other`: any other not-available rule (an engine never available, no base where the check needs one, a check not
-/// in temperare's list of its engine's codes, an engine older than the release temperare's list of its codes was
+/// in cctao's list of its engine's codes, an engine older than the release cctao's list of its codes was
 /// taken from).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NotAvailableCause {

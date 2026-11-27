@@ -42,7 +42,7 @@ fn availability_in_finds_local_eslint() {
     fs::set_permissions(&eslint, fs::Permissions::from_mode(0o755)).unwrap();
     // The public call, with the real PATH: it can tell the local program from PATH's only where eslint is not on PATH.
     // The proof of its folder wiring comes with cli's change that passes the rule file's folder, whose integration
-    // test runs tm as a child with a PATH holding node but no eslint.
+    // test runs cctao as a child with a PATH holding node but no eslint.
     assert_eq!(crate::availability_in::availability_in(Engine::Eslint, root), Availability::Available);
     // `availability_in`'s body with PATH given, saying no eslint, so the folder alone decides.
     let on_path = |n: &str| n != "eslint" && procio::which(n).is_some();
@@ -67,14 +67,14 @@ fn local_eslint_runs_rule_and_supplies_version() {
     fs::write(root.join("eslint.config.mjs"), "export default [];\n").unwrap();
     fs::write(root.join("example.js"), "var x = 1;\nconsole.log(x);\n").unwrap();
     git_support::git(root, &["add", "example.js"], b"");
-    fs::write(root.join("temperare.toml"), r#"version = 1
+    fs::write(root.join("tao.toml"), r#"version = 1
 [[rule]]
 id = "eslint-test"
 engine = "eslint"
 check = "no-var"
 fix = "Use the recommended form."
 "#).unwrap();
-    let file = RuleFile::read(&root.join("temperare.toml")).unwrap();
+    let file = RuleFile::read(&root.join("tao.toml")).unwrap();
     let programs = RefCell::new(Vec::<OsString>::new());
     let run = |cmd: &Cmd| {
         programs.borrow_mut().push(cmd.program.clone());

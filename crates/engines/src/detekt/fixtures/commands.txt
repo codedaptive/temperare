@@ -5,7 +5,7 @@ Program: /opt/homebrew/bin/detekt (a script that sets JAVA_HOME to Homebrew's op
 Root: /private/tmp/tm-detekt-fix (/tmp is a link to /private/tmp; each command ran with the /private/tmp form, and
 detekt wrote that form in its URIs). Removed afterwards.
 
-<layer> is <root>/layer/magic_number.yml, tm's config layer for the check `MagicNumber`, written by hand to match
+<layer> is <root>/layer/magic_number.yml, cctao's config layer for the check `MagicNumber`, written by hand to match
 detekt_layer's output:
     config:
       validation: true
@@ -57,7 +57,7 @@ AbsentOrWrongFileLicense with no license template: exit 1, stdout empty, no repo
   cwd: <m>/lic
   files:
     src/Demo.kt: as above
-    layer.yml: tm's layer for the check `AbsentOrWrongFileLicense`, as detekt_layer writes it (the MagicNumber layer
+    layer.yml: cctao's layer for the check `AbsentOrWrongFileLicense`, as detekt_layer writes it (the MagicNumber layer
       above with `comments:` in place of `style:` and `AbsentOrWrongFileLicense:` in place of `MagicNumber:`)
   command: detekt --input src/Demo.kt --config <m>/lic/layer.yml --report sarif:<m>/lic/r.sarif
   stderr, its first two lines (a Java stack trace follows, from LicenceHeaderLoaderExtension.onStart):
@@ -80,7 +80,7 @@ Every case folder holds the same two files:
   src/Demo.kt: package demo / (blank) / annotation class Mark / (blank) / fun area(r: Int): Int { / return r * 42 /
     } / (blank) / @Mark / fun other(x: Int): Int { / return x * 77 / } (twelve lines; the numbers on lines 6 and 11)
   src/Other.kt: package demo / (blank) / fun twice(r: Int): Int { / return r * 55 / } (five lines; the number on line 4)
-<root>/layer.yml is tm's layer for MagicNumber, the same text as <layer> above. Each case runs its repo.yml alone,
+<root>/layer.yml is cctao's layer for MagicNumber, the same text as <layer> above. Each case runs its repo.yml alone,
 then repo.yml followed by the layer. "MagicNumber hits" are the report's detekt.style.MagicNumber results, file:line;
 "output" lines are the run's stdout and stderr lines naming a property.
 
@@ -266,7 +266,7 @@ sarif-rules: cwd <root>/sarif (src/Demo.kt: the five-line Demo.kt of magic_numbe
     in the SARIF, not in gen.yml: ['potential-bugs.DuplicateCaseInWhenExpression', 'potential-bugs.MissingWhenCase', 'potential-bugs.RedundantElseInWhen', 'style.OptionalWhenBraces']
     in gen.yml, not in the SARIF: []
 
-deprecated: cwd <root>/deprecated (src/Demo.kt as above); layer.yml is tm's layer as detekt_layer writes it for
+deprecated: cwd <root>/deprecated (src/Demo.kt as above); layer.yml is cctao's layer as detekt_layer writes it for
 the check DuplicateCaseInWhenExpression,MissingWhenCase,RedundantElseInWhen,OptionalWhenBraces:
     config:
       validation: true
@@ -308,7 +308,7 @@ the check DuplicateCaseInWhenExpression,MissingWhenCase,RedundantElseInWhen,Opti
     output (a line containing "is deprecated"): Property 'potential-bugs>RedundantElseInWhen' is deprecated. Rule deprecated as compiler performs this check by default.
     output (a line containing "is deprecated"): Property 'potential-bugs>DuplicateCaseInWhenExpression' is deprecated. Rule deprecated as compiler performs this check by default.
 
-baseline: cwd <root>/baseline (src/Demo.kt as above); layer.yml is tm's layer for MagicNumber (above)
+baseline: cwd <root>/baseline (src/Demo.kt as above); layer.yml is cctao's layer for MagicNumber (above)
   command: detekt --config layer.yml --input src --create-baseline --baseline detekt-baseline.xml
     exit 0; detekt-baseline.xml CurrentIssues:
       <ID>MagicNumber:Demo.kt$3.14159</ID>
@@ -338,20 +338,20 @@ suppress: <root>/src/Demo.kt is
     fun other(r: Double): Double {
         return r * 2.71828
     }
-  layer.yml is tm's layer for MagicNumber (above).
+  layer.yml is cctao's layer for MagicNumber (above).
   command: detekt --input src/Demo.kt --config layer.yml --report sarif:<root>/out.sarif
-    exit 2; MagicNumber hits: Demo.kt:9 only (line 5, under @Suppress, is not reported even with tm's layer)
+    exit 2; MagicNumber hits: Demo.kt:9 only (line 5, under @Suppress, is not reported even with cctao's layer)
 usage: an option detekt does not take in that form
   command: detekt --input src/Demo.kt --config=layer.yml
     exit 1; first line: Was passed main parameter '--config=layer.yml' but no main parameter was defined in your arg class
 
 Type resolution probes: the claims in detekt_typed_rules.txt's header and typed_why.rs. Same detekt (`detekt
 --version`: 1.23.8), in a throwaway <root> = /private/tmp/tm-detekt-tr (the listing run again, with the same files, in
-/private/tmp/tm-detekt-tr2, to save its output below), both removed afterwards. tm passes no --classpath.
+/private/tmp/tm-detekt-tr2, to save its output below), both removed afterwards. cctao passes no --classpath.
   files:
     src/Dep.kt: the ZIT's type_resolution_rule_is_not_available text:
       package demo / @Deprecated("use newer") / fun older(): Int = 1 / fun caller(): Int = older()
-    dep.yml: tm's layer for the check `Deprecation`, as detekt_layer writes it (`potential-bugs:` with
+    dep.yml: cctao's layer for the check `Deprecation`, as detekt_layer writes it (`potential-bugs:` with
       `Deprecation:` under it, each active with empty excludes, includes and, for the rule, ignoreAnnotated)
     all.yml: first `config:` with `validation: true` and `excludes: ''`; then each of the 9 sets of
       detekt_rules.txt with `active: true`, and under it each of its rules with `active: true` and no other key: 213
@@ -390,7 +390,7 @@ resolution. Run in a throwaway <lic> = /private/tmp/tm-detekt-r2/lic, removed af
   files:
     src/One.kt: package demo / (blank) / fun one(): Int = 1
     license.template: /* demo licence */
-    layer.yml: tm's layer for the check `AbsentOrWrongFileLicense`, as detekt_layer writes it, plus
+    layer.yml: cctao's layer for the check `AbsentOrWrongFileLicense`, as detekt_layer writes it, plus
       `licenseTemplateFile: 'license.template'` under the rule
   command: detekt --input src/One.kt --config layer.yml --debug --report sarif:out.sarif
   result: detekt.comments.AbsentOrWrongFileLicense at 1:1, "Expected license not found or incorrect in the file:
@@ -400,6 +400,6 @@ A set with no typed rule runs as a set (`empty-blocks`): exit 2, stderr empty, o
 <empty> = /private/tmp/tm-detekt-r2/empty, removed afterwards.
   files:
     src/Empty.kt: package demo / (blank) / fun nothing() { / }
-    layer.yml: tm's layer for the check `empty-blocks`, as detekt_layer writes it (the set and its 15 rules)
+    layer.yml: cctao's layer for the check `empty-blocks`, as detekt_layer writes it (the set and its 15 rules)
   command: detekt --input src/Empty.kt --config layer.yml --report sarif:out.sarif
   result: detekt.empty-blocks.EmptyFunctionBlock at 3:15, "This empty block of code can be removed."

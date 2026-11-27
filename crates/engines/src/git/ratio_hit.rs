@@ -29,7 +29,7 @@ pub(crate) fn ratio_hit(counts: &Counts, ratio: &TestRatio) -> Option<Hit> {
 /// longer declaration reads back as a shorter decimal. With that text read as `n`
 /// over `10^d` the test is `test * 10^d > n * code`, exact in integers. In f64, 0.7 * 90 is 62.99999999999999, so 63
 /// lines against 90 would read as over. A text `over_declared` cannot read counts as over, so the rule reports and
-/// never reads clean on a limit tm could not read.
+/// never reads clean on a limit cctao could not read.
 fn over(test: u32, code: u32, max_ratio: f64) -> bool {
     over_declared(test, code, &format!("{max_ratio}")).unwrap_or(true)
 }

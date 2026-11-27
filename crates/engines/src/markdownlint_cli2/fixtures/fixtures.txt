@@ -6,6 +6,7 @@ markdownlint-cli2: /opt/homebrew/bin/markdownlint-cli2 (npm, /opt/homebrew/lib/n
 Every case ran under /tmp/tm-mdl-capture (canonical /private/tmp/tm-mdl-capture), removed after, with tm's options
 module, the text `tm_options` gives, written as /tmp/tm-mdl-capture/opts/tm.markdownlint-cli2.cjs:
   OPTS = --no-globs --config /tmp/tm-mdl-capture/opts/tm.markdownlint-cli2.cjs
+The program now writes this module as cctao.markdownlint-cli2.cjs, from cctao_options; the runs used tm.markdownlint-cli2.cjs, from tm_options.
 
 findings.json (stdout; exit 1; stderr empty)
   folder /tmp/tm-mdl-capture, no .markdownlint* file in it

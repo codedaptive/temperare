@@ -31,19 +31,19 @@ fn vale_wrapper_cases() {
             "a Vocab name with a line break",
             config(styles(), &["Proj\nBlockIgnores = x"]),
             "Vale",
-            Err("the Vale config value \"Proj\\nBlockIgnores = x\" holds a line break, so tm cannot write it into a config"),
+            Err("the Vale config value \"Proj\\nBlockIgnores = x\" holds a line break, so cctao cannot write it into a config"),
         ),
         (
             "a StylesPath with a carriage return",
             config(vec![PathBuf::from("/repo/sty\rles")], &[]),
             "Vale",
-            Err("the Vale config value \"/repo/sty\\rles\" holds a line break, so tm cannot write it into a config"),
+            Err("the Vale config value \"/repo/sty\\rles\" holds a line break, so cctao cannot write it into a config"),
         ),
         (
             "a style with a line break",
             config(styles(), &[]),
             "Vale\n",
-            Err("the Vale config value \"Vale\\n\" holds a line break, so tm cannot write it into a config"),
+            Err("the Vale config value \"Vale\\n\" holds a line break, so cctao cannot write it into a config"),
         ),
     ];
     for (label, config, style, expected) in rows {
@@ -64,6 +64,6 @@ fn vale_wrapper_refuses_a_styles_path_not_utf8() {
         paths: vec![PathBuf::from(OsStr::from_bytes(b"/repo/st\xffyles"))],
         files: vec![PathBuf::from("/repo/.vale.ini")],
     };
-    let expected = Err("the Vale StylesPath /repo/st\u{fffd}yles is not UTF-8, so tm cannot write it into a config".to_string());
+    let expected = Err("the Vale StylesPath /repo/st\u{fffd}yles is not UTF-8, so cctao cannot write it into a config".to_string());
     assert_eq!(vale_wrapper(&config, "Vale"), expected, "a StylesPath not UTF-8");
 }

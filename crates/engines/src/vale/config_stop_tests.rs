@@ -18,7 +18,7 @@ fn config(styles: &[&str], files: &[&str]) -> ValeConfig {
 fn outside(file: &str) -> Option<Stop> {
     Some(Stop::NotAvailable {
         why: format!(
-            "Vale would read the config {file}, outside the repository: tm runs Vale only with a .vale.ini, _vale.ini, vale.ini, .vale or _vale inside it, or a config the rule names inside it"
+            "Vale would read the config {file}, outside the repository: cctao runs Vale only with a .vale.ini, _vale.ini, vale.ini, .vale or _vale inside it, or a config the rule names inside it"
         ),
     })
 }
@@ -27,7 +27,7 @@ fn outside(file: &str) -> Option<Stop> {
 fn config_stop_cases() {
     let not_named = |root: &str, style: &str| {
         Some(Stop::NotAvailable {
-            why: format!("no BasedOnStyles in {root} names the style `{style}`: tm never turns on a Vale style the repository did not choose"),
+            why: format!("no BasedOnStyles in {root} names the style `{style}`: cctao never turns on a Vale style the repository did not choose"),
         })
     };
     let rows = [

@@ -18,7 +18,7 @@ use std::path::{Path, PathBuf};
 /// 1. the Python files `python_files` lists under `folder`, or its `Stop`; when `no_script` finds none the rule applies
 ///    to, nothing runs and the rule is its `NoFiles`. `engine_hits_with`'s step 1 (`engine_listed`) settles that before
 ///    availability; this guard decides only when that listing failed and this one succeeds;
-/// 2. the config tm pins: the rule's `config` joined to `folder`, else the one `mypy_config` finds from `folder` up to
+/// 2. the config cctao pins: the rule's `config` joined to `folder`, else the one `mypy_config` finds from `folder` up to
 ///    the repository's top (`repo_top`; `folder` itself when that fails, so the search stays in `folder`), else none;
 /// 3. a pinned config that cannot be read, or that `config_suppression` says silences the check, is `Failed` before
 ///    anything runs;

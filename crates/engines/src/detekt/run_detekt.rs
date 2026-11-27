@@ -21,13 +21,13 @@ const JAVA_OPTIONS: [&str; 3] = ["JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS", "_JAVA
 /// 1. the Kotlin sources `kotlin_files` lists under `folder`, or its `Stop`; when `no_script` finds none the rule
 ///    applies to, nothing runs and the rule is its `NoFiles`. `engine_hits_with`'s step 1 (`no_file_listed`) settles
 ///    that before availability; this guard decides only when that listing failed and this one succeeds;
-/// 2. a check with a part that is neither a rule nor a rule set of temperare's list is `detekt_unlisted`'s
+/// 2. a check with a part that is neither a rule nor a rule set of cctao's list is `detekt_unlisted`'s
 ///    `NotListed`, naming the part and the list's version; `stopped` adds the engine and its version. Nothing runs
-///    for it, so a name tm cannot pick is never clean;
+///    for it, so a name cctao cannot pick is never clean;
 /// 3. a check that picks any rule needing type resolution, by its name or through its set, is `NotAvailable` with
-///    `typed_why`'s why, and nothing runs: tm passes detekt no classpath, so such a rule would report nothing;
+///    `typed_why`'s why, and nothing runs: cctao passes detekt no classpath, so such a rule would report nothing;
 /// 4. the config: the rule's `config` joined to `folder`, else `folder`/detekt.yml when it is a file, else none;
-/// 5. tm's layer (`detekt_layer`) and an empty report file, each a `TempFile` (a write error is `Failed` with no exit
+/// 5. cctao's layer (`detekt_layer`) and an empty report file, each a `TempFile` (a write error is `Failed` with no exit
 ///    code), both removed when the flow returns, after the run;
 /// 6. `detekt_args` for the sources the rule applies to, the config, the layer and the report; its Err is `Failed`
 ///    with no exit code, and nothing runs;

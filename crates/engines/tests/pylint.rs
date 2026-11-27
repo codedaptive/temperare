@@ -57,11 +57,11 @@ fn pylint_rule_reports_findings_clean_config_and_absence() {
     for (name, source, config, absent, count) in cases {
         let result = std::panic::catch_unwind(|| {
             fs::write(folder.0.join("example.py"), source).unwrap();
-            fs::write(folder.0.join("temperare.toml"), format!(
+            fs::write(folder.0.join("tao.toml"), format!(
                 "version = 1\n[[rule]]\nid = \"none-comparison\"\nengine = \"pylint\"\ncheck = \"C0121\"\nfix = \"Use identity for None.\"\n{}",
                 if config { "config = \"pylint.rc\"\n" } else { "" }
             )).unwrap();
-            let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
+            let file = RuleFile::read(&folder.0.join("tao.toml")).unwrap();
             let _path_guard = if absent {
                 let guard = PathGuard(std::env::var_os("PATH"));
                 let without_pylint = std::env::join_paths(std::env::split_paths(guard.0.as_ref().unwrap()).filter(|dir| {

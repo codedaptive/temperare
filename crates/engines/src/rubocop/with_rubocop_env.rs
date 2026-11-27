@@ -1,4 +1,4 @@
-//! `with_rubocop_env`: a rubocop command given the environment that keeps it to tm's options and off the network.
+//! `with_rubocop_env`: a rubocop command given the environment that keeps it to cctao's options and off the network.
 
 use procio::Cmd;
 use std::ffi::OsString;

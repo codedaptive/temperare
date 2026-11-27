@@ -1,4 +1,4 @@
-//! `refused`: the `Failed` a rule gets before anything runs, when tm refuses its check or its params.
+//! `refused`: the `Failed` a rule gets before anything runs, when cctao refuses its check or its params.
 
 use crate::ast_grep::split_count_params;
 use crate::entry::{param_args, param_why, threshold_of};

@@ -79,6 +79,6 @@ fn untracked_ranges(full: &Path) -> Result<Option<Vec<Range<u32>>>, Stop> {
     let ends_open = bytes.last().is_some_and(|last| *last != b'\n');
     let lines = bytes.iter().filter(|byte| **byte == b'\n').count() + usize::from(ends_open);
     let end = u32::try_from(lines + 1)
-        .map_err(|_| failed(format!("{} has more lines than tm counts", full.display())))?;
+        .map_err(|_| failed(format!("{} has more lines than cctao counts", full.display())))?;
     Ok(Some(if lines == 0 { Vec::new() } else { vec![1..end] }))
 }

@@ -28,7 +28,7 @@ fn run_pmd_with_hands_pmd_the_files_the_rule_applies_to() {
     let no_files = Stop::NoFiles { why: "no file its engine checks".into() };
     let comma = Stop::Failed {
         code: None,
-        stderr: "a,b/Foo.java: pmd reads ',' in --file-list as a separator, so tm cannot hand it this file".into(),
+        stderr: "a,b/Foo.java: pmd reads ',' in --file-list as a separator, so cctao cannot hand it this file".into(),
     };
     let rows: [(&str, Result<Vec<&str>, Stop>, Result<Vec<Hit>, Stop>, Option<&str>); 5] = [
         ("one file applies", Ok(vec!["lib/Bar.java", "Foo.java"]), Ok(vec![hit.clone()]), Some("Foo.java\n")),

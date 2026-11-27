@@ -21,7 +21,7 @@ engine = "ruff"
 check = "ZZZ999"
 fix = "f"
 "#;
-    fs::write(repo.join("temperare.toml"), text).unwrap();
+    fs::write(repo.join("tao.toml"), text).unwrap();
     fs::write(repo.join("a.py"), "value = 1\n").unwrap();
     let file = RuleFile::parse(text, Path::new(".")).unwrap();
     let ruff_present = procio::which("ruff").is_some();

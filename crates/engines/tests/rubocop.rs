@@ -56,12 +56,12 @@ fn rubocop_rule_reports_findings_clean_todo_and_absence() {
         } else {
             fs::write(folder.0.join("example.rb"), source).unwrap();
         }
-        fs::write(folder.0.join("temperare.toml"), "version = 1\n[[rule]]\nid = \"unused-local\"\nengine = \"rubocop\"\ncheck = \"Lint/UselessAssignment\"\nfix = \"Remove the unused assignment.\"\n").unwrap();
+        fs::write(folder.0.join("tao.toml"), "version = 1\n[[rule]]\nid = \"unused-local\"\nengine = \"rubocop\"\ncheck = \"Lint/UselessAssignment\"\nfix = \"Remove the unused assignment.\"\n").unwrap();
         if name == "todo" {
             fs::write(folder.0.join(".rubocop.yml"), "inherit_from: .rubocop_todo.yml\n").unwrap();
             fs::write(folder.0.join(".rubocop_todo.yml"), "Lint/UselessAssignment:\n  Exclude:\n    - 'example.rb'\n").unwrap();
         }
-        let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
+        let file = RuleFile::read(&folder.0.join("tao.toml")).unwrap();
         let _path_guard = if name == "absent" || name == "absent-no-ruby" {
             let guard = PathGuard(std::env::var_os("PATH"));
             let without_rubocop = std::env::join_paths(std::env::split_paths(guard.0.as_ref().unwrap()).filter(|dir| {

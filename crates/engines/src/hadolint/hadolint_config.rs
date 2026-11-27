@@ -1,4 +1,4 @@
-//! `hadolint_config`: the config file tm pins for a hadolint run in a folder.
+//! `hadolint_config`: the config file cctao pins for a hadolint run in a folder.
 
 use std::path::{Path, PathBuf};
 

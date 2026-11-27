@@ -21,14 +21,14 @@ const OPTIONS: &str = "analysis_options.yaml";
 /// with `.`, which dart does not analyze. An analysis_options.yaml that is a symlink is read through it; a broken one
 /// is passed over, as dart passes it over for the next one up (fixtures/commands.txt). Each step fails closed:
 /// - a file the chain reads whose canonical path lies outside `top`, the repository top (canonical), is `Failed`
-///   naming it as found and as read, since tm cannot turn it off (S-67 (1)); but a `package:` include, and what it
+///   naming it as found and as read, since cctao cannot turn it off (S-67 (1)); but a `package:` include, and what it
 ///   includes, is the repository's declared dependency and is read wherever the package config puts it;
 /// - an include is read beside the file that includes it, or as a `package:` URI through the
 ///   `.dart_tool/package_config.json` (`package_path`) of the nearest pubspec.yaml at or above the governing file and
 ///   no higher than `top` (`pubspec_root`), else of `package_root`, the rule's package; no such file, or a URI it does
-///   not resolve, is `NotAvailable` saying to run `dart pub get`, since tm never fetches packages;
+///   not resolve, is `NotAvailable` saying to run `dart pub get`, since cctao never fetches packages;
 /// - a file it cannot read, a folder it cannot list, or a path whose metadata fails for a reason other than absence is
-///   `NotAvailable` naming it; a file whose YAML tm cannot read (`include_targets`) is `Failed` naming the file and
+///   `NotAvailable` naming it; a file whose YAML cctao cannot read (`include_targets`) is `Failed` naming the file and
 ///   the line.
 pub(crate) fn options_files(
     folder: &Path,
@@ -135,7 +135,7 @@ fn resolved(target: &str, from: &Path, root: &Path) -> Result<PathBuf, Stop> {
     let not_resolved = |what: String| Stop::NotAvailable {
         why: format!(
             "dart cannot resolve the include `{target}` in {}: {what}; run `dart pub get` once in the package, \
-             since tm never fetches packages",
+             since cctao never fetches packages",
             from.display()
         ),
     };

@@ -41,9 +41,9 @@ fn no_files_compares_by_its_reason_and_is_no_other_stop() {
 #[test]
 fn not_listed_compares_by_what_it_said_and_is_no_other_stop() {
     let unlisted = |said: &str| Stop::NotListed { said: said.to_string() };
-    let sc9999 = "SC9999 is not in temperare's list of shellcheck codes (taken from shellcheck 9.9.9)";
+    let sc9999 = "SC9999 is not in cctao's list of shellcheck codes (taken from shellcheck 9.9.9)";
     assert_eq!(unlisted(sc9999), unlisted(sc9999));
-    assert_ne!(unlisted(sc9999), unlisted("SC9998 is not in temperare's list of shellcheck codes (taken from shellcheck 9.9.9)"));
+    assert_ne!(unlisted(sc9999), unlisted("SC9998 is not in cctao's list of shellcheck codes (taken from shellcheck 9.9.9)"));
     assert_ne!(unlisted("x"), Stop::UnknownCheck { said: "x".to_string() });
     assert_ne!(unlisted("x"), Stop::NotAvailable { why: "x".to_string() });
     assert_ne!(unlisted("x"), Stop::NoFiles { why: "x".to_string() });

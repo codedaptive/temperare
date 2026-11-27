@@ -1,5 +1,5 @@
 //! ZUT for options_suppression.rs: a key path holding `exclude` or a value `ignore`, in any file of the chain, is
-//! Failed naming that file, the line and its path, in any YAML style; text tm cannot read is Failed naming its
+//! Failed naming that file, the line and its path, in any YAML style; text cctao cannot read is Failed naming its
 //! line; options without either are None.
 
 use super::options_suppression;
@@ -35,7 +35,7 @@ fn options_suppression_cases() {
             Some("/r/analysis_options.yaml: line 2: `analyzer: errors: x: ignore`:")),
         ("value on the next line", "", "analyzer:\n  errors:\n    unused_local_variable:\n      ignore\n",
             Some("/r/analysis_options.yaml: line 4: `analyzer: errors: unused_local_variable: ignore`:")),
-        ("indented unlike", "a:\n    b: 1\n  c: 2\n", clean, Some("/r/base.yaml: line 3: tm cannot read it: ")),
+        ("indented unlike", "a:\n    b: 1\n  c: 2\n", clean, Some("/r/base.yaml: line 3: cctao cannot read it: ")),
         ("commented out", "", "analyzer:\n  errors:\n    # dead_code: ignore\n", None),
         ("part of a longer word", "", "linter:\n  rules:\n    - x_ignore\n    - ignore_for_file\n    - excludes\n", None),
         ("no options text", "", "", None),

@@ -19,12 +19,12 @@ use std::path::{Path, PathBuf};
 ///    none the rule applies to, nothing runs and the rule is its `NoFiles`. `engine_hits_with`'s step 1
 ///    (`no_file_listed`) settles that before availability; this guard decides only when that listing failed and
 ///    this one succeeds;
-/// 2. a check not in temperare's list of hadolint codes is `not_listed`'s `NotListed`, so nothing runs for it;
-/// 3. the config tm pins (`hadolint_config`). A pinned config that cannot be read, or whose `ignored` hides findings
+/// 2. a check not in cctao's list of hadolint codes is `not_listed`'s `NotListed`, so nothing runs for it;
+/// 3. the config cctao pins (`hadolint_config`). A pinned config that cannot be read, or whose `ignored` hides findings
 ///    (`ignored_listed`), is `Failed` before anything runs; with none, a temporary file holding `{}` is pinned in its
 ///    place, and an error writing it is `Failed`;
 /// 4. the check run of `hadolint_cmd` on the files the rule applies to, in `folder`, through `check_run` so it is
-///    counted, with every variable in tm's environment whose name starts with `HADOLINT_` (`hadolint_vars`) removed
+///    counted, with every variable in cctao's environment whose name starts with `HADOLINT_` (`hadolint_vars`) removed
 ///    from the run's; the temporary config lives until the run has ended;
 /// 5. the output read by `entry.read`; output it cannot read is `parse_failed`'s `Failed`.
 pub(crate) fn run_hadolint(entry: &Entry, rule: &Rule, folder: &Path, host: &Host) -> Result<Vec<Hit>, Stop> {

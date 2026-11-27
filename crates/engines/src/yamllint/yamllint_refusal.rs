@@ -1,7 +1,7 @@
-//! `yamllint_refusal`: why a yamllint check is not one rule id tm can write into yamllint's config, if it is not.
+//! `yamllint_refusal`: why a yamllint check is not one rule id cctao can write into yamllint's config, if it is not.
 
 /// The reason `check` is refused when it is not one yamllint rule id: an ASCII lower-case letter, then ASCII lower-case
-/// letters, digits and `-`; None when it is one. The check is written as a key into the YAML config tm hands yamllint
+/// letters, digits and `-`; None when it is one. The check is written as a key into the YAML config cctao hands yamllint
 /// (`config_data`), so nothing but a rule id may reach that text: a comma, colon, quote, space or capital could change
 /// what the config says. An id of that shape that yamllint lacks is not refused here: yamllint says so itself, and the
 /// rule is then not available (`no_such_rule`).

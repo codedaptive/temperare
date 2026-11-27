@@ -4,19 +4,19 @@
 //! config, and which files Vale is given (`is_vale_source`).
 //!
 //! The design (S-72, S-81):
-//! - **A wrapper config.** tm never runs Vale on the repository's config (its `.vale.ini`, or the file the rule's `config` names) directly. It reads that config through
+//! - **A wrapper config.** cctao never runs Vale on the repository's config (its `.vale.ini`, or the file the rule's `config` names) directly. It reads that config through
 //!   `vale ls-config` (`ValeConfig::read`), stops when it is missing, outside the repository or does not name the
 //!   check's style (`config_stop`), and writes its own ini in a temporary folder (`vale_wrapper`), removed after the
 //!   run. The wrapper copies only the repository's `StylesPath` and `Vocab`, and turns on the check's style for every
 //!   file passed.
-//! - **The files tm passes.** Vale is given the rule's git-listed files under its paths, in the formats Vale reads
+//! - **The files cctao passes.** Vale is given the rule's git-listed files under its paths, in the formats Vale reads
 //!   (`is_vale_source`), so the rule file decides the scope and an empty answer means clean. With none the rule is
 //!   `NoFiles` before availability (`engine_listed`).
 //! - **Vocab is honoured, a stated limit** (S-81 (2)). A vocabulary defines which words are correct everywhere in the
 //!   repository, as a rule's own options do; it lets no finding through at one place. So `Vocab` is copied, and
 //!   `Vale.Spelling` accepts its words (tests/vale.rs, the `vocab-on` row).
 //! - **Inline comments stay on** (S-67 (2)). Vale cannot be told to ignore `<!-- vale off -->` or
-//!   `<!-- vale Style.Rule = NO -->` in the checked files, and tm parses no file itself, so these still hide findings:
+//!   `<!-- vale Style.Rule = NO -->` in the checked files, and cctao parses no file itself, so these still hide findings:
 //!   a gap the baseline's suppression rules are for.
 //! - **The config's skip keys are off** (S-67 (1)). `BlockIgnores`, `TokenIgnores`, `IgnoredScopes`,
 //!   `SkippedScopes`, `IgnoredClasses` and `Style.Rule = NO`, global or in a section, are never copied into the

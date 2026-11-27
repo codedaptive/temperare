@@ -1,4 +1,4 @@
-//! `advisory_db`: the advisory database tm names to cargo-audit: cargo-audit's own default path.
+//! `advisory_db`: the advisory database cctao names to cargo-audit: cargo-audit's own default path.
 
 use std::ffi::OsStr;
 use std::path::PathBuf;

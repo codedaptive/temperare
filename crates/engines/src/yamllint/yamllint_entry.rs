@@ -13,17 +13,17 @@ use rules::Engine;
 /// text. An id the installed yamllint lacks is not available, in yamllint's own words (`no_such_rule`).
 ///
 /// The config is the rule's, else the nearest `.yamllint`, `.yamllint.yaml` or `.yamllint.yml` from the rule's folder
-/// up to the repository top (`yamllint_config`), else yamllint's `default`. tm hands yamllint, with `-d`, a config that
+/// up to the repository top (`yamllint_config`), else yamllint's `default`. cctao hands yamllint, with `-d`, a config that
 /// extends it and turns the check on (`config_data`); `-d` replaces yamllint's own discovery, so the user-global config
 /// and the project config yamllint would find are never read. A rule config that is not a file is `Failed` naming it.
 ///
 /// The files passed are the rule's in-scope YAML files (`source_files` with `is_yaml_source`): yamllint's stock
 /// `yaml-files`, `*.yaml`, `*.yml` and `.yamllint`. A config's own `yaml-files` is not read: it steers only yamllint's
-/// walk of a folder, and tm passes files, so a file it adds under another name is not checked (a stated limit).
+/// walk of a folder, and cctao passes files, so a file it adds under another name is not checked (a stated limit).
 ///
-/// tm reads none of the repository's YAML: yamllint reads its own config, so `extends` chains and `ignore-from-file`
+/// cctao reads none of the repository's YAML: yamllint reads its own config, so `extends` chains and `ignore-from-file`
 /// files are yamllint's, and gitignore-style patterns in its own config are matched by yamllint; which files it is
-/// given is git's (`source_files`). The `-d` text tm writes double-quotes the check key and the base path, since
+/// given is git's (`source_files`). The `-d` text cctao writes double-quotes the check key and the base path, since
 /// yamllint reads it with PyYAML, YAML 1.1, where a bare `yes` or `on` is a boolean; the quoted key `"yes"` was measured
 /// to reach yamllint as a string (fixtures/fixtures.txt).
 ///
@@ -39,7 +39,7 @@ use rules::Engine;
 /// base, not the one beside the config, so its options apply instead.
 ///
 /// yamllint exits 0 for nothing found or warnings only, 1 for an error-level problem and 255 for a config it refuses.
-/// A missing extended config exits 1 with a Python traceback, the same code as findings, so tm reads the output, not
+/// A missing extended config exits 1 with a Python traceback, the same code as findings, so cctao reads the output, not
 /// the code: any stderr is `Failed`. With no YAML file the rule applies to it is `NoFiles`, settled before availability
 /// (`engine_listed`, in `engine_hits_with`'s step 1). Nothing reaches the network: yamllint fetches nothing. yamllint
 /// takes no params, and its rules never share a run: `shares_with` has no arm for it.

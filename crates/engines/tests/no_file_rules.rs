@@ -1,4 +1,4 @@
-//! ZIT for no_file_rules: in a throwaway git repository, the rules tm check settles as no-file, without running an
+//! ZIT for no_file_rules: in a throwaway git repository, the rules cctao check settles as no-file, without running an
 //! engine; outside a repository, none.
 
 use engines::{no_file_rules, NoFileRule};

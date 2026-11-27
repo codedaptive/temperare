@@ -6,7 +6,7 @@ use super::mypy_refusal;
 fn mypy_refusal_cases() {
     let refused = |check: &str| {
         Some(format!(
-            "mypy check `{check}` is not one mypy error code (lowercase words joined by `-`, as `arg-type`), so tm cannot tell which findings it selects"
+            "mypy check `{check}` is not one mypy error code (lowercase words joined by `-`, as `arg-type`), so cctao cannot tell which findings it selects"
         ))
     };
     let rows: [(&str, &str, Option<String>); 14] = [

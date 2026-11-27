@@ -1,5 +1,5 @@
 //! `core_value`: a scalar as YAML 1.2's core schema reads it, for yaml_entries (a repeated key, a tag its text does not
-//! fit or tm does not read) and markdownlint_cli2's yaml_settings (a plain scalar's truthiness). Tested through
+//! fit or cctao does not read) and markdownlint_cli2's yaml_settings (a plain scalar's truthiness). Tested through
 //! yaml_entries_tests.rs and markdownlint_cli2/yaml_settings_tests.rs, so no test file of its own.
 
 use saphyr_parser::{ScalarStyle, Tag};
@@ -8,7 +8,7 @@ use saphyr_parser::{ScalarStyle, Tag};
 /// scalars with one value give one string: `null`, `bool true`, `number <value>` or `string <decoded text>`.
 /// - A core tag decides when present: `!!null`, `!!bool`, `!!int` and `!!float` read the text as that type, and text
 ///   that is not one is an `Err` naming the tag; `!!str` reads it as a string; any other `!!` tag (`!!seq`,
-///   `!!binary`, `!!timestamp`, ...) is an `Err` naming it, since tm does not read it.
+///   `!!binary`, `!!timestamp`, ...) is an `Err` naming it, since cctao does not read it.
 /// - Any other tag (`!foo`, the non-specific `!`) reads the decoded text as a string, as dart does: `!foo a` is `a`,
 ///   `! 1` is `"1"`, and `!foo 1` is not `1`.
 /// - An untagged plain scalar resolves as the core schema does: null forms, booleans, ints in decimal, `0o` octal or
@@ -29,7 +29,7 @@ pub(crate) fn core_value(text: &str, style: ScalarStyle, tag: Option<&Tag>) -> R
         "int" => int(text),
         "float" => float(text),
         "str" => return Ok(string()),
-        _ => return Err(format!("a `!!{suffix}` tag on a scalar, which tm does not read")),
+        _ => return Err(format!("a `!!{suffix}` tag on a scalar, which cctao does not read")),
     };
     read.ok_or_else(|| format!("a `!!{suffix}` tag on `{text}`, which does not read as one"))
 }

@@ -43,7 +43,7 @@ const GIT_ABSENT_REPO: &str = "ENGINES_VULTURE_GIT_ABSENT_REPO";
 
 /// The git-absent row's check, run in the child: with PATH holding only vulture, the rule is not available for git.
 fn assert_git_absent(repo: &Path) {
-    let file = RuleFile::read(&repo.join("temperare.toml")).unwrap();
+    let file = RuleFile::read(&repo.join("tao.toml")).unwrap();
     let runs = run_rules_versioned_at(&file, repo, &[], None).runs;
     let name = "git-absent";
     assert_eq!(runs.len(), 1, "{name}: {runs:?}");
@@ -95,7 +95,7 @@ fn vulture_rule_reports_findings_clean_config_warnings_and_absence() {
             if source.is_none() { fs::write(folder.0.join("notes.txt"), "no Python here\n").unwrap(); }
             if config { fs::write(folder.0.join("pyproject.toml"), "[tool.vulture]\nignore_names = [\"dead\"]\n").unwrap(); }
             if warning { fs::write(folder.0.join("warning.py"), "PAT = \"\\d+\"\nprint(PAT)\n").unwrap(); }
-            fs::write(folder.0.join("temperare.toml"), "version = 1\n[[rule]]\nid = \"dead-function\"\nengine = \"vulture\"\ncheck = \"V103\"\nfix = \"Remove the function or call it.\"\n").unwrap();
+            fs::write(folder.0.join("tao.toml"), "version = 1\n[[rule]]\nid = \"dead-function\"\nengine = \"vulture\"\ncheck = \"V103\"\nfix = \"Remove the function or call it.\"\n").unwrap();
             if name == "git-absent" {
                 // ccvcslib finds git once per process and keeps it, and earlier rows have run git here, so the row
                 // runs in a child of this test binary whose PATH holds only vulture.
@@ -116,7 +116,7 @@ fn vulture_rule_reports_findings_clean_config_warnings_and_absence() {
                 assert!(stdout.contains("1 passed"), "{name}: {stdout}");
                 return;
             }
-            let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
+            let file = RuleFile::read(&folder.0.join("tao.toml")).unwrap();
             let _path_guard = absent.then(|| {
                 let guard = PathGuard(std::env::var_os("PATH"));
                 let without_vulture = std::env::join_paths(std::env::split_paths(guard.0.as_ref().unwrap()).filter(|dir| {

@@ -1,4 +1,4 @@
-//! `actionlint_refusal`: why an actionlint check is not a kind tm can match back, if it is not.
+//! `actionlint_refusal`: why an actionlint check is not a kind cctao can match back, if it is not.
 
 /// The reason `check` is refused when it is not lowercase ASCII words joined by single `-` (`^[a-z]+(-[a-z]+)*$`), the
 /// form of every actionlint kind (`expression`, `runner-label`); None when it is. The reader keeps errors whose `kind`

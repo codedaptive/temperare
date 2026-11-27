@@ -120,10 +120,10 @@ fn actionlint_rule_reports_workflows_suppressions_and_availability() {
                     "base: &b {ignore: ['undefined variable']}\npaths:\n  \"**\": {<<: *b}\n").unwrap(),
                 _ => {}
             }
-            fs::write(folder.0.join("temperare.toml"), format!(
+            fs::write(folder.0.join("tao.toml"), format!(
                 "version = 1\n[[rule]]\nid = \"undefined-variable\"\nengine = \"actionlint\"\ncheck = \"{check}\"\nfix = \"Define the variable.\"\n"
             )).unwrap();
-            let file = RuleFile::read(&folder.0.join("temperare.toml")).unwrap();
+            let file = RuleFile::read(&folder.0.join("tao.toml")).unwrap();
             let tools = if name == "shellcheck-absent" || name == "pyflakes-absent" {
                 let tools = TempFolder::new(&format!("{name}-bin"));
                 for program in ["actionlint", "git"] {
@@ -185,7 +185,7 @@ fn actionlint_rule_reports_workflows_suppressions_and_availability() {
                     match name {
                         "ignored" => {
                             assert!(stderr.contains("actionlint.yaml"), "{name}: {stderr}");
-                            assert!(stderr.contains("tm cannot turn it off; put exceptions in the rule file"), "{name}: {stderr}");
+                            assert!(stderr.contains("cctao cannot turn it off; put exceptions in the rule file"), "{name}: {stderr}");
                             assert!(!stderr.contains("S-67"), "{name}: {stderr}");
                         }
                         "merged-ignore" => {
@@ -218,7 +218,7 @@ fn actionlint_rule_reports_workflows_suppressions_and_availability() {
             if name == "violation" {
                 let mut entries: Vec<_> = fs::read_dir(&folder.0).unwrap().map(|e| e.unwrap().file_name()).collect();
                 entries.sort();
-                assert_eq!(entries, [".git", ".github", "other.yml", "temperare.toml"]);
+                assert_eq!(entries, [".git", ".github", "other.yml", "tao.toml"]);
                 let mut github: Vec<_> = fs::read_dir(folder.0.join(".github")).unwrap().map(|e| e.unwrap().file_name()).collect();
                 github.sort();
                 assert_eq!(github, ["workflows"]);

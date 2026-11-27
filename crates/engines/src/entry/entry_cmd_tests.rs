@@ -69,8 +69,8 @@ fn an_entry_that_takes_no_config_drops_the_rules_config() {
 #[test]
 fn a_file_pick_passes_the_option_then_the_path_as_two_arguments() {
     let entry = fake_entry(Pick::File("--rule"), Params::Template, None);
-    let got = argv(&entry, "/tmp/tm-ast-grep-1-0.yml", &[], None);
-    assert_eq!(got, os(&["check", "--rule", "/tmp/tm-ast-grep-1-0.yml", "."]));
+    let got = argv(&entry, "/tmp/cctao-ast-grep-1-0.yml", &[], None);
+    assert_eq!(got, os(&["check", "--rule", "/tmp/cctao-ast-grep-1-0.yml", "."]));
 }
 
 #[test]

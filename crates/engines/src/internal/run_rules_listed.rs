@@ -1,4 +1,4 @@
-//! `run_rules_listed`: every rule of a rule file run through a host, a rule tm refuses or whose paths match no file
+//! `run_rules_listed`: every rule of a rule file run through a host, a rule cctao refuses or whose paths match no file
 //! of its folder settled before anything runs.
 
 use crate::host::Host;

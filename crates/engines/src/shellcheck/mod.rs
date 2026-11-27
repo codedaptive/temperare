@@ -1,7 +1,7 @@
 //! The shellcheck adapter: its entry (`SHELLCHECK`) and the flow it runs for one rule, the reader of `shellcheck -f
 //! json1` output, the command, the version reader, the check refusal, the listing of the shell scripts in a
 //! repository (tracked, and untracked but not ignored; by extension, or by a shell shebang read from an extensionless
-//! file's first line; never a symlink) and temperare's list of shellcheck codes (`shellcheck_codes.txt`; its
+//! file's first line; never a symlink) and cctao's list of shellcheck codes (`shellcheck_codes.txt`; its
 //! `CodeList` reader is the crate's internal `read_code_list`).
 
 mod is_shell_shebang;

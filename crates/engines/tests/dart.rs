@@ -129,10 +129,10 @@ fn check_case(case: Case) {
         Case::Unknown => "no_such_code_xyz",
         _ => "unused_local_variable",
     };
-    fs::write(repo.join("temperare.toml"), format!(
+    fs::write(repo.join("tao.toml"), format!(
         "version = 1\n[[rule]]\nid = \"dart-rule\"\nengine = \"dart\"\ncheck = \"{check}\"\nfix = \"{FIX}\"\n"
     )).unwrap();
-    let file = RuleFile::read(&repo.join("temperare.toml")).unwrap();
+    let file = RuleFile::read(&repo.join("tao.toml")).unwrap();
     let _absent_path = if matches!(case, Case::NoFilesAbsent | Case::Absent) {
         let guard = PathGuard(std::env::var_os("PATH"));
         // Hides the entries where procio would find dart; procio never resolves a program against a relative entry.
@@ -203,7 +203,7 @@ fn check_case(case: Case) {
                 Case::SymlinkedFolderOutside => assert!(stderr.contains(fs::canonicalize(outer.0.join("outside/analysis_options.yaml")).unwrap().to_str().unwrap()), "{case:?}: {stderr}"),
                 _ => unreachable!(),
             }
-            assert!(stderr.contains("tm cannot turn it off; put exceptions in the rule file"), "{case:?}: {stderr}");
+            assert!(stderr.contains("cctao cannot turn it off; put exceptions in the rule file"), "{case:?}: {stderr}");
             assert!(!stderr.contains("S-67"), "{case:?}: {stderr}");
         }
         _ => {

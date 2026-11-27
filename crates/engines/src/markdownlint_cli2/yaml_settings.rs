@@ -74,7 +74,7 @@ fn truthy(value: &YamlValue, line: usize) -> Result<bool, String> {
         YamlValue::Plain(text) => Ok(!falsy_when_plain(text)),
         YamlValue::Quoted(text) if text.is_empty() => Ok(false),
         YamlValue::Quoted(text) if falsy_when_plain(text) || matches!(text.as_str(), "~" | "null" | "Null" | "NULL") => {
-            Err(format!("line {line}: a quoted or tagged `{text}`, whose tag tm cannot see: it may be falsy"))
+            Err(format!("line {line}: a quoted or tagged `{text}`, whose tag cctao cannot see: it may be falsy"))
         }
         _ => Ok(true),
     }

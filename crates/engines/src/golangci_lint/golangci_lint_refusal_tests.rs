@@ -6,7 +6,7 @@ use super::golangci_lint_refusal;
 fn golangci_lint_refusal_refuses_what_is_not_a_linter_list() {
     let why = |check: &str, part: &str| {
         Some(format!(
-            "golangci-lint check `{check}`: `{part}` is not a linter name; tm picks golangci-lint's linters by name \
+            "golangci-lint check `{check}`: `{part}` is not a linter name; cctao picks golangci-lint's linters by name \
              (`staticcheck`), not a linter's own checks (`SA1019`)"
         ))
     };

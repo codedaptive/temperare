@@ -27,7 +27,7 @@ use rules::Engine;
 /// one of sqlfluff's own (`raw`, `jinja`, `python`, `placeholder`); dbt is a plugin sqlfluff does not ship; where it is
 /// not installed, a config naming it is `Failed` with sqlfluff's stderr (exit 2; it says to `pip install
 /// sqlfluff-templater-dbt`; the "Requested templater 'dbt' ..." line is on stdout). The dialect comes from the
-/// repository's own config: tm passes no `--dialect`, and none set is `NotAvailable` with a why naming `.sqlfluff`
+/// repository's own config: cctao passes no `--dialect`, and none set is `NotAvailable` with a why naming `.sqlfluff`
 /// (`no_dialect`), as a missing project file is.
 ///
 /// Suppressions, settled S-67: (1) turned off: `-- noqa` comments (`--disable-noqa`), `.sqlfluffignore`

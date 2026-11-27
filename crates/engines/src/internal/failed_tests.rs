@@ -1,4 +1,4 @@
-//! ZUT for failed.rs: tm's own failure text kept whole, with no exit code.
+//! ZUT for failed.rs: cctao's own failure text kept whole, with no exit code.
 
 use crate::failed::failed;
 use crate::types::Stop;

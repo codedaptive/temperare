@@ -12,7 +12,7 @@ const IMPORT: &str = "|Target of URI doesn't exist: 'package:";
 /// stdout has an INCLUDE_FILE_NOT_FOUND line (an `include:` in analysis_options.yaml dart cannot find) or a
 /// URI_DOES_NOT_EXIST line whose message names a `package:` URI: dart resolves `package:` URIs only through that
 /// file, which `dart pub get` writes, so its findings would be those of a package without its dependencies. The why
-/// names the first such URI and says to run `dart pub get` once, since tm never fetches packages. `None` otherwise,
+/// names the first such URI and says to run `dart pub get` once, since cctao never fetches packages. `None` otherwise,
 /// and always when the package config exists: a URI missing then is the code's own error, a diagnostic like any.
 /// The code is the third field (the first three never hold an escape) and the URI is read from the message as dart
 /// 3.14.1 words it, so a line worded otherwise is passed over; a URI holding `|` keeps dart's `\|` in the why.
@@ -34,7 +34,7 @@ pub(crate) fn missing_packages(out: &Output, has_package_config: bool) -> Option
     Some(Stop::NotAvailable {
         why: format!(
             "dart cannot resolve `{uri}`: the package's dependencies are not fetched (no .dart_tool/package_config.json); \
-             run `dart pub get` once in the package, since tm never fetches packages"
+             run `dart pub get` once in the package, since cctao never fetches packages"
         ),
     })
 }

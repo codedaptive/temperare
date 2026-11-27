@@ -4,7 +4,7 @@
 use procio::Output;
 
 /// None unless a line of `out`'s stderr, trimmed, is "Error while trying to load a compilation database:". clang-tidy
-/// then checks the file without flags and still exits 0 with findings, which tm must not report: Some(why), naming the
+/// then checks the file without flags and still exits 0 with findings, which cctao must not report: Some(why), naming the
 /// file quoted on the stderr line that starts `Could not auto-detect compilation database for file "`, or "a file it
 /// was given" when no line does.
 pub(crate) fn no_compile_database(out: &Output) -> Option<String> {

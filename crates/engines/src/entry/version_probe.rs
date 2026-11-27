@@ -13,6 +13,6 @@ pub struct VersionProbe {
     /// The version from the probe's output; `None` when it gives none.
     pub read: fn(&Output) -> Option<String>,
     /// The probe command given the same environment the entry's run gives its check run; `None`: the probe runs
-    /// with tm's environment as is.
+    /// with cctao's environment as is.
     pub wrap: Option<fn(Cmd) -> Cmd>,
 }

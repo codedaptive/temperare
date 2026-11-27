@@ -6,7 +6,7 @@ use crate::yaml::{yaml_entries, YamlValue};
 /// each scalar item of its list, block or flow. A null `include` (`include:`, `~`) names none; a quoted empty one
 /// (`include: ''`) names the target "", which `options_files` resolves to the including file's folder and cannot read
 /// as a file (`NotAvailable`), so never clean. `text` is read as YAML
-/// (`yaml_entries`), and its `Err` naming a line is passed up: an include tm cannot read is options it never checks,
+/// (`yaml_entries`), and its `Err` naming a line is passed up: an include cctao cannot read is options it never checks,
 /// so no doubt reads as a clean list. An `include` key anywhere else is not one, since dart reads only the top-level
 /// one. Pure.
 pub(crate) fn include_targets(text: &str) -> Result<Vec<String>, String> {

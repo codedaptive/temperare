@@ -1,7 +1,7 @@
-//! `vale_refusal`: why a vale check is not a Vale rule name tm can pass, if it is not.
+//! `vale_refusal`: why a vale check is not a Vale rule name cctao can pass, if it is not.
 
 /// The reason `check` is refused when it is not `Style.Rule`: exactly one `.`, both sides non-empty, every character
-/// an ASCII letter, digit, `_` or `-`; None when it is. A vale check names one rule (S-72 (2), `Vale.Spelling`). tm
+/// an ASCII letter, digit, `_` or `-`; None when it is. A vale check names one rule (S-72 (2), `Vale.Spelling`). cctao
 /// writes the check into Vale's `--filter` expression and the style into the wrapper config, so the narrow set keeps
 /// a check from ending the expression's quoted string or a config line.
 pub(crate) fn vale_refusal(check: &str) -> Option<String> {

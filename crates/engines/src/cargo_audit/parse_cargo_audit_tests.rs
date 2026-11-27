@@ -28,7 +28,7 @@ fn parse_cargo_audit_cases() {
         ("a kind that matches nothing", 0, UNMAINTAINED, b"", "unsound", Ok(vec![])),
         ("clean", 0, CLEAN, b"", "all", Ok(vec![])),
         ("an audit.toml ignoring an advisory", 0, IGNORED, b"", "all", why(
-            "cargo-audit applied an audit.toml tm was not given (ignore = [\"RUSTSEC-2021-0003\"]); the rule file is the only home for an exception, so tm reads no findings under it",
+            "cargo-audit applied an audit.toml cctao was not given (ignore = [\"RUSTSEC-2021-0003\"]); the rule file is the only home for an exception, so cctao reads no findings under it",
         )),
         ("no database", 1, b"", b"error: error loading advisory database: I/O operation failed\n", "all", why(
             "cargo-audit printed no JSON report: error: error loading advisory database: I/O operation failed\n",

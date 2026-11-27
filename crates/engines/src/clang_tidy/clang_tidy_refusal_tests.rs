@@ -5,7 +5,7 @@ use super::clang_tidy_refusal;
 #[test]
 fn clang_tidy_refusal_cases() {
     let why = |check: &str| {
-        Some(format!("clang-tidy check `{check}` is not one check name (letters, digits, `-`, `.` and `_`, starting with a letter), so tm cannot tell which findings it selects"))
+        Some(format!("clang-tidy check `{check}` is not one check name (letters, digits, `-`, `.` and `_`, starting with a letter), so cctao cannot tell which findings it selects"))
     };
     let rows: [(&str, &str, Option<String>); 9] = [
         ("a dashed name", "bugprone-branch-clone", None),

@@ -6,7 +6,7 @@ use procio::Output;
 use serde::Deserialize;
 use std::path::PathBuf;
 
-/// The part of `swift package dump-package`'s JSON tm reads here.
+/// The part of `swift package dump-package`'s JSON cctao reads here.
 #[derive(Deserialize)]
 struct Manifest {
     dependencies: Vec<Dependency>,

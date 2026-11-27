@@ -55,7 +55,7 @@ impl Repo {
         let repo = Self(fs::canonicalize(path).unwrap(), above_config.is_some());
         support::git::git(&repo.0, &["init", "-q"], b"");
         fs::write(repo.0.join(filename), source).unwrap();
-        fs::write(repo.0.join("temperare.toml"), format!(
+        fs::write(repo.0.join("tao.toml"), format!(
             "version = 1\n[[rule]]\nid = \"spacing\"\nengine = \"sqlfluff\"\ncheck = \"{check}\"\nkind = \"quality\"\nseverity = \"warning\"\nfix = \"{FIX}\"\npaths = [\"**\"]\n"
         )).unwrap();
         repo
@@ -146,7 +146,7 @@ fn check_case(case: Case) {
         support::git::git(&repo.0, &["add", "README.txt"], b"");
     }
     let _path = if case.absent { PathGuard::git_only(&repo) } else { PathGuard::with_sqlfluff() };
-    let file = RuleFile::read(&repo.0.join("temperare.toml")).unwrap();
+    let file = RuleFile::read(&repo.0.join("tao.toml")).unwrap();
     let runs = run_rules_versioned_at(&file, &repo.0, &[], None).runs;
     assert_eq!(runs.len(), 1, "{}: {runs:?}", case.name);
     let run = &runs[0];
