@@ -521,7 +521,7 @@ each only when the kind has it. With nothing loosened the list is `loosened (0):
 |---|---|---|---|---|
 | `rule_gone` | A rule in force at the base is not in the rule file now: removed, turned off by an `[[override]]`, in a set no longer taken, or dropped by the set's newer version | the rule | | |
 | `rule_not_applicable` | A set's rule in force at the base is not applicable now, because a param it requires is not given | the rule | | the why |
-| `severity_lowered` | A rule's severity went from `error` to `warning` | the rule | `error` | `warning` |
+| `severity_lowered` | A rule's severity went down: from `error` to `warning` or `watch`, or from `warning` to `watch` | the rule | the base's severity | now's severity |
 | `path_removed` | A pattern of the base's `paths` is not in now's `paths`, which name some | the rule | the pattern | |
 | `paths_limited` | The base's rule had no `paths` (every file) and now's has some | the rule | | now's patterns, joined by `, ` |
 | `exclude_added` | Now's `exclude` has a pattern the base's did not | the rule | | the pattern |
@@ -530,7 +530,6 @@ each only when the kind has it. With nothing loosened the list is `loosened (0):
 | `outside_kit_added` | Now's `outside_kits` has a kit the base's did not | the rule | | the kit |
 | `exception_added` | An exception now that no exception at the base covers | the exception's rule | | its path, with its `what` in parentheses when it has one |
 | `expiry_later` | An exception's `expires` is later than at the base | the exception's rule | the base's date | now's date |
-| `expiry_dropped` | An exception has no `expires` now where it had one at the base | the exception's rule | the base's date | |
 | `set_dropped` | A baseline set taken at the base is not taken now | the set's name | its version | |
 | `set_older` | A baseline set is taken at a lower version now | the set's name | the base's version | now's version |
 
@@ -539,9 +538,9 @@ now's file order; then the baseline sets, in the base's order. A rule not applic
 has, give nothing. Patterns and kits are compared as written, so a rewritten pattern is a `path_removed` (or an
 `exclude_added`). An exception at the base covers one now when it has the same rule and path and its `what` is the
 same or absent, so dropping a `what` is an `exception_added` and adding one is not. When several cover it, the base's
-date is the latest of theirs; when one of them has no `expires`, its date gives nothing. A dropped set's
-rules are each a `rule_gone` as well. A change that tightens the file gives nothing, and changes to `params`,
-`check`, `kind`, `engine`, `only_with_base`, or an exception's `reason` and `approved` are not compared.
+date is the latest of theirs. A dropped set's rules are each a `rule_gone` as well. A change that tightens the file
+gives nothing, and changes to `params`, `check`, `kind`, `engine`, `only_with_base`, or an exception's `reason` and
+`approved` are not compared.
 
 `tm rules --loosened --json` prints one object on one line:
 
@@ -582,9 +581,9 @@ exits 2 and names that exception's line at the base. Compare against a base whos
 ## `tm baseline test`
 
 `tm baseline test [--set <name@version>] [--json]` tests the rules of the baseline sets built into `tm`, each on
-the cases its set carries for it. With no `--set` it tests every set that is ready, which is both sets it carries:
-`house@1` (36 rules), then `standard@1` (53). `--set` tests the one set it names instead, such as
-`--set standard@1`. It reads no rule file and checks nothing in your repository.
+the cases its set carries for it. With no `--set` it tests every set version that is ready, which is every one it
+carries: `house@1` (36 rules), `house@2` (39), then `standard@1` (53). `--set` tests the one set it names instead,
+such as `--set standard@1`. It reads no rule file and checks nothing in your repository.
 
 Each rule runs alone, by its engine, on two cases. Its failing case must give exactly the one finding the set expects
 (that rule, at that path and line) and nothing else; its passing case must give no finding. Each case is written into
@@ -663,12 +662,12 @@ The exit codes of `tm baseline test`:
 The first that applies wins: 2, 1, 3, 0. Exit 3 is never "holds": a rule that was not run was not tested.
 
 A set `tm` does not carry is the two usage-error lines on stderr, for example `tm baseline test --set standrd@1` prints
-`tm: unknown baseline set "standrd"` and `next: Use one of: house@1, standard@1.`, and with `--json` also the object on
-stdout, as for `tm check`
+`tm: unknown baseline set "standrd"` and `next: Use one of: house@1, house@2, standard@1.`, and with `--json` also the
+object on stdout, as for `tm check`
 ([Errors that stop a run, as JSON](#errors-that-stop-a-run-as-json)). Every set `tm` carries is named. A rule file's
-fix for the same mistake names the ready ones, which today are the same two
+fix for the same mistake names the ready ones, which today are the same three
 ([`RULE_FILE.md`](RULE_FILE.md#problems-of-baseline-and-override)).
 
-Five of `house@1`'s rules require params, and each of their cases gives them (`entity_types` or `own_package`), so
-they run like the rest. A case that lacked one would be not applicable, with the why
-`the case gives no value for required params: <names>`.
+Five of `house@1`'s rules require params, and `house@2` holds the same five. Each of their cases gives them
+(`entity_types` or `own_package`), so they run like the rest. A case that lacked one would be not applicable, with
+the why `the case gives no value for required params: <names>`.

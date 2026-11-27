@@ -256,15 +256,31 @@ rule = "tm-python-print"
 off = true
 ```
 
-Each entry is a set's name, `@` and a whole-number version. A set is taken once, at one version. `tm` carries two:
+Each entry is a set's name, `@` and a whole-number version. A set is taken once, at one version. `tm` carries two
+sets, `house` at two versions:
 
 | Set | Rules | State |
 |---|---|---|
 | `standard@1` | 53, every one `kind = "quality"` and `severity = "warning"` | Ready |
 | `house@1` | 36, 30 at `warning` and 6 at `error`, all `kind = "quality"` | Ready |
+| `house@2` | 39: `house@1`'s 36, unchanged and in their order, then three that find register citations, each with `only_with_base = true`; 33 at `warning` and 6 at `error`, all `kind = "quality"` | Ready |
 
-A file may take either set or both, such as `baseline = ["house@1", "standard@1"]`. Five rules of `house@1` require
-params the file gives; until it does, those five are not applicable ([Required params](#required-params)).
+A file may take `standard@1`, one version of `house`, or both, such as `baseline = ["house@2", "standard@1"]`. It
+takes `house@1` or `house@2`, never both: a second `house` entry is the problem `baseline set "house" is taken
+twice`. Five rules of `house@1` require params the file gives, and `house@2` holds the same five; until the file
+gives them, those five are not applicable ([Required params](#required-params)).
+
+The three rules `house@2` adds, `tm-house-no-register-citation-rust`, `-swift` and `-python`, are ast-grep warnings.
+Each finds a comment (doc comments included; in Python, a docstring too), or a string literal inside test code, whose
+text holds an R- or S-number (`R-369`), a D-number with or without its hyphen (`D438`), a MOOT fact id after the word
+fact (`fact 1a2b3c4d`), or a label of Bob's name and a date in parentheses. A bare eight-hex id is not matched, since a
+short commit id looks the same. Test code is read from the syntax: in Rust a `#[test]` function or a `#[cfg(test)]`
+module, those two attributes exactly; in Swift a function marked `@Test` or a method of a class that names
+`XCTestCase` in its own inheritance list; in Python a function named `test_*` or a method of a class named `Test*`.
+Their `fix` is "Say the reason, or delete the comment." With `only_with_base` they report only lines a change adds:
+without `--base` they are listed under `not_applicable`, so the citations already in a repository are never
+reported. Each rule's `leaves` in the set's file says what it misses, such as a citation added inside a multi-line
+comment whose first line did not change.
 
 ### The rules of `standard@1`
 
@@ -303,7 +319,7 @@ cases under `cases/` beside it.
 | Key | Required | Meaning |
 |---|---|---|
 | `rule` | yes | The `id` of a rule in a set the file takes |
-| `severity` | no | `error` or `warning`, in place of the set's |
+| `severity` | no | `error`, `warning` or `watch`, in place of the set's |
 | `off` | no | `true` or `false` (the default). With `true` the rule is left out: it is not run, and neither `tm rules` nor a report lists it |
 | `paths` | no | Globs, in place of the rule's `paths` |
 | `exclude` | no | Globs, in place of the rule's `exclude` |
@@ -319,18 +335,18 @@ A set's rule can name params the repository must give. The rule file gives each 
 is not applicable: it is not run, `tm check` counts it in text, and `tm rules` (text and `--json`) and
 `tm check --json` list it under not applicable, not among the rules, with the why `required params not given: <names>; give them in the params of an [[override]] for "<rule id>"`.
 
-No rule of `standard@1` requires a param. Five rules of `house@1` do: four require `entity_types` and one
-`own_package`, and the set declares each as a list of strings, such as `params = { entity_types = ["Order",
-"Invoice"] }`. An `[[override]]` that gives a typed param as something else is a problem
-([below](#problems-of-baseline-and-override)).
+No rule of `standard@1` requires a param. Five rules of `house@1` do, and the same five of `house@2`: four require
+`entity_types` and one `own_package`, and the set declares each as a list of strings, such as
+`params = { entity_types = ["Order", "Invoice"] }`. An `[[override]]` that gives a typed param as something else
+is a problem ([below](#problems-of-baseline-and-override)).
 
 ### Keys only a set's own file has
 
 | Key | Where | Meaning |
 |---|---|---|
 | `required_params` | a set's `[[rule]]` | The params the repository must give, as above. Each item is a name, or `{ name = "...", type = "string" }` or `{ name = "...", type = "strings" }` (a list of strings) for a typed one |
-| `failing`, `passing` | a set's `[[rule]]` | The rule's two cases, which `tm baseline test` runs ([`OUTPUT.md`](OUTPUT.md#tm-baseline-test)). `failing = { files = [...], path = "...", line = N }` lists the case's files and the one finding it must give; `passing = { files = [...] }` lists files that must give none. Every rule of a set has both. A case may also carry `params`, such as the required params a repository would give; they are checked against the types in `required_params`, and `tm baseline test` runs the case with them over the rule's own `params`. A case whose `params` lack a required param is not applicable and is not run. Each case of `house@1`'s five rules that require params gives them |
-| `retired` | a set's top level | Rule ids the set has retired. An id is never reused: a retired id is not a rule of the set, nor of another set taken with it. Neither set `tm` carries retires an id |
+| `failing`, `passing` | a set's `[[rule]]` | The rule's two cases, which `tm baseline test` runs ([`OUTPUT.md`](OUTPUT.md#tm-baseline-test)). `failing = { files = [...], path = "...", line = N }` lists the case's files and the one finding it must give; `passing = { files = [...] }` lists files that must give none. Every rule of a set has both. A case may also carry `params`, such as the required params a repository would give; they are checked against the types in `required_params`, and `tm baseline test` runs the case with them over the rule's own `params`. A case whose `params` lack a required param is not applicable and is not run. Each case of the five rules that require params, in `house@1` and in `house@2`, gives them |
+| `retired` | a set's top level | Rule ids the set has retired. An id is never reused: a retired id is not a rule of the set, nor of another set taken with it. No set `tm` carries retires an id |
 
 In a repository's rule file each of these is an unknown key, which is a problem. `enforces`, `leaves` and
 `only_with_base` are keys of any rule, a set's or your own.
@@ -340,7 +356,7 @@ In a repository's rule file each of these is an unknown key, which is a problem.
 | Problem | When |
 |---|---|
 | `malformed baseline entry "<entry>"` | The entry is not a name, `@` and a whole number |
-| `unknown baseline set "<name>"` | `tm` carries no set of that name. The fix names every ready version of each set: `Use one of: house@1, standard@1.` |
+| `unknown baseline set "<name>"` | `tm` carries no set of that name. The fix names every ready version of each set: `Use one of: house@1, house@2, standard@1.` |
 | `unknown version <n> of baseline set "<name>"` | `tm` carries the set, and not at that version. The fix names its ready versions, such as `Use one of: standard@1.` for `standard@2` |
 | `baseline set "<name>" is taken twice` | A second entry for a set an earlier entry took, at any version |
 | `rule "<id>" is in both <set> and <set>` | Two taken sets hold a rule of that id. Reported at the later entry |
@@ -381,8 +397,9 @@ exceptions in force, then the expired ones with their `expires` date ([`OUTPUT.m
 
 `approved` is text. Temperare records it and does not check who wrote it, so review a change to `temperare.toml` as
 you review code. `tm rules --loosened --base <rev>` lists what a change loosened since that commit: a rule gone or
-not applicable, a severity lowered, paths or kits narrowed, excludes or outside kits widened, an exception added or
-its date moved later or dropped, a baseline set dropped or taken at an older version
+not applicable, a severity lowered (`error` to `warning` or `watch`, or `warning` to `watch`), paths or kits narrowed,
+excludes or outside kits widened, an exception added or its date moved later, a baseline set dropped or taken at an
+older version
 ([`OUTPUT.md`](OUTPUT.md#tm-rules---loosened)). It exits 1 when there is one.
 
 ## Who owns a finding

@@ -227,7 +227,7 @@ The arithmetic, the JSON fields and the log line: [`docs/reference/OUTPUT.md`](d
 | `tm check [--rules <path>] [--base <rev>] [--kind quality\|security] [--json] [<path>...]` | Runs every rule's engine and prints the report |
 | `tm rules [--rules <path>] [--json]` | Reads and checks the rule file; lists each rule, whether its engine is available, the baseline rules that are not applicable here with why, the exceptions in force and those expired. Runs no engine |
 | `tm rules --loosened --base <rev> [--rules <path>] [--json]` | Lists how the rule file was loosened since that commit: a rule gone, a severity lowered, paths narrowed, an exception added or its date moved later, a baseline set dropped, and the rest in [`OUTPUT.md`](docs/reference/OUTPUT.md#tm-rules---loosened). Runs no engine |
-| `tm baseline test [--set <name@version>] [--json]` | Tests the rules of the baseline sets built into `tm` on the cases each set carries, each case in a throwaway git repository. With no `--set` it tests the ready sets (`house@1`, then `standard@1`); `--set` tests the one set it names, such as `--set standard@1`. Reads no rule file and checks nothing of yours |
+| `tm baseline test [--set <name@version>] [--json]` | Tests the rules of the baseline sets built into `tm` on the cases each set carries, each case in a throwaway git repository. With no `--set` it tests the ready sets (`house@1`, `house@2`, then `standard@1`); `--set` tests the one set it names, such as `--set standard@1`. Reads no rule file and checks nothing of yours |
 | `tm install [--no-place] [--short-name] [--target claude,codex,cursor] [--mode skill] [--location local] [-y]` | Places the binary, links `tm`, offers the harness skill (see [Install](#install)) |
 | `tm uninstall` | Removes what install placed |
 | `tm help` | The usage text. Also `--help`, `-h`, or no arguments |
@@ -304,7 +304,9 @@ A rule file can also take a baseline set, a list of rules built into `tm`: `base
 level adds that set's 53 rules, all at severity `warning`, ahead of the file's own, and an `[[override]]` changes
 one of them (its severity, paths, exclude or params) or turns it off. Their ids start with `tm-`, which a rule of
 your own may not. A second set, `house@1`, adds 36 rules (`baseline = ["house@1"]`, or both sets); five of them
-need params from your file and are not applicable until an `[[override]]` gives them. See
+need params from your file and are not applicable until an `[[override]]` gives them. `house@2` is those 36 and
+three warnings for a comment, or a string in test code, that a change adds and that cites a register number, a fact
+id or a "(Bob, date)" label instead of saying the reason; a file takes `house@1` or `house@2`, not both. See
 [Baseline sets](docs/reference/RULE_FILE.md#baseline-sets).
 
 A rule file with a problem is never half-used: `tm` lists every problem as `file:line:col  what  fix`, runs
@@ -512,9 +514,9 @@ Temperare runs other programs with your privileges, and the rule file decides wh
   rule, place and fix, and a rule that is not available when the engine is off `PATH`: among them golangci-lint
   (Go), clang-tidy (C), vulture (dead Python), Periphery (dead Swift, in a Swift package), gitleaks (a secret, never
   printed), cargo-audit (an advisory on `Cargo.lock`, from the local database) and git (a change that adds too much
-  test for its code). They also run `tm baseline test` on the ready sets, `house@1` and `standard@1`, and in the
-  acceptance record all 89 of their rules (36 and 53) hold on their own failing and passing cases. The engine
-  versions are listed in [`docs/reference/ENGINES.md`](docs/reference/ENGINES.md#the-engines-version-010-was-accepted-with).
+  test for its code). They also run `tm baseline test` on the ready sets, `house@1`, `house@2` and `standard@1`;
+  in the last acceptance record all 89 rules of `house@1` and `standard@1` (36 and 53) hold on their own failing
+  and passing cases. The engine versions are listed in [`docs/reference/ENGINES.md`](docs/reference/ENGINES.md#the-engines-version-010-was-accepted-with).
 - **Platforms:** built and accepted on macOS. The code is written for Unix systems; Linux and Windows are untested.
 - **Not available today:** rules with `engine = "tessera"` (see [Engines](#engines)).
 - **License:** MIT. See [`LICENSE`](LICENSE).
