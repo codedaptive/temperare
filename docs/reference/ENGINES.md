@@ -404,7 +404,7 @@ list of its files git gives, fails, and the others run as they do when git canno
 ## swiftlint
 
 - **Available when** `swiftlint` is on `PATH`. SwiftLint publishes no Windows build, so on Windows a SwiftLint rule
-  is not available: `swiftlint not found on PATH`.
+  is not available (`swiftlint not found on PATH`) unless you put a `swiftlint` of your own on `PATH`.
 - **Where:** the rule file's folder.
 - **What runs:**
 
