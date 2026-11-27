@@ -66,3 +66,6 @@
 100|two_ruff_rules_share_one_engine_run|Done 10: the baseline
 100|the_shipped_baseline_sets_hold|Done 10: the baseline
 105|an_old_citation_in_a_touched_file_is_not_reported|house@2: an old register citation in a touched file is not reported
+105|a_citing_string_in_a_rust_test_is_reported|house@2: a register citation in a test's string is reported
+105|a_citing_string_in_a_python_test_is_reported|house@2: a register citation in a test's string is reported
+105|a_citing_string_in_a_swift_test_is_reported|house@2: a register citation in a test's string is reported

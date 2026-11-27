@@ -38,7 +38,7 @@ impl BaselineWorld<'static> {
     }
 }
 
-/// A new empty folder `tm-baseline-<pid>-<n>` under the system temp folder, `n` the process's next number (the one
+/// A new empty folder `cctao-baseline-<pid>-<n>` under the system temp folder, `n` the process's next number (the one
 /// after when that name is already there), made a git repository with `git init -q` through ccvcslib's
 /// `make_repository`, no hook run (it passes `core.hooksPath=/dev/null`, `NUL` on Windows): an engine that cctao hands
 /// its files (ShellCheck) lists them with git. A git that cannot run or fails is an error naming the step
