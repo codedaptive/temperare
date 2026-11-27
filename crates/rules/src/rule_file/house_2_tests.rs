@@ -1,5 +1,6 @@
 //! ZUT for house_2.rs.
 
+use super::baseline_set_digest::baseline_set_digest;
 use super::house_1_tests::{expected_rows as house_1_rows, Row};
 use super::house_2::HOUSE_2;
 use super::load_set::load_set;
@@ -67,4 +68,14 @@ fn every_house_2_ast_grep_rule_and_only_those_carry_yaml() {
     let found: Vec<_> = rules.iter().map(|rule| (rule.id.as_str(), rule.embedded_yaml().is_some())).collect();
     let expected: Vec<_> = rules.iter().map(|rule| (rule.id.as_str(), rule.engine == Engine::AstGrep)).collect();
     assert_eq!(found, expected);
+}
+
+#[test]
+fn house_2_is_frozen_as_released() {
+    assert_eq!(
+        baseline_set_digest(&HOUSE_2),
+        // The digest of house@2 as released in v0.5.0.
+        0x6053_eb6c_42e4_1665,
+        "house@2 is released and frozen: its set.toml, YAML or case files differ from the released ones. Put the change in house@3 instead."
+    );
 }
