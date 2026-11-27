@@ -1,12 +1,12 @@
 #!/bin/sh
-# windows_run.sh: temperare's unit and integration suite run for real on the Windows machine, from this Mac
+# windows_run.sh: Code Chi Tao's unit and integration suite run for real on the Windows machine, from this Mac
 # (PLAN-finish-tao-2026-11-25 step 3; Bob via creator #3447). Copied from tensile develop:scripts/windows_run.sh,
-# without its second run of the ccjin it builds (temperare builds none). Usage: sh scripts/windows_run.sh [<commit>]
+# without its second run of the ccjin it builds (Tao builds none). Usage: sh scripts/windows_run.sh [<commit>]
 # (default develop). Below, <short> is the commit's first 12 hex digits.
 #
 # The machine clones from GitHub: the commit is pushed to origin as a throwaway branch, ci/<short>, so a commit on no
 # branch (a request's) can be tested too; the branch is deleted after the run. The machine clones temperare at the
-# commit into <home>\tm-ci\<short>\, under the home of the user ssh logs in as, and cargo fetches ccvcslib by the tag
+# commit into <home>\tao-ci\<short>\, under the home of the user ssh logs in as, and cargo fetches ccvcslib by the tag
 # Cargo.lock pins, through the git CLI. There it runs cargo test --workspace --locked over the unit and integration
 # groups (not validation, which runs the real engines in release: scripts/test_one.sh, scripts/accept.sh).
 # It brings back the output and the exit code into target/windows-run/<short>/out/, prints the failing test names,
@@ -29,7 +29,7 @@ ssh_opts="-o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=30 -o Ser
 # The folder goes under the home of the user ssh logs in as, which the machine names, so no user name is written here.
 home=$(ssh $ssh_opts "$host" 'Write-Output $env:USERPROFILE' | tr -d '\r') || exit 2
 [ -n "$home" ] || exit 2
-remote="$home\\tm-ci\\$short"
+remote="$home\\tao-ci\\$short"
 out="$repo/target/windows-run/$short"
 
 # The unit and integration groups: every crate's library and binaries (their integration:: modules included), and

@@ -3,7 +3,7 @@
 # crates/cli/tests/validation through test_one.sh, as before, so the tests print on the terminal as they did; one line
 # naming the report follows. Each acceptance case writes its part into a temporary folder this script names in
 # ACCEPT_PARTS (crates/cli/tests/validation: check_new.rs names the part, check_drop.rs writes it). Then it writes
-# the markdown report to REPORT: a head (commit, date, the test run's exit code, then the temperare and engine versions the
+# the markdown report to REPORT: a head (commit, date, the test run's exit code, then the cctao and engine versions the
 # cases saw), one section per check, and a last line of totals. Every case that crates/cli/tests/validation/checks.txt
 # lists is in the report, in its order: with its part, or NOT RUN when it wrote none (a filtered run, a test target
 # that did not build, a part that could not be written) or when its part was cut short before a whole Result line.
@@ -19,7 +19,7 @@ set -u
 report=$1
 here=$(dirname "$0")
 list=crates/cli/tests/validation/checks.txt
-parts=$(mktemp -d "${TMPDIR:-/tmp}/tm-accept-parts.XXXXXX") || exit 1
+parts=$(mktemp -d "${TMPDIR:-/tmp}/cctao-accept-parts.XXXXXX") || exit 1
 trap 'rm -r "$parts"' EXIT
 
 ACCEPT_PARTS=$parts sh "$here/test_one.sh" crates/cli/tests/validation validation
@@ -104,16 +104,16 @@ count() {
 }
 
 {
-    echo "# Temperare acceptance report (make accept)"
+    echo "# Code Chi Tao acceptance report (make accept)"
     echo
     echo "- Commit: $commit"
     echo "- Date: $(date '+%Y-%m-%d %H:%M:%S %z')"
-    echo "- Test run: crates/cli/tests/validation (these checks and cli's own tests of the built temperare, S-28), exit $rc"
+    echo "- Test run: crates/cli/tests/validation (these checks and cli's own tests of the built cctao, S-28), exit $rc"
     echo "- Windows run (scripts/windows_run.sh, unit and integration groups): $windows"
     if [ -f "$parts/00-head.md" ]; then
         cat "$parts/00-head.md"
     else
-        echo "- temperare and engines: not recorded (no case ran)"
+        echo "- cctao and engines: not recorded (no case ran)"
     fi
     cat "$parts/sections.md"
     echo
