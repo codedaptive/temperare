@@ -30,6 +30,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// flagged rule of `rules.rules` are dropped, a failed one included, so the caller flags only a rule its engine settled
 /// as having no file (engines tests a refusal first); a flagged rule set aside in `not_applicable_rules` keeps its own
 /// reason and its outcomes; a flagged id naming no rule of the file is ignored (see `out_of_play`).
+///
+/// The report's `record` holds the telemetry record's rules (see `rules_record`), from the same outcomes; with a base,
+/// its findings are cut by the same added-lines map asked of ccvcslib once.
 pub fn build_report_with_no_files(
     rules: &RuleFile,
     outcomes: Vec<(String, RuleOutcome)>,

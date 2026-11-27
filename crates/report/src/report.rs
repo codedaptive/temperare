@@ -1,13 +1,16 @@
 //! `Report`: what a check came to, the `--json` body.
 
-use crate::{Counts, CoversNothing, EngineVersion, Expired, Failed, NotApplicable, NotAvailable, RuleCount, Silenced};
+use crate::{
+    Counts, CoversNothing, EngineVersion, Expired, Failed, NotApplicable, NotAvailable, RuleCount, RuleRecord, Silenced,
+};
 use crate::Oid;
 use rules::Finding;
 use serde::{Serialize, Serializer};
 
 /// The report of one check. `exceptions_in_force`, `covers_nothing`, `not_applicable`, `expired`, `date`,
 /// `silenced_by_rule` and `engines` are always serialized, 0, "" and `[]` included; `base` is left out when the check
-/// had no base commit and otherwise is the commit id's hex text.
+/// had no base commit and otherwise is the commit id's hex text. `record` is never serialized, so the `--json` body
+/// does not carry it.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct Report {
     /// The kept findings: on new lines when there is a base, and covered by no exception.
@@ -36,6 +39,10 @@ pub struct Report {
     /// Filled by the caller: `build_report_with_no_files` leaves it empty.
     pub engines: Vec<EngineVersion>,
     pub counts: Counts,
+    /// The telemetry record's rules list (see `RuleRecord`), filled by `build_report_with_no_files`. Not serialized,
+    /// so `--json` does not carry it; the caller reads it.
+    #[serde(skip)]
+    pub record: Vec<RuleRecord>,
 }
 
 /// The id's hex text: `Oid` has no `Serialize`.

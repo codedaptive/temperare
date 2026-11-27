@@ -24,6 +24,7 @@ fn empty(base: Option<Oid>) -> Report {
         date: String::new(),
         silenced_by_rule: Vec::new(),
         engines: Vec::new(),
+        record: Vec::new(),
         counts: Counts {
             findings: 0,
             errors: 0,
@@ -38,6 +39,18 @@ fn empty(base: Option<Oid>) -> Report {
             expired: 0,
         },
     }
+}
+
+#[test]
+fn a_nonempty_record_does_not_change_report_json() {
+    let report = Report {
+        record: vec![crate::RuleRecord {
+            rule: "q".into(), engine: Engine::Clippy, severity: "error".into(),
+            state: crate::RuleState::Ran, why: None, findings: vec![], silenced: 0,
+        }],
+        ..empty(None)
+    };
+    assert_eq!(to_json(&report), to_json(&empty(None)));
 }
 
 #[test]
