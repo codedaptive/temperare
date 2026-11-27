@@ -61,7 +61,8 @@ fn says_tessera_checks_are_not_available_yet() {
 #[test]
 fn savings_contract_names_the_savings_line() {
     assert!(SKILL_TEXT.lines().any(|line| line == "## Tokens saved"));
-    assert!(SKILL_TEXT.lines().any(|line| line == "When an engine ran, the first line of `temperare check`'s text output estimates the tokens it saved:"));
+    assert!(SKILL_TEXT.lines().any(|line| line == "When an engine ran for a rule other than a watch rule, the first line of `temperare check`'s text output estimates"));
+    assert!(SKILL_TEXT.lines().any(|line| line == "the tokens it saved:"));
     assert!(SKILL_TEXT.lines().any(|line| line == "`[temperare] tokens saved ≈ N (P%) — this output ≈ X tok vs the raw output of K engine run(s) ≈ B tok (estimate).`"));
 }
 

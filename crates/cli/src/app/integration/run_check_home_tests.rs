@@ -230,6 +230,107 @@ fn usage_error_creates_no_log() {
 }
 
 #[test]
+fn watch_finding_reaches_telemetry_but_not_output_or_savings() {
+    const TEXT: &str = "version = 1\n[[rule]]\nid = \"w\"\nengine = \"ruff\"\ncheck = \"F401\"\nseverity = \"watch\"\nfix = \"Remove import.\"\n";
+    let read = |_: &Path| Ok(RuleFile::parse(TEXT, Path::new("/repo")).unwrap());
+    let runs = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| {
+        checked(vec![engines::RuleRun::new(
+            "w".into(), Engine::Ruff,
+            rules::RuleOutcome::Findings(vec![rules::Finding {
+                rule: "w".into(), engine: Engine::Ruff, kind: Kind::Quality, severity: rules::Severity::Watch,
+                owner: None, path: RelPath::new("src/watch.py"), line: Some(7), col: None,
+                what: "Unused watch import".into(), fix: "Remove import.".into(),
+            }]),
+            Some(400),
+        )])
+    };
+    let w = CheckWorld { read: &read, run_rules: &runs, build_report: &report::build_report_with_no_files, ..world() };
+    let (code, text, err) = check(&CheckArgs::default(), &w);
+    assert_eq!((code, err.as_str()), (0, ""));
+    let (code, out, err) = check(&CheckArgs { json: true, ..CheckArgs::default() }, &w);
+    assert_eq!((code, err.as_str()), (0, ""));
+    let (body, saved) = printed_body(&out);
+    let json: serde_json::Value = serde_json::from_str(&body).unwrap();
+    assert_eq!(json["findings"], serde_json::json!([]));
+    assert!(!out.contains("Unused watch import"));
+    assert!(!out.contains("src/watch.py"));
+
+    let home = Home::new();
+    let home_path = || Some(home.0.clone());
+    let (code, home_text, err) = check(&CheckArgs::default(), &CheckWorld {
+        home: &home_path, now: &|| 1795680000, rev_parse: &three_commits, ..w
+    });
+    assert_eq!((code, err.as_str()), (0, ""));
+    let telemetry = fs::read_to_string(home.0.join(
+        ".local/state/temperare/telemetry/3333333333333333333333333333333333333333.jsonl"
+    )).unwrap();
+    assert_eq!(telemetry.lines().count(), 1);
+    let record: serde_json::Value = serde_json::from_str(&telemetry).unwrap();
+    let rules = record["rules"].as_array().unwrap();
+    assert_eq!(rules.len(), 1);
+    assert_eq!(rules[0]["rule"], "w");
+    assert_eq!(rules[0]["findings"].as_array().unwrap().len(), 1);
+    assert_eq!(rules[0]["findings"][0]["what"], "Unused watch import");
+    assert_eq!(rules[0]["findings"][0]["path"], "src/watch.py");
+
+    assert_eq!(saved["engine_runs"], 0);
+    assert_eq!(saved["baseline_tokens"], 0);
+    assert_clean_body(&text);
+    assert_clean_body(&home_text);
+    assert!(!home.log().exists());
+}
+
+#[test]
+fn shared_watch_runs_are_excluded_from_savings() {
+    let rows = [
+        (
+            "watch first, error second",
+            "version = 1\n[[rule]]\nid = \"w\"\nengine = \"ruff\"\ncheck = \"F841\"\nseverity = \"watch\"\nfix = \"Remove variable.\"\n\
+             [[rule]]\nid = \"e\"\nengine = \"ruff\"\ncheck = \"F401\"\nfix = \"Remove import.\"\n",
+            "e", Some(400), 1, 100,
+            serde_json::json!([{"rule":"e", "engine":"ruff", "chars":400}]),
+        ),
+        (
+            "watch rules only",
+            "version = 1\n[[rule]]\nid = \"w\"\nengine = \"ruff\"\ncheck = \"F841\"\nseverity = \"watch\"\nfix = \"Remove variable.\"\n\
+             [[rule]]\nid = \"v\"\nengine = \"ruff\"\ncheck = \"F401\"\nseverity = \"watch\"\nfix = \"Remove import.\"\n",
+            "v", None, 0, 0, serde_json::json!([]),
+        ),
+    ];
+    for (name, text, second, chars, engine_runs, baseline_tokens, counted) in rows {
+        let home = Home::new();
+        let home_path = || Some(home.0.clone());
+        let read = |_: &Path| Ok(RuleFile::parse(text, Path::new("/repo")).unwrap());
+        let runs = |_: &RuleFile, _: &Path, _: &[RelPath], _: Option<&str>| {
+            checked(vec![run("w", Engine::Ruff, None), run(second, Engine::Ruff, chars)])
+        };
+        let w = CheckWorld {
+            home: &home_path, now: &|| 1795680000, rev_parse: &three_commits, read: &read,
+            run_rules: &runs, build_report: &report::build_report_with_no_files, ..world()
+        };
+        let (code, out, err) = check(&CheckArgs::default(), &w);
+        assert_eq!((code, err.as_str()), (0, ""), "{name}");
+        assert_eq!(out.starts_with("[temperare] tokens saved"), engine_runs == 1, "{name}: {out}");
+        if engine_runs == 1 {
+            assert_eq!(fs::read_to_string(home.log()).unwrap().lines().count(), 1, "{name}");
+        } else {
+            assert!(!home.log().exists(), "{name}");
+        }
+        let (code, out, err) = check(&CheckArgs { json: true, ..CheckArgs::default() }, &w);
+        assert_eq!((code, err.as_str()), (0, ""), "{name}");
+        let (_, saved) = printed_body(&out);
+        assert_eq!(saved["engine_runs"], engine_runs, "{name}");
+        assert_eq!(saved["baseline_tokens"], baseline_tokens, "{name}");
+        assert_eq!(saved["counted"], counted, "{name}");
+        if engine_runs == 1 {
+            assert_eq!(fs::read_to_string(home.log()).unwrap().lines().count(), 2, "{name}");
+        } else {
+            assert!(!home.log().exists(), "{name}");
+        }
+    }
+}
+
+#[test]
 fn a_check_appends_one_telemetry_line_named_after_the_root_and_prints_the_same() {
     let home = Home::new();
     let home_path = || Some(home.0.clone());

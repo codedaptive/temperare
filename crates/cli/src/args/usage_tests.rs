@@ -76,8 +76,8 @@ fn says_where_the_rule_file_comes_from() {
 
 #[test]
 fn savings_contract_explains_the_savings_estimate() {
-    assert!(has_line("When at least one engine ran, tm check's text output opens with an estimate of the tokens saved against the raw"));
-    assert!(has_line("output of the engines it ran (characters / 4)."));
+    assert!(has_line("When an engine ran for a rule other than a watch rule, tm check's text output opens with an estimate of the tokens"));
+    assert!(has_line("saved against the raw output of the engines it ran (characters / 4)."));
     assert!(!USAGE.lines().any(|line| line.starts_with("tm check opens with")));
     assert!(has_line("It is an upper bound: the saving against reading that output whole."));
 }
@@ -89,7 +89,8 @@ fn savings_contract_explains_the_switch_and_json() {
 
 #[test]
 fn savings_contract_names_the_savings_log() {
-    assert!(has_line("Each check that ran an engine appends a line to ~/.local/state/temperare/savings.jsonl."));
+    assert!(has_line("Each check that ran an engine for a rule other than a watch rule appends a line to"));
+    assert!(has_line("~/.local/state/temperare/savings.jsonl."));
 }
 
 #[test]

@@ -58,7 +58,7 @@ pub fn run_check(args: &CheckArgs, cwd: &Path, world: &CheckWorld, out: &mut dyn
         Err(e) => return write_failure(&e, args.json, out, err),
     };
     let checked = (world.run_rules)(&rf, cwd, &only, base.as_ref().map(|(_, oid)| oid.as_str()));
-    let counts = rule_counts(&checked.runs);
+    let counts = rule_counts(&checked.runs, &rf);
     let causes: HashMap<String, NotAvailableCause> =
         checked.runs.iter().filter_map(|r| Some((r.rule.clone(), r.not_available_cause?))).collect();
     let no_files = checked.runs.iter().filter_map(|r| Some((r.rule.clone(), r.no_files.clone()?))).collect();
