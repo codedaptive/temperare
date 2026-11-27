@@ -51,6 +51,7 @@ pub(crate) mod shared_groups;
 pub(crate) mod shares_with;
 pub(crate) mod source_files;
 pub(crate) mod stopped;
+pub(crate) mod strip_verbatim_disk;
 pub(crate) mod types;
 pub(crate) mod unavailable;
 pub(crate) mod union_args;
@@ -136,6 +137,8 @@ pub(crate) mod shared_groups_tests;
 pub(crate) mod shares_with_tests;
 #[cfg(test)]
 pub(crate) mod stopped_tests;
+#[cfg(test)]
+pub(crate) mod strip_verbatim_disk_tests;
 #[cfg(test)]
 pub(crate) mod unavailable_tests;
 #[cfg(test)]

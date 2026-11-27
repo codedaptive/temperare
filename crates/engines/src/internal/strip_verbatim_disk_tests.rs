@@ -1,6 +1,6 @@
 //! ZUT for strip_verbatim_disk.rs: the verbatim `\\?\` prefix dropped from disk roots only.
 
-use super::strip_verbatim_disk::strip_verbatim_disk;
+use crate::strip_verbatim_disk::strip_verbatim_disk;
 use std::path::Path;
 
 #[test]
