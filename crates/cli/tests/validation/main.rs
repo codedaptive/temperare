@@ -3,7 +3,7 @@
 //! `cli_check` and `cli_cctao` run `cctao` with engines stubbed on PATH, except cli_check's `real_ruff_` cases;
 //! `savings_real_engine`, `done_10_shared_run` and those cases run the real ruff; `check_text_na_count_real_engines`
 //! runs the real ruff and ast-grep.
-//! `house_2_old_citation_not_reported` runs the real ast-grep.
+//! `house_2_old_citation_not_reported` and the `house_2_*_test_string_citation_reported` cases run the real ast-grep.
 //! `baseline_test_real_ruff` runs `run_baseline_test` with a const test set in a child of this test binary, with HOME
 //! a folder the test made.
 //!
@@ -30,6 +30,9 @@ mod cli_cctao;
 #[cfg(unix)]
 mod cli_check;
 mod house_2_old_citation_not_reported;
+mod house_2_python_test_string_citation_reported;
+mod house_2_rust_test_string_citation_reported;
+mod house_2_swift_test_string_citation_reported;
 mod savings_real_engine;
 
 mod absent_engine_reason;
@@ -42,6 +45,7 @@ mod check_drop;
 mod check_new;
 mod check_not_run;
 mod check_saw_cctao;
+mod citation_rules;
 mod clean_cmd;
 mod env;
 mod not_available_pairs;

@@ -4,52 +4,13 @@
 //! the rule is not applicable. Only when ast-grep is not on the PATH `cctao` gets is the case NOT RUN, with
 //! `cctao`'s own reason.
 
+use crate::absent_engine_reason::absent_engine_reason;
 use crate::check::Check;
-use crate::on_cctao_path::on_cctao_path;
 use crate::repo::Repo;
 use crate::cctao::cctao;
+use crate::citation_rules::citation_rules;
 
 const RULE: &str = "tm-house-no-register-citation-rust";
-
-// house@2's rules other than its three citation rules, each turned off so only those three are in play.
-const OFF: [&str; 36] = [
-    "tm-house-no-unwrap-rust",
-    "tm-house-no-expect-rust",
-    "tm-house-no-unsafe-rust",
-    "tm-house-no-print-stdout-rust",
-    "tm-house-no-todo-python",
-    "tm-house-no-todo-swift",
-    "tm-house-no-todo-rust",
-    "tm-house-no-force-cast-swift",
-    "tm-house-no-force-try-swift",
-    "tm-house-no-force-unwrapping-swift",
-    "tm-house-no-as-conversions-rust",
-    "tm-house-no-assign-then-return-python",
-    "tm-house-no-let-and-return-rust",
-    "tm-house-arg-type-hints-python",
-    "tm-house-return-type-hints-python",
-    "tm-house-pathlib-python",
-    "tm-house-one-public-symbol-rust",
-    "tm-house-one-declaration-swift",
-    "tm-house-file-name-swift",
-    "tm-house-file-length-swift",
-    "tm-house-no-stored-bool-swift",
-    "tm-house-no-stored-bool-rust",
-    "tm-house-bitmap-int64-swift",
-    "tm-house-bitmap-int64-rust",
-    "tm-house-leading-trailing-swift",
-    "tm-house-display-text-literal-swift",
-    "tm-house-swift-testing-swift",
-    "tm-house-test-ratio",
-    "tm-house-test-asserts-sentence-rust",
-    "tm-house-test-asserts-sentence-python",
-    "tm-house-test-asserts-sentence-swift",
-    "tm-house-unit-test-fakes-own-kit-rust",
-    "tm-house-unit-test-fakes-own-kit-python",
-    "tm-house-test-setup-heavier-rust",
-    "tm-house-test-setup-heavier-python",
-    "tm-house-test-setup-heavier-swift",
-];
 
 // The base: line 3 is a comment citing an R-number.
 const BASE: &str = "//! The meter.
@@ -74,13 +35,6 @@ pub fn half(units: u32) -> u32 {
 }
 ";
 
-/// The rule file: house@2 with every rule but the citation ones turned off.
-fn rules() -> String {
-    OFF.iter().fold(String::from("version = 1\nbaseline = [\"house@2\"]\n"), |text, id| {
-        text + &format!("\n[[override]]\nrule = \"{id}\"\noff = true\n")
-    })
-}
-
 #[test]
 fn an_old_citation_in_a_touched_file_is_not_reported() {
     let mut check = Check::new(
@@ -89,7 +43,7 @@ fn an_old_citation_in_a_touched_file_is_not_reported() {
          changed to add a function holding a new citing comment at line 9",
     );
     let repo = Repo::new();
-    repo.write("tao.toml", &rules());
+    repo.write("tao.toml", &citation_rules());
     repo.write("src/meter.rs", BASE);
     let base = repo.commit("base: one old citation");
     repo.write("src/meter.rs", CHANGED);
@@ -98,15 +52,8 @@ fn an_old_citation_in_a_touched_file_is_not_reported() {
     let args = ["check", "--json", "--base", base.as_str()];
     let a = cctao(&repo, &args);
     check.saw_cctao(&args, a.code, &a.json);
-    if !on_cctao_path("ast-grep") {
-        let why = a.json["not_available"]
-            .as_array()
-            .and_then(|list| list.iter().find(|n| n["rule"] == RULE))
-            .and_then(|n| n["why"].as_str())
-            .unwrap_or_else(|| {
-                panic!("ast-grep is not on the PATH cctao gets, yet cctao did not report {RULE}: {:#}", a.json)
-            });
-        check.not_run(format!("cctao: {why}"));
+    if let Some(why) = absent_engine_reason(&a, &["ast-grep"], RULE) {
+        check.not_run(why);
         return;
     }
     let f = a.findings();
