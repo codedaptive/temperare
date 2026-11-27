@@ -30,7 +30,7 @@ pub fn which(program: impl AsRef<OsStr>) -> Option<PathBuf> {
 /// files (a 16-bit `.com` fails as `Spawn`), and Rust's batch handling starts `.bat` and `.cmd`. `.VBS`, `.JS` and the
 /// rest need a host program; a PATHEXT that lists them is honoured, and `run` on such a hit fails as `Spawn`. A name
 /// holding `:` (like `C:tool`) finds nothing there.
-/// PATHEXT is this process's own, not the `Cmd`'s: tm, not the child, chooses which file kinds it starts, and it
+/// PATHEXT is this process's own, not the `Cmd`'s: cctao, not the child, chooses which file kinds it starts, and it
 /// spawns the full path found, so the child's PATHEXT takes no part. PATH is the `Cmd`'s effective PATH, because it
 /// says which folders the `Cmd`'s caller allowed.
 pub(crate) fn which_in(program: &OsStr, path_var: Option<&OsStr>) -> Option<PathBuf> {
