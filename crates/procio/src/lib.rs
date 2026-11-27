@@ -1,11 +1,10 @@
-//! procio: the one place that runs another program, git included. Depends on nothing.
+//! procio: the one place that runs another program. Depends on nothing.
 
 mod cmd;
 mod cmd_new;
 mod command_from;
 mod effective_path;
 mod first_in_dir;
-mod git;
 mod has_path_separator;
 mod is_executable;
 #[cfg(unix)]
@@ -25,7 +24,6 @@ mod which;
 mod which_in_dir;
 
 pub use cmd::Cmd;
-pub use git::{added_lines, blob_at, git_cmd, rev_parse, toplevel, tracked_files, untracked_files, GitError, Oid};
 pub use output::Output;
 pub use proc_error::ProcError;
 pub use run::run;
