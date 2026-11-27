@@ -1,5 +1,5 @@
 //! ZUT for rel_to_folder.rs: absolute and relative engine paths made relative to the rule file's folder, with `.`
-//! dropped and `..` folded before the folder check.
+//! dropped, `..` folded before the folder check, and verbatim folders handled by platform.
 
 use crate::rel_to_folder::rel_to_folder;
 use rules::RelPath;
@@ -46,6 +46,35 @@ fn dot_dot_is_folded_before_the_folder_check() {
         ("absolute_dot_dot_leaves_the_folder", "/w/repo", "/w/repo", "/w/repo/sub/../../other/x.h", None),
         ("absolute_dot_dot_stays_inside", "/w/repo", "/w/repo", "/w/repo/src/../include/x.h", Some("include/x.h")),
         ("cwd_below_the_folder_dot_dot_back_in", "/w/repo/sub", "/w/repo", "../a.rs", Some("a.rs")),
+    ];
+    for (name, cwd, folder, raw, want) in rows {
+        let got = rel_to_folder(Path::new(cwd), Path::new(folder), raw);
+        assert_eq!(got, want.map(RelPath::new), "row {name}");
+    }
+}
+
+#[cfg(windows)]
+#[test]
+fn a_plain_disk_path_is_placed_under_a_verbatim_folder() {
+    let rows: [(&str, &str, &str, &str, Option<&str>); 6] = [
+        ("absolute plain under verbatim", r"\\?\C:\x", r"\\?\C:\x", r"C:\x\a.py", Some("a.py")),
+        ("relative under verbatim cwd and folder", r"\\?\C:\x", r"\\?\C:\x", r"sub\a.py", Some("sub/a.py")),
+        ("plain cwd, verbatim folder", r"C:\x", r"\\?\C:\x", r"a.py", Some("a.py")),
+        ("lowercase drive letter", r"\\?\C:\x", r"\\?\C:\x", r"c:\x\a.py", Some("a.py")),
+        ("outside", r"\\?\C:\x", r"\\?\C:\x", r"C:\y\a.py", None),
+        ("plain dot dot climbing out", r"\\?\C:\x", r"\\?\C:\x", r"C:\x\..\y\a.py", None),
+    ];
+    for (name, cwd, folder, raw, want) in rows {
+        let got = rel_to_folder(Path::new(cwd), Path::new(folder), raw);
+        assert_eq!(got, want.map(RelPath::new), "row {name}");
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn a_verbatim_folder_is_not_stripped_on_unix() {
+    let rows: [(&str, &str, &str, &str, Option<&str>); 1] = [
+        ("unix keeps verbatim text", r"", r"\\?\C:\x", r"C:\x/a.py", None),
     ];
     for (name, cwd, folder, raw, want) in rows {
         let got = rel_to_folder(Path::new(cwd), Path::new(folder), raw);

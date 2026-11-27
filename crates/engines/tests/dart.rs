@@ -188,7 +188,7 @@ fn check_case(case: Case) {
                     assert!(stderr.contains("exclude"), "{case:?}: {stderr}");
                 }
                 Case::OptionsAboveRepo => assert!(stderr.contains(outer.0.join("analysis_options.yaml").to_str().unwrap()), "{case:?}: {stderr}"),
-                Case::GitignoredNestedOptions => assert!(stderr.contains("gen/analysis_options.yaml"), "{case:?}: {stderr}"),
+                Case::GitignoredNestedOptions => assert!(stderr.contains(Path::new("gen").join("analysis_options.yaml").to_str().unwrap()), "{case:?}: {stderr}"),
                 Case::IncludeOutsideRepo => assert!(stderr.contains("shared.yaml"), "{case:?}: {stderr}"),
                 Case::EscapedIgnore | Case::MultilineQuoted | Case::FlowErrors => {
                     assert!(stderr.contains("analysis_options.yaml"), "{case:?}: {stderr}");
