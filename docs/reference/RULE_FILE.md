@@ -1,12 +1,12 @@
 # The rule file
 
-`temperare.toml` holds every rule a repository enforces and every exception to one. It is the only place a rule or
+`tao.toml` holds every rule a repository enforces and every exception to one. It is the only place a rule or
 an exception lives: neither is ever a comment in the code. A rule is written there, or comes from a baseline set
-built into `tm` that the file takes ([Baseline sets](#baseline-sets)).
+built into `cctao` that the file takes ([Baseline sets](#baseline-sets)).
 
 ## Where it is
 
-- `tm` reads `temperare.toml` at the top of the git repository that holds the current folder.
+- `cctao` reads `tao.toml` at the top of the git repository that holds the current folder.
 - `--rules <path>` names another file, anywhere. A relative path is taken from the current folder.
 - Every path inside the file (a rule's `paths`, a kit's `paths`, an exception's `path`, an ast-grep `check`, a
   `config`) is relative to the folder the rule file is in. The engines check that folder, and every finding's path
@@ -114,13 +114,13 @@ the owner of the findings in its files.
 | `engine` | yes | `clippy`, `swiftlint`, `ruff`, `ast-grep`, `shellcheck`, `git`, `tessera`, `golangci-lint`, `pylint`, `clang-tidy`, `vulture`, `periphery`, `gitleaks`, `cargo-audit`, `eslint`, `mypy`, `pmd`, `detekt`, `rubocop`, `phpstan`, `dart`, `markdownlint`, `yamllint`, `actionlint`, `hadolint`, `vale`, `stylelint` or `sqlfluff`, exactly as written here. What each runs: [`ENGINES.md`](ENGINES.md). `markdownlint` runs the program `markdownlint-cli2`. A `tessera` rule is "not available" today ([`ENGINES.md`](ENGINES.md#tessera)). A `git` rule needs `--base` ([`ENGINES.md`](ENGINES.md#git)) |
 | `check` | yes | What the engine is asked. See below |
 | `fix` | yes | The text shown with each finding of this rule |
-| `severity` | no | `error` (the default), `warning` or `watch`. A `watch` rule runs, and nothing it gives is reported: its findings, and its engine being absent or failing, are in no list and no count, and it never sets an exit code ([`OUTPUT.md`](OUTPUT.md#tm-check-as-text)) |
+| `severity` | no | `error` (the default), `warning` or `watch`. A `watch` rule runs, and nothing it gives is reported: its findings, and its engine being absent or failing, are in no list and no count, and it never sets an exit code ([`OUTPUT.md`](OUTPUT.md#cctao-check-as-text)) |
 | `kind` | no | `quality` (the default) or `security` |
 | `paths` | no | Globs. The rule covers files that match one. Absent or empty: every file |
 | `exclude` | no | Globs. The rule never covers a file that matches one |
 | `kits` | no | Kit names. The rule covers only files held by one of these kits |
 | `outside_kits` | no | Kit names. The rule never covers a file held by one of these kits |
-| `config` | no | The engine's own config file, passed as written: to `swiftlint`, `ruff`, `golangci-lint`, `gitleaks`, `eslint`, `rubocop`, `sqlfluff` and `stylelint` as `--config`, to `pylint` and `shellcheck` as `--rcfile`, and to `clang-tidy` as `--config-file`. For `mypy`, `detekt`, `phpstan`, `actionlint`, `hadolint`, `yamllint` and `vale` it is the config the run is built on, taken from the rule file's folder, in place of the one `tm` would find in the repository; each engine's section of [`ENGINES.md`](ENGINES.md) says how it reaches the engine. The other engines do not take one: `vulture` and `periphery` read no config of the repository's, `pmd` and `dart` are not given it, and a `markdownlint` rule that names one fails |
+| `config` | no | The engine's own config file, passed as written: to `swiftlint`, `ruff`, `golangci-lint`, `gitleaks`, `eslint`, `rubocop`, `sqlfluff` and `stylelint` as `--config`, to `pylint` and `shellcheck` as `--rcfile`, and to `clang-tidy` as `--config-file`. For `mypy`, `detekt`, `phpstan`, `actionlint`, `hadolint`, `yamllint` and `vale` it is the config the run is built on, taken from the rule file's folder, in place of the one `cctao` would find in the repository; each engine's section of [`ENGINES.md`](ENGINES.md) says how it reaches the engine. The other engines do not take one: `vulture` and `periphery` read no config of the repository's, `pmd` and `dart` are not given it, and a `markdownlint` rule that names one fails |
 | `params` | no | A table of values for the engine. See below |
 | `only_with_base` | no | `true` or `false` (the default). With `true` the rule reports only what a change adds, so it needs `--base`. Without `--base` the rule reports nothing, not even a failure, and is listed under `not_applicable` ([`OUTPUT.md`](OUTPUT.md#new-findings-only---base)) |
 | `enforces` | no | Text: the practice the rule enforces. Read and checked to be a string; no report prints it |
@@ -148,17 +148,17 @@ Any other key is a problem.
 | `eslint` | One ESLint rule id, such as `no-var` or `@typescript-eslint/no-explicit-any`. Not a list |
 | `mypy` | One mypy error code, lower-case words joined by `-`, such as `arg-type`. Not a list |
 | `pmd` | PMD Java rule references: one rule (`category/java/bestpractices.xml/UnusedPrivateField`), a whole category (`category/java/design.xml`), or several joined by commas with no spaces. Not a ruleset file or URL, and not another language |
-| `detekt` | detekt rule names and rule-set names from `tm`'s list of detekt 1.23.8's rules: one (`MagicNumber`), or several joined by commas with no spaces. Not a rule that needs type resolution, so of the rule sets only `comments` and `empty-blocks` |
+| `detekt` | detekt rule names and rule-set names from `cctao`'s list of detekt 1.23.8's rules: one (`MagicNumber`), or several joined by commas with no spaces. Not a rule that needs type resolution, so of the rule sets only `comments` and `empty-blocks` |
 | `rubocop` | Full cop names: one (`Lint/UselessAssignment`), or several joined by commas with no spaces. Not a department such as `Style` |
 | `phpstan` | A PHPStan level: `0` to `10`, or `max`. Not one of PHPStan's own rules |
 | `dart` | One diagnostic code or lint name, in lower case, such as `unused_local_variable`. A lint must be enabled in the `analysis_options.yaml` |
 | `actionlint` | One actionlint kind, such as `expression` or `shellcheck` |
 | `sqlfluff` | One sqlfluff rule code (`LT01`), name (`layout.spacing`), group (`layout`) or alias. Not a list |
-| `hadolint` | One `DL` code from `tm`'s list of hadolint 2.15.1's codes, such as `DL3006`. Not an `SC` code |
+| `hadolint` | One `DL` code from `cctao`'s list of hadolint 2.15.1's codes, such as `DL3006`. Not an `SC` code |
 | `yamllint` | One yamllint rule id, such as `line-length` |
 | `vale` | One Vale rule, written `Style.Rule`, such as `Vale.Spelling`, of a style the repository's Vale config uses |
 | `stylelint` | One stylelint rule name, such as `color-no-invalid-hex`, that the repository's stylelint config turns on |
-| `markdownlint` | One markdownlint rule from `tm`'s list of markdownlint 0.42.2's rules, by its id (`MD013`) or an alias (`line-length`). Not a tag such as `headings` |
+| `markdownlint` | One markdownlint rule from `cctao`'s list of markdownlint 0.42.2's rules, by its id (`MD013`) or an alias (`line-length`). Not a tag such as `headings` |
 | `tessera` | Required like any other, and not used today: nothing is run |
 
 A finding is kept only when it can be matched back to `check`: for clippy, SwiftLint, pylint and clang-tidy the
@@ -182,8 +182,8 @@ table says, such as a list where one name is asked for, a PMD ruleset file, a Ru
 clang-tidy, golangci-lint, gitleaks, ESLint, mypy, PMD, detekt, RuboCop, PHPStan, dart, actionlint, sqlfluff,
 yamllint, Vale or stylelint does not know (a misspelt name, or one newer than that engine), an advisory id
 cargo-audit's local advisory database does not hold, and a ShellCheck code, detekt name, hadolint code or
-markdownlint rule not on `tm`'s list for that engine,
-make the rule "not available", exit 3, with a reason naming the engine, its version and the check. Neither reads as clean, and `tm rules` reports neither, since it runs no
+markdownlint rule not on `cctao`'s list for that engine,
+make the rule "not available", exit 3, with a reason naming the engine, its version and the check. Neither reads as clean, and `cctao rules` reports neither, since it runs no
 engine. [`ENGINES.md`](ENGINES.md) has each case.
 
 ### `params`
@@ -240,7 +240,7 @@ exit is 6 when nothing ranks above it. A baseline set's rule is not applicable i
 
 ## Baseline sets
 
-A baseline set is a list of rules built into `tm`, with a name and a version. A rule file takes a set with the
+A baseline set is a list of rules built into `cctao`, with a name and a version. A rule file takes a set with the
 top-level `baseline` key, and the set's rules are checked beside its own:
 
 ```toml
@@ -256,7 +256,7 @@ rule = "tm-python-print"
 off = true
 ```
 
-Each entry is a set's name, `@` and a whole-number version. A set is taken once, at one version. `tm` carries two
+Each entry is a set's name, `@` and a whole-number version. A set is taken once, at one version. `cctao` carries two
 sets, `house` at two versions:
 
 | Set | Rules | State |
@@ -298,17 +298,17 @@ In the set's order:
   file and runs nothing ([Which files a rule covers](#which-files-a-rule-covers)).
 - The 28 rules of the last family report only what a change adds: without `--base` they report nothing and are
   listed under `not_applicable`.
-- A set's ast-grep rules carry their YAML inside `tm`. Their `check` is not a path in your repository
+- A set's ast-grep rules carry their YAML inside `cctao`. Their `check` is not a path in your repository
   ([`ENGINES.md`](ENGINES.md#ast-grep)).
 
-The full list: `tm rules` on a rule file that takes the set lists its rules, and each set's own rule file is in the
+The full list: `cctao rules` on a rule file that takes the set lists its rules, and each set's own rule file is in the
 repository at `crates/rules/baseline/<name>/<version>/set.toml`, with its ast-grep YAML under `ast-grep/` and its
 cases under `cases/` beside it.
 
 ### How a set's rules join the file's
 
 - The rules of the taken sets come first, in `baseline` order and then each set's own order. The file's own rules
-  follow. This is the order `tm rules` lists them in, and the "rule-file order" of a report.
+  follow. This is the order `cctao rules` lists them in, and the "rule-file order" of a report.
 - Every rule of a set has an id that starts with `tm-`, and a rule of the file's own may not, so the two never share
   an id. To change a set's rule, write an `[[override]]`; a second `[[rule]]` cannot replace it.
 - An `[[exception]]` may name a rule of a taken set, also one an override turned off.
@@ -320,7 +320,7 @@ cases under `cases/` beside it.
 |---|---|---|
 | `rule` | yes | The `id` of a rule in a set the file takes |
 | `severity` | no | `error`, `warning` or `watch`, in place of the set's |
-| `off` | no | `true` or `false` (the default). With `true` the rule is left out: it is not run, and neither `tm rules` nor a report lists it |
+| `off` | no | `true` or `false` (the default). With `true` the rule is left out: it is not run, and neither `cctao rules` nor a report lists it |
 | `paths` | no | Globs, in place of the rule's `paths` |
 | `exclude` | no | Globs, in place of the rule's `exclude` |
 | `params` | no | A table laid over the rule's `params` key by key: a key given here wins, and the set's other keys stand |
@@ -332,8 +332,8 @@ cannot limit it to kits. Each rule takes at most one `[[override]]`.
 
 A set's rule can name params the repository must give. The rule file gives each one in the `params` of an
 `[[override]]` for that rule; a value in the set's own `params` does not count. Until every one is given the rule
-is not applicable: it is not run, `tm check` counts it in text, and `tm rules` (text and `--json`) and
-`tm check --json` list it under not applicable, not among the rules, with the why `required params not given: <names>; give them in the params of an [[override]] for "<rule id>"`.
+is not applicable: it is not run, `cctao check` counts it in text, and `cctao rules` (text and `--json`) and
+`cctao check --json` list it under not applicable, not among the rules, with the why `required params not given: <names>; give them in the params of an [[override]] for "<rule id>"`.
 
 No rule of `standard@1` requires a param. Five rules of `house@1` do, and the same five of `house@2`: four require
 `entity_types` and one `own_package`, and the set declares each as a list of strings, such as
@@ -345,8 +345,8 @@ is a problem ([below](#problems-of-baseline-and-override)).
 | Key | Where | Meaning |
 |---|---|---|
 | `required_params` | a set's `[[rule]]` | The params the repository must give, as above. Each item is a name, or `{ name = "...", type = "string" }` or `{ name = "...", type = "strings" }` (a list of strings) for a typed one |
-| `failing`, `passing` | a set's `[[rule]]` | The rule's two cases, which `tm baseline test` runs ([`OUTPUT.md`](OUTPUT.md#tm-baseline-test)). `failing = { files = [...], path = "...", line = N }` lists the case's files and the one finding it must give; `passing = { files = [...] }` lists files that must give none. Every rule of a set has both. A case may also carry `params`, such as the required params a repository would give; they are checked against the types in `required_params`, and `tm baseline test` runs the case with them over the rule's own `params`. A case whose `params` lack a required param is not applicable and is not run. Each case of the five rules that require params, in `house@1` and in `house@2`, gives them |
-| `retired` | a set's top level | Rule ids the set has retired. An id is never reused: a retired id is not a rule of the set, nor of another set taken with it. No set `tm` carries retires an id |
+| `failing`, `passing` | a set's `[[rule]]` | The rule's two cases, which `cctao baseline test` runs ([`OUTPUT.md`](OUTPUT.md#cctao-baseline-test)). `failing = { files = [...], path = "...", line = N }` lists the case's files and the one finding it must give; `passing = { files = [...] }` lists files that must give none. Every rule of a set has both. A case may also carry `params`, such as the required params a repository would give; they are checked against the types in `required_params`, and `cctao baseline test` runs the case with them over the rule's own `params`. A case whose `params` lack a required param is not applicable and is not run. Each case of the five rules that require params, in `house@1` and in `house@2`, gives them |
+| `retired` | a set's top level | Rule ids the set has retired. An id is never reused: a retired id is not a rule of the set, nor of another set taken with it. No set `cctao` carries retires an id |
 
 In a repository's rule file each of these is an unknown key, which is a problem. `enforces`, `leaves` and
 `only_with_base` are keys of any rule, a set's or your own.
@@ -356,11 +356,11 @@ In a repository's rule file each of these is an unknown key, which is a problem.
 | Problem | When |
 |---|---|
 | `malformed baseline entry "<entry>"` | The entry is not a name, `@` and a whole number |
-| `unknown baseline set "<name>"` | `tm` carries no set of that name. The fix names every ready version of each set: `Use one of: house@1, house@2, standard@1.` |
-| `unknown version <n> of baseline set "<name>"` | `tm` carries the set, and not at that version. The fix names its ready versions, such as `Use one of: standard@1.` for `standard@2` |
+| `unknown baseline set "<name>"` | `cctao` carries no set of that name. The fix names every ready version of each set: `Use one of: house@1, house@2, standard@1.` |
+| `unknown version <n> of baseline set "<name>"` | `cctao` carries the set, and not at that version. The fix names its ready versions, such as `Use one of: standard@1.` for `standard@2` |
 | `baseline set "<name>" is taken twice` | A second entry for a set an earlier entry took, at any version |
 | `rule "<id>" is in both <set> and <set>` | Two taken sets hold a rule of that id. Reported at the later entry |
-| `baseline set <name>@<version> has a problem at <line>:<col>: <what>` | A fault in the set built into `tm`, not in your file. The fix asks you to report it |
+| `baseline set <name>@<version> has a problem at <line>:<col>: <what>` | A fault in the set built into `cctao`, not in your file. The fix asks you to report it |
 | ``[[override]] is missing `rule` `` | An `[[override]]` with no `rule` |
 | `override of unknown baseline rule "<id>": no taken set holds it` | `rule` names no rule of a taken set: a misspelt id, one of the file's own rules, or a file with no `baseline` |
 | `second [[override]] for "<id>"` | A rule has more than one `[[override]]` |
@@ -392,15 +392,15 @@ A covered finding is silenced: it is not among the findings, it does not change 
 exceptions in force: the exceptions that have not expired on the report's day, whether or not one was used in this
 run. An exception still counts on its `expires` day. From the day after it is listed apart instead, as
 `expired: <rule> <path> (expired <YYYY-MM-DD>)` in text and under `expired` in `--json`, and counted as expired
-([`OUTPUT.md`](OUTPUT.md#tm-check-as-text)). `tm rules` judges them on the same day the same way: it lists the
-exceptions in force, then the expired ones with their `expires` date ([`OUTPUT.md`](OUTPUT.md#tm-rules)).
+([`OUTPUT.md`](OUTPUT.md#cctao-check-as-text)). `cctao rules` judges them on the same day the same way: it lists the
+exceptions in force, then the expired ones with their `expires` date ([`OUTPUT.md`](OUTPUT.md#cctao-rules)).
 
-`approved` is text. Temperare records it and does not check who wrote it, so review a change to `temperare.toml` as
-you review code. `tm rules --loosened --base <rev>` lists what a change loosened since that commit: a rule gone or
+`approved` is text. Code Chi Tao records it and does not check who wrote it, so review a change to `tao.toml` as
+you review code. `cctao rules --loosened --base <rev>` lists what a change loosened since that commit: a rule gone or
 not applicable, a severity lowered (`error` to `warning` or `watch`, or `warning` to `watch`), paths or kits narrowed,
 excludes or outside kits widened, an exception added or its date moved later, a baseline set dropped or taken at an
 older version
-([`OUTPUT.md`](OUTPUT.md#tm-rules---loosened)). It exits 1 when there is one.
+([`OUTPUT.md`](OUTPUT.md#cctao-rules---loosened)). It exits 1 when there is one.
 
 ## Who owns a finding
 
@@ -416,17 +416,17 @@ A rule file with a `security` rule must have a top-level `owner`, so a security 
 
 ## Problems
 
-`tm` checks the whole file before it runs anything, and reports every problem it finds at once, in file order:
+`cctao` checks the whole file before it runs anything, and reports every problem it finds at once, in file order:
 
 ```
-/path/to/temperare.toml:3:1  [[rule]] is missing `fix`  Add `fix = "..."` to this [[rule]].
-/path/to/temperare.toml:4:6  malformed id "No_None": an id is one or more of a-z, 0-9 and '-'  Write the id in lower-case letters, digits and dashes, e.g. "no-stored-bool".
-/path/to/temperare.toml:5:10  unknown engine "pylnit"  Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, shellcheck, git, vulture, periphery, gitleaks, cargo-audit, eslint, mypy, pmd, detekt, rubocop, phpstan, dart, markdownlint, yamllint, actionlint, hadolint, vale, stylelint, sqlfluff.
-next: fix each problem listed for /path/to/temperare.toml
+/path/to/tao.toml:3:1  [[rule]] is missing `fix`  Add `fix = "..."` to this [[rule]].
+/path/to/tao.toml:4:6  malformed id "No_None": an id is one or more of a-z, 0-9 and '-'  Write the id in lower-case letters, digits and dashes, e.g. "no-stored-bool".
+/path/to/tao.toml:5:10  unknown engine "pylnit"  Use one of: clippy, swiftlint, ruff, ast-grep, tessera, golangci-lint, pylint, clang-tidy, shellcheck, git, vulture, periphery, gitleaks, cargo-audit, eslint, mypy, pmd, detekt, rubocop, phpstan, dart, markdownlint, yamllint, actionlint, hadolint, vale, stylelint, sqlfluff.
+next: fix each problem listed for /path/to/tao.toml
 ```
 
 Each line is `file:line:col`, what is wrong, and what to write instead. With any problem, no engine runs and the
-exit code is 2. `tm rules` reports the same problems, so it is the quick way to check a rule file.
+exit code is 2. `cctao rules` reports the same problems, so it is the quick way to check a rule file.
 
 What is checked:
 

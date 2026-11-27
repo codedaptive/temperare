@@ -1,4 +1,4 @@
-# Temperare workspace: one crate per lane, one binary crate (cli) on top (mission, Layout).
+# Code Chi Tao workspace: one crate per lane, one binary crate (cli) on top (mission, Layout).
 [workspace]
 members = ["crates/*"]
 resolver = "2"
