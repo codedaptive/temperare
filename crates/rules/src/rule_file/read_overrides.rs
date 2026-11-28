@@ -5,6 +5,7 @@ use super::check_globs::check_globs;
 use super::check_keys::check_keys;
 use super::check_not_option::check_not_option;
 use super::override_entry::OverrideEntry;
+use super::override_owner::override_owner;
 use super::problem_at::problem_at;
 use super::required_string::required_string;
 use super::severity_value::severity_value;
@@ -63,8 +64,9 @@ fn read_override(
     // severity_value reads an absent severity as Error; here absent means the baseline's severity stands.
     let severity = table.get("severity").and_then(|_| severity_value(text, table, out));
     let off = bool_value(text, table, "off", out).is_some_and(|(off, _)| off);
-    let paths = globs(text, table, "paths", out);
-    let exclude = globs(text, table, "exclude", out);
+    let owner = override_owner(rule.as_ref().map(|(r, _)| r.as_str()));
+    let paths = globs(text, &owner, table, "paths", out);
+    let exclude = globs(text, &owner, table, "exclude", out);
     if let Some(value) = table.get("params").filter(|v| !v.get_ref().is_table()) {
         out.push(wrong_type(text, "params", value, "a table"));
     }
@@ -75,10 +77,11 @@ fn read_override(
     Some(OverrideEntry { rule, at: rule_at, severity, off, paths, exclude, params })
 }
 
-/// The globs under `key` that compile; None when the key is absent or not an array.
-fn globs(text: &str, table: &DeTable, key: &str, out: &mut Vec<Problem>) -> Option<Vec<String>> {
+/// The globs under `key` that compile; each that does not is a Problem naming `owner`. None when the key is absent
+/// or not an array.
+fn globs(text: &str, owner: &str, table: &DeTable, key: &str, out: &mut Vec<Problem>) -> Option<Vec<String>> {
     let given = table.get(key)?.get_ref().is_array();
-    let compiled = check_globs(text, &string_list(text, table, key, out), out);
+    let compiled = check_globs(text, owner, &string_list(text, table, key, out), out);
     given.then_some(compiled)
 }
 

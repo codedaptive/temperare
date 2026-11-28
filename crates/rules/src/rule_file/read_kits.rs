@@ -36,8 +36,9 @@ fn read_kit(text: &str, name: &str, at: usize, kit: &Spanned<DeValue>, out: &mut
         out.push(wrong_type(text, name, kit, "a table with `paths`"));
         return Kit { name: name.to_string(), paths: Vec::new(), owner: None, scope: None };
     };
-    check_keys(text, table, &KIT_KEYS, &format!("kit \"{name}\""), out);
-    let paths = check_globs(text, &string_list(text, table, "paths", out), out);
+    let kit_place = format!("kit \"{name}\"");
+    check_keys(text, table, &KIT_KEYS, &kit_place, out);
+    let paths = check_globs(text, &kit_place, &string_list(text, table, "paths", out), out);
     let owner = string_value(text, table, "owner", out).map(|(owner, _)| owner).filter(|o| !o.trim().is_empty());
     let scope = if paths.is_empty() {
         None
@@ -46,7 +47,7 @@ fn read_kit(text: &str, name: &str, at: usize, kit: &Spanned<DeValue>, out: &mut
             Scope::build(&paths, &[], None),
             text,
             at,
-            |e| format!("kit \"{name}\": its paths do not compile together: {e}"),
+            |e| format!("{kit_place}: its paths do not compile together: {e}"),
             "Split this kit's paths into smaller kits.",
             out,
         )

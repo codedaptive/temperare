@@ -82,7 +82,8 @@ fn given_params_are_merged_key_by_key_with_the_override_winning() {
 fn a_bad_glob_is_a_problem_at_the_override_and_no_rule() {
     let (applied, out) = apply(&OverrideEntry { paths: Some(vec!["src/[a.rs".to_string()]), ..nothing() });
     assert!(applied.is_none(), "{applied:?}");
-    let what = "bad glob \"src/[a.rs\": error parsing glob 'src/[a.rs': unclosed character class; missing ']'";
+    let what = "[[override]] for \"tm-a\": bad glob \"src/[a.rs\": error parsing glob 'src/[a.rs': unclosed \
+                character class; missing ']'";
     let expected = Problem { line: 1, col: 8, what: what.to_string(), fix: "Correct the override's globs.".to_string() };
     assert_eq!(out, vec![expected]);
 }
