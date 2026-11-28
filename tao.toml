@@ -1,8 +1,9 @@
 # Code Chi Tao's own rule file: the repository is checked by itself (mission, How the code is written; Done 8;
-# SPEC-selfcheck WO-orc-selfcheck-1; S-25, S-26). It takes standard@1, the first repository on the baseline (Bob #2235).
+# SPEC-selfcheck WO-orc-selfcheck-1; S-25, S-26). It takes standard@1, the first repository on the baseline (Bob #2235),
+# and house@2 for its three register-citation rules alone (WO-orc-selfcheck-2): house@2's other 36 rules are off.
 version = 1
 owner = "maintainers"
-baseline = ["standard@1"]
+baseline = ["standard@1", "house@2"]
 
 [kits.procio]
 paths = ["crates/procio/**"]
@@ -82,6 +83,165 @@ exclude = ["crates/rules/baseline/**"]
 [[override]]
 rule = "tm-python-commented-out-code"
 exclude = ["crates/rules/baseline/**"]
+
+# house@2 brings in the register-citation check alone (Tao step 4.4): its three citation rules leave the sets' cases out,
+# as the standard@1 rules do, and its other 36 rules are off (whether to take them is a separate question).
+
+[[override]]
+rule = "tm-house-no-register-citation-rust"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-house-no-register-citation-swift"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-house-no-register-citation-python"
+exclude = ["crates/rules/baseline/**"]
+
+[[override]]
+rule = "tm-house-no-unwrap-rust"
+off = true
+
+[[override]]
+rule = "tm-house-no-expect-rust"
+off = true
+
+[[override]]
+rule = "tm-house-no-unsafe-rust"
+off = true
+
+[[override]]
+rule = "tm-house-no-print-stdout-rust"
+off = true
+
+[[override]]
+rule = "tm-house-no-todo-python"
+off = true
+
+[[override]]
+rule = "tm-house-no-todo-swift"
+off = true
+
+[[override]]
+rule = "tm-house-no-todo-rust"
+off = true
+
+[[override]]
+rule = "tm-house-no-force-cast-swift"
+off = true
+
+[[override]]
+rule = "tm-house-no-force-try-swift"
+off = true
+
+[[override]]
+rule = "tm-house-no-force-unwrapping-swift"
+off = true
+
+[[override]]
+rule = "tm-house-no-as-conversions-rust"
+off = true
+
+[[override]]
+rule = "tm-house-no-assign-then-return-python"
+off = true
+
+[[override]]
+rule = "tm-house-no-let-and-return-rust"
+off = true
+
+[[override]]
+rule = "tm-house-arg-type-hints-python"
+off = true
+
+[[override]]
+rule = "tm-house-return-type-hints-python"
+off = true
+
+[[override]]
+rule = "tm-house-pathlib-python"
+off = true
+
+[[override]]
+rule = "tm-house-one-public-symbol-rust"
+off = true
+
+[[override]]
+rule = "tm-house-one-declaration-swift"
+off = true
+
+[[override]]
+rule = "tm-house-file-name-swift"
+off = true
+
+[[override]]
+rule = "tm-house-file-length-swift"
+off = true
+
+[[override]]
+rule = "tm-house-no-stored-bool-swift"
+off = true
+
+[[override]]
+rule = "tm-house-no-stored-bool-rust"
+off = true
+
+[[override]]
+rule = "tm-house-bitmap-int64-swift"
+off = true
+
+[[override]]
+rule = "tm-house-bitmap-int64-rust"
+off = true
+
+[[override]]
+rule = "tm-house-leading-trailing-swift"
+off = true
+
+[[override]]
+rule = "tm-house-display-text-literal-swift"
+off = true
+
+[[override]]
+rule = "tm-house-swift-testing-swift"
+off = true
+
+[[override]]
+rule = "tm-house-test-ratio"
+off = true
+
+[[override]]
+rule = "tm-house-test-asserts-sentence-rust"
+off = true
+
+[[override]]
+rule = "tm-house-test-asserts-sentence-python"
+off = true
+
+[[override]]
+rule = "tm-house-test-asserts-sentence-swift"
+off = true
+
+[[override]]
+rule = "tm-house-unit-test-fakes-own-kit-rust"
+off = true
+
+[[override]]
+rule = "tm-house-unit-test-fakes-own-kit-python"
+off = true
+
+[[override]]
+rule = "tm-house-test-setup-heavier-rust"
+off = true
+
+[[override]]
+rule = "tm-house-test-setup-heavier-python"
+off = true
+
+[[override]]
+rule = "tm-house-test-setup-heavier-swift"
+off = true
 
 [[rule]]
 id = "programs-run-only-in-procio"

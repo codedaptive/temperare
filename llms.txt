@@ -268,9 +268,8 @@ sources.
   rule's run is not counted, and a watch rule is not in saved.counted.
 - Rules with engine = "tessera" are accepted and, when they cover a file and have no params, are reported "not
   available" today, whether or not Tessera is installed. A Tessera rule with a param fails (exit 5).
-- The acceptance checks for 0.1.0 did not run eslint, mypy, pmd, detekt, rubocop, phpstan, dart, actionlint,
-  sqlfluff, hadolint, yamllint, vale, stylelint or markdownlint. cctao runs each of them; docs/reference/ENGINES.md
-  names the engine version each is tested against.
+- The acceptance checks for 0.5.0 ran every engine cctao runs; docs/reference/ENGINES.md names the version each was
+  accepted with.
 - Rules with engine = "git" (check test_ratio) count the lines a change adds against the commit cctao check --base
   names; ast-grep rules with params.count count each file's setup and test lines whole, reporting the files the
   change adds lines to. Without --base such a rule is "not available" ("reports only what a change adds; run with
