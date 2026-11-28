@@ -237,6 +237,7 @@ exit is 6 when nothing ranks above it. A baseline set's rule is not applicable i
 - `*` stays within one folder: `*.py` matches `app.py` and not `src/app.py`.
 - `**` crosses folders: `**/*.py` matches both.
 - A glob is matched against the file's path relative to the rule file's folder, with `/` between its parts.
+- A character with no glob meaning, such as `$`, matches itself: `**/*$` matches `src/a$` and not `src/a.rs`.
 
 ## Baseline sets
 
@@ -439,7 +440,9 @@ What is checked:
 - a `baseline` entry and an `[[override]]`, as listed under
   [Problems of `baseline` and `[[override]]`](#problems-of-baseline-and-override);
 - an `engine`, `kind` or `severity` that is not one of the names above;
-- a glob that does not compile;
+- a glob that does not compile: the problem names the table it is in and the glob, as
+  `rule "<id>": bad glob "<glob>": <reason>`, with `kit "<name>"` or `[[override]] for "<rule>"` in place of
+  `rule "<id>"`;
 - a kit named in `kits` or `outside_kits` that is not defined under `[kits]`;
 - a `security` rule in a file with no top-level `owner`;
 - a `check`, `config` or `params.allow` value that begins with `-`, since it would reach the engine as an option;
