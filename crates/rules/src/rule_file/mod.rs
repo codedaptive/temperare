@@ -37,6 +37,7 @@ mod load_set;
 mod missing_param_names;
 mod missing_params;
 mod override_entry;
+mod override_owner;
 mod param_type;
 mod problem_at;
 mod read_baseline;
@@ -138,6 +139,8 @@ mod missing_params_tests;
 #[cfg(test)]
 mod override_entry_tests;
 #[cfg(test)]
+mod override_owner_tests;
+#[cfg(test)]
 mod problem_at_tests;
 #[cfg(test)]
 mod read_baseline_tests;
@@ -189,6 +192,8 @@ mod rule_file_new_tests;
 mod rule_file_owner_for_tests;
 #[cfg(test)]
 mod rule_file_parse_cases_tests;
+#[cfg(test)]
+mod rule_file_parse_globs_tests;
 #[cfg(test)]
 mod rule_file_parse_order_tests;
 #[cfg(test)]

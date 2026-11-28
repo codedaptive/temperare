@@ -1,6 +1,7 @@
-//! ZUT for rule_file_parse.rs: one case per check of SPEC-rules WO-rules-2 and the `kind` and `owner` checks, on
-//! in-memory text, with the expected line and column written out; then the `baseline` and `[[override]]` keys, on
-//! baseline sets written here and passed to parse_with_sets.
+//! ZUT for rule_file_parse.rs: one case per check of SPEC-rules WO-rules-2 (the bad-glob cases are in
+//! rule_file_parse_globs_tests.rs) and the `kind` and `owner` checks, on in-memory text, with the expected line
+//! and column written out; then the `baseline` and `[[override]]` keys, on baseline sets written here and passed to
+//! parse_with_sets.
 
 use super::baseline_set::BaselineSet;
 use super::rule_file_parse::parse_with_sets;
@@ -57,13 +58,6 @@ fn check_5_missing_fix_at_the_rule_header() {
 #[test]
 fn check_6_missing_check_at_the_rule_header() {
     only("version = 1\n  [[rule]]\nid = \"r\"\nengine = \"ruff\"\nfix = \"f\"\n", 2, 3, "`check`");
-}
-
-#[test]
-fn check_7_bad_glob_in_paths_exclude_and_a_kits_paths_at_that_string() {
-    only(&format!("version = 1\n{RULE}paths = [\"ok/**\", \"src/[a.rs\"]\n"), 7, 19, "src/[a.rs");
-    only(&format!("version = 1\n{RULE}exclude = [\"gen/[x\"]\n"), 7, 12, "gen/[x");
-    only("version = 1\n[kits.core]\npaths = [\"core/[\"]\n", 3, 10, "core/[");
 }
 
 #[test]

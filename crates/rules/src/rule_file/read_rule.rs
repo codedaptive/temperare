@@ -36,7 +36,8 @@ const SET_KEYS: [&str; 18] = [
 /// "tm-" and whose rules may declare `required_params` and their `failing` and `passing` cases, and false for a
 /// repository's own file, whose ids may not start "tm-". Every check runs; any Problem leaves the rule out (None),
 /// and its scope is compiled only when there is none, excluding both `exclude` and the paths of the `outside_kits`
-/// kits.
+/// kits. A glob Problem starts with the rule as named by `owner`: `rule "<id>": `, or `[[rule]]: ` with no
+/// string id.
 pub(crate) fn read_rule(
     text: &str,
     at: usize,
@@ -61,8 +62,9 @@ pub(crate) fn read_rule(
     let kind = kind_value(text, table, out);
     let check = required_string(text, table, "check", PLACE, at, out);
     let config = string_value(text, table, "config", out);
-    let paths = check_globs(text, &string_list(text, table, "paths", out), out);
-    let exclude = check_globs(text, &string_list(text, table, "exclude", out), out);
+    let owner = owner(id.as_ref());
+    let paths = check_globs(text, &owner, &string_list(text, table, "paths", out), out);
+    let exclude = check_globs(text, &owner, &string_list(text, table, "exclude", out), out);
     let kit_names = string_list(text, table, "kits", out);
     let kit_paths = kit_union(text, &kit_names, kits, "kits", out);
     let outside_names = string_list(text, table, "outside_kits", out);
@@ -86,7 +88,7 @@ pub(crate) fn read_rule(
         &exclude.iter().chain(&outside_paths).cloned().collect::<Vec<_>>(),
         kit_paths.as_deref(),
     );
-    let scope = scope_or_problem(built, text, at, |e| e, "Correct the rule's globs.", out)?;
+    let scope = scope_or_problem(built, text, at, |e| format!("{owner}: {e}"), "Correct the rule's globs.", out)?;
     Some(Rule {
         id,
         engine,
@@ -112,6 +114,11 @@ pub(crate) fn read_rule(
         passing_params: toml::Table::new(),
         position: 0,
     })
+}
+
+/// The rule as a glob Problem names it: `rule "<id>"`, or `[[rule]]` when it has no string id.
+fn owner(id: Option<&(String, usize)>) -> String {
+    id.map_or_else(|| PLACE.to_string(), |(id, _)| format!("rule \"{id}\""))
 }
 
 /// A Problem at `at` when `id` is empty or holds anything but a-z, 0-9 and '-'; for a well-formed id, a Problem when

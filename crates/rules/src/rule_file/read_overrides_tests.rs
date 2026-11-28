@@ -131,7 +131,8 @@ fn paths_not_an_array_is_a_problem() {
 
 #[test]
 fn a_bad_exclude_glob_is_a_problem_at_its_string() {
-    let what = "bad glob \"src/[a.rs\": error parsing glob 'src/[a.rs': unclosed character class; missing ']'";
+    let what = "[[override]] for \"tm-x\": bad glob \"src/[a.rs\": error parsing glob 'src/[a.rs': unclosed character \
+                class; missing ']'";
     // The one glob did not compile, so the exclude list is given and empty.
     let entry = OverrideEntry { exclude: Some(vec![]), ..only_rule("tm-x", 20) };
     assert_kept_with("exclude = [\"src/[a.rs\"]", entry, problem(3, 12, what, GLOB_FIX));
